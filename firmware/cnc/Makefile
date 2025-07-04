@@ -69,7 +69,6 @@ bin: $(OUT_BIN)
 
 $(OUT_BIN): $(OUT_ELF)
 	@echo [3] Generating binary...
-	@echo "Files: $< $@"
 	$(OBJCOPY) -O binary $< $@
 
 # Run checksum script on binary
