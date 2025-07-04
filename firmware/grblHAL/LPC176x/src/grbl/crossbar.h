@@ -607,7 +607,7 @@ typedef enum {
 #define PINMODE_NONE        (0)
 #define PINMODE_OUTPUT      (1U<<1)
 #ifndef __LPC17XX__
-#define PINMODE_OD          (1U<<2)
+#define PINMODE_OD_MASK     (1U<<2)
 #endif
 #define PINMODE_PULLUP      (PullMode_Up<<3)
 #define PINMODE_PULLDOWN    (PullMode_Down<<3)

@@ -1,0 +1,254 @@
+Build log - Fri 04/07/2025 20:21:56.92 
+Compiling C sources... 
+Compiling cdc_desc.c 
+Compiling cdc_vcom.c 
+Compiling crp.c 
+Compiling cr_startup_lpc175x_6x.c 
+Compiling diskio.c 
+Compiling driver.c 
+Compiling flash.c 
+Compiling i2c.c 
+Compiling ioports.c 
+Compiling main.c 
+Compiling serial.c 
+Compiling sysinit.c 
+Compiling tmc_uart.c 
+Compiling usb_serial.c 
+Compiling hc_05.c 
+Compiling btt_skr_1.x.c 
+Compiling btt_skr_e3_turbo.c 
+Compiling mks_sbase.c 
+Compiling eeprom_24AAxxx.c 
+Compiling eeprom_24LC16B.c 
+Compiling ff.c 
+Compiling ffsystem.c 
+Compiling ffunicode.c 
+Compiling alarms.c 
+Compiling canbus.c 
+Compiling coolant_control.c 
+Compiling crc.c 
+Compiling crossbar.c 
+Compiling errors.c 
+Compiling gcode.c 
+Compiling grbllib.c 
+Compiling ioports.c 
+Compiling machine_limits.c 
+Compiling messages.c 
+Compiling modbus.c 
+Compiling modbus_rtu.c 
+Compiling motion_control.c 
+Compiling my_plugin.c 
+Compiling ngc_expr.c 
+Compiling ngc_flowctrl.c 
+Compiling ngc_params.c 
+Compiling nuts_bolts.c 
+Compiling nvs_buffer.c 
+Compiling override.c 
+Compiling pid.c 
+Compiling planner.c 
+Compiling protocol.c 
+Compiling regex.c 
+Compiling report.c 
+Compiling settings.c 
+Compiling sleep.c 
+Compiling spindle_control.c 
+Compiling state_machine.c 
+Compiling stepper.c 
+Compiling stepper2.c 
+Compiling stream.c 
+Compiling stream_file.c 
+Compiling stream_passthru.c 
+Compiling strutils.c 
+Compiling system.c 
+Compiling tool_change.c 
+Compiling vfs.c 
+Compiling corexy.c 
+Compiling delta.c 
+Compiling maslow.c 
+Compiling polar.c 
+Compiling wall_plotter.c 
+Compiling pwm_driver.c 
+Compiling keypad.c 
+Compiling macros.c 
+Compiling i2c_interface.c 
+Compiling i2c_leds.c 
+Compiling co2.c 
+Compiling coolant.c 
+Compiling lb_clusters.c 
+Compiling ppi.c 
+Compiling _exit.c 
+Compiling adc_17xx_40xx.c 
+Compiling can_17xx_40xx.c 
+Compiling chip_17xx_40xx.c 
+Compiling clock_17xx_40xx.c 
+Compiling cmp_17xx_40xx.c 
+Compiling crc_17xx_40xx.c 
+Compiling dac_17xx_40xx.c 
+Compiling eeprom_17xx_40xx.c 
+Compiling emc_17xx_40xx.c 
+Compiling enet_17xx_40xx.c 
+Compiling gpdma_17xx_40xx.c 
+Compiling gpioint_17xx_40xx.c 
+Compiling gpio_17xx_40xx.c 
+Compiling i2c_17xx_40xx.c 
+Compiling i2s_17xx_40xx.c 
+Compiling iap.c 
+Compiling iocon_17xx_40xx.c 
+Compiling lcd_17xx_40xx.c 
+Compiling pmu_17xx_40xx.c 
+Compiling ring_buffer.c 
+Compiling ritimer_17xx_40xx.c 
+Compiling rtc_17xx_40xx.c 
+Compiling sdc_17xx_40xx.c 
+Compiling sdmmc_17xx_40xx.c 
+Compiling spi_17xx_40xx.c 
+Compiling ssp_17xx_40xx.c 
+Compiling stopwatch_17xx_40xx.c 
+Compiling sysctl_17xx_40xx.c 
+Compiling sysinit_17xx_40xx.c 
+Compiling timer_17xx_40xx.c 
+Compiling uart_17xx_40xx.c 
+Compiling wwdt_17xx_40xx.c 
+Compiling trinamic.c 
+Compiling fs_fatfs.c 
+Compiling fs_littlefs.c 
+Compiling fs_stream.c 
+Compiling macros.c 
+Compiling sdcard.c 
+Compiling ymodem.c 
+Compiling offset.c 
+Compiling onoff.c 
+Compiling pwm.c 
+Compiling pwm_clone.c 
+Compiling select.c 
+Compiling stepper.c 
+Compiling gs20.c 
+Compiling h100.c 
+Compiling huanyang.c 
+Compiling huanyang2.c 
+Compiling modvfd.c 
+Compiling nowforever.c 
+Compiling spindle.c 
+Compiling yl620.c 
+Compiling common.c 
+Compiling tmc2130.c 
+Compiling tmc2130hal.c 
+Compiling tmc2209.c 
+Compiling tmc2209hal.c 
+Compiling tmc2240.c 
+Compiling tmc2240hal.c 
+Compiling tmc2660.c 
+Compiling tmc2660hal.c 
+Compiling tmc26x.c 
+Compiling tmc5160.c 
+Compiling tmc5160hal.c 
+Compiling tmc_interface.c 
+Compiling CPP sources... 
+Linking... 
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\firmware.elf section `.text' will not fit in region `FLASH'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: section .init LMA [000416e4,000416ef] overlaps section .data LMA [000416e4,00042aa7]
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: region `FLASH' overflowed by 6008 bytes
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\cr_startup_lpc175x_6x.o: in function `ResetISR':
+cr_startup_lpc175x_6x.c:(.after_vectors+0x68): undefined reference to `__data_section_table'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: cr_startup_lpc175x_6x.c:(.after_vectors+0x6c): undefined reference to `__data_section_table_end'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: cr_startup_lpc175x_6x.c:(.after_vectors+0x70): undefined reference to `__bss_section_table_end'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\cr_startup_lpc175x_6x.o:(.isr_vector+0x0): undefined reference to `_vStackTop'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\driver.o: in function `aux_pin_debounce':
+driver.c:(.text.aux_pin_debounce+0x2a): undefined reference to `ioports_event'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\driver.o: in function `aux_pin_irq':
+driver.c:(.text.aux_pin_irq+0x2a): undefined reference to `ioports_event'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\driver.o: in function `driver_init':
+driver.c:(.text.driver_init+0x2c0): undefined reference to `ioports_init'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\gcode.o: in function `gc_get_offset':
+gcode.c:(.text.gc_get_offset+0x1c): undefined reference to `st_get_offset_id'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\grbllib.o: in function `grbl_enter':
+grbllib.c:(.text.grbl_enter+0x324): undefined reference to `stepper_driver_interrupt_handler'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: grbllib.c:(.text.grbl_enter+0x3f4): undefined reference to `st_reset'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\machine_limits.o: in function `limits_pull_off':
+machine_limits.c:(.text.limits_pull_off+0xae): undefined reference to `st_prep_buffer'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: machine_limits.c:(.text.limits_pull_off+0xb2): undefined reference to `st_wake_up'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: machine_limits.c:(.text.limits_pull_off+0xb8): undefined reference to `st_prep_buffer'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: machine_limits.c:(.text.limits_pull_off+0x11c): undefined reference to `st_reset'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\machine_limits.o: in function `homing_cycle':
+machine_limits.c:(.text.homing_cycle+0x1de): undefined reference to `st_prep_buffer'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: machine_limits.c:(.text.homing_cycle+0x1e2): undefined reference to `st_wake_up'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: machine_limits.c:(.text.homing_cycle+0x2e0): undefined reference to `st_prep_buffer'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: machine_limits.c:(.text.homing_cycle+0x356): undefined reference to `st_reset'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\motion_control.o: in function `mc_jog_execute':
+motion_control.c:(.text.mc_jog_execute+0x78): undefined reference to `st_prep_buffer'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: motion_control.c:(.text.mc_jog_execute+0x7c): undefined reference to `st_wake_up'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\motion_control.o: in function `mc_probe_cycle':
+motion_control.c:(.text.mc_probe_cycle+0x1e0): undefined reference to `st_reset'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\motion_control.o: in function `mc_parking_motion':
+motion_control.c:(.text.mc_parking_motion+0x24): undefined reference to `st_parking_setup_buffer'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: motion_control.c:(.text.mc_parking_motion+0x28): undefined reference to `st_prep_buffer'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: motion_control.c:(.text.mc_parking_motion+0x2c): undefined reference to `st_wake_up'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\motion_control.o: in function `mc_reset':
+motion_control.c:(.text.mc_reset+0x6a): undefined reference to `st_go_idle'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\planner.o: in function `planner_recalculate':
+planner.c:(.text.planner_recalculate+0x58): undefined reference to `st_update_plan_block_parameters'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: planner.c:(.text.planner_recalculate+0xa0): undefined reference to `st_update_plan_block_parameters'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\planner.o: in function `plan_cycle_reinitialize':
+planner.c:(.text.plan_cycle_reinitialize+0x4): undefined reference to `st_update_plan_block_parameters'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\protocol.o: in function `protocol_exec_rt_system':
+protocol.c:(.text.protocol_exec_rt_system+0x1ca): undefined reference to `st_is_stepping'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: protocol.c:(.text.protocol_exec_rt_system+0x1e4): undefined reference to `st_reset'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: protocol.c:(.text.protocol_exec_rt_system+0x2bc): undefined reference to `st_is_stepping'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: protocol.c:(.text.protocol_exec_rt_system+0x2ca): undefined reference to `st_prep_buffer'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: protocol.c:(.text.protocol_exec_rt_system+0x2d8): undefined reference to `st_is_stepping'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: protocol.c:(.text.protocol_exec_rt_system+0x410): undefined reference to `st_prep_buffer'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\report.o: in function `report_realtime_status':
+report.c:(.text.report_realtime_status+0x170): undefined reference to `st_get_realtime_rate'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: report.c:(.text.report_realtime_status+0x7d8): undefined reference to `st_get_realtime_rate'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\spindle_control.o: in function `spindle_set_state':
+spindle_control.c:(.text.spindle_set_state+0x46): undefined reference to `st_rpm_changed'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\state_machine.o: in function `initiate_hold':
+state_machine.c:(.text.initiate_hold+0x92): undefined reference to `st_update_plan_block_parameters'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\state_machine.o: in function `enter_sleep':
+state_machine.c:(.text.enter_sleep+0x2): undefined reference to `st_go_idle'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\state_machine.o: in function `state_await_restart_retract':
+state_machine.c:(.text.state_await_restart_retract+0x14): undefined reference to `st_parking_restore_buffer'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\state_machine.o: in function `state_await_waypoint_retract':
+state_machine.c:(.text.state_await_waypoint_retract+0x18): undefined reference to `st_parking_restore_buffer'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\state_machine.o: in function `restart_retract':
+state_machine.c:(.text.restart_retract+0x2a): undefined reference to `st_update_plan_block_parameters'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\state_machine.o: in function `state_restore':
+state_machine.c:(.text.state_restore+0x38): undefined reference to `st_parking_restore_buffer'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\state_machine.o: in function `state_set':
+state_machine.c:(.text.state_set+0xe4): undefined reference to `st_prep_buffer'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: state_machine.c:(.text.state_set+0xf0): undefined reference to `st_wake_up'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\state_machine.o: in function `state_await_resume':
+state_machine.c:(.text.state_await_resume+0x24): undefined reference to `st_parking_restore_buffer'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\state_machine.o: in function `state_await_resumed':
+state_machine.c:(.text.state_await_resumed+0x26): undefined reference to `st_parking_restore_buffer'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\state_machine.o: in function `state_cycle':
+state_machine.c:(.text.state_cycle+0x2c): undefined reference to `st_update_plan_block_parameters'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\state_machine.o: in function `state_await_motion_cancel':
+state_machine.c:(.text.state_await_motion_cancel+0x18): undefined reference to `st_reset'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\system.o: in function `go_home.isra.0':
+system.c:(.text.go_home.isra.0+0x82): undefined reference to `st_go_idle'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\usb_serial.o:(.rodata.g_usbApi+0x0): undefined reference to `hw_api'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\usb_serial.o:(.rodata.g_usbApi+0x4): undefined reference to `core_api'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: ..\output\usb_serial.o:(.rodata.g_usbApi+0x14): undefined reference to `cdc_api'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1\libc.a(libc_a-closer.o): in function `_close_r':
+closer.c:(.text._close_r+0x18): undefined reference to `_close'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1\libc.a(libc_a-lseekr.o): in function `_lseek_r':
+lseekr.c:(.text._lseek_r+0x24): undefined reference to `_lseek'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1\libc.a(libc_a-readr.o): in function `_read_r':
+readr.c:(.text._read_r+0x24): undefined reference to `_read'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1\libc.a(libc_a-sbrkr.o): in function `_sbrk_r':
+sbrkr.c:(.text._sbrk_r+0x18): undefined reference to `_sbrk'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1\libc.a(libc_a-writer.o): in function `_write_r':
+writer.c:(.text._write_r+0x24): undefined reference to `_write'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1\libc.a(libc_a-fstatr.o): in function `_fstat_r':
+fstatr.c:(.text._fstat_r+0x1c): undefined reference to `_fstat'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1\libc.a(libc_a-isattyr.o): in function `_isatty_r':
+isattyr.c:(.text._isatty_r+0x18): undefined reference to `_isatty'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1\libc.a(libc_a-signalr.o): in function `_kill_r':
+signalr.c:(.text._kill_r+0x1c): undefined reference to `_kill'
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/bin/ld.exe: C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1\libc.a(libc_a-signalr.o): in function `_getpid_r':
+signalr.c:(.text._getpid_r+0x4): undefined reference to `_getpid'
+collect2.exe: error: ld returned 1 exit status
+Generating firmware.bin 
+arm-none-eabi-objcopy: '..\output\firmware.elf': No such file
+Build complete ..\output\firmware.bin 
