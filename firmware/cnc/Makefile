@@ -77,7 +77,7 @@ checksum: $(OUT_BIN)
 	python "$(BLD_DIR)$(SEP)checksum.py" "$(OUT_BIN)"
 
 # Flash firmware to target device
-flash: $(OUT_BIN)
+flash: checksum
 	@echo Flashing firmware...
 	openocd -f interface/stlink.cfg -f target/lpc17xx.cfg \
 	  -c "adapter speed 500; program $(OUT_BIN) verify reset exit 0x0"
