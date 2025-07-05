@@ -76,6 +76,18 @@ checksum: $(OUT_BIN)
 	@echo [4] Fixing LPC1769 vector checksum...	
 	python "$(BLD_DIR)$(SEP)checksum.py" "$(OUT_BIN)"
 
+# Flash firmware to target device
+flash: $(OUT_BIN)
+	@echo Flashing firmware...
+	openocd -f interface/stlink.cfg -f target/lpc17xx.cfg \
+	  -c "adapter speed 500; program $(OUT_BIN) verify reset exit 0x0"
+
+filesize:
+	arm-none-eabi-size $(OUT_ELF)
+
+sections:
+	arm-none-eabi-readelf -l $(OUT_ELF)
+
 # Clean
 clean:
 ifeq ($(OS),Windows_NT)
