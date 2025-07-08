@@ -12,12 +12,16 @@ int main(void)
 {
     clock_init();
     systick_init();
-    // uart_init(115200); // UART0 @ 115200 baud
+    uart_init(115200);
+
+    uart_send_str("UART0 ready!\r\n");
 
     GPIO2_DIR |= GPIO2_PINS;
 
     while (1)
     {
+        uart_send_str("Toggling GPIOs...\r\n");
+
         GPIO2_SET = GPIO2_PINS;
         delay_ms(1000);
 
