@@ -1,100 +1,132 @@
-# OS-specific delete
+# OS-specific commands and separator
 ifeq ($(OS),Windows_NT)
   DELCMD = del /Q
-  SEP     = \\
+  MKDIR  = if not exist "$(OBJ_DIR)" mkdir "$(OBJ_DIR)"
+  RM     = rmdir /S /Q
+  SEP    = \\
 else
   DELCMD = rm -rf
-  SEP     = /
+  MKDIR  = mkdir -p "$(OBJ_DIR)"
+  RM     = rm -rf
+  SEP    = /
 endif
 
 # Toolchain
-CC       := arm-none-eabi-gcc
-OBJCOPY  := arm-none-eabi-objcopy
+CC      := arm-none-eabi-gcc
+AS      := arm-none-eabi-as
+OBJCOPY := arm-none-eabi-objcopy
+SIZE    := arm-none-eabi-size
+NM      := arm-none-eabi-nm
+OBJDUMP := arm-none-eabi-objdump
+READELF := arm-none-eabi-readelf
 
 # Directories
-SRC_DIR  := src
-OBJ_DIR  := firmware
-BLD_DIR  := build
+SRC_DIR := src
+OBJ_DIR := firmware
+BLD_DIR := build
 
-# Output names
-OUT_ELF  := $(OBJ_DIR)$(SEP)firmware.elf
-OUT_MAP  := $(OBJ_DIR)$(SEP)firmware.map
-OUT_BIN  := $(OBJ_DIR)$(SEP)firmware.bin
+# Output files
+OUT_ELF := $(OBJ_DIR)$(SEP)firmware.elf
+OUT_MAP := $(OBJ_DIR)$(SEP)firmware.map
+OUT_BIN := $(OBJ_DIR)$(SEP)firmware.bin
 
 # Linker script
-LD_SCRIPT := build/lpc1769.ld
+LD_SCRIPT := $(BLD_DIR)$(SEP)lpc1769.ld
 
-# Flags
-CFLAGS   := -c \
-             -mcpu=cortex-m3 \
-             -mthumb \
-             -O2 \
-             -ffreestanding \
-             -nostdlib \
-             -Wall
+# Compiler flags
+CFLAGS := -mcpu=cortex-m3 -mthumb -g -O0 -ffreestanding -nostdlib -Wall -Wno-unused-variable
 
-LDFLAGS  := -mcpu=cortex-m3 \
-             -mthumb \
-             -nostartfiles \
-             -Wl,-Map=$(OUT_MAP) \
-             -T $(LD_SCRIPT)
+# Assembler flags
+ASFLAGS := -mcpu=cortex-m3 -mthumb -g
 
-# Gather sources & objects
-SRCS     := $(wildcard $(SRC_DIR)/*.c)
-OBJS     := $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRCS))
+# Linker flags
+LDFLAGS := -mcpu=cortex-m3 -mthumb -nostartfiles -Wl,-Map=$(OUT_MAP) -T $(LD_SCRIPT)
 
-# Default: compile & link
+# Sources
+CSRCS := $(wildcard $(SRC_DIR)/*.c)
+ASRCS := $(wildcard $(SRC_DIR)/*.s)
+SRCS  := $(CSRCS) $(ASRCS)
+
+# Objects
+C_OBJS := $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(CSRCS))
+A_OBJS := $(patsubst $(SRC_DIR)/%.s,$(OBJ_DIR)/%.o,$(ASRCS))
+OBJS   := $(C_OBJS) $(A_OBJS)
+
+# Default target
+.PHONY: all
 all: $(OUT_BIN) checksum
 
-# Ensure obj directory exists
+# Create object directory if needed
 $(OBJ_DIR):
-ifeq ($(OS),Windows_NT)
-	@if not exist "$(OBJ_DIR)" mkdir "$(OBJ_DIR)"
-else
-	@mkdir -p "$(OBJ_DIR)"
-endif
+	@$(MKDIR)
 
-# Compile only (no link)
+# Compile C sources
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
-	@echo [1] Compiling source files...
-	$(CC) $(CFLAGS) -o $@ $<
+	@echo "[CC] $<"
+	$(CC) $(CFLAGS) -c -o $@ $<
 
-# Link (and emit .map)
+# Assemble ASM sources
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.s | $(OBJ_DIR)
+	@echo "[AS] $<"
+	$(AS) $(ASFLAGS) -o $@ $<
+
+# Link ELF
 $(OUT_ELF): $(OBJS)
-	@echo [2] Linking...
+	@echo "[LD] Linking $@"
 	$(CC) $(LDFLAGS) -o $@ $^
 
-# Generate binary from ELF
-bin: $(OUT_BIN)
-
+# Generate binary
 $(OUT_BIN): $(OUT_ELF)
-	@echo [3] Generating binary...
+	@echo "[OBJCOPY] Generating binary $@"
 	$(OBJCOPY) -O binary $< $@
 
-# Run checksum script on binary
+# Checksum depends on bin
+.PHONY: checksum
 checksum: $(OUT_BIN)
-	@echo [4] Fixing LPC1769 vector checksum...	
+	@echo "[CHK] Fixing vector checksum"
 	python "$(BLD_DIR)$(SEP)checksum.py" "$(OUT_BIN)"
+	python "$(BLD_DIR)$(SEP)verify_checksum.py" "$(OUT_BIN)"
 
-# Flash firmware to target device
-flash: checksum
-	@echo Flashing firmware...
+# Flash binary with OpenOCD
+.PHONY: flash
+flash: # $(OUT_BIN)
+	@echo "[FLASH] Flashing binary"
 	openocd -f interface/stlink.cfg -f target/lpc17xx.cfg \
-	  -c "adapter speed 500; program $(OUT_BIN) verify reset exit 0x0"
+		-c "adapter speed 500; program $(OUT_BIN) verify reset exit 0x0"
 
+# Run OpenOCD with flashing and halt for debugging
+.PHONY: openocd
+openocd: 
+	@echo "[OPENOCD] Programming and halting"
+	openocd -f interface/stlink.cfg -f target/lpc17xx.cfg \
+		-c "adapter speed 500" \
+		-c "program $(OUT_BIN) verify" \
+		-c "reset halt"
+
+# Debug target (runs openocd and gdb)
+.PHONY: debug
+debug: $(OUT_ELF)
+	@echo "[DEBUG] Starting OpenOCD and GDB"
+	start cmd /c "openocd -f interface/stlink.cfg -f target/lpc17xx.cfg -c 'adapter speed 500' -c 'program $(OUT_ELF) verify' -c 'reset halt'"
+	timeout /t 2 >nul
+	arm-none-eabi-gdb -x $(BLD_DIR)$(SEP)debug.gdb $(OUT_ELF)
+
+# Utility commands for info
+.PHONY: filesize sections dump symbols
 filesize:
-	arm-none-eabi-size $(OUT_ELF)
+	$(SIZE) $(OUT_ELF)
 
 sections:
-	arm-none-eabi-readelf -l $(OUT_ELF)
+	$(READELF) -l $(OUT_ELF)
 
-# Clean
+dump:
+	$(OBJDUMP) -h $(OUT_ELF)
+
+symbols:
+	$(NM) $(OUT_ELF)
+
+# Clean build artifacts
+.PHONY: clean
 clean:
-ifeq ($(OS),Windows_NT)
-	@echo Cleaning Windows build artifacts...
-	@if exist "$(OBJ_DIR)" rmdir /S /Q "$(OBJ_DIR)"
-else
-	@echo Cleaning Unix build artifacts...
-	@rm -rf "$(OBJ_DIR)"
-endif
-
+	@echo "[CLEAN] Removing build artifacts"
+	-$(RM) "$(OBJ_DIR)"

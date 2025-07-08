@@ -1,0 +1,22 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Cortex-Debug LPC1769",
+      "type": "cortex-debug",
+      "request": "launch",
+      "executable": "${workspaceFolder}/firmware/firmware.elf",
+      "cwd": "${workspaceFolder}",
+      "servertype": "external",
+      "gdbTarget": "localhost:3333",
+      "device": "LPC1769",
+      "interface": "swd",
+      "runToEntryPoint": "main",
+      "preLaunchTask": "clean-make-and-run-openocd",
+      "postRestartCommands": ["monitor reset halt", "load"],
+      "svdFile": "${workspaceFolder}/LPC176x.svd",
+      "gdbPath": "arm-none-eabi-gdb",
+      "showDevDebugOutput": "both"
+    }
+  ]
+}

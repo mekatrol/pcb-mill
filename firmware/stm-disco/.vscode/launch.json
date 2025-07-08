@@ -1,0 +1,22 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug STM32",
+      "type": "cortex-debug",
+      "request": "launch",
+      "executable": "${workspaceFolder}/firmware/led_rotate.elf",
+      "cwd": "${workspaceFolder}",
+      "servertype": "openocd",
+      "gdbTarget": "localhost:3333",
+      "device": "STM32F407VG",
+      "interface": "swd",
+      "runToEntryPoint": "main",
+      "preLaunchCommands": ["monitor reset halt", "load"],
+      "postLaunchCommands": ["monitor reset init"],
+      "gdbPath": "arm-none-eabi-gdb",
+      "showDevDebugOutput": "both",
+      "configFiles": ["interface/stlink.cfg", "target/stm32f4x.cfg"]
+    }
+  ]
+}
