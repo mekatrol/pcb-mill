@@ -66,6 +66,7 @@ void lcd_reset(void)
         ;
     GPIO1_SET = LCD_RST_PIN;
 }
+
 static void spi_send(uint8_t data)
 {
     S0SPDR = data;
