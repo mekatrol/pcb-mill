@@ -1,49 +1,29 @@
 #include <stdint.h>
 
+typedef struct
+{
+    volatile uint32_t DIR;          // Offset: 0x00-0x03
+    volatile uint32_t RESERVED0[3]; // Offset: 0x04-0x0F (these register locations not used)
+    volatile uint32_t MSK;          // Offset: 0x10-0x13
+    volatile uint32_t PIN;          // Offset: 0x14-0x17
+    volatile uint32_t SET;          // Offset: 0x18-0x1B
+    volatile uint32_t CLR;          // Offset: 0x1C-0x1F
+} LPC_GPIO_TypeDef;
+
 /**********************************************************************************
  * GPIO registers
  **********************************************************************************/
-#define GPIO0_BASE 0x2009C000UL // Base address for GPIO port 1 registers
+#define GPIO0_BASE 0x2009C000UL // Base address for GPIO port 0 registers
 #define GPIO1_BASE 0x2009C020UL // Base address for GPIO port 1 registers
 #define GPIO2_BASE 0x2009C040UL // Base address for GPIO port 2 registers
 #define GPIO3_BASE 0x2009C060UL // Base address for GPIO port 3 registers
 #define GPIO4_BASE 0x2009C080UL // Base address for GPIO port 4 registers
 
-#define GPIO_DIR_OFFSET 0x00
-#define GPIO_MSK_OFFSET 0x10
-#define GPIO_PIN_OFFSET 0x14
-#define GPIO_SET_OFFSET 0x18
-#define GPIO_CLR_OFFSET 0x1C
-
-#define GPIO0_DIR (*(volatile uint32_t *)(GPIO0_BASE + GPIO_DIR_OFFSET))
-#define GPIO0_MSK (*(volatile uint32_t *)(GPIO0_BASE + GPIO_MSK_OFFSET))
-#define GPIO0_PIN (*(volatile uint32_t *)(GPIO0_BASE + GPIO_PIN_OFFSET))
-#define GPIO0_SET (*(volatile uint32_t *)(GPIO0_BASE + GPIO_SET_OFFSET))
-#define GPIO0_CLR (*(volatile uint32_t *)(GPIO0_BASE + GPIO_CLR_OFFSET))
-
-#define GPIO1_DIR (*(volatile uint32_t *)(GPIO1_BASE + GPIO_DIR_OFFSET))
-#define GPIO1_MSK (*(volatile uint32_t *)(GPIO1_BASE + GPIO_MSK_OFFSET))
-#define GPIO1_PIN (*(volatile uint32_t *)(GPIO1_BASE + GPIO_PIN_OFFSET))
-#define GPIO1_SET (*(volatile uint32_t *)(GPIO1_BASE + GPIO_SET_OFFSET))
-#define GPIO1_CLR (*(volatile uint32_t *)(GPIO1_BASE + GPIO_CLR_OFFSET))
-
-#define GPIO2_DIR (*(volatile uint32_t *)(GPIO2_BASE + GPIO_DIR_OFFSET))
-#define GPIO2_MSK (*(volatile uint32_t *)(GPIO2_BASE + GPIO_MSK_OFFSET))
-#define GPIO2_PIN (*(volatile uint32_t *)(GPIO2_BASE + GPIO_PIN_OFFSET))
-#define GPIO2_SET (*(volatile uint32_t *)(GPIO2_BASE + GPIO_SET_OFFSET))
-#define GPIO2_CLR (*(volatile uint32_t *)(GPIO2_BASE + GPIO_CLR_OFFSET))
-
-#define GPIO3_DIR (*(volatile uint32_t *)(GPIO3_BASE + GPIO_DIR_OFFSET))
-#define GPIO3_MSK (*(volatile uint32_t *)(GPIO3_BASE + GPIO_MSK_OFFSET))
-#define GPIO3_PIN (*(volatile uint32_t *)(GPIO3_BASE + GPIO_PIN_OFFSET))
-#define GPIO3_SET (*(volatile uint32_t *)(GPIO3_BASE + GPIO_SET_OFFSET))
-#define GPIO3_CLR (*(volatile uint32_t *)(GPIO3_BASE + GPIO_CLR_OFFSET))
-
-#define GPIO4_DIR (*(volatile uint32_t *)(GPIO4_BASE + GPIO_DIR_OFFSET))
-#define GPIO4_MSK (*(volatile uint32_t *)(GPIO4_BASE + GPIO_MSK_OFFSET))
-#define GPIO4_PIN (*(volatile uint32_t *)(GPIO4_BASE + GPIO_PIN_OFFSET))
-#define GPIO4_SET (*(volatile uint32_t *)(GPIO4_BASE + GPIO_SET_OFFSET))
-#define GPIO4_CLR (*(volatile uint32_t *)(GPIO4_BASE + GPIO_CLR_OFFSET))
+#define GPIO0 ((LPC_GPIO_TypeDef *)GPIO1_BASE)
+#define GPIO1 ((LPC_GPIO_TypeDef *)GPIO1_BASE)
+#define GPIO2 ((LPC_GPIO_TypeDef *)GPIO2_BASE)
+#define GPIO3 ((LPC_GPIO_TypeDef *)GPIO3_BASE)
+#define GPIO4 ((LPC_GPIO_TypeDef *)GPIO4_BASE)
 
 /**********************************************************************************
  * PINSEL registers

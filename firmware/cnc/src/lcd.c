@@ -46,6 +46,7 @@ static void spi_init(void)
 {
     PINSEL0 |= (2 << 30); // P0.15 = SCK
     PINSEL1 |= (2 << 2);  // P0.18 = MOSI0 (SPI0 MOSI)
+    PINSEL1 |= (2 << 0);  // P0.17 = MISO0 (only needed for SD card)
 
     // With F_CPU = 120 MHz and S0SPCCR = 12:
     // SPI Clock=
@@ -61,10 +62,10 @@ static void spi_init(void)
 void lcd_reset(void)
 {
     // Toggle LCD reset low
-    GPIO1_CLR = LCD_RST_PIN;
+    GPIO1->CLR = LCD_RST_PIN;
     for (volatile int i = 0; i < 10000; i++)
         ;
-    GPIO1_SET = LCD_RST_PIN;
+    GPIO1->SET = LCD_RST_PIN;
 }
 
 static void spi_send(uint8_t data)
@@ -76,27 +77,27 @@ static void spi_send(uint8_t data)
 
 void lcd_send_cmd(uint8_t cmd)
 {
-    GPIO1_CLR = LCD_DC_PIN;
-    GPIO0_CLR = LCD_SS_PIN;
+    GPIO1->CLR = LCD_DC_PIN;
+    GPIO0->CLR = LCD_SS_PIN;
     spi_send(cmd);
-    GPIO0_SET = LCD_SS_PIN;
+    GPIO0->SET = LCD_SS_PIN;
 }
 
 void lcd_send_data(uint8_t data)
 {
-    GPIO1_SET = LCD_DC_PIN;
-    GPIO0_CLR = LCD_SS_PIN;
+    GPIO1->SET = LCD_DC_PIN;
+    GPIO0->CLR = LCD_SS_PIN;
     spi_send(data);
-    GPIO0_SET = LCD_SS_PIN;
+    GPIO0->SET = LCD_SS_PIN;
 }
 
 void lcd_init(void)
 {
     // Set slave select to output
-    GPIO0_DIR |= LCD_SS_PIN;
+    GPIO0->DIR |= LCD_SS_PIN;
 
     // Set data/command and reset to output
-    GPIO1_DIR |= LCD_DC_PIN | LCD_RST_PIN;
+    GPIO1->DIR |= LCD_DC_PIN | LCD_RST_PIN;
 
     spi_init();
     lcd_reset();

@@ -3,15 +3,6 @@
 
 #include "registers.h"
 
-// GPIO port 1 register offsets (from LPC1769 datasheet)
-#define FIODIR_OFFSET 0x020 // Direction register
-#define FIOSET_OFFSET 0x038 // Set bits register
-#define FIOCLR_OFFSET 0x03C // Clear bits register
-
-#define GPIO1_FIODIR (*(volatile uint32_t *)(GPIO1_BASE + FIODIR_OFFSET))
-#define GPIO1_FIOSET (*(volatile uint32_t *)(GPIO1_BASE + FIOSET_OFFSET))
-#define GPIO1_FIOCLR (*(volatile uint32_t *)(GPIO1_BASE + FIOCLR_OFFSET))
-
 #define NEOPIXEL_PIN (1 << 21) // P1.21
 
 // Timing constants in CPU cycles for 120 MHz (adjust if your clock differs)
@@ -25,6 +16,9 @@ static inline void delay_cycles(volatile uint32_t cycles)
     while (cycles--)
     {
         __asm volatile("nop");
+
+        // Tell compiler not to opimize out (assume this loop might touch memory or have side effects)
+        __asm volatile("" ::: "memory");
     }
 }
 
@@ -32,16 +26,16 @@ void neopixel_send_bit(bool bit_val)
 {
     if (bit_val)
     {
-        GPIO1_FIOSET = NEOPIXEL_PIN; // Set pin high
+        GPIO1->SET = NEOPIXEL_PIN; // Set pin high
         delay_cycles(CYCLES_T1H);
-        GPIO1_FIOCLR = NEOPIXEL_PIN; // Set pin low
+        GPIO1->CLR = NEOPIXEL_PIN; // Set pin low
         delay_cycles(CYCLES_T1L);
     }
     else
     {
-        GPIO1_FIOSET = NEOPIXEL_PIN;
+        GPIO1->SET = NEOPIXEL_PIN;
         delay_cycles(CYCLES_T0H);
-        GPIO1_FIOCLR = NEOPIXEL_PIN;
+        GPIO1->CLR = NEOPIXEL_PIN;
         delay_cycles(CYCLES_T0L);
     }
 }
@@ -55,30 +49,62 @@ void neopixel_send_byte(uint8_t byte)
 }
 
 // Send one RGB color (GRB order)
-void neopixel_send_color(uint8_t r, uint8_t g, uint8_t b)
+void __neopixel_send_color(uint8_t r, uint8_t g, uint8_t b)
 {
     neopixel_send_byte(g);
     neopixel_send_byte(r);
     neopixel_send_byte(b);
 }
 
+// Send one RGB color (GRB order)
+void neopixel_send_color(uint8_t r, uint8_t g, uint8_t b)
+{
+    uint32_t primask;
+
+    // Save current interrupt state
+    __asm volatile(
+        "mrs %0, primask\n"
+        "cpsid i\n"
+        : "=r"(primask)::"memory");
+
+    __neopixel_send_color(r, g, b);
+
+    // Restore previous interrupt state
+    __asm volatile(
+        "msr primask, %0\n" ::"r"(primask) : "memory");
+
+    // Latch delay > 50us, approx 6000 cycles of NOP @ 120MHz
+    for (volatile uint32_t i = 0; i < 6000; i++)
+    {
+        __asm volatile("nop");
+    }
+}
+
 void neopixel_init(void)
 {
     // Configure P1.21 as output
-    GPIO1_FIODIR |= NEOPIXEL_PIN;
-    GPIO1_FIOCLR = NEOPIXEL_PIN;
+    GPIO1->DIR |= NEOPIXEL_PIN;
+    GPIO1->CLR = NEOPIXEL_PIN;
 }
 
 void neopixel_send_colors(uint8_t (*colors)[3], uint32_t count)
 {
-    __asm volatile("cpsid i"); // Disable interrupts
+    uint32_t primask;
+
+    // Save current interrupt state
+    __asm volatile(
+        "mrs %0, primask\n"
+        "cpsid i\n"
+        : "=r"(primask)::"memory");
 
     for (uint32_t i = 0; i < count; i++)
     {
-        neopixel_send_color(colors[i][0], colors[i][1], colors[i][2]);
+        __neopixel_send_color(colors[i][0], colors[i][1], colors[i][2]);
     }
 
-    __asm volatile("cpsie i"); // Enable interrupts
+    // Restore previous interrupt state
+    __asm volatile(
+        "msr primask, %0\n" ::"r"(primask) : "memory");
 
     // Latch delay > 50us, approx 6000 cycles of NOP @ 120MHz
     for (volatile uint32_t i = 0; i < 6000; i++)
