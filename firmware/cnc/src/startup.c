@@ -4,7 +4,7 @@
 Vector Table Layout (LPC1769 / Cortex-M3)
 Offset	Vector Name	Description	Notes / Default Handler
 0x00	Initial Stack Pointer	Top of RAM (e.g. 0x10010000)	MSP loaded on reset
-0x04	Reset_Handler	Entry point after reset	Your Reset_Handler()
+0x04	ResetHandler	Entry point after reset	Your ResetHandler()
 0x08	NMI_Handler	Non-Maskable Interrupt	Optional
 0x0C	HardFault_Handler	On hard faults	Must handle or reset
 0x10	MemManage_Handler	MPU memory protection fault	Optional
@@ -70,7 +70,7 @@ extern uint32_t _estack; // Top of stack (from linker script)
 /* Default handler can be accessed via weak alias */
 __attribute__((noreturn)) void Default_Handler(void);
 
-__attribute__((noreturn)) void Reset_Handler(void);
+__attribute__((noreturn)) void ResetHandler(void);
 __attribute__((noreturn)) void NMI_Handler(void) __attribute__((weak, alias("Default_Handler")));
 __attribute__((noreturn)) void HardFault_Handler(void);
 __attribute__((noreturn)) void MemManage_Handler(void) __attribute__((weak, alias("Default_Handler")));
@@ -116,8 +116,8 @@ __attribute__((noreturn)) void QEI_IRQHandler(void) __attribute__((weak, alias("
 /* Vector table for LPC1769 */
 __attribute__((section(".isr_vector"), used))
 const uint32_t vector_table[] = {
-    (uint32_t)&_estack,      // Initial stack pointer
-    (uint32_t)Reset_Handler, // Reset handler
+    (uint32_t)&_estack,     // Initial stack pointer
+    (uint32_t)ResetHandler, // Reset handler
     (uint32_t)NMI_Handler,
     (uint32_t)HardFault_Handler,
     (uint32_t)MemManage_Handler,
@@ -181,7 +181,7 @@ typedef struct
 #define GPIO2_CLR (*(volatile uint32_t *)0x2009C05C)
 
 /* Reset Handler */
-void Reset_Handler(void)
+void ResetHandler(void)
 {
     // Disable watchdog early
     LPC_WDT->WDCLKSEL = 0x00;   // Select internal RC

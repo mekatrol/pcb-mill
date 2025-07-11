@@ -11,6 +11,10 @@ else
   SEP    = /
 endif
 
+# CPU 
+MCU = cortex-m0plus
+CHIP = STM32G0B1
+
 # Toolchain
 CC      := arm-none-eabi-gcc
 AS      := arm-none-eabi-as
@@ -31,16 +35,16 @@ OUT_MAP := $(OBJ_DIR)$(SEP)firmware.map
 OUT_BIN := $(OBJ_DIR)$(SEP)firmware.bin
 
 # Linker script
-LD_SCRIPT := $(BLD_DIR)$(SEP)lpc1769.ld
+LD_SCRIPT := $(BLD_DIR)$(SEP)linker.ld
 
 # Compiler flags
-CFLAGS := -mcpu=cortex-m3 -mthumb -g -O0 -ffreestanding -nostdlib -Wall -Wno-unused-variable
+CFLAGS := -mcpu=$(MCU) -mthumb -g -O0 -ffreestanding -nostdlib -Wall
 
 # Assembler flags
-ASFLAGS := -mcpu=cortex-m3 -mthumb -g
+ASFLAGS := -mcpu=$(MCU) -mthumb -g 
 
 # Linker flags
-LDFLAGS := -mcpu=cortex-m3 -mthumb -nostartfiles -Wl,-Map=$(OUT_MAP) -T $(LD_SCRIPT)
+LDFLAGS := -mcpu=$(MCU) -mthumb -nostartfiles -Wl,-Map=$(OUT_MAP) -T $(LD_SCRIPT)
 
 # Sources
 CSRCS := $(wildcard $(SRC_DIR)/*.c)
@@ -54,7 +58,7 @@ OBJS   := $(A_OBJS) $(C_OBJS)
 
 # Default target
 .PHONY: all
-all: $(OUT_BIN) checksum
+all: $(OUT_BIN)
 
 # Create object directory if needed
 $(OBJ_DIR):
@@ -80,35 +84,31 @@ $(OUT_BIN): $(OUT_ELF)
 	@echo "[OBJCOPY] Generating binary $@"
 	$(OBJCOPY) -O binary $< $@
 
-# Checksum depends on bin
-.PHONY: checksum
-checksum: $(OUT_BIN)
-	@echo "[CHK] Fixing vector checksum"
-	python "$(BLD_DIR)$(SEP)checksum.py" "$(OUT_BIN)"
-	python "$(BLD_DIR)$(SEP)verify_checksum.py" "$(OUT_BIN)"
-
 # Flash binary with OpenOCD
 .PHONY: flash
 flash: # $(OUT_BIN)
 	@echo "[FLASH] Flashing binary"
-	openocd -f interface/stlink.cfg -f target/lpc17xx.cfg \
-		-c "adapter speed 500; program $(OUT_BIN) verify reset exit 0x0"
+	openocd -f interface/stlink.cfg -f target/stm32g0x.cfg \
+		-c "adapter speed 500; program $(OUT_BIN) verify reset exit 0x08000000"
 
 # Run OpenOCD with flashing and halt for debugging
 .PHONY: openocd
 openocd: 
 	@echo "[OPENOCD] Programming and halting"
-	openocd -f interface/stlink.cfg -f target/lpc17xx.cfg \
-		-c "adapter speed 500" \
+	openocd -f interface/stlink.cfg -f target/stm32g0x.cfg \
+		-c "adapter speed 500;" \
 		-c "program $(OUT_BIN) verify" \
 		-c "reset halt"
+
+# Run OpenOCD with flashing and halt for debugging
+.PHONY: openocd-debug
+openocd-debug: 
+	@start "" openocd -f interface/stlink.cfg -f target/stm32g0x.cfg -c "adapter speed 500"
 
 # Debug target (runs openocd and gdb)
 .PHONY: debug
 debug: $(OUT_ELF)
 	@echo "[DEBUG] Starting OpenOCD and GDB"
-	start cmd /c "openocd -f interface/stlink.cfg -f target/lpc17xx.cfg -c 'adapter speed 500' -c 'program $(OUT_ELF) verify' -c 'reset halt'"
-	timeout /t 2 >nul
 	arm-none-eabi-gdb -x $(BLD_DIR)$(SEP)debug.gdb $(OUT_ELF)
 
 # Utility commands for info

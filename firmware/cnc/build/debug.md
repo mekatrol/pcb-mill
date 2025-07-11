@@ -16,7 +16,7 @@
 
 > `file firmware/firmware.bin` - load firmware
 > `monitor mdw 0x10000000 1` - read first word from RAM  
-> `monitor bp 0x00000088 2 hw` - break at reset ahnder (see address for `Reset_Handler` in map file)  
+> `monitor bp 0x00000088 2 hw` - break at reset ahnder (see address for `ResetHandler` in map file)  
 > `monitor rbp 0x00000088` - remove breakpoint  
 > `monitor bp` - list breakpoints
 > `monitor step` - step a single instrauction

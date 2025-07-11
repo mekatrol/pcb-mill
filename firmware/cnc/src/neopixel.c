@@ -74,7 +74,7 @@ void neopixel_send_color(uint8_t r, uint8_t g, uint8_t b)
         "msr primask, %0\n" ::"r"(primask) : "memory");
 
     // Latch delay > 50us, approx 6000 cycles of NOP @ 120MHz
-    for (volatile uint32_t i = 0; i < 6000; i++)
+    for (volatile uint32_t i = 0; i < 12000; i++)
     {
         __asm volatile("nop");
     }
@@ -107,7 +107,7 @@ void neopixel_send_colors(uint8_t (*colors)[3], uint32_t count)
         "msr primask, %0\n" ::"r"(primask) : "memory");
 
     // Latch delay > 50us, approx 6000 cycles of NOP @ 120MHz
-    for (volatile uint32_t i = 0; i < 6000; i++)
+    for (volatile uint32_t i = 0; i < 12000; i++)
     {
         __asm volatile("nop");
     }

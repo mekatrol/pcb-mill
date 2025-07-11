@@ -40,5 +40,9 @@
 # debug information files
 *.dwo
 firmware/cnc/firmware
-firmware/stm-disco/firmware/
 firmware/cnc/gdb.txt
+
+firmware/grbl-ext/firmware
+firmware/grbl-ext/gdb.txt
+
+firmware/stm-disco/firmware/

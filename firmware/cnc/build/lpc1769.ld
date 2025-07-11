@@ -1,5 +1,5 @@
 /* Linker script for LPC1769 (256 KB Flash, 64 KB RAM_LPC) */
-ENTRY(Reset_Handler)
+ENTRY(ResetHandler)
 
 MEMORY
 {
