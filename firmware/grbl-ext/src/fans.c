@@ -9,7 +9,7 @@ void set_fan_0_pwm(uint32_t frequency, uint32_t duty_cycle)
     }
 
     uint32_t reload = frequency - 1;
-    uint32_t duty_cycle_period = (uint32_t)((float)frequency * ((float)(100 - duty_cycle) / 100.0f));
+    uint32_t duty_cycle_period = (uint32_t)((float)frequency * ((float)duty_cycle / 100.0f));
 
     TIM3->ARR = reload;             // Auto-reload (period)
     TIM3->CCR1 = duty_cycle_period; // Compare = % duty
