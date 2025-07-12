@@ -5,6 +5,7 @@
 .global g_pfnVectors
 .global Reset_Handler
 .global TIM6_DAC_IRQHandler
+.global TIM7_DAC_IRQHandler
 .global Default_Handler
 
 .section .isr_vector, "a", %progbits
@@ -82,6 +83,7 @@ g_pfnVectors:
   .word Default_Handler      // IRQ15
   .word Default_Handler      // IRQ16
   .word TIM6_DAC_IRQHandler  // IRQ17 = TIM6/DAC
+  .word TIM7_DAC_IRQHandler  // IRQ18 = TIM7
   .rept 30
   .word Default_Handler
   .endr

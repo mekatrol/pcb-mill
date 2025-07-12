@@ -1,10 +1,10 @@
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "memory_map.h"
+#include "timers.h"
 
 // Bit masks
-#define FAN_0_PIN (1 << 6)
-#define STATUS_LED_PIN (1 << 8)
 #define RCC_CR_HSEON (1 << 16)
 #define RCC_CR_HSERDY (1 << 17)
 #define RCC_CR_PLLON (1 << 24)
@@ -52,71 +52,6 @@
 
 #define RCC_APB1ENR (*(volatile uint32_t *)0x40021038)
 
-#define RCC_APB1ENR_TIM6EN (1 << 4)
-#define TIM_CR1_CEN (1 << 0)
-#define TIM_CR1_OPM (1 << 3) // One-pulse mode
-#define TIM_EGR_UG (1 << 0)
-#define TIM_SR_UIF (1 << 0)
-
-#define TIM_DIER_UIE (1 << 0)
-
-void timer6_init(uint32_t psc, uint32_t arr, uint8_t enable_interrupt)
-{
-    // Enable TIM6 clock
-    RCC->APBENR1 |= RCC_APB1ENR_TIM6EN;
-
-    // Configure prescaler and auto-reload
-    TIM6->PSC = psc;
-    TIM6->ARR = arr;
-    TIM6->CNT = 0;
-
-    // Generate update event to apply registers
-    TIM6->EGR = TIM_EGR_UG;
-
-    // Enable TIM6
-    TIM6->CR1 |= TIM_CR1_CEN;
-
-    // Disable 1 time mode
-    TIM6->CR1 &= ~TIM_CR1_OPM;
-
-    if (!enable_interrupt)
-    {
-        return;
-    }
-
-    // Enable update event interrupt
-    TIM6->SR &= ~TIM_SR_UIF;    // Clear
-    TIM6->DIER |= TIM_DIER_UIE; // Enable
-
-    // Enable TIM6 interrupt in NVIC
-    NVIC->ISER[0] = (1 << 17); // TIM6 interrupt is IRQ #17
-}
-
-// Interrupt handler — must match symbol in vector table
-void TIM6_DAC_IRQHandler(void)
-{
-    if (TIM6->SR & TIM_SR_UIF)
-    {
-        TIM6->SR &= ~TIM_SR_UIF;      // clear interrupt flag
-        GPIOD->ODR ^= STATUS_LED_PIN; // toggle LED on PD8
-    }
-}
-
-// Accurate ms delay using polling
-void delay_ms(uint32_t ms)
-{
-    uint16_t start = TIM6->CNT;
-    while (ms > 0)
-    {
-        uint16_t now = TIM6->CNT;
-        if ((uint16_t)(now - start) >= 1)
-        {
-            start = now;
-            --ms;
-        }
-    }
-}
-
 void init_clock(void)
 {
     RCC->CR |= RCC_CR_HSEON; // Enable HSE
@@ -163,19 +98,17 @@ int main(void)
     GPIOD->MODER &= ~(MODER_MSK << (MODE_08 * MODER_BIT_COUNT)); // Clear PD8 mode bits
     GPIOD->MODER |= (MODER_OUT << (MODE_08 * MODER_BIT_COUNT));  // Set PD8 as output
 
-    // timer6_init();
+    timer6_init(1000, true);
+    timer7_init(500, true);
 
-    // Set TIM6 to tick every 100 ms:
-    //  64 MHz / 64000 = 1000 Hz → 1 ms per tick
-    //  Reload is 100ms, so interrupt fires every 100ms
-    timer6_init(64000 - 1, 100 - 1, 1);
+    // Wait 10 seconds
+    delay_ms(10000);
 
-    // Enable global interrupts
-    __asm volatile("cpsie i"); // Enable interrupts globally
+    // Update intervals
+    set_timer7_interval(1000);
 
     while (1)
     {
-        GPIOC->ODR ^= FAN_0_PIN; // Toggle PC6
         delay_ms(100);
     }
 }

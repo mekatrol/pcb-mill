@@ -2,7 +2,8 @@
   "files.associations": {
     "systick.h": "c",
     "stdint.h": "c",
-    "stdint-gcc.h": "c"
+    "stdint-gcc.h": "c",
+    "memory_map.h": "c"
   },
   "cortex-debug.variableUseNaturalFormat": false
 }
