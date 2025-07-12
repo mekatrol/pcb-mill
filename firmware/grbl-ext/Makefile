@@ -38,7 +38,7 @@ OUT_BIN := $(OBJ_DIR)$(SEP)firmware.bin
 LD_SCRIPT := $(BLD_DIR)$(SEP)linker.ld
 
 # Compiler flags
-CFLAGS := -mcpu=$(MCU) -mthumb -g -O0 -ffreestanding -nostdlib -Wall
+CFLAGS := -mcpu=$(MCU) -mthumb -g -O0 -ffreestanding -nostdlib -Wall # -Wno-unused-variable
 
 # Assembler flags
 ASFLAGS := -mcpu=$(MCU) -mthumb -g 
@@ -130,3 +130,9 @@ symbols:
 clean:
 	@echo "[CLEAN] Removing build artifacts"
 	-$(RM) "$(OBJ_DIR)"
+
+
+# Reset flash
+.PHONY: reset
+reset:
+	openocd -f interface/stlink.cfg -f target/stm32g0x.cfg -c "init; reset halt; flash write_image erase firmware/firmware.bin 0x08000000; reset run; exit"

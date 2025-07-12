@@ -3,5 +3,6 @@
     "systick.h": "c",
     "stdint.h": "c",
     "stdint-gcc.h": "c"
-  }
+  },
+  "cortex-debug.variableUseNaturalFormat": false
 }
