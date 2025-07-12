@@ -11,6 +11,14 @@
 #define SRAM_BASE 0x20000000UL   /* SRAM memory */
 #define IOPORT_BASE 0x50000000UL /* GPIO register block base */
 
+#define SCS_BASE (0xE000E000UL)            /* System Control Space Base Address */
+#define DWT_BASE (0xE0001000UL)            /* DWT Base Address */
+#define TPI_BASE (0xE0040000UL)            /* TPI Base Address */
+#define CoreDebug_BASE (0xE000EDF0UL)      /* Core Debug Base Address */
+#define SysTick_BASE (SCS_BASE + 0x0010UL) /* SysTick Base Address */
+#define NVIC_BASE (SCS_BASE + 0x0100UL)    /* NVIC Base Address */
+#define SCB_BASE (SCS_BASE + 0x0D00UL)     /* System Control Block Base Address */
+
 /***************************************************************************************************
  * AHB - Advanced High-performance Bus
  ***************************************************************************************************/
@@ -51,6 +59,28 @@
 #define GPIOD_BASE 0x50000C00UL
 #define GPIOE_BASE 0x50001000UL
 #define GPIOF_BASE 0x50001400UL
+
+/*************************************************************************************************************************************************
+ * NVIC - Nested vectored interrupt controller
+ *************************************************************************************************************************************************/
+typedef struct
+{
+    volatile uint32_t ISER[16U]; /* Offset: 0x000 (R/W)  Interrupt Set Enable Register */
+    uint32_t RESERVED0[16U];
+    volatile uint32_t ICER[16U]; /* Offset: 0x080 (R/W)  Interrupt Clear Enable Register */
+    uint32_t RSERVED1[16U];
+    volatile uint32_t ISPR[16U]; /* Offset: 0x100 (R/W)  Interrupt Set Pending Register */
+    uint32_t RESERVED2[16U];
+    volatile uint32_t ICPR[16U]; /* Offset: 0x180 (R/W)  Interrupt Clear Pending Register */
+    uint32_t RESERVED3[16U];
+    volatile uint32_t IABR[16U]; /* Offset: 0x200 (R/W)  Interrupt Active bit Register */
+    uint32_t RESERVED4[16U];
+    volatile uint32_t ITNS[16U]; /* Offset: 0x280 (R/W)  Interrupt Non-Secure State Register */
+    uint32_t RESERVED5[16U];
+    volatile uint32_t IPR[124U]; /* Offset: 0x300 (R/W)  Interrupt Priority Register */
+} NVIC_Type;
+
+#define NVIC ((NVIC_Type *)NVIC_BASE) /* NVIC configuration struct */
 
 /***************************************************************************************************
  * RCC - Reset and Clock Control
@@ -169,6 +199,10 @@ typedef struct
 } PWR_TypeDef;
 
 #define PWR ((PWR_TypeDef *)PWR_BASE)
+
+/***************************************************************************************************
+ * TIM - Timer registers
+ ***************************************************************************************************/
 
 typedef struct
 {
