@@ -2,6 +2,7 @@
 #include <stdbool.h>
 
 #include "clock.h"
+#include "fans.h"
 #include "memory_map.h"
 #include "ports.h"
 #include "timers.h"
@@ -23,14 +24,25 @@ int main(void)
     timer6_init(1000, true);
     timer7_init(500, true);
 
+    enable_fan_0(1000, 50);
+
     // Wait 10 seconds
-    delay_ms(10000);
+    delay_ms(5000);
 
     // Update intervals
     set_timer7_interval(1000);
 
     while (1)
     {
-        delay_ms(100);
+        set_fan_0_pwm(1000, 10);
+        delay_ms(5000);
+        set_fan_0_pwm(1000, 90);
+        delay_ms(5000);
+        set_fan_0_pwm(1000, 0);
+        delay_ms(5000);
+        set_fan_0_pwm(1000, 100);
+        delay_ms(5000);
+        set_fan_0_pwm(1000, 50);
+        delay_ms(5000);
     }
 }

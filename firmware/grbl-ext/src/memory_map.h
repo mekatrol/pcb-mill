@@ -1,3 +1,6 @@
+#ifndef __MEMORY_MAP_H__
+#define __MEMORY_MAP_H__
+
 /***************************************************************************************************
  * Memory map and register boundary addresses
  * Refer to section 2.2.2 of RM0444 Reference Manual
@@ -245,3 +248,5 @@ typedef struct
 #define TIM15 ((TIM_TypeDef *)TIM15_BASE)
 #define TIM16 ((TIM_TypeDef *)TIM16_BASE)
 #define TIM17 ((TIM_TypeDef *)TIM17_BASE)
+
+#endif // __MEMORY_MAP_H__

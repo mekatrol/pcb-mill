@@ -1,3 +1,6 @@
+#ifndef __PORTS_H__
+#define __PORTS_H__
+
 /*
  * MODER = Port mode register
  */
@@ -31,3 +34,5 @@
 #define IOPENR_PORTD_ENABLE (1 << 3)
 #define IOPENR_PORTE_ENABLE (1 << 4)
 #define IOPENR_PORTF_ENABLE (1 << 5)
+
+#endif // __PORTS_H__

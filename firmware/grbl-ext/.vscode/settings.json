@@ -5,5 +5,5 @@
     "stdint-gcc.h": "c",
     "memory_map.h": "c"
   },
-  "cortex-debug.variableUseNaturalFormat": false
+  "cortex-debug.variableUseNaturalFormat": true
 }

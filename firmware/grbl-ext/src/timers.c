@@ -99,8 +99,7 @@ void TIM6_DAC_IRQHandler(void)
 {
     if (TIM6->SR & TIM_SR_UIF)
     {
-        TIM6->SR &= ~TIM_SR_UIF;      // clear interrupt flag
-        GPIOD->ODR ^= STATUS_LED_PIN; // toggle LED on PD8
+        TIM6->SR &= ~TIM_SR_UIF; // clear interrupt flag
     }
 }
 
