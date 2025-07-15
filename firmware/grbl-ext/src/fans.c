@@ -1,4 +1,6 @@
+#include "clock.h"
 #include "fans.h"
+#include "register_bits.h"
 
 void set_fan_0_pwm(uint32_t frequency, uint32_t duty_cycle)
 {
@@ -17,8 +19,7 @@ void set_fan_0_pwm(uint32_t frequency, uint32_t duty_cycle)
 
 void enable_fan_0(uint32_t frequency, uint32_t duty_cycle)
 {
-    RCC->IOPENR |= (1 << 2);  // GPIOC enable (bit 2)
-    RCC->APBENR1 |= (1 << 1); // TIM3 enable (bit 1)
+    RCC->APBENR1 |= RCC_APBENR1_TIM3EN;
 
     // Set MODER[13:12] to 10 (alternate function) for PC6
     GPIOC->MODER &= ~(0x3 << (6 * 2));

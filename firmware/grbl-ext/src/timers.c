@@ -1,21 +1,8 @@
+#include "clock.h"
+#include "gpio.h"
 #include "timers.h"
 #include "memory_map.h"
-
-#define TIM6_IRQn 17
-#define TIM7_IRQn 18
-
-#define RCC_APB1ENR_TIM6EN (1 << 4)
-#define RCC_APB1ENR_TIM7EN (1 << 5)
-
-#define TIM_CR1_CEN (1 << 0)
-#define TIM_CR1_OPM (1 << 3) // One-pulse mode
-#define TIM_EGR_UG (1 << 0)
-#define TIM_SR_UIF (1 << 0)
-
-#define TIM_DIER_UIE (1 << 0)
-
-#define STATUS_LED_PIN (1 << 8)
-#define FAN_0_PIN (1 << 6)
+#include "irq.h"
 
 // Accurate ms delay using polling
 void delay_ms(uint32_t ms)
@@ -66,7 +53,7 @@ void timer_init(
     TIMx->DIER |= TIM_DIER_UIE; // Enable
 
     // Enable TIMx interrupt in NVIC
-    NVIC->ISER[irq_number / 32] |= (1 << (irq_number % 32));
+    ENABLE_IRQ(irq_number);
 }
 
 void timer6_init(uint32_t interval, bool enable_interrupt)
@@ -85,25 +72,41 @@ void timer7_init(uint32_t interval, bool enable_interrupt)
     timer_init(TIM7, 64000 - 1, interval - 1, enable_interrupt, TIM7_IRQn, &RCC->APBENR1, RCC_APB1ENR_TIM7EN);
 }
 
+void set_timer_interval(TIM_TypeDef *TIMx, uint32_t interval)
+{
+    // Disable TIMx update interrupt (optional, if enabled)
+    TIMx->DIER &= ~(1 << 0); // Clear UIE (Update Interrupt Enable)
+
+    // Set timer interval
+    TIMx->ARR = interval - 1;
+
+    // Force update event to reload the ARR immediately
+    TIMx->EGR = 1; // UG bit set
+
+    // Re-enable update interrupt
+    TIMx->DIER |= (1 << 0);
+}
+
 void set_timer6_interval(uint32_t interval)
 {
-    TIM6->ARR = interval - 1;
+    set_timer_interval(TIM6, interval);
 }
 
 void set_timer7_interval(uint32_t interval)
 {
-    TIM7->ARR = interval - 1;
+    set_timer_interval(TIM7, interval);
 }
 
 void TIM6_DAC_IRQHandler(void)
 {
     if (TIM6->SR & TIM_SR_UIF)
     {
-        TIM6->SR &= ~TIM_SR_UIF; // clear interrupt flag
+        TIM6->SR &= ~TIM_SR_UIF;      // clear interrupt flag
+        GPIOD->ODR ^= STATUS_LED_PIN; // Toggle PD8
     }
 }
 
-void TIM7_DAC_IRQHandler(void)
+void TIM7_IRQHandler(void)
 {
     if (TIM7->SR & TIM_SR_UIF)
     {

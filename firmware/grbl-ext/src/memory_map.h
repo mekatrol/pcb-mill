@@ -54,6 +54,17 @@
 #define TIM17_BASE (0x40000000UL + 0x00014800UL)
 
 /***************************************************************************************************
+ * USART - Universal Synchronous/Asynchronous Receiver Transmitter
+ ***************************************************************************************************/
+#define USART1_BASE (0x40000000UL + 0x00013800UL)
+#define USART2_BASE (0x40000000UL + 0x00004400UL)
+#define USART3_BASE (0x40000000UL + 0x00004800UL)
+#define USART4_BASE (0x40000000UL + 0x00004C00UL)
+#define USART5_BASE (0x40000000UL + 0x00005000UL)
+#define LPUART1_BASE (0x40000000UL + 0x00008000UL)
+#define LPUART2_BASE (0x40000000UL + 0x00008400UL)
+
+/***************************************************************************************************
  * GPIO - General Purpose Input/Output Base Addresses
  ***************************************************************************************************/
 #define GPIOA_BASE 0x50000000UL
@@ -120,6 +131,35 @@ typedef struct
 #define RCC ((RCC_TypeDef *)RCC_BASE)
 
 /***************************************************************************************************
+ * USART - Universal Synchronous/Asynchronous Receiver Transmitter
+ ***************************************************************************************************/
+typedef struct
+{
+    volatile uint32_t CR1;   /* USART Control register 1,                 Address offset: 0x00  */
+    volatile uint32_t CR2;   /* USART Control register 2,                 Address offset: 0x04  */
+    volatile uint32_t CR3;   /* USART Control register 3,                 Address offset: 0x08  */
+    volatile uint32_t BRR;   /* USART Baud rate register,                 Address offset: 0x0C  */
+    volatile uint32_t GTPR;  /* USART Guard time and prescaler register,  Address offset: 0x10  */
+    volatile uint32_t RTOR;  /* USART Receiver Time Out register,         Address offset: 0x14  */
+    volatile uint32_t RQR;   /* USART Request register,                   Address offset: 0x18  */
+    volatile uint32_t ISR;   /* USART Interrupt and status register,      Address offset: 0x1C  */
+    volatile uint32_t ICR;   /* USART Interrupt flag Clear register,      Address offset: 0x20  */
+    volatile uint32_t RDR;   /* USART Receive Data register,              Address offset: 0x24  */
+    volatile uint32_t TDR;   /* USART Transmit Data register,             Address offset: 0x28  */
+    volatile uint32_t PRESC; /* USART Prescaler register,                 Address offset: 0x2C  */
+} USART_TypeDef;
+
+#define USART1 ((USART_TypeDef *)USART1_BASE)
+#define USART2 ((USART_TypeDef *)USART2_BASE)
+#define USART3 ((USART_TypeDef *)USART3_BASE)
+#define USART4 ((USART_TypeDef *)USART4_BASE)
+#define USART5 ((USART_TypeDef *)USART5_BASE)
+#define USART6 ((USART_TypeDef *)USART6_BASE)
+
+#define LPUART1 ((USART_TypeDef *)LPUART1_BASE)
+#define LPUART2 ((USART_TypeDef *)LPUART2_BASE)
+
+/***************************************************************************************************
  * GPIO - common structure for multiple GPIOs
  ***************************************************************************************************/
 typedef struct
@@ -130,10 +170,19 @@ typedef struct
     volatile uint32_t PUPDR;   /* GPIO port pull-up/pull-down register,  Address offset: 0x0C      */
     volatile uint32_t IDR;     /* GPIO port input data register,         Address offset: 0x10      */
     volatile uint32_t ODR;     /* GPIO port output data register,        Address offset: 0x14      */
-    volatile uint32_t BSRR;    /* GPIO port bit set/reset  register,     Address offset: 0x18      */
+    volatile uint32_t BSRR;    /* GPIO port bit set/reset register,      Address offset: 0x18      */
     volatile uint32_t LCKR;    /* GPIO port configuration lock register, Address offset: 0x1C      */
-    volatile uint32_t AFR[2];  /* GPIO alternate function registers,     Address offset: 0x20-0x24 */
-    volatile uint32_t BRR;     /* GPIO Bit Reset register,               Address offset: 0x28      */
+    union
+    {
+        volatile uint32_t AFR[2]; // AFR[0] = AFRL, AFR[1] = AFRH
+
+        struct
+        {
+            volatile uint32_t AFRL; // Offset 0x20
+            volatile uint32_t AFRH; // Offset 0x24
+        };
+    };
+    volatile uint32_t BRR; /* GPIO Bit Reset register,               Address offset: 0x28      */
 } GPIO_TypeDef;
 
 #define GPIOA ((GPIO_TypeDef *)GPIOA_BASE)
