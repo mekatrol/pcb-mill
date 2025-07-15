@@ -1,8 +1,9 @@
 #include "clock.h"
 #include "gpio.h"
-#include "timers.h"
-#include "memory_map.h"
 #include "irq.h"
+#include "memory_map.h"
+#include "register_bits.h"
+#include "timers.h"
 
 // Accurate ms delay using polling
 void delay_ms(uint32_t ms)

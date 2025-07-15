@@ -8,25 +8,28 @@
 #include "timers.h"
 #include "uart.h"
 
-extern int usart2_test(void);
+extern void usart2_init();
+extern void usart2_test(void);
 
 int main(void)
 {
     init_clock();
 
-    usart2_test();
-
     // Enable GPIO ports
+    RCC->IOPENR |= IOPENR_PORTA_ENABLE; // Enable PORTA in IOPENR
     RCC->IOPENR |= IOPENR_PORTC_ENABLE; // Enable PORTC in IOPENR
     RCC->IOPENR |= IOPENR_PORTD_ENABLE; // Enable PORTD in IOPENR
 
     // Enable GPIOC peripheral
-    GPIOC->MODER &= ~(MODER_MSK << (MODE_06 * MODER_BIT_COUNT)); // Clear PC6 mode bits
-    GPIOC->MODER |= (MODER_OUT << (MODE_06 * MODER_BIT_COUNT));  // Set PC6 as output
+    GPIOC->MODER &= ~(MODER_MSK << (BIT_06 * MODER_BIT_COUNT)); // Clear PC6 mode bits
+    GPIOC->MODER |= (MODER_OUT << (BIT_06 * MODER_BIT_COUNT));  // Set PC6 as output
 
     // Enable GPIOD peripheral
-    GPIOD->MODER &= ~(MODER_MSK << (MODE_08 * MODER_BIT_COUNT)); // Clear PD8 mode bits
-    GPIOD->MODER |= (MODER_OUT << (MODE_08 * MODER_BIT_COUNT));  // Set PD8 as output
+    GPIOD->MODER &= ~(MODER_MSK << (BIT_08 * MODER_BIT_COUNT)); // Clear PD8 mode bits
+    GPIOD->MODER |= (MODER_OUT << (BIT_08 * MODER_BIT_COUNT));  // Set PD8 as output
+
+    usart2_init();
+    usart2_test();
 
     timer6_init(500, true);
     timer7_init(1000, true);

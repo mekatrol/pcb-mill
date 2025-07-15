@@ -6,32 +6,27 @@
 #include "register_bits.h"
 #include "uart.h"
 
-int usart2_test(void)
+void usart2_init()
 {
-    // 1. Enable GPIOA and USART2 clocks
-    RCC->IOPENR |= IOPENR_PORTA_ENABLE;
+    // Enable clock to UART2
     RCC->APBENR1 |= RCC_APBENR1_USART2EN;
 
-    // Enable GPIOD clock
-    RCC->IOPENR |= IOPENR_PORTD_ENABLE; // Enable PORTD in IOPENR
+    // Configure PA2 and PA3 as alternate function AF1 (USART2)
+    GPIOA->MODER &= ~((MODER_MSK << (BIT_02 * MODER_BIT_COUNT)) | (MODER_MSK << (BIT_03 * MODER_BIT_COUNT)));
+    GPIOA->MODER |= ((MODER_ALT << (BIT_02 * MODER_BIT_COUNT)) | (MODER_ALT << (BIT_03 * MODER_BIT_COUNT)));
 
-    // Enable GPIOD peripheral
-    GPIOD->MODER &= ~(MODER_MSK << (MODE_08 * MODER_BIT_COUNT)); // Clear PD8 mode bits
-    GPIOD->MODER |= (MODER_OUT << (MODE_08 * MODER_BIT_COUNT));  // Set PD8 as output
+    GPIOA->AFRL &= ~((GPIO_AF_MSK << (BIT_02 * GPIO_AF_BIT_COUNT)) | (GPIO_AF_MSK << (BIT_03 * GPIO_AF_BIT_COUNT))); // Clear AF bits
+    GPIOA->AFRL |= ((GPIO_AF1 << (BIT_02 * GPIO_AF_BIT_COUNT)) | (GPIO_AF1 << (BIT_03 * GPIO_AF_BIT_COUNT)));
 
-    // 2. Configure PA2 and PA3 as alternate function AF1 (USART2)
-    GPIOA->MODER &= ~((0b11 << (PIN2 * 2)) | (0b11 << (PIN3 * 2))); // Clear mode bits
-    GPIOA->MODER |= ((GPIO_MODE_ALT << (PIN2 * 2)) | (GPIO_MODE_ALT << (PIN3 * 2)));
-
-    GPIOA->AFRL &= ~((0xF << (PIN2 * 4)) | (0xF << (PIN3 * 4))); // Clear AF bits
-    GPIOA->AFRL |= ((GPIO_AF1 << (PIN2 * 4)) | (GPIO_AF1 << (PIN3 * 4)));
-
-    // 3. Configure USART2
+    // Configure USART2
     USART2->CR1 &= ~USART_CR1_UE;              // Disable USART
     USART2->BRR = USART_BRR_VALUE;             // Set baud rate
     USART2->CR1 = USART_CR1_TE | USART_CR1_RE; // Enable transmitter and receiver
     USART2->CR1 |= USART_CR1_UE;               // Enable USART
+}
 
+void usart2_test(void)
+{
     uint8_t c = 'A';
     while (1)
     {
