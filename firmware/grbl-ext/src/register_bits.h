@@ -1,50 +1,22 @@
 #ifndef __REGISTER_BITS_H__
 #define __REGISTER_BITS_H__
 
-#define BIT_00 0x00
-#define BIT_01 0x01
-#define BIT_02 0x02
-#define BIT_03 0x03
-#define BIT_04 0x04
-#define BIT_05 0x05
-#define BIT_06 0x06
-#define BIT_07 0x07
-#define BIT_08 0x08
-#define BIT_09 0x09
-#define BIT_10 0x10
-#define BIT_11 0x11
-#define BIT_12 0x12
-#define BIT_13 0x13
-#define BIT_14 0x14
-#define BIT_15 0x15
-
-// Stops -wno_unused warning
-#define UNUSED(X) (void)X
-
-#define SET_BIT(REG, BIT) ((REG) |= (BIT))
-
-#define CLEAR_BIT(REG, BIT) ((REG) &= ~(BIT))
-
-#define READ_BIT(REG, BIT) ((REG) & (BIT))
-
-#define CLEAR_REG(REG) ((REG) = (0x0))
-
-#define WRITE_REG(REG, VAL) ((REG) = (VAL))
-
-#define READ_REG(REG) ((REG))
-
-#define MODIFY_REG(REG, CLEARMASK, SETMASK) WRITE_REG((REG), (((READ_REG(REG)) & (~(CLEARMASK))) | (SETMASK)))
-
-// Reads back a register after writing it to cause a short delay for stabilisation
-#define SET_READ_BIT(reg, bit)                             \
-    do                                                     \
-    {                                                      \
-        volatile uint32_t tmpreg;                          \
-        SET_BIT((reg), (bit));                             \
-        /* Delay after an RCC peripheral clock enabling */ \
-        tmpreg = READ_BIT((reg), (bit));                   \
-        UNUSED(tmpreg);                                    \
-    } while (0U)
+#define BIT_00 0
+#define BIT_01 1
+#define BIT_02 2
+#define BIT_03 3
+#define BIT_04 4
+#define BIT_05 5
+#define BIT_06 6
+#define BIT_07 7
+#define BIT_08 8
+#define BIT_09 9
+#define BIT_10 10
+#define BIT_11 11
+#define BIT_12 12
+#define BIT_13 13
+#define BIT_14 14
+#define BIT_15 15
 
 /*
  * MODER = Port mode register
@@ -56,6 +28,9 @@
 #define MODER_ALT 0b10
 #define MODER_ANA 0b11
 
+/*
+ * AF = Alternate function
+ */
 #define GPIO_AF_BIT_COUNT 4U // 4 bits per AF port configuration
 #define GPIO_AF_MSK 0x0F
 #define GPIO_AF0 0x00
@@ -66,6 +41,16 @@
 #define GPIO_AF5 0x05
 #define GPIO_AF6 0x06
 #define GPIO_AF7 0x07
+
+/*
+ * OSPEED = Output speed register
+ */
+#define OSPEEDR_BIT_COUNT 2U // 2 bits per MODER port configuration
+#define OSPEEDR_MSK 0b11     // Mask
+#define OSPEEDR_VL 0b00      // Very low
+#define OSPEEDR_LOW 0b01     // Low
+#define OSPEEDR_HIGH 0b10    // High
+#define OSPEEDR_VH 0b11      // Very high
 
 #define IOPENR_PORTA_ENABLE (1 << 0)
 #define IOPENR_PORTB_ENABLE (1 << 1)
@@ -94,7 +79,7 @@
 /*      Universal Synchronous Asynchronous Receiver Transmitter (USART)       */
 /*                                                                            */
 /******************************************************************************/
-#define USART_BRR_VALUE ((F_CPU + (BAUD_RATE / 2)) / BAUD_RATE)
+#define USART_BRR(PCLK, BAUD) (((PCLK) + ((BAUD) / 2)) / (BAUD))
 
 /******************  Bit definition for USART_CR1 register  *******************/
 #define USART_CR1_UE_Pos (0U)

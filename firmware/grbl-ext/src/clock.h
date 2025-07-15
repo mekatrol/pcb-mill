@@ -4,7 +4,7 @@
 #ifndef __CLOCK_H__
 #define __CLOCK_H__
 
-#define F_CPU 64000000UL
+#define F_SYS_CLOCK 64000000UL
 
 void init_clock();
 

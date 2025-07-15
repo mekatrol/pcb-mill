@@ -6,7 +6,8 @@
     "memory_map.h": "c",
     "*.bak": "c",
     "uart.h": "c",
-    "gpio.h": "c"
+    "gpio.h": "c",
+    "irq.h": "c"
   },
   "cortex-debug.variableUseNaturalFormat": true
 }

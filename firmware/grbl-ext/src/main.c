@@ -8,17 +8,15 @@
 #include "timers.h"
 #include "uart.h"
 
-extern void usart2_init();
-extern void usart2_test(void);
-
 int main(void)
 {
     init_clock();
 
     // Enable GPIO ports
-    RCC->IOPENR |= IOPENR_PORTA_ENABLE; // Enable PORTA in IOPENR
-    RCC->IOPENR |= IOPENR_PORTC_ENABLE; // Enable PORTC in IOPENR
-    RCC->IOPENR |= IOPENR_PORTD_ENABLE; // Enable PORTD in IOPENR
+    RCC->IOPENR |= IOPENR_PORTA_ENABLE; // Enable PORTA
+    RCC->IOPENR |= IOPENR_PORTB_ENABLE; // Enable PORTB
+    RCC->IOPENR |= IOPENR_PORTC_ENABLE; // Enable PORTC
+    RCC->IOPENR |= IOPENR_PORTD_ENABLE; // Enable PORTD
 
     // Enable GPIOC peripheral
     GPIOC->MODER &= ~(MODER_MSK << (BIT_06 * MODER_BIT_COUNT)); // Clear PC6 mode bits
@@ -28,12 +26,10 @@ int main(void)
     GPIOD->MODER &= ~(MODER_MSK << (BIT_08 * MODER_BIT_COUNT)); // Clear PD8 mode bits
     GPIOD->MODER |= (MODER_OUT << (BIT_08 * MODER_BIT_COUNT));  // Set PD8 as output
 
-    usart2_init();
-    usart2_test();
-
     timer6_init(500, true);
     timer7_init(1000, true);
 
+    uart2_init();
     uart4_init();
 
     __asm volatile("cpsie i");
@@ -42,13 +38,14 @@ int main(void)
 
     tmc2209_read_gconf(0x00); // Send read to slave 0
 
-    delay_ms(1);
+    delay_ms(100);
 
     uint8_t gconf[4];
-    int result = tmc2209_parse_reply(gconf, 0x00);
+    uint32_t value;
+    int result = tmc2209_parse_reply(4, gconf);
     if (result == 0)
     {
-        uint32_t value = gconf[0] | (gconf[1] << 8) | (gconf[2] << 16) | (gconf[3] << 24);
+        value = gconf[0] | (gconf[1] << 8) | (gconf[2] << 16) | (gconf[3] << 24);
         (void)value; // Just to stop unused variable warning
         // Use 'value' (GCONF register)
     }
@@ -60,6 +57,16 @@ int main(void)
 
     while (1)
     {
-        delay_ms(5000);
+        uint8_t c;
+        while ((c = uart2_recv()) != 0)
+        {
+            uart4_send(c);
+        }
+
+        while ((c = uart4_recv()) != 0)
+        {
+            uart2_send(c);
+        }
+        delay_ms(10);
     }
 }
