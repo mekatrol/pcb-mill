@@ -23,22 +23,19 @@ void delay_ms(uint32_t ms)
 
 void timer_init(
     TIM_TypeDef *TIMx,
-    uint32_t psc, uint32_t arr,
+    uint32_t prescaler,
+    uint32_t ticks,
     bool enable_interrupt,
     uint8_t irq_number,
-    volatile uint32_t *rcc_enr, uint32_t rcc_timer_en)
+    volatile uint32_t *rcc_enr,
+    uint32_t rcc_timer_en)
 {
-    if (arr == 0)
-    {
-        arr = 1;
-    }
-
     // Enable timer  clock
     *rcc_enr |= rcc_timer_en;
 
-    // Configure prescaler and auto-reload
-    TIMx->PSC = psc;
-    TIMx->ARR = arr;
+    // Configure prescaler and auto-reload ticks
+    TIMx->PSC = prescaler - 1;
+    TIMx->ARR = ticks - 1;
     TIMx->CNT = 0;
 
     // Generate update event to apply registers
@@ -68,7 +65,7 @@ void timer6_init(uint32_t interval, bool enable_interrupt)
     // Set TIM6 to tick every interval ms:
     //  64 MHz / 64000 = 1000 Hz → 1 ms per tick
     //  ARR is interval ms, so interrupt fires every interval ms
-    timer_init(TIM6, 64000 - 1, interval - 1, enable_interrupt, TIM6_IRQn, &RCC->APBENR1, RCC_APBENR1_TIM6EN);
+    timer_init(TIM6, 64000, interval, enable_interrupt, TIM6_IRQn, &RCC->APBENR1, RCC_APBENR1_TIM6EN);
 }
 
 void timer7_init(uint32_t interval, bool enable_interrupt)
@@ -76,15 +73,16 @@ void timer7_init(uint32_t interval, bool enable_interrupt)
     // Set TIM7 to tick every interval ms:
     //  64 MHz / 64000 = 1000 Hz → 1 ms per tick
     //  ARR is interval ms, so interrupt fires every interval ms
-    timer_init(TIM7, 64000 - 1, interval - 1, enable_interrupt, TIM7_IRQn, &RCC->APBENR1, RCC_APBENR1_TIM7EN);
+    timer_init(TIM7, 64000, interval, enable_interrupt, TIM7_IRQn, &RCC->APBENR1, RCC_APBENR1_TIM7EN);
 }
 
-void timer14_init(uint32_t interval, bool enable_interrupt)
+void timer14_init()
 {
     // Set TIM7 to tick every interval ms:
-    //  64 MHz / 64000 = 1000 Hz → 1 ms per tick
-    //  ARR is interval ms, so interrupt fires every interval ms
-    timer_init(TIM14, 64000 - 1, interval - 1, enable_interrupt, TIM14_IRQn, &RCC->APBENR2, RCC_APBENR2_TIM14EN);
+    //  64 MHz / 64 = 1 MHz → 1 µs prescaled
+    //  50 ticks = 50µs per tick
+    // This makes steps 100µs (10KHz) for a full toggle cycle
+    timer_init(TIM14, 64, 50, true, TIM14_IRQn, &RCC->APBENR2, RCC_APBENR2_TIM14EN);
 }
 
 void set_timer_interval(TIM_TypeDef *TIMx, uint32_t interval)
@@ -130,7 +128,7 @@ void TIM7_IRQHandler(void)
     if (TIM7->SR & TIM_SR_UIF)
     {
         TIM7->SR &= ~TIM_SR_UIF; // Clear interrupt flag
-        GPIOC->ODR ^= FAN_0_PIN; // Toggle PC6
+        // GPIOC->ODR ^= FAN_0_PIN; // Toggle PC6
     }
 }
 
@@ -141,6 +139,7 @@ void TIM14_IRQHandler(void)
     if (TIM14->SR & TIM_SR_UIF)
     {
         TIM14->SR &= ~TIM_SR_UIF; // Clear interrupt flag
+        GPIOC->ODR ^= FAN_0_PIN;  // Toggle PC6
 
         if (step_state == 0)
         {

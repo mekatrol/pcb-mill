@@ -8,4 +8,14 @@
 
 #define ENABLE_IRQ(irq_number) NVIC->ISER[(irq_number) / 32] |= (1 << ((irq_number) % 32));
 
+static inline void disable_irq(void)
+{
+    __asm volatile("cpsid i" ::: "memory");
+}
+
+static inline void enable_irq(void)
+{
+    __asm volatile("cpsie i" ::: "memory");
+}
+
 #endif // __IRQ_H__
