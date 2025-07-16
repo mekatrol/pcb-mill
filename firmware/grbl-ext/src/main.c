@@ -10,6 +10,8 @@
 #include "hal/timers.h"
 #include "hal/uart.h"
 
+#include "utils/log_uart.h"
+
 int main(void)
 {
     init_clock();
@@ -34,6 +36,8 @@ int main(void)
 
     uart2_init();
     uart4_init();
+
+    uart_puts("Hello!\r\n");
 
     init_steppers();
 
