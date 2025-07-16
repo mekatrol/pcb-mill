@@ -57,7 +57,7 @@ int main(void)
     if (result == 0)
     {
         value = gconf[0] | (gconf[1] << 8) | (gconf[2] << 16) | (gconf[3] << 24);
-        uart_printf("gconf: 0x%x\r\n", gconf);
+        uart_printf("gconf: 0x%x\r\n", value);
     }
     else
     {

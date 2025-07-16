@@ -1,12 +1,12 @@
 # OS-specific commands and separator
 ifeq ($(OS),Windows_NT)
   DELCMD = del /Q
-  MKDIR  = if not exist "$(OBJ_DIR)" mkdir "$(OBJ_DIR)"
+  MKDIR  = if not exist "$(dir $@)" mkdir "$(dir $@)"
   RM     = rmdir /S /Q
   SEP    = \\
 else
   DELCMD = rm -rf
-  MKDIR  = mkdir -p "$(OBJ_DIR)"
+  MKDIR  = mkdir -p $(dir $@)
   RM     = rm -rf
   SEP    = /
 endif
@@ -47,13 +47,15 @@ ASFLAGS := -mcpu=$(MCU) -mthumb -g
 LDFLAGS := -mcpu=$(MCU) -mthumb -nostartfiles -Wl,-Map=$(OUT_MAP) -T $(LD_SCRIPT)
 
 # Sources
-ifeq ($(OS),Windows_NT)
-  CSRCS := $(shell dir /S /B $(SRC_DIR)\*.c)
-  ASRCS := $(shell dir /S /B $(SRC_DIR)\*.s)
-else
-  CSRCS := $(shell find $(SRC_DIR) -type f -name '*.c')
-  ASRCS := $(shell find $(SRC_DIR) -type f -name '*.s')
-endif
+CSRCS := $(wildcard $(SRC_DIR)/*.c) \
+         $(wildcard $(SRC_DIR)/hal/*.c) \
+         $(wildcard $(SRC_DIR)/utils/*.c) \
+		 $(wildcard $(SRC_DIR)/peripherals/*.c)
+
+ASRCS := $(wildcard $(SRC_DIR)/*.s) \
+         $(wildcard $(SRC_DIR)/hal/*.s) \
+         $(wildcard $(SRC_DIR)/utils/*.s) \
+		 $(wildcard $(SRC_DIR)/peripherals/*.s)
 SRCS  := $(CSRCS) $(ASRCS)
 
 # Objects
@@ -71,14 +73,14 @@ $(OBJ_DIR):
 
 # Compile C sources
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
-	@mkdir -p $(dir $@)
 	@echo "[CC] $<"
+	@$(MKDIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 # Assemble ASM sources
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.s | $(OBJ_DIR)
-	@mkdir -p $(dir $@)
 	@echo "[AS] $<"
+	@$(MKDIR)
 	$(AS) $(ASFLAGS) -o $@ $<
 
 # Link ELF
