@@ -57,8 +57,7 @@ int main(void)
     if (result == 0)
     {
         value = gconf[0] | (gconf[1] << 8) | (gconf[2] << 16) | (gconf[3] << 24);
-        (void)value; // Just to stop unused variable warning
-        // Use 'value' (GCONF register)
+        uart_printf("gconf: 0x%x\r\n", gconf);
     }
     else
     {
