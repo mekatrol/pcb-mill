@@ -144,19 +144,19 @@ void TIM14_IRQHandler(void)
 
         if (step_state == 0)
         {
-            GPIOD->ODR ^= STATUS_LED_PIN;     // Toggle PD8
-            GPIOB->ODR |= (1 << STEP_X_STEP); // Rising edge
+            GPIOD->ODR ^= STATUS_LED_PIN; // Toggle PD8
+            GPIOB->ODR |= STEP_X_STEP;    // Rising edge
             step_state = 1;
         }
         else
         {
-            GPIOB->ODR &= ~(1 << STEP_X_STEP); // Falling edge
+            GPIOB->ODR &= ~STEP_X_STEP; // Falling edge
             step_state = 0;
         }
 
         if ((++step_tick) % 10000 == 0)
         {
-            GPIOB->ODR ^= (1 << STEP_X_DIR);
+            GPIOB->ODR ^= STEP_X_DIR;
         }
     }
 }
