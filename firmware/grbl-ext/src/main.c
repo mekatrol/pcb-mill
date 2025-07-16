@@ -1,14 +1,14 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "clock.h"
-#include "fans.h"
-#include "irq.h"
-#include "memory_map.h"
-#include "register_bits.h"
-#include "steppers.h"
-#include "timers.h"
-#include "uart.h"
+#include "hal/clock.h"
+#include "hal/fans.h"
+#include "hal/irq.h"
+#include "hal/memory_map.h"
+#include "hal/register_bits.h"
+#include "hal/steppers.h"
+#include "hal/timers.h"
+#include "hal/uart.h"
 
 int main(void)
 {

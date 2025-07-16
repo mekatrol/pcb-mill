@@ -99,7 +99,6 @@ g_pfnVectors:
 .word         USART3_4_LPUART1_IRQHandler   // IRQ29
 .word         Default_Handler               // IRQ30
 .word         Default_Handler               // IRQ31
-.endr
 
 .size         g_pfnVectors, . - g_pfnVectors
 

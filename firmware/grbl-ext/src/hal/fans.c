@@ -1,6 +1,6 @@
 #include "clock.h"
-#include "fans.h"
 #include "register_bits.h"
+#include "fans.h"
 
 void set_fan_0_pwm(uint32_t frequency, uint32_t duty_cycle)
 {

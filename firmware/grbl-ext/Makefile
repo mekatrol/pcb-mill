@@ -47,8 +47,13 @@ ASFLAGS := -mcpu=$(MCU) -mthumb -g
 LDFLAGS := -mcpu=$(MCU) -mthumb -nostartfiles -Wl,-Map=$(OUT_MAP) -T $(LD_SCRIPT)
 
 # Sources
-CSRCS := $(wildcard $(SRC_DIR)/*.c)
-ASRCS := $(wildcard $(SRC_DIR)/*.s)
+ifeq ($(OS),Windows_NT)
+  CSRCS := $(shell dir /S /B $(SRC_DIR)\*.c)
+  ASRCS := $(shell dir /S /B $(SRC_DIR)\*.s)
+else
+  CSRCS := $(shell find $(SRC_DIR) -type f -name '*.c')
+  ASRCS := $(shell find $(SRC_DIR) -type f -name '*.s')
+endif
 SRCS  := $(CSRCS) $(ASRCS)
 
 # Objects
@@ -66,16 +71,18 @@ $(OBJ_DIR):
 
 # Compile C sources
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
+	@mkdir -p $(dir $@)
 	@echo "[CC] $<"
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 # Assemble ASM sources
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.s | $(OBJ_DIR)
+	@mkdir -p $(dir $@)
 	@echo "[AS] $<"
 	$(AS) $(ASFLAGS) -o $@ $<
 
 # Link ELF
-$(OUT_ELF): $(OBJS)
+$(OUT_ELF): $(OBJS) | $(OBJ_DIR)
 	@echo "[LD] Linking $@"
 	$(CC) $(LDFLAGS) -o $@ $^
 
