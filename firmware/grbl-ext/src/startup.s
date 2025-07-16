@@ -6,6 +6,7 @@
 .global       Reset_Handler
 .global       TIM6_DAC_IRQHandler
 .global       TIM7_IRQHandler
+.global       TIM14_IRQHandler
 .global       USART3_4_LPUART1_IRQHandler
 .global       Default_Handler
 
@@ -85,7 +86,7 @@ g_pfnVectors:
 .word         Default_Handler               // IRQ16
 .word         TIM6_DAC_IRQHandler           // IRQ17 = TIM6/DAC
 .word         TIM7_IRQHandler               // IRQ18 = TIM7
-.word         Default_Handler               // IRQ19
+.word         TIM14_IRQHandler              // IRQ19
 .word         Default_Handler               // IRQ20
 .word         Default_Handler               // IRQ21
 .word         Default_Handler               // IRQ22

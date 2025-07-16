@@ -62,11 +62,13 @@
 #define RCC_APBENR1_TIM2EN (1 << 0)
 #define RCC_APBENR1_TIM3EN (1 << 1)
 #define RCC_APBENR1_TIM4EN (1 << 2)
-#define RCC_APB1ENR_TIM6EN (1 << 4)
-#define RCC_APB1ENR_TIM7EN (1 << 5)
+#define RCC_APBENR1_TIM6EN (1 << 4)
+#define RCC_APBENR1_TIM7EN (1 << 5)
 #define RCC_APBENR1_USART2EN (1 << 17)
 #define RCC_APBENR1_USART3EN (1 << 18)
 #define RCC_APBENR1_USART4EN (1 << 19)
+
+#define RCC_APBENR2_TIM14EN (1 << 15)
 
 #define TIM_CR1_CEN (1 << 0)  //
 #define TIM_CR1_OPM (1 << 3)  // One-pulse mode

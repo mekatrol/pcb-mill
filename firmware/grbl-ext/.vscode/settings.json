@@ -7,7 +7,11 @@
     "*.bak": "c",
     "uart.h": "c",
     "gpio.h": "c",
-    "irq.h": "c"
+    "irq.h": "c",
+    "timers.h": "c",
+    "stepper.h": "c",
+    "register_bits.h": "c",
+    "steppers.h": "c"
   },
   "cortex-debug.variableUseNaturalFormat": true
 }

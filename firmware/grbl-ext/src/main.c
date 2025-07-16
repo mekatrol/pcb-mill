@@ -5,6 +5,7 @@
 #include "fans.h"
 #include "memory_map.h"
 #include "register_bits.h"
+#include "steppers.h"
 #include "timers.h"
 #include "uart.h"
 
@@ -28,9 +29,12 @@ int main(void)
 
     timer6_init(500, true);
     timer7_init(1000, true);
+    timer14_init(1, true);
 
     uart2_init();
     uart4_init();
+
+    init_steppers();
 
     __asm volatile("cpsie i");
 
