@@ -91,7 +91,7 @@ void set_timer_interval(TIM_TypeDef *TIMx, uint32_t interval)
     TIMx->DIER &= ~(1 << 0); // Clear UIE (Update Interrupt Enable)
 
     // Set timer interval
-    TIMx->ARR = interval == 1 ? 1 : interval - 1;
+    TIMx->ARR = interval <= 1 ? 1 : interval - 1;
 
     // Force update event to reload the ARR immediately
     TIMx->EGR = 1; // UG bit set
@@ -119,7 +119,8 @@ void TIM6_DAC_IRQHandler(void)
 {
     if (TIM6->SR & TIM_SR_UIF)
     {
-        TIM6->SR &= ~TIM_SR_UIF; // Clear interrupt flag
+        TIM6->SR &= ~TIM_SR_UIF;      // Clear interrupt flag
+        GPIOD->ODR ^= STATUS_LED_PIN; // Toggle PD8
     }
 }
 
@@ -128,7 +129,7 @@ void TIM7_IRQHandler(void)
     if (TIM7->SR & TIM_SR_UIF)
     {
         TIM7->SR &= ~TIM_SR_UIF; // Clear interrupt flag
-        // GPIOC->ODR ^= FAN_0_PIN; // Toggle PC6
+        GPIOC->ODR ^= FAN_0_PIN; // Toggle PC6
     }
 }
 
@@ -139,12 +140,10 @@ void TIM14_IRQHandler(void)
     if (TIM14->SR & TIM_SR_UIF)
     {
         TIM14->SR &= ~TIM_SR_UIF; // Clear interrupt flag
-        GPIOC->ODR ^= FAN_0_PIN;  // Toggle PC6
 
         if (step_state == 0)
         {
-            GPIOD->ODR ^= STATUS_LED_PIN; // Toggle PD8
-            GPIOB->ODR |= STEP_X_STEP;    // Rising edge
+            GPIOB->ODR |= STEP_X_STEP; // Rising edge
             step_state = 1;
         }
         else

@@ -10,6 +10,8 @@
 #include "hal/timers.h"
 #include "hal/uart.h"
 
+#include "peripherals/tmc2209.h"
+
 #include "utils/log_uart.h"
 
 int main(void)
