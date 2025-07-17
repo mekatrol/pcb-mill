@@ -1,18 +1,17 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "hal/clock.h"
-#include "hal/fans.h"
-#include "hal/irq.h"
-#include "hal/memory_map.h"
-#include "hal/register_bits.h"
-#include "hal/steppers.h"
-#include "hal/timers.h"
-#include "hal/uart.h"
-
-#include "peripherals/tmc2209.h"
-
-#include "utils/log_uart.h"
+#include "clock.h"
+#include "fans.h"
+#include "irq.h"
+#include "memory_map.h"
+#include "register_bits.h"
+#include "../../drivers/steppers/steppers.h"
+#include "../../drivers/timers/timers.h"
+#include "../../drivers/uart/uart.h"
+#include "../../drivers/tmc2209/tmc2209.h"
+#include "../../drivers/uart/uart.h"
+#include "../../drivers/logging/log_uart.h"
 
 int main(void)
 {
@@ -68,14 +67,14 @@ int main(void)
     while (1)
     {
         uint8_t c;
-        while ((c = uart2_recv()) != 0)
+        while ((c = uart_getc()) != 0)
         {
             uart4_send(c);
         }
 
         while ((c = uart4_recv()) != 0)
         {
-            uart2_send(c);
+            uart_putc(c);
         }
         delay_ms(10);
     }

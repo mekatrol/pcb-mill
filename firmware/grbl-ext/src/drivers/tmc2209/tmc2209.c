@@ -1,6 +1,6 @@
 #include <stdint.h>
 
-#include "../hal/uart.h"
+#include "../uart/uart.h"
 
 // RX buffer
 #define RX_BUF_SIZE 64

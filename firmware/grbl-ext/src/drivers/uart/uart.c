@@ -4,6 +4,9 @@
 #include "register_bits.h"
 #include "uart.h"
 
+#include "clock.h"
+#include "memory_map.h"
+
 // RX buffer
 #define RX_BUF_SIZE 64
 volatile uint8_t rx_buf[RX_BUF_SIZE];
@@ -105,12 +108,12 @@ void uart2_init()
     USART2->CR1 |= USART_CR1_UE;                     // Enable USART
 }
 
-void uart2_send(uint8_t b)
+void uart_putc(uint8_t b)
 {
     uart_send(USART2, b);
 }
 
-uint8_t uart2_recv()
+uint8_t uart_getc()
 {
     return uart_recv(USART2);
 }

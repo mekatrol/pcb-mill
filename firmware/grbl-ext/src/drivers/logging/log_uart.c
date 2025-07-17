@@ -1,8 +1,8 @@
 #include <stdarg.h>
 #include <stdbool.h>
-#include "../hal/uart.h"
+#include "../uart/uart.h"
 
-#define uart_putc(c) uart2_send((c));
+extern void uart_putc(uint8_t c);
 
 void uart_puts(const char *s)
 {

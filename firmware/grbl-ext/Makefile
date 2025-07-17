@@ -1,3 +1,21 @@
+# Source code structure
+# src/
+# ├── boards/
+# │   └── btt_e3_min_v3_0/
+# │       ├── startup.s
+# │       └── board.c
+# ├── drivers/
+# │   ├── uart/
+# │   │   └── uart.c
+# │   ├── timers/
+# │   │   └── timer.c
+# │   └── tmc2209/
+# │       └── tmc2209.c
+
+# Project configuration
+BOARD_NAME := btt_e3_min_v3_0
+DRIVER_NAMES := fans logging steppers timers tmc2209 uart
+
 # OS-specific commands and separator
 ifeq ($(OS),Windows_NT)
   DELCMD = del /Q
@@ -41,27 +59,39 @@ LD_SCRIPT := $(BLD_DIR)$(SEP)linker.ld
 CFLAGS := -mcpu=$(MCU) -mthumb -g -O0 -ffreestanding -nostdlib -Wall # -Wno-unused-variable
 
 # Assembler flags
-ASFLAGS := -mcpu=$(MCU) -mthumb -g 
+ASFLAGS := -mcpu=$(MCU) -mthumb -g
 
 # Linker flags
 LDFLAGS := -mcpu=$(MCU) -mthumb -nostartfiles -Wl,-Map=$(OUT_MAP) -T $(LD_SCRIPT)
 
-# Sources
+# Include paths
+BOARD_DIR := $(SRC_DIR)/boards/$(BOARD_NAME)
+DRIVER_DIRS := $(foreach name,$(DRIVER_NAMES),$(SRC_DIR)/drivers/$(name))
+
+CFLAGS += -I$(BOARD_DIR)
+CFLAGS += $(foreach dir,$(DRIVER_DIRS),-I$(dir))
+
+# Source files
 CSRCS := $(wildcard $(SRC_DIR)/*.c) \
          $(wildcard $(SRC_DIR)/hal/*.c) \
          $(wildcard $(SRC_DIR)/utils/*.c) \
-		 $(wildcard $(SRC_DIR)/peripherals/*.c)
+         $(wildcard $(SRC_DIR)/peripherals/*.c) \
+         $(wildcard $(BOARD_DIR)/*.c) \
+         $(foreach dir,$(DRIVER_DIRS),$(wildcard $(dir)/*.c))
 
 ASRCS := $(wildcard $(SRC_DIR)/*.s) \
          $(wildcard $(SRC_DIR)/hal/*.s) \
          $(wildcard $(SRC_DIR)/utils/*.s) \
-		 $(wildcard $(SRC_DIR)/peripherals/*.s)
-SRCS  := $(CSRCS) $(ASRCS)
+         $(wildcard $(SRC_DIR)/peripherals/*.s) \
+         $(wildcard $(BOARD_DIR)/*.s) \
+         $(foreach dir,$(DRIVER_DIRS),$(wildcard $(dir)/*.s))
 
-# Objects
+SRCS := $(CSRCS) $(ASRCS)
+
+# Object files
 C_OBJS := $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(CSRCS))
 A_OBJS := $(patsubst $(SRC_DIR)/%.s,$(OBJ_DIR)/%.o,$(ASRCS))
-OBJS   := $(A_OBJS) $(C_OBJS) 
+OBJS   := $(A_OBJS) $(C_OBJS)
 
 # Default target
 .PHONY: all
@@ -95,32 +125,32 @@ $(OUT_BIN): $(OUT_ELF)
 
 # Flash binary with OpenOCD
 .PHONY: flash
-flash: # $(OUT_BIN)
+flash:
 	@echo "[FLASH] Flashing binary"
 	openocd -f interface/stlink.cfg -f target/stm32g0x.cfg \
 		-c "adapter speed 500; program $(OUT_BIN) verify reset exit 0x08000000"
 
 # Run OpenOCD with flashing and halt for debugging
 .PHONY: openocd
-openocd: 
+openocd:
 	@echo "[OPENOCD] Programming and halting"
 	openocd -f interface/stlink.cfg -f target/stm32g0x.cfg \
 		-c "adapter speed 500;" \
 		-c "program $(OUT_BIN) verify" \
 		-c "reset halt"
 
-# Run OpenOCD with flashing and halt for debugging
+# Run OpenOCD in background for GDB debugging
 .PHONY: openocd-debug
-openocd-debug: 
+openocd-debug:
 	@start "" openocd -f interface/stlink.cfg -f target/stm32g0x.cfg -c "adapter speed 500"
 
-# Debug target (runs openocd and gdb)
+# Debug target (runs OpenOCD and gdb)
 .PHONY: debug
 debug: $(OUT_ELF)
 	@echo "[DEBUG] Starting OpenOCD and GDB"
 	arm-none-eabi-gdb -x $(BLD_DIR)$(SEP)debug.gdb $(OUT_ELF)
 
-# Utility commands for info
+# Utility targets
 .PHONY: filesize sections dump symbols
 filesize:
 	$(SIZE) $(OUT_ELF)
@@ -139,7 +169,6 @@ symbols:
 clean:
 	@echo "[CLEAN] Removing build artifacts"
 	-$(RM) "$(OBJ_DIR)"
-
 
 # Reset flash
 .PHONY: reset
