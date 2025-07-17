@@ -108,6 +108,16 @@ void uart2_init()
     USART2->CR1 |= USART_CR1_UE;                     // Enable USART
 }
 
+inline bool uart_data_ready()
+{
+    return (USART2->ISR & USART_ISR_RXNE_RXFNE) != 0;
+}
+
+inline bool uart_can_send()
+{
+    return (USART2->ISR & USART_ISR_TXE_TXFNF) != 0;
+}
+
 void uart_putc(uint8_t b)
 {
     uart_send(USART2, b);

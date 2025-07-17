@@ -1,5 +1,8 @@
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
+
+#include "../../grbl/grbl.h"
 
 #include "clock.h"
 #include "fans.h"
@@ -64,18 +67,19 @@ int main(void)
         set_timer6_interval(100);
     }
 
-    while (1)
-    {
-        uint8_t c;
-        while ((c = uart_getc()) != 0)
-        {
-            uart4_send(c);
-        }
+    // Configure HAL
+    hal_interface_t hal = {
+        .terminal = {
+            .can_recv = uart_data_ready,
+            .can_send = uart_can_send,
+            .char_recv = uart_getc,
+            .char_send = uart_putc},
 
-        while ((c = uart4_recv()) != 0)
-        {
-            uart_putc(c);
-        }
-        delay_ms(10);
-    }
+        .timer = {.delay_ms = delay_ms},
+
+        .enter_critical = disable_irq,
+        .exit_critical = enable_irq};
+
+    // Run GRBL with HAL configuration
+    grbl_run(&hal);
 }

@@ -72,17 +72,11 @@ CFLAGS += -I$(BOARD_DIR)
 CFLAGS += $(foreach dir,$(DRIVER_DIRS),-I$(dir))
 
 # Source files
-CSRCS := $(wildcard $(SRC_DIR)/*.c) \
-         $(wildcard $(SRC_DIR)/hal/*.c) \
-         $(wildcard $(SRC_DIR)/utils/*.c) \
-         $(wildcard $(SRC_DIR)/peripherals/*.c) \
+CSRCS := $(wildcard $(SRC_DIR)/grbl/*.c) \
          $(wildcard $(BOARD_DIR)/*.c) \
          $(foreach dir,$(DRIVER_DIRS),$(wildcard $(dir)/*.c))
 
-ASRCS := $(wildcard $(SRC_DIR)/*.s) \
-         $(wildcard $(SRC_DIR)/hal/*.s) \
-         $(wildcard $(SRC_DIR)/utils/*.s) \
-         $(wildcard $(SRC_DIR)/peripherals/*.s) \
+ASRCS := $(wildcard $(SRC_DIR)/grbl/*.s) \
          $(wildcard $(BOARD_DIR)/*.s) \
          $(foreach dir,$(DRIVER_DIRS),$(wildcard $(dir)/*.s))
 
