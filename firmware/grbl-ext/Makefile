@@ -14,7 +14,7 @@
 
 # Project configuration
 BOARD_NAME := btt_e3_min_v3_0
-DRIVER_NAMES := fans logging steppers timers tmc2209 uart
+DRIVER_NAMES := fans logging timers tmc2209 uart
 
 # OS-specific commands and separator
 ifeq ($(OS),Windows_NT)

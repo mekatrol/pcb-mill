@@ -1,19 +1,20 @@
 #include "grbl.h"
 
-void grbl_run(hal_interface_t *hal)
-{
-    // Loop forever (GRBL never exits)
-    while (true)
-    {
-        uint8_t c;
-        while ((c = hal->terminal.char_recv()) != 0)
-        {
-            while (hal->terminal.can_send())
-                ;
+void grbl_run(hal_interface_t *hal) {
+  hal->terminal.printf("GRBL v%d.%d.%d starting! \r\n", 0, 0, 1);
 
-            hal->terminal.char_send(c);
-        }
+  // Disable steppers by default
+  hal->steppers.x.disable();
+  hal->steppers.y.disable();
+  hal->steppers.z.disable();
 
-        hal->timer.delay_ms(10);
+  // Loop forever (GRBL never exits)
+  while (true) {
+    uint8_t c;
+    while ((c = hal->terminal.getchar()) != 0) {
+      hal->terminal.putchar(c);
     }
+
+    hal->timer.delay_ms(10);
+  }
 }
