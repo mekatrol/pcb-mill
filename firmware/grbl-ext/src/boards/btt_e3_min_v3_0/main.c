@@ -62,18 +62,26 @@ int main(void) {
   }
 
   // Configure HALF
-  hal_interface_t hal = {
-      .terminal = {.getchar = uart_getc, .putchar = uart_putc, .printf = uart_printf},
+  hal_interface_t hal = {.terminal = {.getchar = uart_getc, .putchar = uart_putc, .printf = uart_printf},
 
-      .timer = {.delay_ms = delay_ms},
+                         .timer = {.delay_ms = delay_ms},
 
-      .steppers = {.x = {.enable = stepper_enable_x, .disable = stepper_disable_x, .set_dir = stepper_x_set_dir},
-                   .y = {.enable = stepper_enable_y, .disable = stepper_disable_y, .set_dir = stepper_y_set_dir},
-                   .z = {.enable = stepper_enable_z, .disable = stepper_disable_z, .set_dir = stepper_z_set_dir}},
+                         .steppers = {.x = {.enable = stepper_enable_x,
+                                            .disable = stepper_disable_x,
+                                            .set_dir = stepper_x_set_dir,
+                                            .set_state = stepper_x_set_state},
+                                      .y = {.enable = stepper_enable_y,
+                                            .disable = stepper_disable_y,
+                                            .set_dir = stepper_y_set_dir,
+                                            .set_state = stepper_y_set_state},
+                                      .z = {.enable = stepper_enable_z,
+                                            .disable = stepper_disable_z,
+                                            .set_dir = stepper_z_set_dir,
+                                            .set_state = stepper_z_set_state}},
 
-      .enter_critical = disable_irq,
-      .exit_critical = enable_irq,
-      .panic = panic};
+                         .enter_critical = disable_irq,
+                         .exit_critical = enable_irq,
+                         .panic = panic};
 
   // Run GRBL with HAL configuration
   grbl_run(&hal);

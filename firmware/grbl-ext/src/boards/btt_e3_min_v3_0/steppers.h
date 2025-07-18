@@ -39,13 +39,16 @@ void init_steppers();
 void stepper_enable_x();
 void stepper_disable_x();
 void stepper_x_set_dir(rotation_t rotation_direction);
+void stepper_x_set_state(uint8_t state);
 
 void stepper_enable_y();
 void stepper_disable_y();
 void stepper_y_set_dir(rotation_t rotation_direction);
+void stepper_y_set_state(uint8_t state);
 
 void stepper_enable_z();
 void stepper_disable_z();
 void stepper_z_set_dir(rotation_t rotation_direction);
+void stepper_z_set_state(uint8_t state);
 
 #endif  // __STEPPER_H__

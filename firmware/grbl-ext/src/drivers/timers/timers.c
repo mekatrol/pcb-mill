@@ -106,17 +106,9 @@ void TIM7_IRQHandler(void) {
   }
 }
 
-volatile uint8_t step_state = 0;
 void TIM14_IRQHandler(void) {
   if (TIM14->SR & TIM_SR_UIF) {
     TIM14->SR &= ~TIM_SR_UIF;  // Clear interrupt flag
-
-    if (step_state == 0) {
-      GPIOB->ODR |= STEP_X_STEP;  // Rising edge
-      step_state = 1;
-    } else {
-      GPIOB->ODR &= ~STEP_X_STEP;  // Falling edge
-      step_state = 0;
-    }
+    grbl_tick();
   }
 }

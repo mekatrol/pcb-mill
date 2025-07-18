@@ -24,6 +24,7 @@ typedef struct {
   void (*enable)();
   void (*disable)();
   void (*set_dir)(rotation_t rotation_direction);
+  void (*set_state)(uint8_t state);
 } stepper_interface_t;
 
 typedef struct {
@@ -45,6 +46,11 @@ typedef struct {
   void (*panic)();
 } hal_interface_t;
 
+// This method should be called by the board (eg through a timer interrupt) at a frequency of
+// 100KHz. It is used for stepper pulse timing and is therefore not absolutely critical on timing.
+void grbl_tick();
+
+// This methid should be called to run the GRBL kernel. It never returns.
 void grbl_run(hal_interface_t *grbl);
 
 #endif  // __GRBL_H__

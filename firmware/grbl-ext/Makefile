@@ -21,7 +21,7 @@ ifeq ($(OS),Windows_NT)
   DELCMD = del /Q
   MKDIR  = if not exist "$(dir $@)" mkdir "$(dir $@)"
   RM     = rmdir /S /Q
-  SEP    = \\
+  SEP    = /
 else
   DELCMD = rm -rf
   MKDIR  = mkdir -p $(dir $@)
@@ -157,12 +157,17 @@ dump:
 
 symbols:
 	$(NM) $(OUT_ELF)
-
+ 
 # Clean build artifacts
 .PHONY: clean
 clean:
 	@echo "[CLEAN] Removing build artifacts"
 	-$(RM) "$(OBJ_DIR)"
+
+.PHONY: build
+build:
+	$(MAKE) clean
+	$(MAKE) $(OUT_BIN)
 
 # Reset flash
 .PHONY: reset
