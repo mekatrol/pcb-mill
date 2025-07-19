@@ -105,74 +105,74 @@
 #define USART_CR1_IDLEIE USART_CR1_IDLEIE_Msk                                /* IDLE Interrupt Enable */
 #define USART_CR1_RXNEIE_RXFNEIE_Pos (5U)                                    //
 #define USART_CR1_RXNEIE_RXFNEIE_Msk (0x1UL << USART_CR1_RXNEIE_RXFNEIE_Pos) /* 0x00000020 */
-#define USART_CR1_RXNEIE_RXFNEIE USART_CR1_RXNEIE_RXFNEIE_Msk              /* RXNE/RXFIFO not empty Interrupt Enable */
-#define USART_CR1_TCIE_Pos (6U)                                            //
-#define USART_CR1_TCIE_Msk (0x1UL << USART_CR1_TCIE_Pos)                   /* 0x00000040 */
-#define USART_CR1_TCIE USART_CR1_TCIE_Msk                                  /* Transmission Complete Interrupt Enable */
-#define USART_CR1_TXEIE_TXFNFIE_Pos (7U)                                   //
-#define USART_CR1_TXEIE_TXFNFIE_Msk (0x1UL << USART_CR1_TXEIE_TXFNFIE_Pos) /* 0x00000080 */
-#define USART_CR1_TXEIE_TXFNFIE USART_CR1_TXEIE_TXFNFIE_Msk                /* TXE/TXFIFO not full Interrupt Enable */
-#define USART_CR1_PEIE_Pos (8U)                                            //
-#define USART_CR1_PEIE_Msk (0x1UL << USART_CR1_PEIE_Pos)                   /* 0x00000100 */
-#define USART_CR1_PEIE USART_CR1_PEIE_Msk                                  /* PE Interrupt Enable */
-#define USART_CR1_PS_Pos (9U)                                              //
-#define USART_CR1_PS_Msk (0x1UL << USART_CR1_PS_Pos)                       /* 0x00000200 */
-#define USART_CR1_PS USART_CR1_PS_Msk                                      /* Parity Selection */
-#define USART_CR1_PCE_Pos (10U)                                            //
-#define USART_CR1_PCE_Msk (0x1UL << USART_CR1_PCE_Pos)                     /* 0x00000400 */
-#define USART_CR1_PCE USART_CR1_PCE_Msk                                    /* Parity Control Enable */
-#define USART_CR1_WAKE_Pos (11U)                                           //
-#define USART_CR1_WAKE_Msk (0x1UL << USART_CR1_WAKE_Pos)                   /* 0x00000800 */
-#define USART_CR1_WAKE USART_CR1_WAKE_Msk                                  /* Receiver Wakeup method */
-#define USART_CR1_M_Pos (12U)                                              //
-#define USART_CR1_M_Msk (0x10001UL << USART_CR1_M_Pos)                     /* 0x10001000 */
-#define USART_CR1_M USART_CR1_M_Msk                                        /* Word length */
-#define USART_CR1_M0_Pos (12U)                                             //
-#define USART_CR1_M0_Msk (0x1UL << USART_CR1_M0_Pos)                       /* 0x00001000 */
-#define USART_CR1_M0 USART_CR1_M0_Msk                                      /* Word length - Bit 0 */
-#define USART_CR1_MME_Pos (13U)                                            //
-#define USART_CR1_MME_Msk (0x1UL << USART_CR1_MME_Pos)                     /* 0x00002000 */
-#define USART_CR1_MME USART_CR1_MME_Msk                                    /* Mute Mode Enable */
-#define USART_CR1_CMIE_Pos (14U)                                           //
-#define USART_CR1_CMIE_Msk (0x1UL << USART_CR1_CMIE_Pos)                   /* 0x00004000 */
-#define USART_CR1_CMIE USART_CR1_CMIE_Msk                                  /* Character match interrupt enable */
-#define USART_CR1_OVER8_Pos (15U)                                          //
-#define USART_CR1_OVER8_Msk (0x1UL << USART_CR1_OVER8_Pos)                 /* 0x00008000 */
-#define USART_CR1_OVER8 USART_CR1_OVER8_Msk                                /* Oversampling by 8-bit or 16-bit mode */
-#define USART_CR1_DEDT_Pos (16U)                                           //
-#define USART_CR1_DEDT_Msk (0x1FUL << USART_CR1_DEDT_Pos)                  /* 0x001F0000 */
-#define USART_CR1_DEDT USART_CR1_DEDT_Msk                    /* DEDT[4:0] bits (Driver Enable Deassertion Time) */
-#define USART_CR1_DEDT_0 (0x01UL << USART_CR1_DEDT_Pos)      /* 0x00010000 */
-#define USART_CR1_DEDT_1 (0x02UL << USART_CR1_DEDT_Pos)      /* 0x00020000 */
-#define USART_CR1_DEDT_2 (0x04UL << USART_CR1_DEDT_Pos)      /* 0x00040000 */
-#define USART_CR1_DEDT_3 (0x08UL << USART_CR1_DEDT_Pos)      /* 0x00080000 */
-#define USART_CR1_DEDT_4 (0x10UL << USART_CR1_DEDT_Pos)      /* 0x00100000 */
-#define USART_CR1_DEAT_Pos (21U)                             //
-#define USART_CR1_DEAT_Msk (0x1FUL << USART_CR1_DEAT_Pos)    /* 0x03E00000 */
-#define USART_CR1_DEAT USART_CR1_DEAT_Msk                    /* DEAT[4:0] bits (Driver Enable Assertion Time) */
-#define USART_CR1_DEAT_0 (0x01UL << USART_CR1_DEAT_Pos)      /* 0x00200000 */
-#define USART_CR1_DEAT_1 (0x02UL << USART_CR1_DEAT_Pos)      /* 0x00400000 */
-#define USART_CR1_DEAT_2 (0x04UL << USART_CR1_DEAT_Pos)      /* 0x00800000 */
-#define USART_CR1_DEAT_3 (0x08UL << USART_CR1_DEAT_Pos)      /* 0x01000000 */
-#define USART_CR1_DEAT_4 (0x10UL << USART_CR1_DEAT_Pos)      /* 0x02000000 */
-#define USART_CR1_RTOIE_Pos (26U)                            //
-#define USART_CR1_RTOIE_Msk (0x1UL << USART_CR1_RTOIE_Pos)   /* 0x04000000 */
-#define USART_CR1_RTOIE USART_CR1_RTOIE_Msk                  /* Receive Time Out interrupt enable */
-#define USART_CR1_EOBIE_Pos (27U)                            //
-#define USART_CR1_EOBIE_Msk (0x1UL << USART_CR1_EOBIE_Pos)   /* 0x08000000 */
-#define USART_CR1_EOBIE USART_CR1_EOBIE_Msk                  /* End of Block interrupt enable */
-#define USART_CR1_M1_Pos (28U)                               //
-#define USART_CR1_M1_Msk (0x1UL << USART_CR1_M1_Pos)         /* 0x10000000 */
-#define USART_CR1_M1 USART_CR1_M1_Msk                        /* Word length - Bit 1 */
-#define USART_CR1_FIFOEN_Pos (29U)                           //
-#define USART_CR1_FIFOEN_Msk (0x1UL << USART_CR1_FIFOEN_Pos) /* 0x20000000 */
-#define USART_CR1_FIFOEN USART_CR1_FIFOEN_Msk                /* FIFO mode enable */
-#define USART_CR1_TXFEIE_Pos (30U)                           //
-#define USART_CR1_TXFEIE_Msk (0x1UL << USART_CR1_TXFEIE_Pos) /* 0x40000000 */
-#define USART_CR1_TXFEIE USART_CR1_TXFEIE_Msk                /* TXFIFO empty interrupt enable */
-#define USART_CR1_RXFFIE_Pos (31U)                           //
-#define USART_CR1_RXFFIE_Msk (0x1UL << USART_CR1_RXFFIE_Pos) /* 0x80000000 */
-#define USART_CR1_RXFFIE USART_CR1_RXFFIE_Msk                /* RXFIFO Full interrupt enable */
+#define USART_CR1_RXNEIE_RXFNEIE USART_CR1_RXNEIE_RXFNEIE_Msk                /* RXNE/RXFIFO not empty Interrupt Enable */
+#define USART_CR1_TCIE_Pos (6U)                                              //
+#define USART_CR1_TCIE_Msk (0x1UL << USART_CR1_TCIE_Pos)                     /* 0x00000040 */
+#define USART_CR1_TCIE USART_CR1_TCIE_Msk                                    /* Transmission Complete Interrupt Enable */
+#define USART_CR1_TXEIE_TXFNFIE_Pos (7U)                                     //
+#define USART_CR1_TXEIE_TXFNFIE_Msk (0x1UL << USART_CR1_TXEIE_TXFNFIE_Pos)   /* 0x00000080 */
+#define USART_CR1_TXEIE_TXFNFIE USART_CR1_TXEIE_TXFNFIE_Msk                  /* TXE/TXFIFO not full Interrupt Enable */
+#define USART_CR1_PEIE_Pos (8U)                                              //
+#define USART_CR1_PEIE_Msk (0x1UL << USART_CR1_PEIE_Pos)                     /* 0x00000100 */
+#define USART_CR1_PEIE USART_CR1_PEIE_Msk                                    /* PE Interrupt Enable */
+#define USART_CR1_PS_Pos (9U)                                                //
+#define USART_CR1_PS_Msk (0x1UL << USART_CR1_PS_Pos)                         /* 0x00000200 */
+#define USART_CR1_PS USART_CR1_PS_Msk                                        /* Parity Selection */
+#define USART_CR1_PCE_Pos (10U)                                              //
+#define USART_CR1_PCE_Msk (0x1UL << USART_CR1_PCE_Pos)                       /* 0x00000400 */
+#define USART_CR1_PCE USART_CR1_PCE_Msk                                      /* Parity Control Enable */
+#define USART_CR1_WAKE_Pos (11U)                                             //
+#define USART_CR1_WAKE_Msk (0x1UL << USART_CR1_WAKE_Pos)                     /* 0x00000800 */
+#define USART_CR1_WAKE USART_CR1_WAKE_Msk                                    /* Receiver Wakeup method */
+#define USART_CR1_M_Pos (12U)                                                //
+#define USART_CR1_M_Msk (0x10001UL << USART_CR1_M_Pos)                       /* 0x10001000 */
+#define USART_CR1_M USART_CR1_M_Msk                                          /* Word length */
+#define USART_CR1_M0_Pos (12U)                                               //
+#define USART_CR1_M0_Msk (0x1UL << USART_CR1_M0_Pos)                         /* 0x00001000 */
+#define USART_CR1_M0 USART_CR1_M0_Msk                                        /* Word length - Bit 0 */
+#define USART_CR1_MME_Pos (13U)                                              //
+#define USART_CR1_MME_Msk (0x1UL << USART_CR1_MME_Pos)                       /* 0x00002000 */
+#define USART_CR1_MME USART_CR1_MME_Msk                                      /* Mute Mode Enable */
+#define USART_CR1_CMIE_Pos (14U)                                             //
+#define USART_CR1_CMIE_Msk (0x1UL << USART_CR1_CMIE_Pos)                     /* 0x00004000 */
+#define USART_CR1_CMIE USART_CR1_CMIE_Msk                                    /* Character match interrupt enable */
+#define USART_CR1_OVER8_Pos (15U)                                            //
+#define USART_CR1_OVER8_Msk (0x1UL << USART_CR1_OVER8_Pos)                   /* 0x00008000 */
+#define USART_CR1_OVER8 USART_CR1_OVER8_Msk                                  /* Oversampling by 8-bit or 16-bit mode */
+#define USART_CR1_DEDT_Pos (16U)                                             //
+#define USART_CR1_DEDT_Msk (0x1FUL << USART_CR1_DEDT_Pos)                    /* 0x001F0000 */
+#define USART_CR1_DEDT USART_CR1_DEDT_Msk                                    /* DEDT[4:0] bits (Driver Enable Deassertion Time) */
+#define USART_CR1_DEDT_0 (0x01UL << USART_CR1_DEDT_Pos)                      /* 0x00010000 */
+#define USART_CR1_DEDT_1 (0x02UL << USART_CR1_DEDT_Pos)                      /* 0x00020000 */
+#define USART_CR1_DEDT_2 (0x04UL << USART_CR1_DEDT_Pos)                      /* 0x00040000 */
+#define USART_CR1_DEDT_3 (0x08UL << USART_CR1_DEDT_Pos)                      /* 0x00080000 */
+#define USART_CR1_DEDT_4 (0x10UL << USART_CR1_DEDT_Pos)                      /* 0x00100000 */
+#define USART_CR1_DEAT_Pos (21U)                                             //
+#define USART_CR1_DEAT_Msk (0x1FUL << USART_CR1_DEAT_Pos)                    /* 0x03E00000 */
+#define USART_CR1_DEAT USART_CR1_DEAT_Msk                                    /* DEAT[4:0] bits (Driver Enable Assertion Time) */
+#define USART_CR1_DEAT_0 (0x01UL << USART_CR1_DEAT_Pos)                      /* 0x00200000 */
+#define USART_CR1_DEAT_1 (0x02UL << USART_CR1_DEAT_Pos)                      /* 0x00400000 */
+#define USART_CR1_DEAT_2 (0x04UL << USART_CR1_DEAT_Pos)                      /* 0x00800000 */
+#define USART_CR1_DEAT_3 (0x08UL << USART_CR1_DEAT_Pos)                      /* 0x01000000 */
+#define USART_CR1_DEAT_4 (0x10UL << USART_CR1_DEAT_Pos)                      /* 0x02000000 */
+#define USART_CR1_RTOIE_Pos (26U)                                            //
+#define USART_CR1_RTOIE_Msk (0x1UL << USART_CR1_RTOIE_Pos)                   /* 0x04000000 */
+#define USART_CR1_RTOIE USART_CR1_RTOIE_Msk                                  /* Receive Time Out interrupt enable */
+#define USART_CR1_EOBIE_Pos (27U)                                            //
+#define USART_CR1_EOBIE_Msk (0x1UL << USART_CR1_EOBIE_Pos)                   /* 0x08000000 */
+#define USART_CR1_EOBIE USART_CR1_EOBIE_Msk                                  /* End of Block interrupt enable */
+#define USART_CR1_M1_Pos (28U)                                               //
+#define USART_CR1_M1_Msk (0x1UL << USART_CR1_M1_Pos)                         /* 0x10000000 */
+#define USART_CR1_M1 USART_CR1_M1_Msk                                        /* Word length - Bit 1 */
+#define USART_CR1_FIFOEN_Pos (29U)                                           //
+#define USART_CR1_FIFOEN_Msk (0x1UL << USART_CR1_FIFOEN_Pos)                 /* 0x20000000 */
+#define USART_CR1_FIFOEN USART_CR1_FIFOEN_Msk                                /* FIFO mode enable */
+#define USART_CR1_TXFEIE_Pos (30U)                                           //
+#define USART_CR1_TXFEIE_Msk (0x1UL << USART_CR1_TXFEIE_Pos)                 /* 0x40000000 */
+#define USART_CR1_TXFEIE USART_CR1_TXFEIE_Msk                                /* TXFIFO empty interrupt enable */
+#define USART_CR1_RXFFIE_Pos (31U)                                           //
+#define USART_CR1_RXFFIE_Msk (0x1UL << USART_CR1_RXFFIE_Pos)                 /* 0x80000000 */
+#define USART_CR1_RXFFIE USART_CR1_RXFFIE_Msk                                /* RXFIFO Full interrupt enable */
 /******************  Bit definition for USART_CR2 register  *******************/
 #define USART_CR2_SLVEN_Pos (0U)
 #define USART_CR2_SLVEN_Msk (0x1UL << USART_CR2_SLVEN_Pos) /* 0x00000001 */
@@ -307,7 +307,7 @@
 #define USART_CR3_TXFTIE USART_CR3_TXFTIE_Msk                /* TXFIFO threshold interrupt enable */
 #define USART_CR3_TCBGTIE_Pos (24U)
 #define USART_CR3_TCBGTIE_Msk (0x1UL << USART_CR3_TCBGTIE_Pos) /* 0x01000000 */
-#define USART_CR3_TCBGTIE USART_CR3_TCBGTIE_Msk /* Transmission Complete Before Guard Time Interrupt Enable */
+#define USART_CR3_TCBGTIE USART_CR3_TCBGTIE_Msk                /* Transmission Complete Before Guard Time Interrupt Enable */
 #define USART_CR3_RXFTCFG_Pos (25U)
 #define USART_CR3_RXFTCFG_Msk (0x7UL << USART_CR3_RXFTCFG_Pos) /* 0x0E000000 */
 #define USART_CR3_RXFTCFG USART_CR3_RXFTCFG_Msk                /* RXFIFO FIFO threshold configuration */
@@ -582,7 +582,7 @@
 #define I2C_CR2_ADD10 I2C_CR2_ADD10_Msk                /*!< 10-bit addressing mode (master mode) */
 #define I2C_CR2_HEAD10R_Pos (12U)
 #define I2C_CR2_HEAD10R_Msk (0x1UL << I2C_CR2_HEAD10R_Pos) /*!< 0x00001000 */
-#define I2C_CR2_HEAD10R I2C_CR2_HEAD10R_Msk /*!< 10-bit address header only read direction (master mode) */
+#define I2C_CR2_HEAD10R I2C_CR2_HEAD10R_Msk                /*!< 10-bit address header only read direction (master mode) */
 #define I2C_CR2_START_Pos (13U)
 #define I2C_CR2_START_Msk (0x1UL << I2C_CR2_START_Pos) /*!< 0x00002000 */
 #define I2C_CR2_START I2C_CR2_START_Msk                /*!< START generation */

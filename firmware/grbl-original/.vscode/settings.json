@@ -1,0 +1,6 @@
+{
+  "files.associations": {
+    "grbl.h": "c",
+    "irq.h": "c"
+  }
+}

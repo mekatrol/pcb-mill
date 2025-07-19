@@ -1,0 +1,1080 @@
+Archive member included to satisfy reference by file (symbol)
+
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_udivsi3.o)
+                              firmware/grbl/print.o (__aeabi_uidiv)
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_dvmd_tls.o)
+                              C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_udivsi3.o) (__aeabi_idiv0)
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_arm_cmpdf2.o)
+                              firmware/grbl/math_soft.o (__aeabi_dcmpeq)
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_arm_cmpsf2.o)
+                              firmware/grbl/gcode.o (__aeabi_fcmpeq)
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_fixunssfsi.o)
+                              firmware/grbl/stepper.o (__aeabi_f2uiz)
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_fixunsdfsi.o)
+                              firmware/grbl/gcode.o (__aeabi_d2uiz)
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(addsf3.o)
+                              firmware/grbl/gcode.o (__aeabi_fadd)
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(divsf3.o)
+                              firmware/grbl/math_soft.o (__aeabi_fdiv)
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(eqsf2.o)
+                              C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_arm_cmpsf2.o) (__eqsf2)
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(gesf2.o)
+                              C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_arm_cmpsf2.o) (__gesf2)
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(lesf2.o)
+                              C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_arm_cmpsf2.o) (__lesf2)
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(mulsf3.o)
+                              firmware/grbl/gcode.o (__aeabi_fmul)
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(subsf3.o)
+                              firmware/grbl/gcode.o (__aeabi_fsub)
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(fixsfsi.o)
+                              firmware/grbl/math_soft.o (__aeabi_f2iz)
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(floatsisf.o)
+                              firmware/grbl/gcode.o (__aeabi_i2f)
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(floatunsisf.o)
+                              firmware/grbl/nuts_bolts.o (__aeabi_ui2f)
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(adddf3.o)
+                              firmware/grbl/math_soft.o (__aeabi_dadd)
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(divdf3.o)
+                              firmware/grbl/gcode.o (__aeabi_ddiv)
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(eqdf2.o)
+                              C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_arm_cmpdf2.o) (__eqdf2)
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(gedf2.o)
+                              C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_arm_cmpdf2.o) (__gedf2)
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(ledf2.o)
+                              C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_arm_cmpdf2.o) (__ledf2)
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(muldf3.o)
+                              firmware/grbl/gcode.o (__aeabi_dmul)
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(subdf3.o)
+                              firmware/grbl/gcode.o (__aeabi_dsub)
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(fixdfsi.o)
+                              firmware/grbl/gcode.o (__aeabi_d2iz)
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(floatsidf.o)
+                              firmware/grbl/math_soft.o (__aeabi_i2d)
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(floatunsidf.o)
+                              firmware/grbl/limits.o (__aeabi_ui2d)
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(extendsfdf2.o)
+                              firmware/grbl/gcode.o (__aeabi_f2d)
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(truncdfsf2.o)
+                              firmware/grbl/gcode.o (__aeabi_d2f)
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_clzsi2.o)
+                              C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(addsf3.o) (__clzsi2)
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libc.a(libc_a-labs.o)
+                              firmware/grbl/planner.o (labs)
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libc.a(libc_a-memset.o)
+                              firmware/grbl/gcode.o (memset)
+C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libc.a(libc_a-memcpy-stub.o)
+                              firmware/grbl/gcode.o (memcpy)
+
+There are no discarded input sections
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+FLASH            0x08000000         0x00080000         xr
+RAM              0x20000000         0x00024000         xrw
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+                0x20024000                        _estack = (ORIGIN (RAM) + LENGTH (RAM))
+                0x0800d0f0                        _sidata = LOADADDR (.data)
+                0x20000000                        _sdata = .
+                0x20000000                        _edata = .
+                0x20000000                        _sbss = .
+                0x2000064c                        _ebss = .
+
+.isr_vector     0x08000000       0xc0
+                0x08000000                        . = ALIGN (0x4)
+ *(.isr_vector)
+ .isr_vector    0x08000000       0xc0 firmware/boards/btt_skr_mini_e3_v3_0/startup.o
+                0x08000000                g_pfnVectors
+
+.text           0x080000c0     0xd030
+                0x080000c0                        . = ALIGN (0x4)
+ *(.text*)
+ .text          0x080000c0        0x0 firmware/boards/btt_skr_mini_e3_v3_0/startup.o
+ .text.Reset_Handler
+                0x080000c0       0x44 firmware/boards/btt_skr_mini_e3_v3_0/startup.o
+                0x080000c0                Reset_Handler
+                0x080000ee                Default_Handler
+ .text          0x08000104       0x70 firmware/grbl/coolant_control.o
+                0x08000104                coolant_init
+                0x08000116                coolant_stop
+                0x08000124                coolant_set_state
+                0x08000142                coolant_run
+ .text          0x08000174      0x148 firmware/grbl/eeprom.o
+                0x08000174                eeprom_get_char
+                0x0800018a                eeprom_put_char
+                0x080001ae                memcpy_to_eeprom_with_checksum
+                0x0800022c                memcpy_from_eeprom_with_checksum
+ .text          0x080002bc     0x1c74 firmware/grbl/gcode.o
+                0x080002f0                gc_init
+                0x08000328                gc_sync_position
+                0x080003a4                gc_execute_line
+ .text          0x08001f30      0x70c firmware/grbl/limits.o
+                0x08001f64                limits_init
+                0x08001f88                limits_disable
+                0x08001f92                limits_get_state
+                0x08002028                limits_triggered
+                0x08002068                limits_go_home
+                0x08002554                limits_soft_check
+ .text          0x0800263c       0xbc firmware/grbl/main.o
+                0x08002656                main
+ .text          0x080026f8      0xbb8 firmware/grbl/math_soft.o
+                0x080026f8                trunc
+                0x0800275c                truncf
+                0x080027aa                ceil
+                0x0800280a                ceilf
+                0x0800285a                sqrt
+                0x08002930                sqrtf
+                0x080029bc                round
+                0x08002a30                roundf
+                0x08002a86                fabs
+                0x08002ac2                fabsf
+                0x08002aea                lround
+                0x08002b48                lroundf
+                0x08002b8e                floor
+                0x08002bee                floorf
+                0x08002cb4                sin
+                0x08002d9c                sinf
+                0x08002e50                cos
+                0x08002e88                cos_approx
+                0x08002f60                atan
+                0x08003068                atan2
+                0x0800315c                atanf
+                0x080031fc                atan2f
+ .text          0x080032b0      0x8c8 firmware/grbl/motion_control.o
+                0x080032e4                mc_line
+                0x08003350                mc_arc
+                0x0800389c                mc_dwell
+                0x0800396c                mc_homing_cycle
+                0x080039a0                mc_probe_cycle
+                0x08003ae0                mc_reset
+ .text          0x08003b78      0x280 firmware/grbl/nuts_bolts.o
+                0x08003b78                read_float
+                0x08003da4                hypot_f
+ .text          0x08003df8      0xa48 firmware/grbl/planner.o
+                0x08003df8                plan_next_block_index
+                0x080040a8                plan_reset
+                0x080040ec                plan_discard_current_block
+                0x08004140                plan_get_current_block
+                0x08004174                plan_get_exec_block_exit_speed
+                0x080041e0                plan_check_full_buffer
+                0x08004204                plan_buffer_line
+                0x08004794                plan_sync_position
+                0x080047e0                plan_get_block_buffer_count
+                0x0800481c                plan_cycle_reinitialize
+ .text          0x08004840      0x514 firmware/grbl/print.o
+                0x08004840                printString
+                0x0800486a                printPgmString
+                0x080048a0                print_unsigned_int8
+                0x080049d4                print_uint8_base2
+                0x080049f6                print_uint8_base10
+                0x08004a48                print_uint32_base10
+                0x08004ad4                printInteger
+                0x08004b04                printFloat
+                0x08004c80                printFloat_CoordValue
+                0x08004cdc                printFloat_RateValue
+                0x08004d38                printFloat_SettingValue
+ .text          0x08004d54       0xd0 firmware/grbl/probe.o
+                0x08004d54                probe_init
+                0x08004d62                probe_configure_invert_mask
+                0x08004db4                probe_get_state
+                0x08004dd4                probe_state_monitor
+ .text          0x08004e24      0x5c4 firmware/grbl/protocol.o
+                0x08004ec4                protocol_main_loop
+                0x0800502c                protocol_execute_realtime
+                0x08005390                protocol_buffer_synchronize
+                0x080053c0                protocol_auto_cycle_start
+ .text          0x080053e8      0xe68 firmware/grbl/report.o
+                0x080053e8                report_status_message
+                0x0800551c                report_alarm_message
+                0x080055b0                report_feedback_message
+                0x08005664                report_init_message
+                0x0800567c                report_grbl_help
+                0x08005694                report_grbl_settings
+                0x08005ac0                report_probe_parameters
+                0x08005b68                report_ngc_parameters
+                0x08005ce0                report_gcode_modes
+                0x08005f20                report_startup_line
+                0x08005f6c                report_build_info
+                0x08005f9c                report_echo_line_received
+                0x08005fcc                report_realtime_status
+ .text          0x08006250      0x32c firmware/grbl/serial.o
+                0x08006284                serial_get_rx_buffer_count
+                0x080062cc                serial_get_tx_buffer_count
+                0x08006314                serial_init
+                0x08006322                serial_write
+                0x0800639c                serial_data_can_send
+                0x08006408                serial_read
+                0x0800646c                serial_data_received
+                0x08006560                serial_reset_read_buffer
+ .text          0x0800657c      0x788 firmware/grbl/settings.o
+                0x0800657c                settings_store_startup_line
+                0x080065b6                settings_store_build_info
+                0x080065d8                settings_write_coord_data
+                0x08006612                write_global_settings
+                0x08006634                settings_restore
+                0x080067a4                settings_read_startup_line
+                0x080067fc                settings_read_build_info
+                0x08006834                settings_read_coord_data
+                0x08006892                read_global_settings
+                0x080068d4                settings_store_global_setting
+                0x08006c58                settings_init
+                0x08006c7a                get_step_pin_mask
+                0x08006ca8                get_direction_pin_mask
+                0x08006cd6                get_limit_pin_mask
+ .text          0x08006d04       0x98 firmware/grbl/spindle_control.o
+                0x08006d04                spindle_init
+                0x08006d16                spindle_stop
+                0x08006d24                spindle_set_state
+                0x08006d64                spindle_run
+ .text          0x08006d9c      0xf3c firmware/grbl/stepper.o
+                0x08006dd0                st_wake_up
+                0x08006e38                st_go_idle
+                0x08006ebc                timer_1_interrupt
+                0x0800716c                timer_0_interrupt
+                0x08007176                st_generate_step_dir_invert_masks
+                0x08007220                st_reset
+                0x0800728c                stepper_init
+                0x0800729a                st_update_plan_block_parameters
+                0x080072d8                st_prep_buffer
+ .text          0x08007cd8      0x6a0 firmware/grbl/system.o
+                0x08007cd8                system_init
+                0x08007ce6                pin_changed
+                0x08007d58                system_check_safety_door_ajar
+                0x08007d64                system_execute_startup
+                0x08007dd2                system_execute_line
+                0x080082e4                system_convert_axis_steps_to_mpos
+                0x08008328                system_convert_array_steps_to_mpos
+ .text          0x08008378       0xc8 firmware/boards/btt_skr_mini_e3_v3_0/clock.o
+                0x08008378                init_clock
+ .text          0x08008440       0xc0 firmware/boards/btt_skr_mini_e3_v3_0/coolant_control_hal.o
+                0x08008440                coolant_stop_hal
+                0x08008468                coolant_init_hal
+                0x080084b8                coolant_set_state_hal
+ .text          0x08008500      0x368 firmware/boards/btt_skr_mini_e3_v3_0/eeprom_hal.o
+                0x08008520                i2c1_master_init
+                0x08008684                at24c32_write_byte
+                0x08008720                at24c32_read_byte
+                0x080087b8                init_eeprom
+                0x08008824                eeprom_get_char_hal
+                0x08008842                eeprom_put_char_hal
+ .text          0x08008868       0x64 firmware/boards/btt_skr_mini_e3_v3_0/hal.o
+                0x08008868                init_gpio
+                0x080088a8                board_init_hal
+                0x080088c2                system_init_hal
+ .text          0x080088cc       0xf8 firmware/boards/btt_skr_mini_e3_v3_0/limits_hal.o
+                0x080088cc                limits_init_hal
+                0x0800895c                limits_get_state_hal
+                0x08008968                EXTI0_1_IRQHandler
+                0x080089a0                EXTI2_3_IRQHandler
+ .text          0x080089c4       0x16 firmware/boards/btt_skr_mini_e3_v3_0/probe_hal.o
+                0x080089c4                probe_init_hal
+                0x080089ce                probe_get_state_hal
+ *fill*         0x080089da        0x2 
+ .text          0x080089dc      0x160 firmware/boards/btt_skr_mini_e3_v3_0/serial_hal.o
+                0x080089dc                serial_init_hal
+                0x08008a80                serial_tx_enable_hal
+                0x08008a9c                serial_tx_disable_hal
+                0x08008ab8                USART2_IRQHandler
+                0x08008b18                USART3_4_LPUART1_IRQHandler
+ .text          0x08008b3c       0x88 firmware/boards/btt_skr_mini_e3_v3_0/spindle_control_hal.o
+                0x08008b3c                spindle_stop_hal
+                0x08008b5c                spindle_init_hal
+                0x08008b8c                spindle_set_state_hal
+ .text          0x08008bc4       0x14 firmware/boards/btt_skr_mini_e3_v3_0/stepper_hal.o
+                0x08008bc4                stepper_init_hal
+                0x08008bce                steppers_enable_hal
+ .text          0x08008bd8      0x2c4 firmware/boards/btt_skr_mini_e3_v3_0/timers.o
+                0x08008bd8                delay_ms
+                0x08008c30                timer_init
+                0x08008ce8                timer6_init
+                0x08008d24                timer7_init
+                0x08008d60                timer14_init
+                0x08008d90                set_timer_interval
+                0x08008dd0                set_timer6_interval
+                0x08008df0                set_timer7_interval
+                0x08008e10                set_timer14_interval
+                0x08008e30                TIM6_DAC_IRQHandler
+                0x08008e54                TIM7_IRQHandler
+                0x08008e78                TIM14_IRQHandler
+ .text          0x08008e9c      0x114 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_udivsi3.o)
+                0x08008e9c                __aeabi_uidiv
+                0x08008e9c                __udivsi3
+                0x08008fa8                __aeabi_uidivmod
+ .text          0x08008fb0        0x4 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_dvmd_tls.o)
+                0x08008fb0                __aeabi_idiv0
+                0x08008fb0                __aeabi_ldiv0
+ .text          0x08008fb4       0x7c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_arm_cmpdf2.o)
+                0x08008fb4                __aeabi_cdrcmple
+                0x08008fc4                __aeabi_cdcmple
+                0x08008fc4                __aeabi_cdcmpeq
+                0x08008fd4                __aeabi_dcmpeq
+                0x08008fe0                __aeabi_dcmplt
+                0x08008ff4                __aeabi_dcmple
+                0x08009008                __aeabi_dcmpgt
+                0x0800901c                __aeabi_dcmpge
+ .text          0x08009030       0x74 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_arm_cmpsf2.o)
+                0x08009030                __aeabi_cfrcmple
+                0x08009038                __aeabi_cfcmpeq
+                0x08009038                __aeabi_cfcmple
+                0x08009048                __aeabi_fcmpeq
+                0x08009054                __aeabi_fcmplt
+                0x08009068                __aeabi_fcmple
+                0x0800907c                __aeabi_fcmpgt
+                0x08009090                __aeabi_fcmpge
+ .text          0x080090a4        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_fixunssfsi.o)
+ .text.__fixunssfsi
+                0x080090a4       0x30 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_fixunssfsi.o)
+                0x080090a4                __fixunssfsi
+                0x080090a4                __aeabi_f2uiz
+ .text          0x080090d4        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_fixunsdfsi.o)
+ .text.__fixunsdfsi
+                0x080090d4       0x3c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_fixunsdfsi.o)
+                0x080090d4                __aeabi_d2uiz
+                0x080090d4                __fixunsdfsi
+ .text          0x08009110        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(addsf3.o)
+ .text.__aeabi_fadd
+                0x08009110      0x41c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(addsf3.o)
+                0x08009110                __aeabi_fadd
+ .text          0x0800952c        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(divsf3.o)
+ .text.__aeabi_fdiv
+                0x0800952c      0x22c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(divsf3.o)
+                0x0800952c                __aeabi_fdiv
+ .text          0x08009758        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(eqsf2.o)
+ .text.__eqsf2  0x08009758       0x50 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(eqsf2.o)
+                0x08009758                __eqsf2
+                0x08009758                __nesf2
+ .text          0x080097a8        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(gesf2.o)
+ .text.__gesf2  0x080097a8       0x90 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(gesf2.o)
+                0x080097a8                __gesf2
+                0x080097a8                __gtsf2
+ .text          0x08009838        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(lesf2.o)
+ .text.__lesf2  0x08009838       0x90 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(lesf2.o)
+                0x08009838                __ltsf2
+                0x08009838                __lesf2
+ .text          0x080098c8        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(mulsf3.o)
+ .text.__aeabi_fmul
+                0x080098c8      0x2a4 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(mulsf3.o)
+                0x080098c8                __aeabi_fmul
+ .text          0x08009b6c        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(subsf3.o)
+ .text.__aeabi_fsub
+                0x08009b6c      0x484 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(subsf3.o)
+                0x08009b6c                __aeabi_fsub
+ .text          0x08009ff0        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(fixsfsi.o)
+ .text.__aeabi_f2iz
+                0x08009ff0       0x40 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(fixsfsi.o)
+                0x08009ff0                __aeabi_f2iz
+ .text          0x0800a030        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(floatsisf.o)
+ .text.__aeabi_i2f
+                0x0800a030       0xa0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(floatsisf.o)
+                0x0800a030                __aeabi_i2f
+ .text          0x0800a0d0        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(floatunsisf.o)
+ .text.__aeabi_ui2f
+                0x0800a0d0       0x8c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(floatunsisf.o)
+                0x0800a0d0                __aeabi_ui2f
+ .text          0x0800a15c        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(adddf3.o)
+ .text.__aeabi_dadd
+                0x0800a15c      0x834 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(adddf3.o)
+                0x0800a15c                __aeabi_dadd
+ .text          0x0800a990        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(divdf3.o)
+ .text.__aeabi_ddiv
+                0x0800a990      0x63c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(divdf3.o)
+                0x0800a990                __aeabi_ddiv
+ .text          0x0800afcc        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(eqdf2.o)
+ .text.__eqdf2  0x0800afcc       0x8c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(eqdf2.o)
+                0x0800afcc                __nedf2
+                0x0800afcc                __eqdf2
+ .text          0x0800b058        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(gedf2.o)
+ .text.__gedf2  0x0800b058       0xe0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(gedf2.o)
+                0x0800b058                __gedf2
+                0x0800b058                __gtdf2
+ .text          0x0800b138        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(ledf2.o)
+ .text.__ledf2  0x0800b138       0xdc C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(ledf2.o)
+                0x0800b138                __ledf2
+                0x0800b138                __ltdf2
+ .text          0x0800b214        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(muldf3.o)
+ .text.__aeabi_dmul
+                0x0800b214      0x590 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(muldf3.o)
+                0x0800b214                __aeabi_dmul
+ .text          0x0800b7a4        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(subdf3.o)
+ .text.__aeabi_dsub
+                0x0800b7a4      0x870 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(subdf3.o)
+                0x0800b7a4                __aeabi_dsub
+ .text          0x0800c014        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(fixdfsi.o)
+ .text.__aeabi_d2iz
+                0x0800c014       0x78 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(fixdfsi.o)
+                0x0800c014                __aeabi_d2iz
+ .text          0x0800c08c        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(floatsidf.o)
+ .text.__aeabi_i2d
+                0x0800c08c       0x5c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(floatsidf.o)
+                0x0800c08c                __aeabi_i2d
+ .text          0x0800c0e8        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(floatunsidf.o)
+ .text.__aeabi_ui2d
+                0x0800c0e8       0x48 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(floatunsidf.o)
+                0x0800c0e8                __aeabi_ui2d
+ .text          0x0800c130        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(extendsfdf2.o)
+ .text.__aeabi_f2d
+                0x0800c130       0x90 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(extendsfdf2.o)
+                0x0800c130                __aeabi_f2d
+ .text          0x0800c1c0        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(truncdfsf2.o)
+ .text.__aeabi_d2f
+                0x0800c1c0      0x110 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(truncdfsf2.o)
+                0x0800c1c0                __aeabi_d2f
+ .text          0x0800c2d0       0x3c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_clzsi2.o)
+                0x0800c2d0                __clzsi2
+ .text          0x0800c30c        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libc.a(libc_a-labs.o)
+ .text.labs     0x0800c30c        0x8 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libc.a(libc_a-labs.o)
+                0x0800c30c                labs
+ .text          0x0800c314        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libc.a(libc_a-memset.o)
+ .text.memset   0x0800c314       0x94 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libc.a(libc_a-memset.o)
+                0x0800c314                memset
+ .text          0x0800c3a8        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libc.a(libc_a-memcpy-stub.o)
+ .text.memcpy   0x0800c3a8       0xac C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libc.a(libc_a-memcpy-stub.o)
+                0x0800c3a8                memcpy
+ *(.rodata*)
+ .rodata        0x0800c454      0x2d0 firmware/grbl/gcode.o
+ .rodata        0x0800c724      0x8a0 firmware/grbl/report.o
+ .rodata        0x0800cfc4       0x70 firmware/grbl/settings.o
+ .rodata.__aeabi_fdiv
+                0x0800d034       0x7c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(divsf3.o)
+ .rodata.__aeabi_ddiv
+                0x0800d0b0       0x40 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(divdf3.o)
+                0x0800d0f0                        . = ALIGN (0x4)
+                0x0800d0f0                        _etext = .
+
+.glue_7         0x0800d0f0        0x0
+ .glue_7        0x0800d0f0        0x0 linker stubs
+
+.glue_7t        0x0800d0f0        0x0
+ .glue_7t       0x0800d0f0        0x0 linker stubs
+
+.vfp11_veneer   0x0800d0f0        0x0
+ .vfp11_veneer  0x0800d0f0        0x0 linker stubs
+
+.v4_bx          0x0800d0f0        0x0
+ .v4_bx         0x0800d0f0        0x0 linker stubs
+
+.iplt           0x0800d0f0        0x0
+ .iplt          0x0800d0f0        0x0 firmware/boards/btt_skr_mini_e3_v3_0/startup.o
+
+.rel.dyn        0x0800d0f0        0x0
+ .rel.iplt      0x0800d0f0        0x0 firmware/boards/btt_skr_mini_e3_v3_0/startup.o
+
+.data           0x20000000        0x0 load address 0x0800d0f0
+                0x20000000                        . = ALIGN (0x4)
+                0x20000000                        _sdata = .
+                0x0800d0f0                        _sidata = LOADADDR (.data)
+ *(.data*)
+ .data          0x20000000        0x0 firmware/boards/btt_skr_mini_e3_v3_0/startup.o
+ .data          0x20000000        0x0 firmware/grbl/coolant_control.o
+ .data          0x20000000        0x0 firmware/grbl/eeprom.o
+ .data          0x20000000        0x0 firmware/grbl/gcode.o
+ .data          0x20000000        0x0 firmware/grbl/limits.o
+ .data          0x20000000        0x0 firmware/grbl/main.o
+ .data          0x20000000        0x0 firmware/grbl/math_soft.o
+ .data          0x20000000        0x0 firmware/grbl/motion_control.o
+ .data          0x20000000        0x0 firmware/grbl/nuts_bolts.o
+ .data          0x20000000        0x0 firmware/grbl/planner.o
+ .data          0x20000000        0x0 firmware/grbl/print.o
+ .data          0x20000000        0x0 firmware/grbl/probe.o
+ .data          0x20000000        0x0 firmware/grbl/protocol.o
+ .data          0x20000000        0x0 firmware/grbl/report.o
+ .data          0x20000000        0x0 firmware/grbl/serial.o
+ .data          0x20000000        0x0 firmware/grbl/settings.o
+ .data          0x20000000        0x0 firmware/grbl/spindle_control.o
+ .data          0x20000000        0x0 firmware/grbl/stepper.o
+ .data          0x20000000        0x0 firmware/grbl/system.o
+ .data          0x20000000        0x0 firmware/boards/btt_skr_mini_e3_v3_0/clock.o
+ .data          0x20000000        0x0 firmware/boards/btt_skr_mini_e3_v3_0/coolant_control_hal.o
+ .data          0x20000000        0x0 firmware/boards/btt_skr_mini_e3_v3_0/eeprom_hal.o
+ .data          0x20000000        0x0 firmware/boards/btt_skr_mini_e3_v3_0/hal.o
+ .data          0x20000000        0x0 firmware/boards/btt_skr_mini_e3_v3_0/limits_hal.o
+ .data          0x20000000        0x0 firmware/boards/btt_skr_mini_e3_v3_0/probe_hal.o
+ .data          0x20000000        0x0 firmware/boards/btt_skr_mini_e3_v3_0/serial_hal.o
+ .data          0x20000000        0x0 firmware/boards/btt_skr_mini_e3_v3_0/spindle_control_hal.o
+ .data          0x20000000        0x0 firmware/boards/btt_skr_mini_e3_v3_0/stepper_hal.o
+ .data          0x20000000        0x0 firmware/boards/btt_skr_mini_e3_v3_0/timers.o
+ .data          0x20000000        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_udivsi3.o)
+ .data          0x20000000        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_dvmd_tls.o)
+ .data          0x20000000        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_arm_cmpdf2.o)
+ .data          0x20000000        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_arm_cmpsf2.o)
+ .data          0x20000000        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_fixunssfsi.o)
+ .data          0x20000000        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_fixunsdfsi.o)
+ .data          0x20000000        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(addsf3.o)
+ .data          0x20000000        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(divsf3.o)
+ .data          0x20000000        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(eqsf2.o)
+ .data          0x20000000        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(gesf2.o)
+ .data          0x20000000        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(lesf2.o)
+ .data          0x20000000        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(mulsf3.o)
+ .data          0x20000000        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(subsf3.o)
+ .data          0x20000000        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(fixsfsi.o)
+ .data          0x20000000        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(floatsisf.o)
+ .data          0x20000000        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(floatunsisf.o)
+ .data          0x20000000        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(adddf3.o)
+ .data          0x20000000        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(divdf3.o)
+ .data          0x20000000        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(eqdf2.o)
+ .data          0x20000000        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(gedf2.o)
+ .data          0x20000000        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(ledf2.o)
+ .data          0x20000000        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(muldf3.o)
+ .data          0x20000000        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(subdf3.o)
+ .data          0x20000000        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(fixdfsi.o)
+ .data          0x20000000        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(floatsidf.o)
+ .data          0x20000000        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(floatunsidf.o)
+ .data          0x20000000        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(extendsfdf2.o)
+ .data          0x20000000        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(truncdfsf2.o)
+ .data          0x20000000        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_clzsi2.o)
+ .data          0x20000000        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libc.a(libc_a-labs.o)
+ .data          0x20000000        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libc.a(libc_a-memset.o)
+ .data          0x20000000        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libc.a(libc_a-memcpy-stub.o)
+                0x20000000                        . = ALIGN (0x4)
+                0x20000000                        _edata = .
+
+.igot.plt       0x20000000        0x0 load address 0x0800d0f0
+ .igot.plt      0x20000000        0x0 firmware/boards/btt_skr_mini_e3_v3_0/startup.o
+
+.bss            0x20000000      0x64c load address 0x0800d0f0
+                0x20000000                        _sbss = .
+                0x20000000                        . = ALIGN (0x4)
+ *(.bss*)
+ .bss           0x20000000        0x0 firmware/boards/btt_skr_mini_e3_v3_0/startup.o
+ .bss           0x20000000        0x0 firmware/grbl/coolant_control.o
+ .bss           0x20000000        0x0 firmware/grbl/eeprom.o
+ .bss           0x20000000       0x84 firmware/grbl/gcode.o
+                0x20000000                gc_state
+                0x20000044                gc_block
+ .bss           0x20000084        0x0 firmware/grbl/limits.o
+ .bss           0x20000084       0x20 firmware/grbl/main.o
+                0x20000084                sys
+ .bss           0x200000a4        0x0 firmware/grbl/math_soft.o
+ .bss           0x200000a4        0x0 firmware/grbl/motion_control.o
+ .bss           0x200000a4        0x0 firmware/grbl/nuts_bolts.o
+ .bss           0x200000a4      0x338 firmware/grbl/planner.o
+ .bss           0x200003dc        0x0 firmware/grbl/print.o
+ .bss           0x200003dc        0x1 firmware/grbl/probe.o
+                0x200003dc                probe_invert_mask
+ *fill*         0x200003dd        0x3 
+ .bss           0x200003e0       0x50 firmware/grbl/protocol.o
+ .bss           0x20000430        0x0 firmware/grbl/report.o
+ .bss           0x20000430       0xc6 firmware/grbl/serial.o
+                0x20000430                serial_rx_buffer
+                0x200004b0                serial_rx_buffer_head
+                0x200004b1                serial_rx_buffer_tail
+                0x200004b4                serial_tx_buffer
+                0x200004f4                serial_tx_buffer_head
+                0x200004f5                serial_tx_buffer_tail
+ *fill*         0x200004f6        0x2 
+ .bss           0x200004f8       0x54 firmware/grbl/settings.o
+                0x200004f8                settings
+ .bss           0x2000054c        0x0 firmware/grbl/spindle_control.o
+ .bss           0x2000054c       0xfc firmware/grbl/stepper.o
+ .bss           0x20000648        0x3 firmware/grbl/system.o
+                0x20000648                sys_probe_state
+                0x20000649                sys_rt_exec_state
+                0x2000064a                sys_rt_exec_alarm
+ .bss           0x2000064b        0x0 firmware/boards/btt_skr_mini_e3_v3_0/clock.o
+ .bss           0x2000064b        0x0 firmware/boards/btt_skr_mini_e3_v3_0/coolant_control_hal.o
+ .bss           0x2000064b        0x0 firmware/boards/btt_skr_mini_e3_v3_0/eeprom_hal.o
+ .bss           0x2000064b        0x0 firmware/boards/btt_skr_mini_e3_v3_0/hal.o
+ .bss           0x2000064b        0x0 firmware/boards/btt_skr_mini_e3_v3_0/limits_hal.o
+ .bss           0x2000064b        0x0 firmware/boards/btt_skr_mini_e3_v3_0/probe_hal.o
+ .bss           0x2000064b        0x0 firmware/boards/btt_skr_mini_e3_v3_0/serial_hal.o
+ .bss           0x2000064b        0x0 firmware/boards/btt_skr_mini_e3_v3_0/spindle_control_hal.o
+ .bss           0x2000064b        0x0 firmware/boards/btt_skr_mini_e3_v3_0/stepper_hal.o
+ .bss           0x2000064b        0x0 firmware/boards/btt_skr_mini_e3_v3_0/timers.o
+ .bss           0x2000064b        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_udivsi3.o)
+ .bss           0x2000064b        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_dvmd_tls.o)
+ .bss           0x2000064b        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_arm_cmpdf2.o)
+ .bss           0x2000064b        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_arm_cmpsf2.o)
+ .bss           0x2000064b        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_fixunssfsi.o)
+ .bss           0x2000064b        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_fixunsdfsi.o)
+ .bss           0x2000064b        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(addsf3.o)
+ .bss           0x2000064b        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(divsf3.o)
+ .bss           0x2000064b        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(eqsf2.o)
+ .bss           0x2000064b        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(gesf2.o)
+ .bss           0x2000064b        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(lesf2.o)
+ .bss           0x2000064b        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(mulsf3.o)
+ .bss           0x2000064b        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(subsf3.o)
+ .bss           0x2000064b        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(fixsfsi.o)
+ .bss           0x2000064b        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(floatsisf.o)
+ .bss           0x2000064b        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(floatunsisf.o)
+ .bss           0x2000064b        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(adddf3.o)
+ .bss           0x2000064b        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(divdf3.o)
+ .bss           0x2000064b        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(eqdf2.o)
+ .bss           0x2000064b        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(gedf2.o)
+ .bss           0x2000064b        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(ledf2.o)
+ .bss           0x2000064b        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(muldf3.o)
+ .bss           0x2000064b        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(subdf3.o)
+ .bss           0x2000064b        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(fixdfsi.o)
+ .bss           0x2000064b        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(floatsidf.o)
+ .bss           0x2000064b        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(floatunsidf.o)
+ .bss           0x2000064b        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(extendsfdf2.o)
+ .bss           0x2000064b        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(truncdfsf2.o)
+ .bss           0x2000064b        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_clzsi2.o)
+ .bss           0x2000064b        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libc.a(libc_a-labs.o)
+ .bss           0x2000064b        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libc.a(libc_a-memset.o)
+ .bss           0x2000064b        0x0 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libc.a(libc_a-memcpy-stub.o)
+ *(COMMON)
+                0x2000064c                        . = ALIGN (0x4)
+ *fill*         0x2000064b        0x1 
+                0x2000064c                        _ebss = .
+LOAD firmware/boards/btt_skr_mini_e3_v3_0/startup.o
+LOAD firmware/grbl/coolant_control.o
+LOAD firmware/grbl/eeprom.o
+LOAD firmware/grbl/gcode.o
+LOAD firmware/grbl/limits.o
+LOAD firmware/grbl/main.o
+LOAD firmware/grbl/math_soft.o
+LOAD firmware/grbl/motion_control.o
+LOAD firmware/grbl/nuts_bolts.o
+LOAD firmware/grbl/planner.o
+LOAD firmware/grbl/print.o
+LOAD firmware/grbl/probe.o
+LOAD firmware/grbl/protocol.o
+LOAD firmware/grbl/report.o
+LOAD firmware/grbl/serial.o
+LOAD firmware/grbl/settings.o
+LOAD firmware/grbl/spindle_control.o
+LOAD firmware/grbl/stepper.o
+LOAD firmware/grbl/system.o
+LOAD firmware/boards/btt_skr_mini_e3_v3_0/clock.o
+LOAD firmware/boards/btt_skr_mini_e3_v3_0/coolant_control_hal.o
+LOAD firmware/boards/btt_skr_mini_e3_v3_0/eeprom_hal.o
+LOAD firmware/boards/btt_skr_mini_e3_v3_0/hal.o
+LOAD firmware/boards/btt_skr_mini_e3_v3_0/limits_hal.o
+LOAD firmware/boards/btt_skr_mini_e3_v3_0/probe_hal.o
+LOAD firmware/boards/btt_skr_mini_e3_v3_0/serial_hal.o
+LOAD firmware/boards/btt_skr_mini_e3_v3_0/spindle_control_hal.o
+LOAD firmware/boards/btt_skr_mini_e3_v3_0/stepper_hal.o
+LOAD firmware/boards/btt_skr_mini_e3_v3_0/timers.o
+START GROUP
+LOAD C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a
+LOAD C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libc.a
+END GROUP
+OUTPUT(firmware/grbl.elf elf32-littlearm)
+LOAD linker stubs
+
+.ARM.attributes
+                0x00000000       0x2e
+ .ARM.attributes
+                0x00000000       0x22 firmware/boards/btt_skr_mini_e3_v3_0/startup.o
+ .ARM.attributes
+                0x00000022       0x2c firmware/grbl/coolant_control.o
+ .ARM.attributes
+                0x0000004e       0x2c firmware/grbl/eeprom.o
+ .ARM.attributes
+                0x0000007a       0x2c firmware/grbl/gcode.o
+ .ARM.attributes
+                0x000000a6       0x2c firmware/grbl/limits.o
+ .ARM.attributes
+                0x000000d2       0x2c firmware/grbl/main.o
+ .ARM.attributes
+                0x000000fe       0x2c firmware/grbl/math_soft.o
+ .ARM.attributes
+                0x0000012a       0x2c firmware/grbl/motion_control.o
+ .ARM.attributes
+                0x00000156       0x2c firmware/grbl/nuts_bolts.o
+ .ARM.attributes
+                0x00000182       0x2c firmware/grbl/planner.o
+ .ARM.attributes
+                0x000001ae       0x2c firmware/grbl/print.o
+ .ARM.attributes
+                0x000001da       0x2c firmware/grbl/probe.o
+ .ARM.attributes
+                0x00000206       0x2c firmware/grbl/protocol.o
+ .ARM.attributes
+                0x00000232       0x2c firmware/grbl/report.o
+ .ARM.attributes
+                0x0000025e       0x2c firmware/grbl/serial.o
+ .ARM.attributes
+                0x0000028a       0x2c firmware/grbl/settings.o
+ .ARM.attributes
+                0x000002b6       0x2c firmware/grbl/spindle_control.o
+ .ARM.attributes
+                0x000002e2       0x2c firmware/grbl/stepper.o
+ .ARM.attributes
+                0x0000030e       0x2c firmware/grbl/system.o
+ .ARM.attributes
+                0x0000033a       0x2c firmware/boards/btt_skr_mini_e3_v3_0/clock.o
+ .ARM.attributes
+                0x00000366       0x2c firmware/boards/btt_skr_mini_e3_v3_0/coolant_control_hal.o
+ .ARM.attributes
+                0x00000392       0x2c firmware/boards/btt_skr_mini_e3_v3_0/eeprom_hal.o
+ .ARM.attributes
+                0x000003be       0x2c firmware/boards/btt_skr_mini_e3_v3_0/hal.o
+ .ARM.attributes
+                0x000003ea       0x2c firmware/boards/btt_skr_mini_e3_v3_0/limits_hal.o
+ .ARM.attributes
+                0x00000416       0x2c firmware/boards/btt_skr_mini_e3_v3_0/probe_hal.o
+ .ARM.attributes
+                0x00000442       0x2c firmware/boards/btt_skr_mini_e3_v3_0/serial_hal.o
+ .ARM.attributes
+                0x0000046e       0x2c firmware/boards/btt_skr_mini_e3_v3_0/spindle_control_hal.o
+ .ARM.attributes
+                0x0000049a       0x2c firmware/boards/btt_skr_mini_e3_v3_0/stepper_hal.o
+ .ARM.attributes
+                0x000004c6       0x2c firmware/boards/btt_skr_mini_e3_v3_0/timers.o
+ .ARM.attributes
+                0x000004f2       0x1e C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_udivsi3.o)
+ .ARM.attributes
+                0x00000510       0x1e C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_dvmd_tls.o)
+ .ARM.attributes
+                0x0000052e       0x1e C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_arm_cmpdf2.o)
+ .ARM.attributes
+                0x0000054c       0x1e C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_arm_cmpsf2.o)
+ .ARM.attributes
+                0x0000056a       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_fixunssfsi.o)
+ .ARM.attributes
+                0x00000596       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_fixunsdfsi.o)
+ .ARM.attributes
+                0x000005c2       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(addsf3.o)
+ .ARM.attributes
+                0x000005ee       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(divsf3.o)
+ .ARM.attributes
+                0x0000061a       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(eqsf2.o)
+ .ARM.attributes
+                0x00000646       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(gesf2.o)
+ .ARM.attributes
+                0x00000672       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(lesf2.o)
+ .ARM.attributes
+                0x0000069e       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(mulsf3.o)
+ .ARM.attributes
+                0x000006ca       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(subsf3.o)
+ .ARM.attributes
+                0x000006f6       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(fixsfsi.o)
+ .ARM.attributes
+                0x00000722       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(floatsisf.o)
+ .ARM.attributes
+                0x0000074e       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(floatunsisf.o)
+ .ARM.attributes
+                0x0000077a       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(adddf3.o)
+ .ARM.attributes
+                0x000007a6       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(divdf3.o)
+ .ARM.attributes
+                0x000007d2       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(eqdf2.o)
+ .ARM.attributes
+                0x000007fe       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(gedf2.o)
+ .ARM.attributes
+                0x0000082a       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(ledf2.o)
+ .ARM.attributes
+                0x00000856       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(muldf3.o)
+ .ARM.attributes
+                0x00000882       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(subdf3.o)
+ .ARM.attributes
+                0x000008ae       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(fixdfsi.o)
+ .ARM.attributes
+                0x000008da       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(floatsidf.o)
+ .ARM.attributes
+                0x00000906       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(floatunsidf.o)
+ .ARM.attributes
+                0x00000932       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(extendsfdf2.o)
+ .ARM.attributes
+                0x0000095e       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(truncdfsf2.o)
+ .ARM.attributes
+                0x0000098a       0x1e C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_clzsi2.o)
+ .ARM.attributes
+                0x000009a8       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libc.a(libc_a-labs.o)
+ .ARM.attributes
+                0x000009d4       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libc.a(libc_a-memset.o)
+ .ARM.attributes
+                0x00000a00       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libc.a(libc_a-memcpy-stub.o)
+
+.comment        0x00000000       0x45
+ .comment       0x00000000       0x45 firmware/grbl/coolant_control.o
+                                 0x46 (size before relaxing)
+ .comment       0x00000045       0x46 firmware/grbl/eeprom.o
+ .comment       0x00000045       0x46 firmware/grbl/gcode.o
+ .comment       0x00000045       0x46 firmware/grbl/limits.o
+ .comment       0x00000045       0x46 firmware/grbl/main.o
+ .comment       0x00000045       0x46 firmware/grbl/math_soft.o
+ .comment       0x00000045       0x46 firmware/grbl/motion_control.o
+ .comment       0x00000045       0x46 firmware/grbl/nuts_bolts.o
+ .comment       0x00000045       0x46 firmware/grbl/planner.o
+ .comment       0x00000045       0x46 firmware/grbl/print.o
+ .comment       0x00000045       0x46 firmware/grbl/probe.o
+ .comment       0x00000045       0x46 firmware/grbl/protocol.o
+ .comment       0x00000045       0x46 firmware/grbl/report.o
+ .comment       0x00000045       0x46 firmware/grbl/serial.o
+ .comment       0x00000045       0x46 firmware/grbl/settings.o
+ .comment       0x00000045       0x46 firmware/grbl/spindle_control.o
+ .comment       0x00000045       0x46 firmware/grbl/stepper.o
+ .comment       0x00000045       0x46 firmware/grbl/system.o
+ .comment       0x00000045       0x46 firmware/boards/btt_skr_mini_e3_v3_0/clock.o
+ .comment       0x00000045       0x46 firmware/boards/btt_skr_mini_e3_v3_0/coolant_control_hal.o
+ .comment       0x00000045       0x46 firmware/boards/btt_skr_mini_e3_v3_0/eeprom_hal.o
+ .comment       0x00000045       0x46 firmware/boards/btt_skr_mini_e3_v3_0/hal.o
+ .comment       0x00000045       0x46 firmware/boards/btt_skr_mini_e3_v3_0/limits_hal.o
+ .comment       0x00000045       0x46 firmware/boards/btt_skr_mini_e3_v3_0/probe_hal.o
+ .comment       0x00000045       0x46 firmware/boards/btt_skr_mini_e3_v3_0/serial_hal.o
+ .comment       0x00000045       0x46 firmware/boards/btt_skr_mini_e3_v3_0/spindle_control_hal.o
+ .comment       0x00000045       0x46 firmware/boards/btt_skr_mini_e3_v3_0/stepper_hal.o
+ .comment       0x00000045       0x46 firmware/boards/btt_skr_mini_e3_v3_0/timers.o
+
+.debug_line     0x00000000     0x577a
+ .debug_line    0x00000000       0x76 firmware/boards/btt_skr_mini_e3_v3_0/startup.o
+ .debug_line    0x00000076      0x111 firmware/grbl/coolant_control.o
+ .debug_line    0x00000187      0x139 firmware/grbl/eeprom.o
+ .debug_line    0x000002c0      0xd0c firmware/grbl/gcode.o
+ .debug_line    0x00000fcc      0x43e firmware/grbl/limits.o
+ .debug_line    0x0000140a      0x24c firmware/grbl/main.o
+ .debug_line    0x00001656      0x3cb firmware/grbl/math_soft.o
+ .debug_line    0x00001a21      0x526 firmware/grbl/motion_control.o
+ .debug_line    0x00001f47      0x1a7 firmware/grbl/nuts_bolts.o
+ .debug_line    0x000020ee      0x55e firmware/grbl/planner.o
+ .debug_line    0x0000264c      0x269 firmware/grbl/print.o
+ .debug_line    0x000028b5      0x195 firmware/grbl/probe.o
+ .debug_line    0x00002a4a      0x4af firmware/grbl/protocol.o
+ .debug_line    0x00002ef9      0x51b firmware/grbl/report.o
+ .debug_line    0x00003414      0x246 firmware/grbl/serial.o
+ .debug_line    0x0000365a      0x471 firmware/grbl/settings.o
+ .debug_line    0x00003acb      0x11c firmware/grbl/spindle_control.o
+ .debug_line    0x00003be7      0x875 firmware/grbl/stepper.o
+ .debug_line    0x0000445c      0x471 firmware/grbl/system.o
+ .debug_line    0x000048cd      0x181 firmware/boards/btt_skr_mini_e3_v3_0/clock.o
+ .debug_line    0x00004a4e      0x182 firmware/boards/btt_skr_mini_e3_v3_0/coolant_control_hal.o
+ .debug_line    0x00004bd0      0x29f firmware/boards/btt_skr_mini_e3_v3_0/eeprom_hal.o
+ .debug_line    0x00004e6f      0x125 firmware/boards/btt_skr_mini_e3_v3_0/hal.o
+ .debug_line    0x00004f94      0x1a8 firmware/boards/btt_skr_mini_e3_v3_0/limits_hal.o
+ .debug_line    0x0000513c       0xdd firmware/boards/btt_skr_mini_e3_v3_0/probe_hal.o
+ .debug_line    0x00005219      0x1ce firmware/boards/btt_skr_mini_e3_v3_0/serial_hal.o
+ .debug_line    0x000053e7      0x160 firmware/boards/btt_skr_mini_e3_v3_0/spindle_control_hal.o
+ .debug_line    0x00005547       0x66 firmware/boards/btt_skr_mini_e3_v3_0/stepper_hal.o
+ .debug_line    0x000055ad      0x1cd firmware/boards/btt_skr_mini_e3_v3_0/timers.o
+
+.debug_info     0x00000000     0x76a9
+ .debug_info    0x00000000       0x26 firmware/boards/btt_skr_mini_e3_v3_0/startup.o
+ .debug_info    0x00000026      0x1c3 firmware/grbl/coolant_control.o
+ .debug_info    0x000001e9      0x1cb firmware/grbl/eeprom.o
+ .debug_info    0x000003b4      0x7f2 firmware/grbl/gcode.o
+ .debug_info    0x00000ba6      0x562 firmware/grbl/limits.o
+ .debug_info    0x00001108      0x3ae firmware/grbl/main.o
+ .debug_info    0x000014b6      0x53a firmware/grbl/math_soft.o
+ .debug_info    0x000019f0      0x761 firmware/grbl/motion_control.o
+ .debug_info    0x00002151      0x1b7 firmware/grbl/nuts_bolts.o
+ .debug_info    0x00002308      0x6e4 firmware/grbl/planner.o
+ .debug_info    0x000029ec      0x3f8 firmware/grbl/print.o
+ .debug_info    0x00002de4      0x335 firmware/grbl/probe.o
+ .debug_info    0x00003119      0x596 firmware/grbl/protocol.o
+ .debug_info    0x000036af      0x70e firmware/grbl/report.o
+ .debug_info    0x00003dbd      0x2ed firmware/grbl/serial.o
+ .debug_info    0x000040aa      0x566 firmware/grbl/settings.o
+ .debug_info    0x00004610      0x1cd firmware/grbl/spindle_control.o
+ .debug_info    0x000047dd      0x939 firmware/grbl/stepper.o
+ .debug_info    0x00005116      0x5bf firmware/grbl/system.o
+ .debug_info    0x000056d5      0x323 firmware/boards/btt_skr_mini_e3_v3_0/clock.o
+ .debug_info    0x000059f8      0x1d0 firmware/boards/btt_skr_mini_e3_v3_0/coolant_control_hal.o
+ .debug_info    0x00005bc8      0x4f6 firmware/boards/btt_skr_mini_e3_v3_0/eeprom_hal.o
+ .debug_info    0x000060be      0x209 firmware/boards/btt_skr_mini_e3_v3_0/hal.o
+ .debug_info    0x000062c7      0x5c5 firmware/boards/btt_skr_mini_e3_v3_0/limits_hal.o
+ .debug_info    0x0000688c       0xa1 firmware/boards/btt_skr_mini_e3_v3_0/probe_hal.o
+ .debug_info    0x0000692d      0x520 firmware/boards/btt_skr_mini_e3_v3_0/serial_hal.o
+ .debug_info    0x00006e4d      0x1df firmware/boards/btt_skr_mini_e3_v3_0/spindle_control_hal.o
+ .debug_info    0x0000702c       0x47 firmware/boards/btt_skr_mini_e3_v3_0/stepper_hal.o
+ .debug_info    0x00007073      0x636 firmware/boards/btt_skr_mini_e3_v3_0/timers.o
+
+.debug_abbrev   0x00000000     0x28ed
+ .debug_abbrev  0x00000000       0x14 firmware/boards/btt_skr_mini_e3_v3_0/startup.o
+ .debug_abbrev  0x00000014       0xfd firmware/grbl/coolant_control.o
+ .debug_abbrev  0x00000111       0xf2 firmware/grbl/eeprom.o
+ .debug_abbrev  0x00000203      0x21d firmware/grbl/gcode.o
+ .debug_abbrev  0x00000420      0x227 firmware/grbl/limits.o
+ .debug_abbrev  0x00000647      0x12e firmware/grbl/main.o
+ .debug_abbrev  0x00000775       0xe3 firmware/grbl/math_soft.o
+ .debug_abbrev  0x00000858      0x217 firmware/grbl/motion_control.o
+ .debug_abbrev  0x00000a6f       0xc9 firmware/grbl/nuts_bolts.o
+ .debug_abbrev  0x00000b38      0x272 firmware/grbl/planner.o
+ .debug_abbrev  0x00000daa      0x133 firmware/grbl/print.o
+ .debug_abbrev  0x00000edd      0x172 firmware/grbl/probe.o
+ .debug_abbrev  0x0000104f      0x1b7 firmware/grbl/protocol.o
+ .debug_abbrev  0x00001206      0x216 firmware/grbl/report.o
+ .debug_abbrev  0x0000141c      0x173 firmware/grbl/serial.o
+ .debug_abbrev  0x0000158f      0x214 firmware/grbl/settings.o
+ .debug_abbrev  0x000017a3       0xf3 firmware/grbl/spindle_control.o
+ .debug_abbrev  0x00001896      0x21b firmware/grbl/stepper.o
+ .debug_abbrev  0x00001ab1      0x22f firmware/grbl/system.o
+ .debug_abbrev  0x00001ce0       0xe1 firmware/boards/btt_skr_mini_e3_v3_0/clock.o
+ .debug_abbrev  0x00001dc1      0x15c firmware/boards/btt_skr_mini_e3_v3_0/coolant_control_hal.o
+ .debug_abbrev  0x00001f1d      0x1dc firmware/boards/btt_skr_mini_e3_v3_0/eeprom_hal.o
+ .debug_abbrev  0x000020f9       0xbd firmware/boards/btt_skr_mini_e3_v3_0/hal.o
+ .debug_abbrev  0x000021b6      0x182 firmware/boards/btt_skr_mini_e3_v3_0/limits_hal.o
+ .debug_abbrev  0x00002338       0x69 firmware/boards/btt_skr_mini_e3_v3_0/probe_hal.o
+ .debug_abbrev  0x000023a1      0x1d9 firmware/boards/btt_skr_mini_e3_v3_0/serial_hal.o
+ .debug_abbrev  0x0000257a      0x16d firmware/boards/btt_skr_mini_e3_v3_0/spindle_control_hal.o
+ .debug_abbrev  0x000026e7       0x2d firmware/boards/btt_skr_mini_e3_v3_0/stepper_hal.o
+ .debug_abbrev  0x00002714      0x1d9 firmware/boards/btt_skr_mini_e3_v3_0/timers.o
+
+.debug_aranges  0x00000000      0x3a0
+ .debug_aranges
+                0x00000000       0x20 firmware/boards/btt_skr_mini_e3_v3_0/startup.o
+ .debug_aranges
+                0x00000020       0x20 firmware/grbl/coolant_control.o
+ .debug_aranges
+                0x00000040       0x20 firmware/grbl/eeprom.o
+ .debug_aranges
+                0x00000060       0x20 firmware/grbl/gcode.o
+ .debug_aranges
+                0x00000080       0x20 firmware/grbl/limits.o
+ .debug_aranges
+                0x000000a0       0x20 firmware/grbl/main.o
+ .debug_aranges
+                0x000000c0       0x20 firmware/grbl/math_soft.o
+ .debug_aranges
+                0x000000e0       0x20 firmware/grbl/motion_control.o
+ .debug_aranges
+                0x00000100       0x20 firmware/grbl/nuts_bolts.o
+ .debug_aranges
+                0x00000120       0x20 firmware/grbl/planner.o
+ .debug_aranges
+                0x00000140       0x20 firmware/grbl/print.o
+ .debug_aranges
+                0x00000160       0x20 firmware/grbl/probe.o
+ .debug_aranges
+                0x00000180       0x20 firmware/grbl/protocol.o
+ .debug_aranges
+                0x000001a0       0x20 firmware/grbl/report.o
+ .debug_aranges
+                0x000001c0       0x20 firmware/grbl/serial.o
+ .debug_aranges
+                0x000001e0       0x20 firmware/grbl/settings.o
+ .debug_aranges
+                0x00000200       0x20 firmware/grbl/spindle_control.o
+ .debug_aranges
+                0x00000220       0x20 firmware/grbl/stepper.o
+ .debug_aranges
+                0x00000240       0x20 firmware/grbl/system.o
+ .debug_aranges
+                0x00000260       0x20 firmware/boards/btt_skr_mini_e3_v3_0/clock.o
+ .debug_aranges
+                0x00000280       0x20 firmware/boards/btt_skr_mini_e3_v3_0/coolant_control_hal.o
+ .debug_aranges
+                0x000002a0       0x20 firmware/boards/btt_skr_mini_e3_v3_0/eeprom_hal.o
+ .debug_aranges
+                0x000002c0       0x20 firmware/boards/btt_skr_mini_e3_v3_0/hal.o
+ .debug_aranges
+                0x000002e0       0x20 firmware/boards/btt_skr_mini_e3_v3_0/limits_hal.o
+ .debug_aranges
+                0x00000300       0x20 firmware/boards/btt_skr_mini_e3_v3_0/probe_hal.o
+ .debug_aranges
+                0x00000320       0x20 firmware/boards/btt_skr_mini_e3_v3_0/serial_hal.o
+ .debug_aranges
+                0x00000340       0x20 firmware/boards/btt_skr_mini_e3_v3_0/spindle_control_hal.o
+ .debug_aranges
+                0x00000360       0x20 firmware/boards/btt_skr_mini_e3_v3_0/stepper_hal.o
+ .debug_aranges
+                0x00000380       0x20 firmware/boards/btt_skr_mini_e3_v3_0/timers.o
+
+.debug_str      0x00000000     0x1ecb
+ .debug_str     0x00000000     0x1ecb firmware/boards/btt_skr_mini_e3_v3_0/startup.o
+                                 0x61 (size before relaxing)
+ .debug_str     0x00001ecb      0x24c firmware/grbl/coolant_control.o
+ .debug_str     0x00001ecb      0x20f firmware/grbl/eeprom.o
+ .debug_str     0x00001ecb      0x58d firmware/grbl/gcode.o
+ .debug_str     0x00001ecb      0x508 firmware/grbl/limits.o
+ .debug_str     0x00001ecb      0x40a firmware/grbl/main.o
+ .debug_str     0x00001ecb      0x166 firmware/grbl/math_soft.o
+ .debug_str     0x00001ecb      0x65b firmware/grbl/motion_control.o
+ .debug_str     0x00001ecb      0x1c6 firmware/grbl/nuts_bolts.o
+ .debug_str     0x00001ecb      0x61c firmware/grbl/planner.o
+ .debug_str     0x00001ecb      0x36c firmware/grbl/print.o
+ .debug_str     0x00001ecb      0x396 firmware/grbl/probe.o
+ .debug_str     0x00001ecb      0x5a4 firmware/grbl/protocol.o
+ .debug_str     0x00001ecb      0x67d firmware/grbl/report.o
+ .debug_str     0x00001ecb      0x31c firmware/grbl/serial.o
+ .debug_str     0x00001ecb      0x4f2 firmware/grbl/settings.o
+ .debug_str     0x00001ecb      0x231 firmware/grbl/spindle_control.o
+ .debug_str     0x00001ecb      0x85f firmware/grbl/stepper.o
+ .debug_str     0x00001ecb      0x59e firmware/grbl/system.o
+ .debug_str     0x00001ecb      0x2c4 firmware/boards/btt_skr_mini_e3_v3_0/clock.o
+ .debug_str     0x00001ecb      0x1fc firmware/boards/btt_skr_mini_e3_v3_0/coolant_control_hal.o
+ .debug_str     0x00001ecb      0x35d firmware/boards/btt_skr_mini_e3_v3_0/eeprom_hal.o
+ .debug_str     0x00001ecb      0x25a firmware/boards/btt_skr_mini_e3_v3_0/hal.o
+ .debug_str     0x00001ecb      0x39b firmware/boards/btt_skr_mini_e3_v3_0/limits_hal.o
+ .debug_str     0x00001ecb      0x16f firmware/boards/btt_skr_mini_e3_v3_0/probe_hal.o
+ .debug_str     0x00001ecb      0x377 firmware/boards/btt_skr_mini_e3_v3_0/serial_hal.o
+ .debug_str     0x00001ecb      0x1fd firmware/boards/btt_skr_mini_e3_v3_0/spindle_control_hal.o
+ .debug_str     0x00001ecb       0xe7 firmware/boards/btt_skr_mini_e3_v3_0/stepper_hal.o
+ .debug_str     0x00001ecb      0x3de firmware/boards/btt_skr_mini_e3_v3_0/timers.o
+
+.debug_frame    0x00000000     0x2024
+ .debug_frame   0x00000000       0x88 firmware/grbl/coolant_control.o
+ .debug_frame   0x00000088       0x94 firmware/grbl/eeprom.o
+ .debug_frame   0x0000011c      0x104 firmware/grbl/gcode.o
+ .debug_frame   0x00000220      0x138 firmware/grbl/limits.o
+ .debug_frame   0x00000358       0x64 firmware/grbl/main.o
+ .debug_frame   0x000003bc      0x300 firmware/grbl/math_soft.o
+ .debug_frame   0x000006bc      0x140 firmware/grbl/motion_control.o
+ .debug_frame   0x000007fc       0x50 firmware/grbl/nuts_bolts.o
+ .debug_frame   0x0000084c      0x184 firmware/grbl/planner.o
+ .debug_frame   0x000009d0      0x178 firmware/grbl/print.o
+ .debug_frame   0x00000b48       0x84 firmware/grbl/probe.o
+ .debug_frame   0x00000bcc      0x118 firmware/grbl/protocol.o
+ .debug_frame   0x00000ce4      0x1ac firmware/grbl/report.o
+ .debug_frame   0x00000e90      0x178 firmware/grbl/serial.o
+ .debug_frame   0x00001008      0x1c8 firmware/grbl/settings.o
+ .debug_frame   0x000011d0       0x88 firmware/grbl/spindle_control.o
+ .debug_frame   0x00001258      0x190 firmware/grbl/stepper.o
+ .debug_frame   0x000013e8       0xf0 firmware/grbl/system.o
+ .debug_frame   0x000014d8       0x2c firmware/boards/btt_skr_mini_e3_v3_0/clock.o
+ .debug_frame   0x00001504       0x68 firmware/boards/btt_skr_mini_e3_v3_0/coolant_control_hal.o
+ .debug_frame   0x0000156c      0x164 firmware/boards/btt_skr_mini_e3_v3_0/eeprom_hal.o
+ .debug_frame   0x000016d0       0x64 firmware/boards/btt_skr_mini_e3_v3_0/hal.o
+ .debug_frame   0x00001734       0x80 firmware/boards/btt_skr_mini_e3_v3_0/limits_hal.o
+ .debug_frame   0x000017b4       0x48 firmware/boards/btt_skr_mini_e3_v3_0/probe_hal.o
+ .debug_frame   0x000017fc       0xa4 firmware/boards/btt_skr_mini_e3_v3_0/serial_hal.o
+ .debug_frame   0x000018a0       0x68 firmware/boards/btt_skr_mini_e3_v3_0/spindle_control_hal.o
+ .debug_frame   0x00001908       0x48 firmware/boards/btt_skr_mini_e3_v3_0/stepper_hal.o
+ .debug_frame   0x00001950      0x184 firmware/boards/btt_skr_mini_e3_v3_0/timers.o
+ .debug_frame   0x00001ad4       0x20 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_udivsi3.o)
+ .debug_frame   0x00001af4       0x28 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_fixunssfsi.o)
+ .debug_frame   0x00001b1c       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_fixunsdfsi.o)
+ .debug_frame   0x00001b48       0x38 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(addsf3.o)
+ .debug_frame   0x00001b80       0x38 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(divsf3.o)
+ .debug_frame   0x00001bb8       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(eqsf2.o)
+ .debug_frame   0x00001be4       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(gesf2.o)
+ .debug_frame   0x00001c10       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(lesf2.o)
+ .debug_frame   0x00001c3c       0x38 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(mulsf3.o)
+ .debug_frame   0x00001c74       0x38 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(subsf3.o)
+ .debug_frame   0x00001cac       0x20 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(fixsfsi.o)
+ .debug_frame   0x00001ccc       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(floatsisf.o)
+ .debug_frame   0x00001cf8       0x28 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(floatunsisf.o)
+ .debug_frame   0x00001d20       0x3c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(adddf3.o)
+ .debug_frame   0x00001d5c       0x3c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(divdf3.o)
+ .debug_frame   0x00001d98       0x38 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(eqdf2.o)
+ .debug_frame   0x00001dd0       0x3c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(gedf2.o)
+ .debug_frame   0x00001e0c       0x3c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(ledf2.o)
+ .debug_frame   0x00001e48       0x3c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(muldf3.o)
+ .debug_frame   0x00001e84       0x3c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(subdf3.o)
+ .debug_frame   0x00001ec0       0x30 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(fixdfsi.o)
+ .debug_frame   0x00001ef0       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(floatsidf.o)
+ .debug_frame   0x00001f1c       0x28 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(floatunsidf.o)
+ .debug_frame   0x00001f44       0x2c C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(extendsfdf2.o)
+ .debug_frame   0x00001f70       0x30 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(truncdfsf2.o)
+ .debug_frame   0x00001fa0       0x20 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libc.a(libc_a-labs.o)
+ .debug_frame   0x00001fc0       0x30 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libc.a(libc_a-memset.o)
+ .debug_frame   0x00001ff0       0x34 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libc.a(libc_a-memcpy-stub.o)
+
+.debug_rnglists
+                0x00000000       0x6c
+ .debug_rnglists
+                0x00000000       0x1c firmware/grbl/gcode.o
+ .debug_rnglists
+                0x0000001c       0x17 firmware/grbl/motion_control.o
+ .debug_rnglists
+                0x00000033       0x17 firmware/grbl/settings.o
+ .debug_rnglists
+                0x0000004a       0x22 firmware/grbl/stepper.o
+
+.debug_line_str
+                0x00000000       0xd9
+ .debug_line_str
+                0x00000000       0xd9 C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_udivsi3.o)
+                                 0xcd (size before relaxing)
+ .debug_line_str
+                0x000000d9       0xcd C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_dvmd_tls.o)
+ .debug_line_str
+                0x000000d9       0xcd C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_arm_cmpdf2.o)
+ .debug_line_str
+                0x000000d9       0xcd C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_arm_cmpsf2.o)
+ .debug_line_str
+                0x000000d9       0xcd C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/../lib/gcc/arm-none-eabi/14.2.1/thumb/v6-m/nofp\libgcc.a(_clzsi2.o)

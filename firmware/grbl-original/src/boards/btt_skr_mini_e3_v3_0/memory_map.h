@@ -22,6 +22,7 @@
 #define NVIC_BASE (SCS_BASE + 0x0100UL)           /* NVIC Base Address */
 #define SCB_BASE (SCS_BASE + 0x0D00UL)            /* System Control Block Base Address */
 #define SYSCFG_BASE (0x40000000UL + 0x00010000UL) /* System Configuration Controller */
+#define EXTI_BASE (0x40000000UL + 0x00001800UL)
 
 /***************************************************************************************************
  * AHB - Advanced High-performance Bus
@@ -85,7 +86,8 @@
 /*************************************************************************************************************************************************
  * NVIC - Nested vectored interrupt controller
  *************************************************************************************************************************************************/
-typedef struct {
+typedef struct
+{
   volatile uint32_t ISER[16U]; /* Offset: 0x000 (R/W)  Interrupt Set Enable Register */
   uint32_t RESERVED0[16U];
   volatile uint32_t ICER[16U]; /* Offset: 0x080 (R/W)  Interrupt Clear Enable Register */
@@ -106,57 +108,33 @@ typedef struct {
 /***************************************************************************************************
  * RCC - Reset and Clock Control
  ***************************************************************************************************/
-typedef struct {
-  volatile uint32_t
-      CR; /*!< RCC Clock Sources Control Register,                                     Address offset: 0x00 */
-  volatile uint32_t
-      ICSCR; /*!< RCC Internal Clock Sources Calibration Register,                        Address offset: 0x04 */
-  volatile uint32_t
-      CFGR; /*!< RCC Regulated Domain Clocks Configuration Register,                     Address offset: 0x08 */
-  volatile uint32_t
-      PLLCFGR; /*!< RCC System PLL configuration Register,                                  Address offset: 0x0C */
-  volatile uint32_t
-      RESERVED0; /*!< Reserved,                                                               Address offset: 0x10 */
-  volatile uint32_t
-      CRRCR; /*!< RCC Clock Configuration Register,                                       Address offset: 0x14 */
-  volatile uint32_t
-      CIER; /*!< RCC Clock Interrupt Enable Register,                                    Address offset: 0x18 */
-  volatile uint32_t
-      CIFR; /*!< RCC Clock Interrupt Flag Register,                                      Address offset: 0x1C */
-  volatile uint32_t
-      CICR; /*!< RCC Clock Interrupt Clear Register,                                     Address offset: 0x20 */
-  volatile uint32_t
-      IOPRSTR; /*!< RCC IO port reset register,                                             Address offset: 0x24 */
-  volatile uint32_t
-      AHBRSTR; /*!< RCC AHB peripherals reset register,                                     Address offset: 0x28 */
-  volatile uint32_t
-      APBRSTR1; /*!< RCC APB peripherals reset register 1,                                   Address offset: 0x2C */
-  volatile uint32_t
-      APBRSTR2; /*!< RCC APB peripherals reset register 2,                                   Address offset: 0x30 */
-  volatile uint32_t
-      IOPENR; /*!< RCC IO port enable register,                                            Address offset: 0x34 */
-  volatile uint32_t
-      AHBENR; /*!< RCC AHB peripherals clock enable register,                              Address offset: 0x38 */
-  volatile uint32_t
-      APBENR1; /*!< RCC APB peripherals clock enable register1,                             Address offset: 0x3C */
-  volatile uint32_t
-      APBENR2; /*!< RCC APB peripherals clock enable register2,                             Address offset: 0x40 */
-  volatile uint32_t
-      IOPSMENR; /*!< RCC IO port clocks enable in sleep mode register,                       Address offset: 0x44 */
-  volatile uint32_t
-      AHBSMENR; /*!< RCC AHB peripheral clocks enable in sleep mode register,                Address offset: 0x48 */
-  volatile uint32_t
-      APBSMENR1; /*!< RCC APB peripheral clocks enable in sleep mode register1,               Address offset: 0x4C */
-  volatile uint32_t
-      APBSMENR2; /*!< RCC APB peripheral clocks enable in sleep mode register2,               Address offset: 0x50 */
-  volatile uint32_t
-      CCIPR; /*!< RCC Peripherals Independent Clocks Configuration Register,              Address offset: 0x54 */
-  volatile uint32_t
-      CCIPR2; /*!< RCC Peripherals Independent Clocks Configuration Register2,             Address offset: 0x58 */
-  volatile uint32_t
-      BDCR; /*!< RCC Backup Domain Control Register,                                     Address offset: 0x5C */
-  volatile uint32_t
-      CSR; /*!< RCC Unregulated Domain Clock Control and Status Register,               Address offset: 0x60 */
+typedef struct
+{
+  volatile uint32_t CR;        /*!< RCC Clock Sources Control Register,                                     Address offset: 0x00 */
+  volatile uint32_t ICSCR;     /*!< RCC Internal Clock Sources Calibration Register,                        Address offset: 0x04 */
+  volatile uint32_t CFGR;      /*!< RCC Regulated Domain Clocks Configuration Register,                     Address offset: 0x08 */
+  volatile uint32_t PLLCFGR;   /*!< RCC System PLL configuration Register,                                  Address offset: 0x0C */
+  volatile uint32_t RESERVED0; /*!< Reserved,                                                               Address offset: 0x10 */
+  volatile uint32_t CRRCR;     /*!< RCC Clock Configuration Register,                                       Address offset: 0x14 */
+  volatile uint32_t CIER;      /*!< RCC Clock Interrupt Enable Register,                                    Address offset: 0x18 */
+  volatile uint32_t CIFR;      /*!< RCC Clock Interrupt Flag Register,                                      Address offset: 0x1C */
+  volatile uint32_t CICR;      /*!< RCC Clock Interrupt Clear Register,                                     Address offset: 0x20 */
+  volatile uint32_t IOPRSTR;   /*!< RCC IO port reset register,                                             Address offset: 0x24 */
+  volatile uint32_t AHBRSTR;   /*!< RCC AHB peripherals reset register,                                     Address offset: 0x28 */
+  volatile uint32_t APBRSTR1;  /*!< RCC APB peripherals reset register 1,                                   Address offset: 0x2C */
+  volatile uint32_t APBRSTR2;  /*!< RCC APB peripherals reset register 2,                                   Address offset: 0x30 */
+  volatile uint32_t IOPENR;    /*!< RCC IO port enable register,                                            Address offset: 0x34 */
+  volatile uint32_t AHBENR;    /*!< RCC AHB peripherals clock enable register,                              Address offset: 0x38 */
+  volatile uint32_t APBENR1;   /*!< RCC APB peripherals clock enable register1,                             Address offset: 0x3C */
+  volatile uint32_t APBENR2;   /*!< RCC APB peripherals clock enable register2,                             Address offset: 0x40 */
+  volatile uint32_t IOPSMENR;  /*!< RCC IO port clocks enable in sleep mode register,                       Address offset: 0x44 */
+  volatile uint32_t AHBSMENR;  /*!< RCC AHB peripheral clocks enable in sleep mode register,                Address offset: 0x48 */
+  volatile uint32_t APBSMENR1; /*!< RCC APB peripheral clocks enable in sleep mode register1,               Address offset: 0x4C */
+  volatile uint32_t APBSMENR2; /*!< RCC APB peripheral clocks enable in sleep mode register2,               Address offset: 0x50 */
+  volatile uint32_t CCIPR;     /*!< RCC Peripherals Independent Clocks Configuration Register,              Address offset: 0x54 */
+  volatile uint32_t CCIPR2;    /*!< RCC Peripherals Independent Clocks Configuration Register2,             Address offset: 0x58 */
+  volatile uint32_t BDCR;      /*!< RCC Backup Domain Control Register,                                     Address offset: 0x5C */
+  volatile uint32_t CSR;       /*!< RCC Unregulated Domain Clock Control and Status Register,               Address offset: 0x60 */
 } RCC_TypeDef;
 
 #define RCC ((RCC_TypeDef *)RCC_BASE)
@@ -164,7 +142,8 @@ typedef struct {
 /***************************************************************************************************
  * SYSCFG - System configuration controller
  ***************************************************************************************************/
-typedef struct {
+typedef struct
+{
   volatile uint32_t CFGR1;          /*!< SYSCFG configuration register 1,                   Address offset: 0x00 */
   uint32_t RESERVED0[5];            /*!< Reserved,                                                   0x04 --0x14 */
   volatile uint32_t CFGR2;          /*!< SYSCFG configuration register 2,                   Address offset: 0x18 */
@@ -177,7 +156,8 @@ typedef struct {
 /***************************************************************************************************
  * EXTI - Asynch Interrupt/Event Controller
  ***************************************************************************************************/
-typedef struct {
+typedef struct
+{
   volatile uint32_t RTSR1;     /*!< EXTI Rising Trigger Selection Register 1,        Address offset:   0x00 */
   volatile uint32_t FTSR1;     /*!< EXTI Falling Trigger Selection Register 1,       Address offset:   0x04 */
   volatile uint32_t SWIER1;    /*!< EXTI Software Interrupt event Register 1,        Address offset:   0x08 */
@@ -204,7 +184,8 @@ typedef struct {
 /***************************************************************************************************
  * USART - Universal Synchronous/Asynchronous Receiver Transmitter
  ***************************************************************************************************/
-typedef struct {
+typedef struct
+{
   volatile uint32_t CR1;   /*!< USART Control register 1,                 Address offset: 0x00  */
   volatile uint32_t CR2;   /*!< USART Control register 2,                 Address offset: 0x04  */
   volatile uint32_t CR3;   /*!< USART Control register 3,                 Address offset: 0x08  */
@@ -233,7 +214,8 @@ typedef struct {
  * I2C - Inter-integrated Circuit Interface
  ***************************************************************************************************/
 
-typedef struct {
+typedef struct
+{
   volatile uint32_t CR1;      /*!< I2C Control register 1,            Address offset: 0x00 */
   volatile uint32_t CR2;      /*!< I2C Control register 2,            Address offset: 0x04 */
   volatile uint32_t OAR1;     /*!< I2C Own address 1 register,        Address offset: 0x08 */
@@ -254,7 +236,8 @@ typedef struct {
 /***************************************************************************************************
  * GPIO - common structure for multiple GPIOs
  ***************************************************************************************************/
-typedef struct {
+typedef struct
+{
   volatile uint32_t MODER;   /* GPIO port mode register,               Address offset: 0x00      */
   volatile uint32_t OTYPER;  /* GPIO port output type register,        Address offset: 0x04      */
   volatile uint32_t OSPEEDR; /* GPIO port output speed register,       Address offset: 0x08      */
@@ -266,7 +249,8 @@ typedef struct {
   union {
     volatile uint32_t AFR[2];  // AFR[0] = AFRL, AFR[1] = AFRH
 
-    struct {
+    struct
+    {
       volatile uint32_t AFRL;  // Offset 0x20
       volatile uint32_t AFRH;  // Offset 0x24
     };
@@ -281,7 +265,8 @@ typedef struct {
 #define GPIOE ((GPIO_TypeDef *)GPIOE_BASE)
 #define GPIOF ((GPIO_TypeDef *)GPIOF_BASE)
 
-typedef struct {
+typedef struct
+{
   volatile uint32_t ACR;       /*!< FLASH Access Control register,                     Address offset: 0x00 */
   uint32_t RESERVED1;          /*!< Reserved1,                                         Address offset: 0x04 */
   volatile uint32_t KEYR;      /*!< FLASH Key register,                                Address offset: 0x08 */
@@ -314,7 +299,8 @@ typedef struct {
  * PWR - Power registers
  ***************************************************************************************************/
 
-typedef struct {
+typedef struct
+{
   volatile uint32_t CR1;   /*!< PWR Power Control Register 1,                     Address offset: 0x00 */
   volatile uint32_t CR2;   /*!< PWR Power Control Register 2,                     Address offset: 0x04 */
   volatile uint32_t CR3;   /*!< PWR Power Control Register 3,                     Address offset: 0x08 */
@@ -343,7 +329,8 @@ typedef struct {
  * TIM - Timer registers
  ***************************************************************************************************/
 
-typedef struct {
+typedef struct
+{
   volatile uint32_t CR1;   /*!< TIM control register 1,                   Address offset: 0x00 */
   volatile uint32_t CR2;   /*!< TIM control register 2,                   Address offset: 0x04 */
   volatile uint32_t SMCR;  /*!< TIM slave mode control register,          Address offset: 0x08 */

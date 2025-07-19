@@ -7,6 +7,7 @@
 .global       TIM6_DAC_IRQHandler
 .global       TIM7_IRQHandler
 .global       TIM14_IRQHandler
+.global       USART2_IRQHandler
 .global       USART3_4_LPUART1_IRQHandler
 .global       Default_Handler
 
@@ -95,7 +96,7 @@ g_pfnVectors:
 .word         Default_Handler               // IRQ25
 .word         Default_Handler               // IRQ26
 .word         Default_Handler               // IRQ27
-.word         Default_Handler               // IRQ28
+.word         USART2_IRQHandler             // IRQ28
 .word         USART3_4_LPUART1_IRQHandler   // IRQ29
 .word         Default_Handler               // IRQ30
 .word         Default_Handler               // IRQ31

@@ -1,21 +1,31 @@
+#include "../../grbl/hal.h"
+
 #include <stdint.h>
 
+#include "clock.h"
+#include "eeprom_hal.h"
 #include "irq.h"
+#include "memory_map.h"
+#include "register_bits.h"
 
-static inline void bit_true_atomic(volatile uint8_t* addr, uint32_t mask) {
-  disable_irq();  // Disable interrupts
-  *addr |= mask;  // Set the bit(s)
-  enable_irq();   // Re-enable interrupts
+void init_gpio() {
+  // Enable GPIO ports
+  RCC->IOPENR |= IOPENR_PORTA_ENABLE;  // Enable PORTA
+  RCC->IOPENR |= IOPENR_PORTB_ENABLE;  // Enable PORTB
+  RCC->IOPENR |= IOPENR_PORTC_ENABLE;  // Enable PORTC
+  RCC->IOPENR |= IOPENR_PORTD_ENABLE;  // Enable PORTD
 }
 
-static inline void bit_false_atomic(volatile uint8_t* x, uint32_t mask) {
-  disable_irq();    // Disable interrupts
-  (*x) &= ~(mask);  // Clear the bit(s)
-  enable_irq();     // Re-enable interrupts
+extern void i2c1_master_init();
+
+void board_init_hal() {
+  init_clock();
+
+  init_gpio();
+
+  init_eeprom();
+  i2c1_master_init();
 }
 
-static inline void bit_toggle_atomic(volatile uint8_t* x, uint32_t mask) {
-  disable_irq();   // Disable interrupts
-  (*x) ^= (mask);  // Toggle the bit(s)
-  enable_irq();    // Re-enable interrupts
+void system_init_hal() {
 }

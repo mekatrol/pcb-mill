@@ -1,4 +1,6 @@
 # Project configuration
+MCU = cortex-m0plus
+CHIP = STM32G0B1
 BOARD_NAME := btt_skr_mini_e3_v3_0
 DRIVER_NAMES := 
 
@@ -14,10 +16,6 @@ else
   RM     = rm -rf
   SEP    = /
 endif
-
-# CPU 
-MCU = cortex-m0plus
-CHIP = STM32G0B1
 
 # Toolchain
 CC      := arm-none-eabi-gcc
@@ -43,16 +41,16 @@ BOARD_DIR := $(SRC_DIR)/boards/$(BOARD_NAME)
 DRIVER_DIRS := $(foreach name,$(DRIVER_NAMES),$(SRC_DIR)/drivers/$(name))
 
 # Compiler flags
-CFLAGS := -mcpu=$(MCU) -mthumb -g -O0 -ffreestanding -nostdlib -Wall # -Wno-unused-variable
+CFLAGS := -mcpu=$(MCU) -mthumb -g -O0 -ffreestanding -nostdlib -Wall -Werror # -Wno-unused-variable
 
 # Assembler flags
 ASFLAGS := -mcpu=$(MCU) -mthumb -g
 
-# Linker flags
-LDFLAGS := -mcpu=$(MCU) -mthumb -nostartfiles -Wl,-Map=$(OUT_MAP) -T $(LD_SCRIPT)
-
 # Linker script
 LD_SCRIPT := $(BOARD_DIR)$(SEP)linker.ld
+
+# Linker flags
+LDFLAGS := -mcpu=$(MCU) -mthumb -nostartfiles -Wl,-Map=$(OUT_MAP),--fatal-warnings,-T$(LD_SCRIPT)
 
 CFLAGS += -I$(BOARD_DIR)
 
