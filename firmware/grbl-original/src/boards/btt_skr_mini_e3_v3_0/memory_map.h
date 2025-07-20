@@ -88,22 +88,36 @@
  *************************************************************************************************************************************************/
 typedef struct
 {
-  volatile uint32_t ISER[16U]; /* Offset: 0x000 (R/W)  Interrupt Set Enable Register */
-  uint32_t RESERVED0[16U];
-  volatile uint32_t ICER[16U]; /* Offset: 0x080 (R/W)  Interrupt Clear Enable Register */
-  uint32_t RSERVED1[16U];
-  volatile uint32_t ISPR[16U]; /* Offset: 0x100 (R/W)  Interrupt Set Pending Register */
-  uint32_t RESERVED2[16U];
-  volatile uint32_t ICPR[16U]; /* Offset: 0x180 (R/W)  Interrupt Clear Pending Register */
-  uint32_t RESERVED3[16U];
-  volatile uint32_t IABR[16U]; /* Offset: 0x200 (R/W)  Interrupt Active bit Register */
-  uint32_t RESERVED4[16U];
-  volatile uint32_t ITNS[16U]; /* Offset: 0x280 (R/W)  Interrupt Non-Secure State Register */
-  uint32_t RESERVED5[16U];
-  volatile uint32_t IPR[124U]; /* Offset: 0x300 (R/W)  Interrupt Priority Register */
+  volatile uint32_t ISER[1U]; /*!< Offset: 0x000 (R/W)  Interrupt Set Enable Register */
+  uint32_t RESERVED0[31U];
+  volatile uint32_t ICER[1U]; /*!< Offset: 0x080 (R/W)  Interrupt Clear Enable Register */
+  uint32_t RESERVED1[31U];
+  volatile uint32_t ISPR[1U]; /*!< Offset: 0x100 (R/W)  Interrupt Set Pending Register */
+  uint32_t RESERVED2[31U];
+  volatile uint32_t ICPR[1U]; /*!< Offset: 0x180 (R/W)  Interrupt Clear Pending Register */
+  uint32_t RESERVED3[31U];
+  uint32_t RESERVED4[64U];
+  volatile uint32_t IP[8U]; /*!< Offset: 0x300 (R/W)  Interrupt Priority Register */
 } NVIC_Type;
 
 #define NVIC ((NVIC_Type *)NVIC_BASE) /* NVIC configuration struct */
+
+/**
+  \brief  Structure type to access the System Control Block (SCB).
+ */
+typedef struct
+{
+  volatile uint32_t CPUID; /*!< Offset: 0x000 (R/ )  CPUID Base Register */
+  volatile uint32_t ICSR;  /*!< Offset: 0x004 (R/W)  Interrupt Control and State Register */
+  uint32_t RESERVED0;
+  volatile uint32_t AIRCR; /*!< Offset: 0x00C (R/W)  Application Interrupt and Reset Control Register */
+  volatile uint32_t SCR;   /*!< Offset: 0x010 (R/W)  System Control Register */
+  volatile uint32_t CCR;   /*!< Offset: 0x014 (R/W)  Configuration Control Register */
+  uint32_t RESERVED1;
+  volatile uint32_t SHP[2U]; /*!< Offset: 0x01C (R/W)  System Handlers Priority Registers. [0] is RESERVED */
+  volatile uint32_t SHCSR;   /*!< Offset: 0x024 (R/W)  System Handler Control and State Register */
+} SCB_Type;
+#define SCB ((SCB_Type *)SCB_BASE) /*!< SCB configuration struct */
 
 /***************************************************************************************************
  * RCC - Reset and Clock Control
@@ -152,6 +166,15 @@ typedef struct
 } SYSCFG_TypeDef;
 
 #define SYSCFG ((SYSCFG_TypeDef *)SYSCFG_BASE)
+
+typedef struct
+{
+  volatile uint32_t CTRL;  /*!< Offset: 0x000 (R/W)  SysTick Control and Status Register */
+  volatile uint32_t LOAD;  /*!< Offset: 0x004 (R/W)  SysTick Reload Value Register */
+  volatile uint32_t VAL;   /*!< Offset: 0x008 (R/W)  SysTick Current Value Register */
+  volatile uint32_t CALIB; /*!< Offset: 0x00C (R/ )  SysTick Calibration Register */
+} SysTick_Type;
+#define SysTick ((SysTick_Type *)SysTick_BASE) /*!< SysTick configuration struct */
 
 /***************************************************************************************************
  * EXTI - Asynch Interrupt/Event Controller

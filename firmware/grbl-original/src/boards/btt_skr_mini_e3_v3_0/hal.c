@@ -4,9 +4,19 @@
 
 #include "clock.h"
 #include "eeprom_hal.h"
+#include "gpio.h"
 #include "irq.h"
 #include "memory_map.h"
 #include "register_bits.h"
+#include "timers.h"
+
+inline void interrupts_enable() {
+  enable_irq();
+}
+
+inline void interrupts_disable() {
+  disable_irq();
+}
 
 void init_gpio() {
   // Enable GPIO ports
@@ -14,14 +24,22 @@ void init_gpio() {
   RCC->IOPENR |= IOPENR_PORTB_ENABLE;  // Enable PORTB
   RCC->IOPENR |= IOPENR_PORTC_ENABLE;  // Enable PORTC
   RCC->IOPENR |= IOPENR_PORTD_ENABLE;  // Enable PORTD
-}
 
-extern void i2c1_master_init();
+  GPIO_SET_MODE(GPIOD, BIT_08_POS, MODER_OUT);  // Set LED status (PD8) to ouput
+  GPIO_SET_MODE(GPIOC, BIT_06_POS, MODER_OUT);  // Set FAN 0 (PC6) to output
+  GPIO_SET_MODE(GPIOB, BIT_15_POS, MODER_OUT);  // Set FAN 2 (PB15) to output
+  GPIO_SET_MODE(GPIOC, BIT_08_POS, MODER_OUT);  // Set E0 heater (PC8) to output
+}
 
 void board_init_hal() {
   init_clock();
 
   init_gpio();
+
+  // Init timers
+  timer6_init(500, true);
+  timer7_init(1000, true);
+  timer14_init();
 
   init_eeprom();
   i2c1_master_init();

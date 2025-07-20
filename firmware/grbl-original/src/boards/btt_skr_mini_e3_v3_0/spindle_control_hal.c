@@ -6,7 +6,7 @@
 #include "memory_map.h"
 #include "register_bits.h"
 
-#define SPINDLE_PC9_POS BIT_09
+#define SPINDLE_PC9_POS BIT_09_POS
 #define SPINDLE_PC9 (1 << SPINDLE_PC9_POS)
 
 void spindle_stop_hal() {
@@ -16,10 +16,7 @@ void spindle_stop_hal() {
 
 void spindle_init_hal() {
   // Set spindle PC9 to output
-  GPIOC->MODER &= ~(MODER_MSK << (SPINDLE_PC9_POS *
-                                  MODER_BIT_COUNT));  // Clear PC9 mode bits
-  GPIOC->MODER |= (MODER_OUT << (SPINDLE_PC9_POS *
-                                 MODER_BIT_COUNT));  // Set PC9 as output
+  GPIO_SET_MODE(GPIOC, SPINDLE_PC9_POS, MODER_OUT);
 
 #ifdef VARIABLE_SPINDLE
   // TODO: Variable spindle PWM

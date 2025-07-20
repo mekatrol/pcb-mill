@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Cortex-Debug STM32G0B1",
+      "type": "cortex-debug",
+      "request": "launch",
+      "executable": "${workspaceFolder}/firmware/grbl.elf",
+      "cwd": "${workspaceFolder}",
+      "servertype": "external",
+      "gdbTarget": "localhost:3333",
+      "device": "STM32G0B1",
+      "interface": "swd",
+      "runToEntryPoint": "main",
+      "preLaunchTask": "run-debug",
+      "postRestartCommands": ["monitor reset halt", "load"],
+      "gdbPath": "arm-none-eabi-gdb",
+      "showDevDebugOutput": "both"
+    }
+  ]
+}

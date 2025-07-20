@@ -1,6 +1,7 @@
 #include "timers.h"
 
 #include "clock.h"
+#include "gpio.h"
 #include "irq.h"
 #include "memory_map.h"
 #include "register_bits.h"
@@ -52,14 +53,14 @@ void timer6_init(uint32_t interval, bool enable_interrupt) {
   // Set TIM6 to tick every interval ms:
   //  64 MHz / 64000 = 1000 Hz → 1 ms per tick
   //  ARR is interval ms, so interrupt fires every interval ms
-  timer_init(TIM6, 64000, interval, enable_interrupt, TIM6_IRQn, &RCC->APBENR1, RCC_APBENR1_TIM6EN);
+  timer_init(TIM6, 64000, interval, enable_interrupt, TIM6_DAC_LPTIM1_IRQn, &RCC->APBENR1, RCC_APBENR1_TIM6EN);
 }
 
 void timer7_init(uint32_t interval, bool enable_interrupt) {
   // Set TIM7 to tick every interval ms:
   //  64 MHz / 64000 = 1000 Hz → 1 ms per tick
   //  ARR is interval ms, so interrupt fires every interval ms
-  timer_init(TIM7, 64000, interval, enable_interrupt, TIM7_IRQn, &RCC->APBENR1, RCC_APBENR1_TIM7EN);
+  timer_init(TIM7, 64000, interval, enable_interrupt, TIM7_LPTIM2_IRQn, &RCC->APBENR1, RCC_APBENR1_TIM7EN);
 }
 
 void timer14_init() {
@@ -99,6 +100,7 @@ void TIM6_DAC_IRQHandler(void) {
 void TIM7_IRQHandler(void) {
   if (TIM7->SR & TIM_SR_UIF) {
     TIM7->SR &= ~TIM_SR_UIF;  // Clear interrupt flag
+    GPIOD->ODR ^= BIT_08;     // Toggle PD8
   }
 }
 

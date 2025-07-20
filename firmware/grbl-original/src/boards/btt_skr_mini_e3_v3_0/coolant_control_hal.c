@@ -6,10 +6,10 @@
 #include "memory_map.h"
 #include "register_bits.h"
 
-#define COOLANT_FLOOD_PC6_POS BIT_06
+#define COOLANT_FLOOD_PC6_POS BIT_06_POS
 #define COOLANT_FLOOD_PC6 (1 << COOLANT_FLOOD_PC6_POS)
 
-#define COOLANT_MIST_PC7_POS BIT_07
+#define COOLANT_MIST_PC7_POS BIT_07_POS
 #define COOLANT_MIST_PC7 (1 << COOLANT_MIST_PC7_POS)
 
 void coolant_stop_hal() {

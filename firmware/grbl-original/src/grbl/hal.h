@@ -35,13 +35,8 @@
 #define Z_LIMIT_BIT 3
 #define LIMIT_MASK ((1 << X_LIMIT_BIT) | (1 << Y_LIMIT_BIT) | (1 << Z_LIMIT_BIT))
 
-static inline void interrupts_enable() {
-  enable_irq();
-}
-
-static inline void interrupts_disable() {
-  disable_irq();
-}
+void interrupts_enable();
+void interrupts_disable();
 
 void board_init_hal();
 

@@ -1,22 +1,40 @@
 #ifndef __REGISTER_BITS_H__
 #define __REGISTER_BITS_H__
 
-#define BIT_00 0
-#define BIT_01 1
-#define BIT_02 2
-#define BIT_03 3
-#define BIT_04 4
-#define BIT_05 5
-#define BIT_06 6
-#define BIT_07 7
-#define BIT_08 8
-#define BIT_09 9
-#define BIT_10 10
-#define BIT_11 11
-#define BIT_12 12
-#define BIT_13 13
-#define BIT_14 14
-#define BIT_15 15
+#define BIT_00_POS 0
+#define BIT_00 (1 << BIT_00_POS)
+#define BIT_01_POS 1
+#define BIT_01 (1 << BIT_01_POS)
+#define BIT_02_POS 2
+#define BIT_02 (1 << BIT_02_POS)
+#define BIT_03_POS 3
+#define BIT_03 (1 << BIT_03_POS)
+#define BIT_04_POS 4
+#define BIT_04 (1 << BIT_04_POS)
+#define BIT_05_POS 5
+#define BIT_05 (1 << BIT_05_POS)
+#define BIT_06_POS 6
+#define BIT_06 (1 << BIT_06_POS)
+#define BIT_07_POS 7
+#define BIT_07 (1 << BIT_07_POS)
+#define BIT_08_POS 8
+#define BIT_08 (1 << BIT_08_POS)
+#define BIT_09_POS 9
+#define BIT_09 (1 << BIT_09_POS)
+#define BIT_10_POS 10
+#define BIT_10 (1 << BIT_10_POS)
+#define BIT_11_POS 11
+#define BIT_11 (1 << BIT_11_POS)
+#define BIT_12_POS 12
+#define BIT_12 (1 << BIT_12_POS)
+#define BIT_13_POS 13
+#define BIT_13 (1 << BIT_13_POS)
+#define BIT_14_POS 14
+#define BIT_14 (1 << BIT_14_POS)
+#define BIT_15_POS 15
+#define BIT_15 (1 << BIT_15_POS)
+
+#define __NVIC_PRIO_BITS 2U /*!< STM32G0xx uses 2 Bits for the Priority Levels */
 
 /*
  * MODER = Port mode register
@@ -41,6 +59,15 @@
 #define GPIO_AF5 0x05
 #define GPIO_AF6 0x06
 #define GPIO_AF7 0x07
+
+/*
+ * Helper macros
+ */
+#define GPIO_SET_MODE(PORT, PIN_POS, MODE)                          \
+  do {                                                              \
+    (PORT)->MODER &= ~(MODER_MSK << ((PIN_POS) * MODER_BIT_COUNT)); \
+    (PORT)->MODER |= ((MODE) << ((PIN_POS) * MODER_BIT_COUNT));     \
+  } while (0)
 
 /*
  * OSPEED = Output speed register
@@ -75,6 +102,37 @@
 
 #define RCC_APBENR2_SYSCFGEN (1 < 0)
 #define RCC_APBENR2_TIM14EN (1 << 15)
+
+/* SysTick Control / Status Register Definitions */
+#define SysTick_CTRL_COUNTFLAG_Pos 16U                                 /*!< SysTick CTRL: COUNTFLAG Position */
+#define SysTick_CTRL_COUNTFLAG_Msk (1UL << SysTick_CTRL_COUNTFLAG_Pos) /*!< SysTick CTRL: COUNTFLAG Mask */
+
+#define SysTick_CTRL_CLKSOURCE_Pos 2U                                  /*!< SysTick CTRL: CLKSOURCE Position */
+#define SysTick_CTRL_CLKSOURCE_Msk (1UL << SysTick_CTRL_CLKSOURCE_Pos) /*!< SysTick CTRL: CLKSOURCE Mask */
+
+#define SysTick_CTRL_TICKINT_Pos 1U                                /*!< SysTick CTRL: TICKINT Position */
+#define SysTick_CTRL_TICKINT_Msk (1UL << SysTick_CTRL_TICKINT_Pos) /*!< SysTick CTRL: TICKINT Mask */
+
+#define SysTick_CTRL_ENABLE_Pos 0U                                   /*!< SysTick CTRL: ENABLE Position */
+#define SysTick_CTRL_ENABLE_Msk (1UL /*<< SysTick_CTRL_ENABLE_Pos*/) /*!< SysTick CTRL: ENABLE Mask */
+
+/* SysTick Reload Register Definitions */
+#define SysTick_LOAD_RELOAD_Pos 0U                                          /*!< SysTick LOAD: RELOAD Position */
+#define SysTick_LOAD_RELOAD_Msk (0xFFFFFFUL /*<< SysTick_LOAD_RELOAD_Pos*/) /*!< SysTick LOAD: RELOAD Mask */
+
+/* SysTick Current Register Definitions */
+#define SysTick_VAL_CURRENT_Pos 0U                                          /*!< SysTick VAL: CURRENT Position */
+#define SysTick_VAL_CURRENT_Msk (0xFFFFFFUL /*<< SysTick_VAL_CURRENT_Pos*/) /*!< SysTick VAL: CURRENT Mask */
+
+/* SysTick Calibration Register Definitions */
+#define SysTick_CALIB_NOREF_Pos 31U                              /*!< SysTick CALIB: NOREF Position */
+#define SysTick_CALIB_NOREF_Msk (1UL << SysTick_CALIB_NOREF_Pos) /*!< SysTick CALIB: NOREF Mask */
+
+#define SysTick_CALIB_SKEW_Pos 30U                             /*!< SysTick CALIB: SKEW Position */
+#define SysTick_CALIB_SKEW_Msk (1UL << SysTick_CALIB_SKEW_Pos) /*!< SysTick CALIB: SKEW Mask */
+
+#define SysTick_CALIB_TENMS_Pos 0U                                          /*!< SysTick CALIB: TENMS Position */
+#define SysTick_CALIB_TENMS_Msk (0xFFFFFFUL /*<< SysTick_CALIB_TENMS_Pos*/) /*!< SysTick CALIB: TENMS Mask */
 
 #define TIM_CR1_CEN (1 << 0)   //
 #define TIM_CR1_OPM (1 << 3)   // One-pulse mode
@@ -650,6 +708,7 @@
 #define I2C_OAR2_OA2EN I2C_OAR2_OA2EN_Msk                /*!< Own address 2 enable */
 
 /*******************  Bit definition for I2C_TIMINGR register *******************/
+#define I2C_TIMINGR_CLEAR_MASK (0xF0FFFFFFU) /* Make used to set TIMINGR clearing reserved bits */
 #define I2C_TIMINGR_SCLL_Pos (0U)
 #define I2C_TIMINGR_SCLL_Msk (0xFFUL << I2C_TIMINGR_SCLL_Pos) /*!< 0x000000FF */
 #define I2C_TIMINGR_SCLL I2C_TIMINGR_SCLL_Msk                 /*!< SCL low period (master mode) */

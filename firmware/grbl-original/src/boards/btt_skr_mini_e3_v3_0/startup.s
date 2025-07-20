@@ -4,6 +4,7 @@
 
 .global       g_pfnVectors
 .global       Reset_Handler
+.global       SysTick_IRQHandler
 .global       TIM6_DAC_IRQHandler
 .global       TIM7_IRQHandler
 .global       TIM14_IRQHandler
@@ -152,8 +153,10 @@ call_main:
 Default_Handler:
    b          .
 
+// Hard fault Handler
+HardFault_Handler:
+   b          .
+
    NMI_Handler = Default_Handler
-   HardFault_Handler = Default_Handler
    SVC_Handler = Default_Handler
    PendSV_Handler = Default_Handler
-   SysTick_Handler = Default_Handler

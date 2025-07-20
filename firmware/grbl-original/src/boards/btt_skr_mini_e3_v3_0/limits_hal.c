@@ -5,37 +5,24 @@
 #include "memory_map.h"
 #include "register_bits.h"
 
-// #define RCC_BASE 0x40021000UL
-// #define EXTI_BASE 0x40001800UL
-// #define GPIOC_BASE 0x48000800UL
-// #define SYSCFG_BASE 0x40010000UL
-// #define EXTI_BASE 0x40021800UL
-// #define NVIC_ISER0 (*(volatile uint32_t*)0xE000E100UL)
-
-// #define RCC_IOPENR (*(volatile uint32_t*)(RCC_BASE + 0x34))
-// #define RCC_APBENR2 (*(volatile uint32_t*)(RCC_BASE + 0x40))
-
-// #define GPIOC_MODER (*(volatile uint32_t*)(GPIOC_BASE + 0x00))
-// #define GPIOC_PUPDR (*(volatile uint32_t*)(GPIOC_BASE + 0x0C))
-// #define GPIOC_IDR (*(volatile uint32_t*)(GPIOC_BASE + 0x10))
-
-// #define SYSCFG_EXTICR1 (*(volatile uint32_t*)(SYSCFG_BASE + 0x08))
-
-// #define EXTI_RTSR1 (*(volatile uint32_t*)(EXTI_BASE + 0x00))
-// #define EXTI_FTSR1 (*(volatile uint32_t*)(EXTI_BASE + 0x04))
-// #define EXTI_IMR1 (*(volatile uint32_t*)(EXTI_BASE + 0x08))
-// #define EXTI_PR1 (*(volatile uint32_t*)(EXTI_BASE + 0x10))
-
 void limits_init_hal() {
   // Enable SYSCFG clock
   RCC->APBENR2 |= RCC_APBENR2_SYSCFGEN;
 
   // Set PC0, PC1, PC2 as inputs
-  GPIOC->MODER &= ~((MODER_MSK << (BIT_00 * MODER_BIT_COUNT)) | (MODER_MSK << (BIT_01 * MODER_BIT_COUNT)) | (MODER_MSK << (BIT_02 * MODER_BIT_COUNT)));
+  GPIO_SET_MODE(GPIOC, BIT_00_POS, MODER_INP);  // Set mode to input on PC0
+  GPIO_SET_MODE(GPIOC, BIT_01_POS, MODER_INP);  // Set mode to input on PC1
+  GPIO_SET_MODE(GPIOC, BIT_02_POS, MODER_INP);  // Set mode to input on PC2
 
-  // Route EXTI0–2 to PC0–2 via SYSCFG_EXTICR1
-  SYSCFG->CFGR1 &= ~((0xF << 0) | (0xF << 4) | (0xF << 8));
-  SYSCFG->CFGR1 |= ((2 << 0) | (2 << 4) | (2 << 8));
+  // Clear existing EXTI mappings for lines 0, 1, 2
+  EXTI->EXTICR[0] &= ~((0xF << (0 * 4)) |  // EXTI0
+                       (0xF << (1 * 4)) |  // EXTI1
+                       (0xF << (2 * 4)));  // EXTI2
+
+  // Set EXTI0–2 to port C (2 = PC)
+  EXTI->EXTICR[0] |= ((2 << (0 * 4)) |
+                      (2 << (1 * 4)) |
+                      (2 << (2 * 4)));
 
   // Configure EXTI lines 0–2 to trigger on rising and falling edges
   EXTI->RTSR1 |= (1 << 0) | (1 << 1) | (1 << 2);

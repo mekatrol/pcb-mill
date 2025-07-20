@@ -30,15 +30,14 @@ READELF := arm-none-eabi-readelf
 SRC_DIR := src
 OBJ_DIR := firmware
 BLD_DIR := build
+BOARD_DIR := $(SRC_DIR)/boards/$(BOARD_NAME)
+BOARD_BLD_DIR := $(BOARD_DIR)/build
+DRIVER_DIRS := $(foreach name,$(DRIVER_NAMES),$(SRC_DIR)/drivers/$(name))
 
 # Output files
 OUT_ELF := $(OBJ_DIR)$(SEP)grbl.elf
 OUT_MAP := $(OBJ_DIR)$(SEP)grbl.map
 OUT_BIN := $(OBJ_DIR)$(SEP)grbl.bin
-
-# Include paths
-BOARD_DIR := $(SRC_DIR)/boards/$(BOARD_NAME)
-DRIVER_DIRS := $(foreach name,$(DRIVER_NAMES),$(SRC_DIR)/drivers/$(name))
 
 # Compiler flags
 CFLAGS := -mcpu=$(MCU) -mthumb -g -O0 -ffreestanding -nostdlib -Wall -Werror # -Wno-unused-variable
@@ -47,7 +46,7 @@ CFLAGS := -mcpu=$(MCU) -mthumb -g -O0 -ffreestanding -nostdlib -Wall -Werror # -
 ASFLAGS := -mcpu=$(MCU) -mthumb -g
 
 # Linker script
-LD_SCRIPT := $(BOARD_DIR)$(SEP)linker.ld
+LD_SCRIPT := $(BOARD_DIR)$(SEP)build$(SEP)linker.ld
 
 # Linker flags
 LDFLAGS := -mcpu=$(MCU) -mthumb -nostartfiles -Wl,-Map=$(OUT_MAP),--fatal-warnings,-T$(LD_SCRIPT)
@@ -109,48 +108,14 @@ $(OUT_BIN): $(OUT_ELF)
 .PHONY: flash
 flash:
 	@echo "[FLASH] Flashing binary"
-	openocd -f interface/stlink.cfg -f target/stm32g0x.cfg \
-		-c "adapter speed 500; program $(OUT_BIN) verify reset exit 0x08000000"
+	$(MAKE) -C $(BOARD_BLD_DIR) flash
 
-# Run OpenOCD with flashing and halt for debugging
-.PHONY: openocd
-openocd:
-	@echo "[OPENOCD] Programming and halting"
-	openocd -f interface/stlink.cfg -f target/stm32g0x.cfg \
-		-c "adapter speed 500;" \
-		-c "program $(OUT_BIN) verify" \
-		-c "reset halt"
+# Debug binary with OpenOCD
+.PHONY: flash
+debug:
+	@echo "[DEBUG] Launching OpenOCD/gdb"
+	$(MAKE) -C $(BOARD_BLD_DIR) debug
 
-# Run OpenOCD in background for GDB debugging
-.PHONY: openocd-debug
-openocd-debug:
-ifeq ($(OS),Windows_NT)
-	@start "" openocd -f interface/stlink.cfg -f target/stm32g0x.cfg -c "adapter speed 500"
-else
-	@openocd -f interface/stlink.cfg -f target/stm32g0x.cfg -c "adapter speed 500" &
-endif
-
-
-# Debug target (runs OpenOCD and gdb)
-.PHONY: debug
-debug: $(OUT_ELF) | $(BLD_DIR)
-	@echo "[DEBUG] Starting OpenOCD and GDB"
-	arm-none-eabi-gdb -x $(BLD_DIR)$(SEP)debug.gdb $(OUT_ELF)
-
-# Utility targets
-.PHONY: filesize sections dump symbols
-filesize:
-	$(SIZE) $(OUT_ELF)
-
-sections:
-	$(READELF) -l $(OUT_ELF)
-
-dump:
-	$(OBJDUMP) -h $(OUT_ELF)
-
-symbols:
-	$(NM) $(OUT_ELF)
- 
 # Clean build artifacts
 .PHONY: clean
 clean:
@@ -161,8 +126,3 @@ clean:
 build:
 	$(MAKE) clean
 	$(MAKE) $(OUT_BIN)
-
-# Reset flash
-.PHONY: reset
-reset:
-	openocd -f interface/stlink.cfg -f target/stm32g0x.cfg -c "init; reset halt; flash write_image erase $(OUT_BIN) 0x08000000; reset run; exit"
