@@ -22,7 +22,6 @@
 #define NVIC_BASE (SCS_BASE + 0x0100UL)           /* NVIC Base Address */
 #define SCB_BASE (SCS_BASE + 0x0D00UL)            /* System Control Block Base Address */
 #define SYSCFG_BASE (0x40000000UL + 0x00010000UL) /* System Configuration Controller */
-#define EXTI_BASE (0x40000000UL + 0x00001800UL)
 
 /***************************************************************************************************
  * AHB - Advanced High-performance Bus
@@ -30,6 +29,7 @@
 #define AHB_BASE 0x40020000UL
 #define RCC_BASE 0x40021000UL             /* Reset and Clock Control */
 #define FLASH_REGISTERS_BASE 0x40022000UL /* Flash control registers */
+#define EXTI_BASE (AHB_BASE + 0x00001800UL)
 
 /***************************************************************************************************
  * APB - Advanced Peripheral Bus

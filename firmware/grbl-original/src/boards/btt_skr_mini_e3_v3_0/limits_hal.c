@@ -14,15 +14,11 @@ void limits_init_hal() {
   GPIO_SET_MODE(GPIOC, BIT_01_POS, MODER_INP);  // Set mode to input on PC1
   GPIO_SET_MODE(GPIOC, BIT_02_POS, MODER_INP);  // Set mode to input on PC2
 
-  // Clear existing EXTI mappings for lines 0, 1, 2
-  EXTI->EXTICR[0] &= ~((0xF << (0 * 4)) |  // EXTI0
-                       (0xF << (1 * 4)) |  // EXTI1
-                       (0xF << (2 * 4)));  // EXTI2
+  // Clear EXTI0 (bits 7:0), EXTI1 (15:8), EXTI2 (23:16)
+  EXTI->EXTICR[0] &= ~((0xFF << 0) | (0xFF << 8) | (0xFF << 16));
 
-  // Set EXTI0–2 to port C (2 = PC)
-  EXTI->EXTICR[0] |= ((2 << (0 * 4)) |
-                      (2 << (1 * 4)) |
-                      (2 << (2 * 4)));
+  // Set EXTI0–2 to Port C (0x02)
+  EXTI->EXTICR[0] |= (0x02 << 0) | (0x02 << 8) | (0x02 << 16);
 
   // Configure EXTI lines 0–2 to trigger on rising and falling edges
   EXTI->RTSR1 |= (1 << 0) | (1 << 1) | (1 << 2);
