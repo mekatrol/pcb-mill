@@ -46,3 +46,4 @@ firmware/grbl-ext/firmware
 firmware/grbl-ext/gdb.txt
 
 firmware/stm-disco/firmware/
+firmware/grbl-original/firmware
