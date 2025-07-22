@@ -19,11 +19,11 @@ void serial_init_hal() {
   GPIOA->AFRL |= ((GPIO_AF1 << (BIT_02_POS * GPIO_AF_BIT_COUNT)) | (GPIO_AF1 << (BIT_03_POS * GPIO_AF_BIT_COUNT)));
 
   // Configure USART2
-  USART2->CR1 &= ~USART_CR1_UE;                     // Disable USART
-  USART2->BRR = USART_BRR(F_SYS_CLOCK, BAUD_RATE);  // Set baud rate
-  USART2->CR1 = USART_CR1_TE | USART_CR1_RE;        // Enable transmitter and receiver
-  USART2->CR3 = 0;                                  // No half-duplex
-  USART2->CR1 |= USART_CR1_UE;                      // Enable USART
+  USART2->CR1 &= ~USART_CR1_UE;                                          // Disable USART
+  USART2->BRR = USART_BRR(F_SYS_CLOCK, BAUD_RATE);                       // Set baud rate
+  USART2->CR1 = USART_CR1_TE | USART_CR1_RE | USART_CR1_RXNEIE_RXFNEIE;  // Enable transmitter and receiver
+  USART2->CR3 = 0;                                                       // No half-duplex
+  USART2->CR1 |= USART_CR1_UE;                                           // Enable USART
 
   ENABLE_IRQ(USART2_LPUART2_IRQn);
 }
