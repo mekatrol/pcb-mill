@@ -64,11 +64,10 @@ void timer7_init(uint32_t interval, bool enable_interrupt) {
 }
 
 void timer14_init() {
-  // Set TIM7 to tick every interval ms:
+  // Set TIM14 to tick every interval ms:
   //  64 MHz / 64 = 1 MHz → 1 µs prescaled
-  //  50 ticks = 50µs per tick
-  // This makes steps 100µs (10KHz) for a full toggle cycle
-  timer_init(TIM14, 64, 50, true, TIM14_IRQn, &RCC->APBENR2, RCC_APBENR2_TIM14EN);
+  //  10 ticks = 10µs per tick (100kHz)
+  timer_init(TIM14, 64, 10, true, TIM14_IRQn, &RCC->APBENR2, RCC_APBENR2_TIM14EN);
 }
 
 void set_timer_interval(TIM_TypeDef *TIMx, uint32_t interval) {
