@@ -7,16 +7,16 @@
 #include "memory_map.h"
 #include "register_bits.h"
 
-// Accurate ms delay using polling
+extern volatile uint32_t systick_global;
+
+void delay_us(uint32_t us) {
+  uint32_t start = TIM6->CNT;  // TIM6->CNT increments every µs
+  while ((uint32_t)(TIM6->CNT - start) < us);
+}
+
 void delay_ms(uint32_t ms) {
-  uint16_t start = TIM6->CNT;
-  while (ms > 0) {
-    uint16_t now = TIM6->CNT;
-    if ((uint16_t)(now - start) >= 1) {
-      start = now;
-      --ms;
-    }
-  }
+  uint32_t start = systick_global;  // systick_global increments every ms
+  while ((uint32_t)(systick_global - start) < ms);
 }
 
 void timer_init(TIM_TypeDef *TIMx, uint32_t prescaler, uint32_t ticks, bool enable_interrupt, uint8_t irq_number,
@@ -50,11 +50,10 @@ void timer_init(TIM_TypeDef *TIMx, uint32_t prescaler, uint32_t ticks, bool enab
   ENABLE_IRQ(irq_number);
 }
 
-void timer6_init(uint32_t interval, bool enable_interrupt) {
+void timer6_init() {
   // Set TIM6 to tick every interval ms:
-  //  64 MHz / 64000 = 1000 Hz → 1 ms per tick
-  //  ARR is interval ms, so interrupt fires every interval ms
-  timer_init(TIM6, 64000, interval, enable_interrupt, TIM6_DAC_LPTIM1_IRQn, &RCC->APBENR1, RCC_APBENR1_TIM6EN);
+  //  64 MHz / 64 = 1 MHz → 1 µs prescaled
+  timer_init(TIM6, 64, 0, false, TIM6_DAC_LPTIM1_IRQn, &RCC->APBENR1, RCC_APBENR1_TIM6EN);
 }
 
 void timer7_init(uint32_t interval, bool enable_interrupt) {
@@ -85,11 +84,7 @@ void set_timer_interval(TIM_TypeDef *TIMx, uint32_t interval) {
   TIMx->DIER |= (1 << 0);
 }
 
-void set_timer6_interval(uint32_t interval) { set_timer_interval(TIM6, interval); }
-
 void set_timer7_interval(uint32_t interval) { set_timer_interval(TIM7, interval); }
-
-void set_timer14_interval(uint32_t interval) { set_timer_interval(TIM14, interval); }
 
 void TIM6_DAC_IRQHandler(void) {
   if (TIM6->SR & TIM_SR_UIF) {

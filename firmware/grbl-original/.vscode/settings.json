@@ -6,7 +6,8 @@
     "memory_map.h": "c",
     "eeprom_hal.h": "c",
     "stdint.h": "c",
-    "stdint-gcc.h": "c"
+    "stdint-gcc.h": "c",
+    "timers.h": "c"
   },
   "cortex-debug.variableUseNaturalFormat": false
 }

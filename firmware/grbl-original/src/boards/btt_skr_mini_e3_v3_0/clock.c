@@ -7,7 +7,7 @@
 #include "memory_map.h"
 #include "register_bits.h"
 
-uint32_t systick_global = 0;
+volatile uint32_t systick_global = 0;
 
 #define HAL_TICK_FREQ_1KHZ 1U
 
@@ -80,12 +80,9 @@ void init_clock() {
   while ((RCC->CFGR & (0x3 << 3)) != (0x2 << 3));  // Wait for switch to PLL
 }
 
-uint32_t get_systick() {
-  uint32_t systick_local = 0;
-  disable_irq();
-  systick_local = systick_global;
-  enable_irq();
-  return systick_local;
+inline uint32_t get_systick() {
+  uint32_t systick_inline = systick_global;
+  return systick_inline;
 }
 
 void SysTick_Handler() {

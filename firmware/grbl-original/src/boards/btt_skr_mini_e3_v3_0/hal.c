@@ -37,7 +37,7 @@ void board_init_hal() {
   init_gpio();
 
   // Init timers
-  timer6_init(500, true);
+  timer6_init();
   timer7_init(1000, true);
   timer14_init();
 

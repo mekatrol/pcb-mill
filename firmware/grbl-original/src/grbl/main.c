@@ -43,7 +43,7 @@ int main(void) {
   // init_motion(0, 0, 0);
   steppers_enable_hal(true);
   while (true) {
-    // start_motion(100, 20, 20);
+    start_motion(100, 20, 20);
   }
 
 // Check for power-up and set system alarm if homing is enabled to force homing
