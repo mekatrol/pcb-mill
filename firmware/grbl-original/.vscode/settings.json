@@ -3,7 +3,10 @@
     "grbl.h": "c",
     "irq.h": "c",
     "register_bits.h": "c",
-    "memory_map.h": "c"
+    "memory_map.h": "c",
+    "eeprom_hal.h": "c",
+    "stdint.h": "c",
+    "stdint-gcc.h": "c"
   },
   "cortex-debug.variableUseNaturalFormat": false
 }

@@ -48,6 +48,7 @@ void serial_tx_disable_hal();
 void serial_data_received(uint8_t data);
 uint8_t serial_data_can_send();
 
+void stepper_interrupt();
 void stepper_init_hal();
 void steppers_enable_hal(bool invert);
 

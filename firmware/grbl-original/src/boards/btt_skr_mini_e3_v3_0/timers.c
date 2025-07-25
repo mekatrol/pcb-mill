@@ -1,5 +1,6 @@
 #include "timers.h"
 
+#include "../../grbl/hal.h"
 #include "clock.h"
 #include "gpio.h"
 #include "irq.h"
@@ -106,5 +107,6 @@ void TIM7_IRQHandler(void) {
 void TIM14_IRQHandler(void) {
   if (TIM14->SR & TIM_SR_UIF) {
     TIM14->SR &= ~TIM_SR_UIF;  // Clear interrupt flag
+    stepper_interrupt();
   }
 }

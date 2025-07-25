@@ -55,9 +55,11 @@ CFLAGS += -I$(BOARD_DIR)
 
 # Core sources
 CSRCS := $(wildcard $(SRC_DIR)/grbl/*.c) \
+		 $(wildcard $(SRC_DIR)/grbl/motion/*.c) \
          $(wildcard $(BOARD_DIR)/*.c)
 
 ASRCS := $(wildcard $(SRC_DIR)/grbl/*.s) \
+         $(wildcard $(SRC_DIR)/grbl/motion/*.s) \
          $(wildcard $(BOARD_DIR)/*.s)
 
 # Add driver paths and includes if any drivers defined
@@ -70,8 +72,8 @@ endif
 SRCS := $(CSRCS) $(ASRCS)
 
 # Object files
-C_OBJS := $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(CSRCS))
-A_OBJS := $(patsubst $(SRC_DIR)/%.s,$(OBJ_DIR)/%.o,$(ASRCS))
+C_OBJS := $(patsubst %.c,$(OBJ_DIR)/%.o,$(subst $(SRC_DIR)/,,$(CSRCS)))
+A_OBJS := $(patsubst %.s,$(OBJ_DIR)/%.o,$(subst $(SRC_DIR)/,,$(ASRCS)))
 OBJS   := $(A_OBJS) $(C_OBJS)
 
 # Default target

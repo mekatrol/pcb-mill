@@ -34,7 +34,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Define the Grbl system include files. NOTE: Do not alter organization.
 #include "config.h"
 #include "coolant_control.h"
 #include "defaults.h"
@@ -43,6 +42,7 @@
 #include "hal.h"
 #include "limits.h"
 #include "math_soft.h"
+#include "motion/motion.h"
 #include "motion_control.h"
 #include "nuts_bolts.h"
 #include "planner.h"
