@@ -27,6 +27,7 @@ OBJDUMP := arm-none-eabi-objdump
 READELF := arm-none-eabi-readelf
 
 # Directories
+LIB_DIR := lib
 SRC_DIR := src
 OBJ_DIR := firmware
 BLD_DIR := build
@@ -51,15 +52,16 @@ LD_SCRIPT := $(BOARD_DIR)$(SEP)build$(SEP)linker.ld
 # Linker flags
 LDFLAGS := -mcpu=$(MCU) -mthumb -nostartfiles -Wl,-Map=$(OUT_MAP),--fatal-warnings,-T$(LD_SCRIPT)
 
-CFLAGS += -I$(BOARD_DIR)
+CFLAGS += -I$(SRC_DIR)/grbl/include
+CFLAGS += -I$(BOARD_DIR) -I$(BOARD_DIR)/include
+
+CFLAGS += -I$(SRC_DIR)/grbl
 
 # Core sources
 CSRCS := $(wildcard $(SRC_DIR)/grbl/*.c) \
-		 $(wildcard $(SRC_DIR)/grbl/motion/*.c) \
          $(wildcard $(BOARD_DIR)/*.c)
 
 ASRCS := $(wildcard $(SRC_DIR)/grbl/*.s) \
-         $(wildcard $(SRC_DIR)/grbl/motion/*.s) \
          $(wildcard $(BOARD_DIR)/*.s)
 
 # Add driver paths and includes if any drivers defined
@@ -72,7 +74,10 @@ endif
 SRCS := $(CSRCS) $(ASRCS)
 
 # Object files
-C_OBJS := $(patsubst %.c,$(OBJ_DIR)/%.o,$(subst $(SRC_DIR)/,,$(CSRCS)))
+C_OBJS := $(patsubst %.c,$(OBJ_DIR)/%.o,\
+          $(filter %.c,$(subst $(SRC_DIR)/,,$(filter $(SRC_DIR)%,$(CSRCS)))))
+C_OBJS += $(patsubst lib/%.c,$(OBJ_DIR)/lib/%.o,\
+          $(filter lib/%,$(CSRCS)))
 A_OBJS := $(patsubst %.s,$(OBJ_DIR)/%.o,$(subst $(SRC_DIR)/,,$(ASRCS)))
 OBJS   := $(A_OBJS) $(C_OBJS)
 
@@ -95,6 +100,11 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.s | $(OBJ_DIR)
 	@echo "[AS] $<"
 	@$(MKDIR)
 	$(AS) $(ASFLAGS) -o $@ $<
+
+$(OBJ_DIR)/lib/%.o: lib/%.c | $(OBJ_DIR)
+	@echo "[CC] $<"
+	@$(MKDIR)
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 # Link ELF
 $(OUT_ELF): $(OBJS) | $(OBJ_DIR)
@@ -128,3 +138,9 @@ clean:
 build:
 	$(MAKE) clean
 	$(MAKE) $(OUT_BIN)
+
+.PHONY: vscode_cpp_settings
+vscode_cpp_settings:
+	@echo "[TOOLS] Generate CPP setting"
+	python tools/gen_c_cpp_properties.py
+

@@ -1,7 +1,7 @@
 #include <stdbool.h>
 
-#include "../../grbl/motion/motion.h"
 #include "memory_map.h"
+#include "motion.h"
 #include "register_bits.h"
 
 #define STEP_X_DIR_POS (BIT_12_POS)         // PB12

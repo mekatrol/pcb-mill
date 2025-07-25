@@ -42,7 +42,7 @@
 #include "hal.h"
 #include "limits.h"
 #include "math_soft.h"
-#include "motion/motion.h"
+#include "motion.h"
 #include "motion_control.h"
 #include "nuts_bolts.h"
 #include "planner.h"

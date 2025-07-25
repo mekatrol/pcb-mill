@@ -1,7 +1,7 @@
 #include <stdint.h>
 
-#include "../../grbl/config.h"
 #include "clock.h"
+#include "config.h"
 #include "irq.h"
 #include "memory_map.h"
 #include "register_bits.h"
@@ -50,13 +50,5 @@ void USART2_IRQHandler(void) {
   if ((USART2->ISR & USART_ISR_RXNE_RXFNE) && (USART2->CR1 & USART_CR1_RXNEIE_RXFNEIE)) {
     uint8_t data = USART2->RDR;
     serial_data_received(data);
-  }
-}
-
-void USART3_4_LPUART1_IRQHandler(void) {
-  if (USART4->ISR & USART_ISR_RXNE_RXFNE) {
-    // RXFIFO not empty
-    uint8_t b = USART4->RDR;
-    (void)b;
   }
 }

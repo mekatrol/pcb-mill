@@ -1,4 +1,4 @@
-#include "../../grbl/hal.h"
+#include "hal.h"
 
 #include <stdint.h>
 
@@ -6,9 +6,11 @@
 #include "eeprom_hal.h"
 #include "gpio.h"
 #include "irq.h"
+#include "log.h"
 #include "memory_map.h"
 #include "register_bits.h"
 #include "timers.h"
+#include "tmc2209.h"
 
 inline void interrupts_enable() {
   enable_irq();
@@ -41,8 +43,26 @@ void board_init_hal() {
   timer7_init(1000, true);
   timer14_init();
 
+  // TMC2209 uart
+  uart4_init();
+
   init_eeprom();
   i2c1_master_init();
+
+  tmc2209_read_gconf(0x00);  // Send read to slave 0
+
+  delay_ms(100);
+
+  uint8_t gconf[4];
+  uint32_t value;
+  int result = tmc2209_parse_reply(4, gconf);
+  if (result == 0) {
+    value = gconf[0] | (gconf[1] << 8) | (gconf[2] << 16) | (gconf[3] << 24);
+    uart_printf("gconf: 0x%x\r\n", value);
+  } else {
+    // Handle error
+    set_timer7_interval(100);
+  }
 }
 
 void system_init_hal() {

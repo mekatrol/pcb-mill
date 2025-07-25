@@ -7,7 +7,10 @@
     "eeprom_hal.h": "c",
     "stdint.h": "c",
     "stdint-gcc.h": "c",
-    "timers.h": "c"
+    "timers.h": "c",
+    "tusb.h": "c",
+    "fsdev_stm32.h": "c",
+    "motion.h": "c"
   },
   "cortex-debug.variableUseNaturalFormat": false
 }

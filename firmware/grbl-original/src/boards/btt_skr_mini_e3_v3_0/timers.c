@@ -1,8 +1,8 @@
 #include "timers.h"
 
-#include "../../grbl/hal.h"
 #include "clock.h"
 #include "gpio.h"
+#include "hal.h"
 #include "irq.h"
 #include "memory_map.h"
 #include "register_bits.h"

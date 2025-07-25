@@ -92,6 +92,7 @@
 #define RCC_APBENR1_TIM6EN (1 << 4)
 #define RCC_APBENR1_TIM7EN (1 << 5)
 #define RCC_APBENR1_LPUART2EN (1 << 7)
+#define RCC_APBENR1_USBEN (1 << 13)
 #define RCC_APBENR1_USART2EN (1 << 17)
 #define RCC_APBENR1_USART3EN (1 << 18)
 #define RCC_APBENR1_USART4EN (1 << 19)

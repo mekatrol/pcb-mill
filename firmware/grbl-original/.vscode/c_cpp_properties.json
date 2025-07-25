@@ -1,0 +1,30 @@
+{
+  "configurations": [
+    {
+      "name": "STM32G0B1",
+      "includePath": [
+        "src/boards/btt_skr_mini_e3_v3_0",
+        "src/boards/btt_skr_mini_e3_v3_0/include",
+        "src/grbl",
+        "src/grbl/include",
+        "${workspaceFolder}/**"
+      ],
+      "defines": [],
+      "compilerPath": "arm-none-eabi-gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "gnu++17",
+      "intelliSenseMode": "gcc-arm",
+      "browse": {
+        "limitSymbolsToIncludedHeaders": true,
+        "path": [
+          "src/boards/btt_skr_mini_e3_v3_0",
+          "src/boards/btt_skr_mini_e3_v3_0/include",
+          "src/grbl",
+          "src/grbl/include",
+          "${workspaceFolder}/**"
+        ]
+      }
+    }
+  ],
+  "version": 4
+}

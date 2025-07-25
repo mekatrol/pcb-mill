@@ -1,6 +1,6 @@
 #include "motion.h"
 
-#include "../../boards/btt_skr_mini_e3_v3_0/memory_map.h"
+#include "memory_map.h"
 
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 

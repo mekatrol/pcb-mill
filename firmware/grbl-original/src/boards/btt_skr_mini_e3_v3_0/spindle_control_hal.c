@@ -1,7 +1,7 @@
 #include <stdint.h>
 
-#include "../../grbl/grbl.h"
 #include "clock.h"
+#include "grbl.h"
 #include "irq.h"
 #include "memory_map.h"
 #include "register_bits.h"
