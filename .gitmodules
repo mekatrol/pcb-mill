@@ -1,0 +1,3 @@
+[submodule "firmware/grbl-original/lib/tinyusb"]
+	path = firmware/grbl-original/lib/tinyusb
+	url = https://github.com/hathach/tinyusb.git
