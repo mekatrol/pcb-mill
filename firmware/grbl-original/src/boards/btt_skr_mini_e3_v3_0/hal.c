@@ -68,11 +68,9 @@ void hal_tick() {
 
   tmc2209_read_gconf(tmc2209_configure_addr);
 
-  delay_ms(100);
-
   uint8_t gconf[4];
   uint32_t value;
-  int result = tmc2209_parse_reply(4, gconf);
+  int result = tmc2209_parse_reply(4, gconf, 0x00);
   if (result == 0) {
     value = gconf[0] | (gconf[1] << 8) | (gconf[2] << 16) | (gconf[3] << 24);
     uart_printf("gconf: 0x%x [for addr: 0x%x]\r\n", value, tmc2209_configure_addr);

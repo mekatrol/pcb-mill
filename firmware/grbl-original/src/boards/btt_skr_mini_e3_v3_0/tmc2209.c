@@ -3,14 +3,24 @@
 #include "irq.h"
 #include "memory_map.h"
 #include "register_bits.h"
+#include "timers.h"
 
 // TMC2209 uart baud rate
 #define TMC2209_BAUD_RATE 115200
 
 // TMC2209 RX buffer
-#define TMC2209_RX_BUF_SIZE 16  // More than enough capactiy
-volatile uint8_t tmc2209_rx_buf[TMC2209_RX_BUF_SIZE];
-volatile uint8_t tmc2209_rx_index = 0;
+#define TMC2209_RX_BUFFER_SIZE 16  // Characters are echoed (so buffer size should be twice maximum message length)
+uint8_t tmc2209_rx_buffer[TMC2209_RX_BUFFER_SIZE];
+uint8_t tmc2209_rx_buffer_head = 0;
+volatile uint8_t tmc2209_rx_buffer_tail = 0;
+
+// TMC2209 TX buffer
+#define TMC2209_TX_BUFFER_SIZE 8
+uint8_t tmc2209_tx_buffer[TMC2209_TX_BUFFER_SIZE];
+uint8_t tmc2209_tx_buffer_head = 0;
+volatile uint8_t tmc2209_tx_buffer_tail = 0;
+
+volatile uint8_t tmc2209_rx_count = 0;
 
 void tmc2209_uart4_init() {
   // Enable USART4 clocks
@@ -33,50 +43,95 @@ void tmc2209_uart4_init() {
   // GPIOC->PUPDR |= (0 << (BIT_10_POS * 2)) | (1 << (BIT_11_POS * 2)); // No pull-up TX, pull-up RX
 
   // Configure USART4 (8-bit data, 1 stop bit)
-  USART4->CR1 &= ~USART_CR1_UE;                                          // Disable USART
-  USART4->BRR = USART_BRR(F_SYS_CLOCK, TMC2209_BAUD_RATE);               // Set baud rate
-  USART4->CR1 = USART_CR1_TE | USART_CR1_RE | USART_CR1_RXNEIE_RXFNEIE;  // Enable transmitter and receiver
-  USART4->CR3 = 0;                                                       // No half-duplex
-  USART4->CR1 |= USART_CR1_UE;                                           // Enable USART
+  USART4->CR1 &= ~USART_CR1_UE;                             // Disable USART
+  USART4->BRR = USART_BRR(F_SYS_CLOCK, TMC2209_BAUD_RATE);  // Set baud rate
+  USART4->CR1 =                                             //
+      USART_CR1_TE | USART_CR1_RE |                         // Enable transmit and receive
+      USART_CR1_TXEIE_TXFNFIE | USART_CR1_RXNEIE_RXFNEIE;   // Enable interrupts
+  USART4->CR3 = 0;                                          // No half-duplex
+  USART4->CR1 |= USART_CR1_UE;                              // Enable USART
 
   // Enable USART4 interrupt in NVIC
   ENABLE_IRQ(USART3_4_5_6_LPUART1_IRQn);
 }
 
 void USART3_4_LPUART1_IRQHandler(void) {
-  if (USART4->ISR & USART_ISR_RXNE_RXFNE) {
-    // RXFIFO not empty
-    uint8_t b = USART4->RDR;
-    tmc2209_rx_buf[tmc2209_rx_index++] = b;
+  // Is the TX buffer empty?
+  if ((USART4->ISR & USART_ISR_TXE_TXFNF)) {
+    if (tmc2209_tx_buffer_tail != tmc2209_tx_buffer_head) {
+      uint8_t data = tmc2209_tx_buffer[tmc2209_tx_buffer_tail++];
 
-    if (tmc2209_rx_index >= TMC2209_RX_BUF_SIZE) {
-      tmc2209_rx_index = 0;
+      if (tmc2209_tx_buffer_tail >= TMC2209_TX_BUFFER_SIZE) {
+        tmc2209_tx_buffer_tail = 0;
+      }
+
+      USART4->TDR = data;
+    } else {
+      // Disable TX empty interrupt until more data sent
+      USART4->CR1 &= ~(USART_CR1_TXEIE_TXFNFIE);
+    }
+  }
+
+  // Is RX FIFO not empty?
+  if (USART4->ISR & USART_ISR_RXNE_RXFNE) {
+    tmc2209_rx_buffer[tmc2209_rx_buffer_head++] = USART4->RDR;
+    tmc2209_rx_count++;
+
+    if (tmc2209_rx_buffer_head >= TMC2209_RX_BUFFER_SIZE) {
+      tmc2209_rx_buffer_head = 0;
     }
   }
 }
 
 void tmc2209_uart_send(uint8_t b) {
-  // Wait until transmit data register empty
-  while (!(USART4->ISR & USART_ISR_TXE_TXFNF));
+  // Disable transmit empty interrupt while sending
+  USART4->CR1 &= ~(USART_CR1_TXEIE_TXFNFIE);
 
-  // Send byte
-  USART4->TDR = b;
+  // Add byte to TX buffer
+  tmc2209_tx_buffer[tmc2209_tx_buffer_head++] = b;
 
-  // Wait transmit complete (TC)
-  while (!(USART4->ISR & USART_ISR_TC));
-
-  // Clear transmit complete (TC)
-  USART4->ICR |= USART_ISR_TC;
-}
-
-uint8_t tmc2209_uart_recv() {
-  if (USART4->ISR & USART_ISR_RXNE_RXFNE) {
-    uint8_t c = USART4->RDR;
-    return c;
+  if (tmc2209_tx_buffer_head >= TMC2209_TX_BUFFER_SIZE) {
+    tmc2209_tx_buffer_head = 0;
   }
 
-  // Zero indicates no data
-  return 0;
+  // Enable transmit empty interrupt
+  USART4->CR1 |= USART_CR1_TXEIE_TXFNFIE;
+}
+
+int16_t tmc2209_uart_recv() {
+  // Default to no data available
+  int16_t data = -1;
+
+  // Disable receive data interrupt while getting rx data
+  USART4->CR1 &= ~(USART_CR1_RXNEIE_RXFNEIE);
+
+  if (tmc2209_rx_buffer_tail != tmc2209_rx_buffer_head) {
+    // Read from rx buffer
+    data = tmc2209_rx_buffer[tmc2209_rx_buffer_tail++];
+
+    if (tmc2209_rx_buffer_tail >= TMC2209_RX_BUFFER_SIZE) {
+      tmc2209_rx_buffer_tail = 0;
+    }
+
+    tmc2209_rx_count--;
+  } else {
+    tmc2209_rx_count = 0;
+  }
+
+  // Enable receive data interrupt
+  USART4->CR1 |= USART_CR1_RXNEIE_RXFNEIE;
+
+  // Will be -1 if no data was available
+  return data;
+}
+
+bool tmc2209_wait_for_count(uint8_t count, uint32_t max_wait_ms) {
+  while (tmc2209_rx_count < count && max_wait_ms-- > 0) {
+    delay_ms(1);
+  }
+
+  // Was successful if rx count is at least desired count
+  return tmc2209_rx_count >= count;
 }
 
 uint8_t tmc2209_crc8(uint8_t *data, uint8_t length) {
@@ -99,52 +154,81 @@ uint8_t tmc2209_crc8(uint8_t *data, uint8_t length) {
   return crc;
 }
 
-void tmc2209_read_gconf(uint8_t slave) {
+// Reference: TMC2209 DATASHEET (Rev. 1.09 / 2023-FEB-16)
+// Section: 4.1.1 Write Access
+
+// Reference: TMC2209 DATASHEET (Rev. 1.09 / 2023-FEB-16)
+// Section: 4.1.2 Read Access
+void tmc2209_read_reg(uint8_t addr, uint8_t reg) {
   uint8_t packet[4];
   packet[0] = 0x05;                     // Sync nibble
-  packet[1] = slave;                    // Slave addr
-  packet[2] = 0x00;                     // Register address (GCONF) + read b7=1
+  packet[1] = addr;                     // Slave addr
+  packet[2] = reg;                      // Register address
   packet[3] = tmc2209_crc8(packet, 3);  // CRC
-
-  tmc2209_rx_index = 0;
 
   for (int i = 0; i < 4; i++) {
     tmc2209_uart_send(packet[i]);
   }
 }
 
-int tmc2209_parse_reply(uint8_t sent_count, uint8_t *data_out) {
-  // Note, as the E3 Mini used onw wire on RX4 then the transmitted bytes will be echoed
-  // via the one wire resitor, so we need to ignore first 'sent_count' bytes of received data (becayse we transmitted it)
+void tmc2209_read_gconf(uint8_t addr) {
+  tmc2209_read_reg(addr, 0x00);
+}
 
-  if (tmc2209_rx_index < 8 + sent_count) {
-    return -1;  // Not enough data
+int tmc2209_parse_reply(uint8_t sent_count, uint8_t *data_out, uint8_t reg) {
+  // Note, as the E3 Mini uses one wire on RX4 then the transmitted bytes will be echoed
+  // via the one wire resitor, so we need to ignore first 'sent_count' bytes of received data (because we transmitted it)
+
+  // Need the sent count plus expected rx count of 8
+  if (!tmc2209_wait_for_count(sent_count + 8, 100)) {
+    // Not enough data
+    return -1;
   }
+
+  // We need to remove echoed bytes
+  while (sent_count--) {
+    tmc2209_uart_recv();
+  }
+
+  uint8_t rx_data[8];
+  uint8_t rx_data_index = 0;
 
   // Check sync
-  if (tmc2209_rx_buf[0 + sent_count] != 0x05) {
+  if ((tmc2209_uart_recv() & 0xFF) != 0x05) {
     return -2;
   }
+  rx_data[rx_data_index++] = 0x05;
 
   // Check addr is 0xFF which is reserved for responses to master
-  if (tmc2209_rx_buf[1 + sent_count] != 0xFF) {
+  if ((tmc2209_uart_recv() & 0xFF) != 0xFF) {
     return -3;
   }
+  rx_data[rx_data_index++] = 0xFF;
 
   // Check register
-  if (tmc2209_rx_buf[2 + sent_count] != 0x00) {
+  if ((tmc2209_uart_recv() & 0xFF) != reg) {
     return -4;
   }
+  rx_data[rx_data_index++] = reg;
+
+  // Read response data (4 bytes)
+  rx_data[rx_data_index++] = (tmc2209_uart_recv() & 0xFF);
+  rx_data[rx_data_index++] = (tmc2209_uart_recv() & 0xFF);
+  rx_data[rx_data_index++] = (tmc2209_uart_recv() & 0xFF);
+  rx_data[rx_data_index++] = (tmc2209_uart_recv() & 0xFF);
+
+  // Read received CRC
+  uint8_t crc = (tmc2209_uart_recv() & 0xFF);
 
   // Check CRC
-  uint8_t calc_crc = tmc2209_crc8((uint8_t *)(&tmc2209_rx_buf[sent_count]), 7);
-  if (tmc2209_rx_buf[7 + sent_count] != calc_crc) {
-    return -5;
+  uint8_t calc_crc = tmc2209_crc8(rx_data, 7);
+  if (crc != calc_crc) {
+    return -5;  // Bad CRC
   }
 
   // Copy 4-byte GCONF register value (LSB first)
   for (int i = 0; i < 4; i++) {
-    data_out[i] = tmc2209_rx_buf[3 + i + sent_count];
+    data_out[i] = rx_data[3 + i];
   }
 
   return 0;

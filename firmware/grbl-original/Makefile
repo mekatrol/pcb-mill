@@ -52,10 +52,9 @@ LD_SCRIPT := $(BOARD_DIR)$(SEP)build$(SEP)linker.ld
 # Linker flags
 LDFLAGS := -mcpu=$(MCU) -mthumb -nostartfiles -Wl,-Map=$(OUT_MAP),--fatal-warnings,-T$(LD_SCRIPT)
 
+CFLAGS += -I$(SRC_DIR)/grbl
 CFLAGS += -I$(SRC_DIR)/grbl/include
 CFLAGS += -I$(BOARD_DIR) -I$(BOARD_DIR)/include
-
-CFLAGS += -I$(SRC_DIR)/grbl
 
 # Core sources
 CSRCS := $(wildcard $(SRC_DIR)/grbl/*.c) \
