@@ -29,7 +29,6 @@ typedef struct {
 
 extern volatile MotionState motion;
 
-void stepper_interrupt(void);
 void init_motion(int32_t x, int32_t y, int32_t z, int32_t a);
 void start_motion(int32_t x, int32_t y, int32_t z, int32_t a);
 
