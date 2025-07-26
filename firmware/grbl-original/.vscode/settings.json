@@ -14,5 +14,5 @@
     "clock.h": "c",
     "tmc2209.h": "c"
   },
-  "cortex-debug.variableUseNaturalFormat": true
+  "cortex-debug.variableUseNaturalFormat": false
 }

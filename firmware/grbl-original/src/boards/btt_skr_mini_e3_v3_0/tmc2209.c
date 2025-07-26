@@ -195,7 +195,7 @@ void tmc2209_clear_buffers() {
 }
 
 // Reference: TMC2209 DATASHEET (Rev. 1.09 / 2023-FEB-16)
-// Section: 4.1.1 Write Access
+// Section:   4.1.1 Write Access
 void tmc2209_send_write_reg(uint8_t addr, uint8_t reg, uint32_t data) {
   tmc2209_clear_buffers();
 
@@ -214,8 +214,14 @@ void tmc2209_send_write_reg(uint8_t addr, uint8_t reg, uint32_t data) {
   }
 }
 
+// This helper waits till data actually sent before returning
+void tmc2209_send_write_reg_with_wait(uint8_t addr, uint8_t reg, uint32_t data) {
+  tmc2209_send_write_reg(addr, reg, data);
+  tmc2209_wait_data_sent();  // TMC2209 does not reply to writes, so need to make sure data is sent before continuing
+}
+
 // Reference: TMC2209 DATASHEET (Rev. 1.09 / 2023-FEB-16)
-// Section: 4.1.2 Read Access
+// Section:   4.1.2 Read Access
 void tmc2209_send_read_reg(uint8_t addr, uint8_t reg) {
   tmc2209_clear_buffers();
 
@@ -305,39 +311,35 @@ uint32_t tmc2209_read_reg(uint8_t addr, uint8_t reg) {
   return value;
 }
 
+void tmc2209_set_report_register(const char *name, uint8_t addr, uint8_t reg, uint32_t value) {
+  uart_printf("   %s:", name);
+  uint32_t read_value = tmc2209_read_reg(addr, reg);
+  uart_printf(" 0x%x->", read_value);
+  tmc2209_send_write_reg(addr, reg, value);  // Write the value
+  tmc2209_wait_data_sent();                  // TMC2209 does not reply to writes, so need to make sure data is sent before continuing
+  read_value = tmc2209_read_reg(addr, reg);
+  uart_printf("0x%x\r\n", read_value);
+}
+
 void tmc2209_read_ifcnt(uint8_t addr) {
   uint32_t ifcnt = tmc2209_read_reg(addr, TMC2209_REG_IFCNT);
   uart_printf("   ifcnt: 0x%x\r\n", ifcnt);
 }
 
-void tmc2209_set_hold_run(uint8_t addr, uint32_t hold_run_value) {
-  uart_printf("   hold :");
-  tmc2209_send_write_reg(addr, TMC2209_REG_IHOLD_IRUN, hold_run_value);
-  tmc2209_wait_data_sent();  // TMC2209 does not reply to writes, so need to make sure data is sent before continuing
-  uart_printf(" 0x%x\r\n", hold_run_value);
+bool tmc2209_gstat_init(uint8_t addr) {
+  // Read ifcnt before writing to identify if write was successful
+  uint32_t ifcnt_before = tmc2209_read_reg(addr, TMC2209_REG_IFCNT);
+
+  // Clear all flags
+  tmc2209_send_write_reg_with_wait(addr, TMC2209_REG_GSTAT, 0xb111);
+
+  // Should have incremented
+  return tmc2209_read_reg(addr, TMC2209_REG_IFCNT) > ifcnt_before;
 }
 
-void tmc2209_read_gconf(uint8_t addr) {
-  uint32_t gconf = tmc2209_read_reg(addr, TMC2209_REG_GCONF);
-  uart_printf("   gconf: 0x%x\r\n", gconf);
-}
-
-void tmc2209_reset_status(uint8_t addr) {
-  uart_printf("   gstat:");
-  uint32_t gstat = tmc2209_read_reg(addr, TMC2209_REG_GSTAT);
-  uart_printf(" 0x%x->", gstat);
-  tmc2209_send_write_reg(addr, TMC2209_REG_GSTAT, 0xb111);  // Just try and clear all flags
-  tmc2209_wait_data_sent();                                 // TMC2209 does not reply to writes, so need to make sure data is sent before continuing
-  gstat = tmc2209_read_reg(addr, TMC2209_REG_GSTAT);
-  uart_printf("0x%x\r\n", gstat);
-}
-
-void tmc2209_device_initialise(uint8_t addr) {
-  uart_printf("Initialising TMC2209 device at address: 0x%x\r\n", addr);
-  tmc2209_read_ifcnt(addr);
-  tmc2209_reset_status(addr);
-  tmc2209_read_ifcnt(addr);
-  tmc2209_read_gconf(addr);
+bool tmc2209_hold_run_init(uint8_t addr) {
+  // Read ifcnt before writing to identify if write was successful
+  uint32_t ifcnt_before = tmc2209_read_reg(addr, TMC2209_REG_IFCNT);
 
   // Reasonable initial IHOLD, IRUN, IHOLDDELAY values
   // 0x00_06_1F_0A
@@ -345,8 +347,56 @@ void tmc2209_device_initialise(uint8_t addr) {
   //      │  │  └── IHOLD       = 0x0A = 10 : Hold current (standstill)        - (0=1/32 … 31=32/32 so 10=11/32 ≈  34%)
   //      │  └───── IRUN        = 0x1F = 31 : Run current (during motion)      - (0=1/32 … 31=32/32 so 31=32/32 = 100%)
   //      └──────── IHOLDDELAY  = 0x06 = 6  : Delay before switching to IHOLD  - Delay per current reduction step in multiple of 2^18 clocks
-  tmc2209_set_hold_run(addr, 0x00061F0A);
-  tmc2209_read_ifcnt(addr);
+  tmc2209_send_write_reg_with_wait(addr, TMC2209_REG_IHOLD_IRUN, 0x00061F0A);
+
+  // Should have incremented
+  return tmc2209_read_reg(addr, TMC2209_REG_IFCNT) > ifcnt_before;
+}
+
+bool tmc2209_gconf_init(uint8_t addr) {
+  // Read current gconf value
+  uint32_t gconf = tmc2209_read_reg(addr, TMC2209_REG_GCONF);
+
+  // Read ifcnt before writing to identify if write was successful
+  uint32_t ifcnt_before = tmc2209_read_reg(addr, TMC2209_REG_IFCNT);
+
+  // Use internal reference derived from 5VOUT (default is Use voltage supplied to VREF as current reference)
+  gconf &= ~BIT_00;
+
+  // Reference: TMC2209 DATASHEET (Rev. 1.09 / 2023-FEB-16)
+  // Section:   3.4 Configuration Pins
+  //    When using the UART interface, the configuration pin should be disabled via
+  //    GCONF.pdn_disable = 1. Program IHOLD as desired for standstill periods
+  // PDN_UART input function disabled. Set this bit, when using the UART interface!
+  gconf |= BIT_06;
+
+  // Microstep resolution selected by MRES register (not by pins MS1, MS2)
+  gconf |= BIT_07;
+
+  // Test pin normal operation - Attention: Not for user, set to 0 for normal operation!
+  gconf &= ~BIT_09;
+
+  // Write the updated gconf value
+  tmc2209_send_write_reg_with_wait(addr, TMC2209_REG_GCONF, gconf);
+
+  // Should have incremented
+  return tmc2209_read_reg(addr, TMC2209_REG_IFCNT) > ifcnt_before;
+}
+
+void tmc2209_device_initialise(uint8_t addr) {
+  uart_printf("Initialising TMC2209 device at address: 0x%x\r\n", addr);
+
+  // Reset status
+  bool result = tmc2209_gstat_init(addr);
+  uart_printf("   gstat: %s\r\n", result ? "success" : "fail");
+
+  // Initialise gconf
+  result = tmc2209_gconf_init(addr);
+  uart_printf("   gconf: %s\r\n", result ? "success" : "fail");
+
+  // Initialise hold/run
+  result = tmc2209_hold_run_init(addr);
+  uart_printf("    hold: %s\r\n", result ? "success" : "fail");
 
   uart_puts("\r\n");
 }
