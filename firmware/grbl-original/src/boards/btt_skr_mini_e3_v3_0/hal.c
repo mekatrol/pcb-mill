@@ -60,7 +60,7 @@ void system_init_hal() {
   GPIOC->BSRR = BIT_06;  // Turn Fan 0 on
 
   // Enable steppers
-  steppers_enable_hal(true);
+  // steppers_enable_hal(true);
 }
 
 void do_motion_planning() {

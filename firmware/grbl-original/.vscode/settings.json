@@ -11,7 +11,8 @@
     "tusb.h": "c",
     "fsdev_stm32.h": "c",
     "motion.h": "c",
-    "clock.h": "c"
+    "clock.h": "c",
+    "tmc2209.h": "c"
   },
   "cortex-debug.variableUseNaturalFormat": true
 }
