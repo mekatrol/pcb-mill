@@ -96,6 +96,20 @@ void USART3_4_LPUART1_IRQHandler(void) {
   }
 }
 
+void tmc2209_wait_data_sent() {
+  // Wait till tx buffer empty
+  // Total bits = 8 bytes × 10 bits
+  //            = 80 bits
+  // Bit rate   = 115200 bits/second
+  // Time       = 80 bits / 115200 bps
+  //            ≈ 0.000694 seconds
+  //            = 694 μs
+  delay_us(700);  // Wait 700µs for full 8 bytes to be sent
+
+  // Wait until transmit data register empty
+  while (!(USART4->ISR & USART_ISR_TXE_TXFNF));
+}
+
 void tmc2209_uart_send(uint8_t b) {
   // Disable transmit empty interrupt while sending
   USART4->CR1 &= ~(USART_CR1_TXEIE_TXFNFIE);
@@ -176,7 +190,7 @@ void tmc2209_clear_buffers() {
   tmc2209_rx_buffer_head = tmc2209_rx_buffer_tail = 0;
   tmc2209_rx_count = 0;
 
-  // Restore receive interrupt (TX interrupt will be enabled when data is sent next)
+  // Restore receive interrupt (TX interrupt will be enabled when data is next sent)
   USART4->CR1 |= USART_CR1_RXNEIE_RXFNEIE;
 }
 
@@ -291,6 +305,11 @@ uint32_t tmc2209_read_reg(uint8_t addr, uint8_t reg) {
   return value;
 }
 
+void tmc2209_read_ifcnt(uint8_t addr) {
+  uint32_t ifcnt = tmc2209_read_reg(addr, TMC2209_REG_IFCNT);
+  uart_printf("   ifcnt: 0x%x\r\n", ifcnt);
+}
+
 void tmc2209_read_gconf(uint8_t addr) {
   uint32_t gconf = tmc2209_read_reg(addr, TMC2209_REG_GCONF);
   uart_printf("   gconf: 0x%x\r\n", gconf);
@@ -301,13 +320,16 @@ void tmc2209_reset_status(uint8_t addr) {
   uint32_t gstat = tmc2209_read_reg(addr, TMC2209_REG_GSTAT);
   uart_printf(" 0x%x->", gstat);
   tmc2209_send_write_reg(addr, TMC2209_REG_GSTAT, gstat);
+  tmc2209_wait_data_sent();  // TMC2209 does not reply to writes, so need to make sure data is sent before continuing
   gstat = tmc2209_read_reg(addr, TMC2209_REG_GSTAT);
   uart_printf("0x%x\r\n", gstat);
 }
 
-void tmc_init(uint8_t addr) {
-  uart_printf("Initialising TMC2209 at address: 0x%x\r\n", addr);
+void tmc2209_device_initialise(uint8_t addr) {
+  uart_printf("Initialising TMC2209 device at address: 0x%x\r\n", addr);
+  tmc2209_read_ifcnt(addr);
   tmc2209_reset_status(addr);
+  tmc2209_read_ifcnt(addr);
   tmc2209_read_gconf(addr);
 
   uart_puts("\r\n");
@@ -316,25 +338,25 @@ void tmc_init(uint8_t addr) {
 // Default to initialising at boot
 TMC2209_Initialise_State init_state = STATE_INIT_X;
 
-void tmc2209_initialise() {
+void tmc2209_state_initialise() {
   switch (init_state) {
     case STATE_INIT_X:
-      tmc_init(0x00);
+      tmc2209_device_initialise(0x00);
       init_state = STATE_INIT_Y;
       break;
 
     case STATE_INIT_Y:
-      tmc_init(0x01);
+      tmc2209_device_initialise(0x01);
       init_state = STATE_INIT_Z;
       break;
 
     case STATE_INIT_Z:
-      tmc_init(0x02);
+      tmc2209_device_initialise(0x02);
       init_state = STATE_INIT_E;
       break;
 
     case STATE_INIT_E:
-      tmc_init(0x03);
+      tmc2209_device_initialise(0x03);
       init_state = STATE_INIT_DONE;
       break;
 
@@ -348,6 +370,6 @@ void tmc2209_initialise() {
 
 void tmc2209_tick() {
   if (init_state != STATE_INIT_DONE) {
-    tmc2209_initialise();
+    tmc2209_state_initialise();
   }
 }
