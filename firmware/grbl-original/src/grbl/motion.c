@@ -4,14 +4,14 @@
 
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 
-static inline void axis_step_high(volatile Axis* a) {
-  a->step_high();      // Set pin HIGH
-  a->step_active = 1;  // Flag pin active
+static inline void axis_step_high(volatile Axis* axis) {
+  axis->step_high();      // Set pin HIGH
+  axis->step_active = 1;  // Flag pin active
 }
 
-static inline void axis_step_low(volatile Axis* a) {
-  a->step_low();       // Set pin LOW
-  a->step_active = 0;  // Flag pin not active
+static inline void axis_step_low(volatile Axis* axis) {
+  axis->step_low();       // Set pin LOW
+  axis->step_active = 0;  // Flag pin not active
 }
 
 void stepper_interrupt(void) {
