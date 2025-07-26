@@ -41,10 +41,10 @@ int main(void) {
   interrupts_enable();                // Enable interrupts
 
   // init_motion(0, 0, 0);
-  steppers_enable_hal(true);
-  while (true) {
-    start_motion(100, 20, 20);
-  }
+  // steppers_enable_hal(true);
+  // while (true) {
+  //   start_motion(100, 20, 20);
+  // }
 
 // Check for power-up and set system alarm if homing is enabled to force homing
 // cycle by setting Grbl's alarm state. Alarm locks out all g-code commands,

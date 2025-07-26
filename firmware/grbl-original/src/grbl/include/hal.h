@@ -70,4 +70,6 @@ uint8_t probe_get_state_hal();
 uint8_t eeprom_get_char_hal();
 void eeprom_put_char_hal(uint32_t addr, uint8_t new_value);
 
+void hal_tick();
+
 #endif  // __HAL_H__

@@ -43,13 +43,30 @@ void board_init_hal() {
   timer7_init(1000, true);
   timer14_init();
 
+  set_timer7_interval(200);
+
   // TMC2209 uart
-  uart4_init();
+  tmc2209_uart4_init();
 
   init_eeprom();
   i2c1_master_init();
+}
 
-  tmc2209_read_gconf(0x00);  // Send read to slave 0
+void system_init_hal() {
+}
+
+uint8_t tmc2209_configure_addr = 0;
+
+void hal_tick() {
+  if (tmc2209_configure_addr > 3) {
+    return;
+  }
+
+  uint8_t errors = 0;
+
+  uart_printf("Reading gconf for addr: 0x%x\r\n", tmc2209_configure_addr);
+
+  tmc2209_read_gconf(tmc2209_configure_addr);
 
   delay_ms(100);
 
@@ -58,12 +75,16 @@ void board_init_hal() {
   int result = tmc2209_parse_reply(4, gconf);
   if (result == 0) {
     value = gconf[0] | (gconf[1] << 8) | (gconf[2] << 16) | (gconf[3] << 24);
-    uart_printf("gconf: 0x%x\r\n", value);
+    uart_printf("gconf: 0x%x [for addr: 0x%x]\r\n", value, tmc2209_configure_addr);
   } else {
-    // Handle error
+    errors++;
+  }
+
+  if (errors == 0) {
+    set_timer7_interval(1000);
+  } else {
     set_timer7_interval(100);
   }
-}
 
-void system_init_hal() {
+  tmc2209_configure_addr++;
 }
