@@ -15,19 +15,43 @@ static inline void axis_step_low(volatile Axis* axis) {
 }
 
 void stepper_interrupt(void) {
+  if (!motion.x.step_high) {
+    // Motion system not yet initialised
+    return;
+  }
+
+  motion.tick_counter++;
+
+  if (motion.tick_counter % 10 != 0) {
+    return;
+  }
+
   // Auto-clear STEP pins from previous tick
   if (motion.x.step_active) {
     axis_step_low(&motion.x);
+  } else {
+    axis_step_high(&motion.x);
   }
+
   if (motion.y.step_active) {
     axis_step_low(&motion.y);
+  } else {
+    axis_step_high(&motion.y);
   }
+
   if (motion.z.step_active) {
     axis_step_low(&motion.z);
+  } else {
+    axis_step_high(&motion.z);
   }
+
   if (motion.e.step_active) {
     axis_step_low(&motion.e);
+  } else {
+    axis_step_high(&motion.e);
   }
+
+  return;
 
   if (motion.steps_remaining == 0) {
     return;

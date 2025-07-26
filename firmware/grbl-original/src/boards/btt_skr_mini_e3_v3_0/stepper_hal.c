@@ -131,9 +131,9 @@ static inline void set_ena_E(int32_t enable) {
 }
 
 void steppers_enable_hal(bool invert) {
-  // set_ena_X(1);
-  // set_ena_Y(1);
-  // set_ena_Z(1);
+  set_ena_X(1);
+  set_ena_Y(1);
+  set_ena_Z(1);
   set_ena_E(1);
   GPIOC->BSRR = BIT_06;  // Turn Fan 0 on
 }
@@ -156,17 +156,17 @@ void stepper_init_hal() {
   GPIOB->ODR &= ~STEP_Y_STEP;                        // Set state low
 
   // Init Z stepper
-  GPIO_SET_MODE(GPIOC, STEP_Z_DIR_POS, MODER_OUT);   // Set Z1 direction to output pin mode
-  GPIO_SET_MODE(GPIOB, STEP_Z_STEP_POS, MODER_OUT);  // Set Z1 step to output pin mode
-  GPIO_SET_MODE(GPIOB, STEP_Z_EN_POS, MODER_OUT);    // Set Z1 enable to output pin mode
+  GPIO_SET_MODE(GPIOC, STEP_Z_DIR_POS, MODER_OUT);   // Set Z direction to output pin mode
+  GPIO_SET_MODE(GPIOB, STEP_Z_STEP_POS, MODER_OUT);  // Set Z step to output pin mode
+  GPIO_SET_MODE(GPIOB, STEP_Z_EN_POS, MODER_OUT);    // Set Z enable to output pin mode
   GPIOC->ODR |= STEP_Z_DIR;                          // Set initial direction to forward
   GPIOB->ODR |= STEP_Z_EN;                           // Disable stepper
   GPIOB->ODR &= ~STEP_Z_STEP;                        // Set state low
 
   // Init E stepper
-  GPIO_SET_MODE(GPIOB, STEP_E_DIR_POS, MODER_OUT);   // Set Z2 direction to output pin mode
-  GPIO_SET_MODE(GPIOB, STEP_E_STEP_POS, MODER_OUT);  // Set Z2 step to output pin mode
-  GPIO_SET_MODE(GPIOD, STEP_E_EN_POS, MODER_OUT);    // Set Z2 enable to output pin mode
+  GPIO_SET_MODE(GPIOB, STEP_E_DIR_POS, MODER_OUT);   // Set E direction to output pin mode
+  GPIO_SET_MODE(GPIOB, STEP_E_STEP_POS, MODER_OUT);  // Set E step to output pin mode
+  GPIO_SET_MODE(GPIOD, STEP_E_EN_POS, MODER_OUT);    // Set E enable to output pin mode
   GPIOB->ODR |= STEP_E_DIR;                          // Set initial direction to forward
   GPIOD->ODR |= STEP_E_EN;                           // Disable stepper
   GPIOB->ODR &= ~STEP_E_STEP;                        // Set state low
