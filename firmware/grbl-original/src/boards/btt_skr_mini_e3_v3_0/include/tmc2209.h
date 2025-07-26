@@ -4,16 +4,20 @@
 #include <stdint.h>
 
 // TMC2209 Register Addresses
-#define TMC2209_REG_GCONF 0x00       // General configuration
-#define TMC2209_REG_GSTAT 0x01       // Global status
-#define TMC2209_REG_IFCNT 0x03       // Interface transmission counter
-#define TMC2209_REG_SLAVECONF 0x04   // Slave configuration
-#define TMC2209_REG_IOIN 0x06        // Input/output status
-#define TMC2209_REG_IHOLD_IRUN 0x10  // Current control (hold/run/boost)
-#define TMC2209_REG_TPOWERDOWN 0x11  // Power-down delay
-#define TMC2209_REG_TPWMTHRS 0x13    // StealthChop activation threshold
-#define TMC2209_REG_TCOOLTHRS 0x14   // CoolStep activation threshold
-#define TMC2209_REG_THIGH 0x15       // Upper velocity threshold for CoolStep
+#define TMC2209_REG_GCONF 0x00         // General configuration
+#define TMC2209_REG_GSTAT 0x01         // Global status
+#define TMC2209_REG_IFCNT 0x02         // Interface transmission counter
+#define TMC2209_REG_NODECONF 0x03      // Slave configuration
+#define TMC2209_REG_OTP_WRITE 0x04     // Write OTP
+#define TMC2209_REG_OTP_READ 0x05      // Read OTP
+#define TMC2209_REG_IOIN 0x06          // Input/output status
+#define TMC2209_REG_FACTORY_CONF 0x07  // Read factory configuration
+#define TMC2209_REG_IHOLD_IRUN 0x10    // Current control (hold/run/boost)
+#define TMC2209_REG_TPOWERDOWN 0x11    // Power-down delay
+#define TMC2209_REG_TSTEP 0x12         // Step delay
+#define TMC2209_REG_TPWMTHRS 0x13      // StealthChop activation threshold
+#define TMC2209_REG_TCOOLTHRS 0x14     // CoolStep activation threshold
+#define TMC2209_REG_THIGH 0x15         // Upper velocity threshold for CoolStep
 
 // Direct coil control
 #define TMC2209_REG_XDIRECT 0x20

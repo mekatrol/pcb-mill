@@ -201,15 +201,15 @@ void tmc2209_send_write_reg(uint8_t addr, uint8_t reg, uint32_t data) {
 
   uint8_t packet[8];
   packet[0] = 0x05;                     // Sync nibble
-  packet[1] = addr | 0x80;              // Device addr with write bit set
-  packet[2] = reg;                      // Register address
+  packet[1] = addr;                     // Device addr
+  packet[2] = reg | 0x80;               // Register address with write bit set
   packet[3] = (data >> 24) & 0xFF;      // MSB
   packet[4] = (data >> 16) & 0xFF;      //
   packet[5] = (data >> 8) & 0xFF;       //
   packet[6] = (data >> 0) & 0xFF;       // LSB
   packet[7] = tmc2209_crc8(packet, 7);  // CRC
 
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < 8; i++) {
     tmc2209_uart_send(packet[i]);
   }
 }
@@ -310,6 +310,13 @@ void tmc2209_read_ifcnt(uint8_t addr) {
   uart_printf("   ifcnt: 0x%x\r\n", ifcnt);
 }
 
+void tmc2209_set_hold_run(uint8_t addr, uint32_t hold_run_value) {
+  uart_printf("   hold :");
+  tmc2209_send_write_reg(addr, TMC2209_REG_IHOLD_IRUN, hold_run_value);
+  tmc2209_wait_data_sent();  // TMC2209 does not reply to writes, so need to make sure data is sent before continuing
+  uart_printf(" 0x%x\r\n", hold_run_value);
+}
+
 void tmc2209_read_gconf(uint8_t addr) {
   uint32_t gconf = tmc2209_read_reg(addr, TMC2209_REG_GCONF);
   uart_printf("   gconf: 0x%x\r\n", gconf);
@@ -319,8 +326,8 @@ void tmc2209_reset_status(uint8_t addr) {
   uart_printf("   gstat:");
   uint32_t gstat = tmc2209_read_reg(addr, TMC2209_REG_GSTAT);
   uart_printf(" 0x%x->", gstat);
-  tmc2209_send_write_reg(addr, TMC2209_REG_GSTAT, gstat);
-  tmc2209_wait_data_sent();  // TMC2209 does not reply to writes, so need to make sure data is sent before continuing
+  tmc2209_send_write_reg(addr, TMC2209_REG_GSTAT, 0xb111);  // Just try and clear all flags
+  tmc2209_wait_data_sent();                                 // TMC2209 does not reply to writes, so need to make sure data is sent before continuing
   gstat = tmc2209_read_reg(addr, TMC2209_REG_GSTAT);
   uart_printf("0x%x\r\n", gstat);
 }
@@ -331,6 +338,15 @@ void tmc2209_device_initialise(uint8_t addr) {
   tmc2209_reset_status(addr);
   tmc2209_read_ifcnt(addr);
   tmc2209_read_gconf(addr);
+
+  // Reasonable initial IHOLD, IRUN, IHOLDDELAY values
+  // 0x00_06_1F_0A
+  //      ↑  ↑  ↑
+  //      │  │  └── IHOLD       = 0x0A = 10 : Hold current (standstill)        - (0=1/32 … 31=32/32 so 10=11/32 ≈  34%)
+  //      │  └───── IRUN        = 0x1F = 31 : Run current (during motion)      - (0=1/32 … 31=32/32 so 31=32/32 = 100%)
+  //      └──────── IHOLDDELAY  = 0x06 = 6  : Delay before switching to IHOLD  - Delay per current reduction step in multiple of 2^18 clocks
+  tmc2209_set_hold_run(addr, 0x00061F0A);
+  tmc2209_read_ifcnt(addr);
 
   uart_puts("\r\n");
 }
