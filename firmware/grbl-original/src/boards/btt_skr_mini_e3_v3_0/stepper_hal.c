@@ -135,6 +135,14 @@ void steppers_enable_hal(bool enable) {
   set_ena_Y(enable);
   set_ena_Z(enable);
   set_ena_E(enable);
+
+  // Stepper cooling fan
+  if (enable) {
+    GPIOC->BSRR = BIT_06;  // Turn Fan 0 on
+  } else {
+    // TODO: should be delayed to cool heatsink OR use actual temp of steppers if avaluable through the UART
+    GPIOC->BSRR = BIT_06 << 16;  // Turn Fan 0 off
+  }
 }
 
 void stepper_init_hal() {

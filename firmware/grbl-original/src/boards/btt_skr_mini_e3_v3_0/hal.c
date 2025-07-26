@@ -56,9 +56,6 @@ void board_init_hal() {
 void system_init_hal() {
   init_motion(0, 0, 0, 0);
 
-  // Enable stepper cooling fan
-  GPIOC->BSRR = BIT_06;  // Turn Fan 0 on
-
   // Enable steppers
   // steppers_enable_hal(true);
 }
