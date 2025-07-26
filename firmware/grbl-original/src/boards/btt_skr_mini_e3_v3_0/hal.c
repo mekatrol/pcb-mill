@@ -55,6 +55,12 @@ void board_init_hal() {
 
 void system_init_hal() {
   init_motion(0, 0, 0, 0);
+
+  // Enable stepper cooling fan
+  GPIOC->BSRR = BIT_06;  // Turn Fan 0 on
+
+  // Enable steppers
+  steppers_enable_hal(true);
 }
 
 void do_motion_planning() {
@@ -63,7 +69,7 @@ void do_motion_planning() {
   //   return;
   // }
 
-  steppers_enable_hal(true);
+  // steppers_enable_hal(true);
 
   // if (motion.x.cur_pos == 0) {
   //   start_motion(1000, 1000, 1000, 1000);

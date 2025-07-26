@@ -50,7 +50,7 @@ uint8_t serial_data_can_send();
 
 void stepper_interrupt();
 void stepper_init_hal();
-void steppers_enable_hal(bool invert);
+void steppers_enable_hal(bool enable);
 
 void coolant_init_hal();
 void coolant_stop_hal();

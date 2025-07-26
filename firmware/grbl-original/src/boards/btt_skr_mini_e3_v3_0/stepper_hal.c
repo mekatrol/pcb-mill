@@ -50,8 +50,8 @@ static inline void set_dir_X(int32_t dir) {
   }
 }
 
-static inline void set_ena_X(int32_t enable) {
-  if (enable > 0) {
+static inline void set_ena_X(bool enable) {
+  if (enable) {
     GPIOB->BSRR = STEP_X_EN << 16;  // Reset pin (LOW)
   } else {                          //
     GPIOB->BSRR = STEP_X_EN;        // Set pin (HIGH)
@@ -74,8 +74,8 @@ static inline void set_dir_Y(int32_t dir) {
   }
 }
 
-static inline void set_ena_Y(int32_t enable) {
-  if (enable > 0) {
+static inline void set_ena_Y(bool enable) {
+  if (enable) {
     GPIOB->BSRR = STEP_Y_EN << 16;  // Reset pin (LOW)
   } else {                          //
     GPIOB->BSRR = STEP_Y_EN;        // Set pin (HIGH)
@@ -98,8 +98,8 @@ static inline void set_dir_Z(int32_t dir) {
   }
 }
 
-static inline void set_ena_Z(int32_t enable) {
-  if (enable > 0) {
+static inline void set_ena_Z(bool enable) {
+  if (enable) {
     GPIOB->BSRR = STEP_Z_EN << 16;  // Reset pin (LOW)
   } else {                          //
     GPIOB->BSRR = STEP_Z_EN;        // Set pin (HIGH)
@@ -122,20 +122,19 @@ static inline void set_dir_E(int32_t dir) {
   }
 }
 
-static inline void set_ena_E(int32_t enable) {
-  if (enable > 0) {
+static inline void set_ena_E(bool enable) {
+  if (enable) {
     GPIOD->BSRR = STEP_E_EN << 16;  // Reset pin (LOW)
   } else {                          //
     GPIOD->BSRR = STEP_E_EN;        // Set pin (HIGH)
   }
 }
 
-void steppers_enable_hal(bool invert) {
-  set_ena_X(1);
-  set_ena_Y(1);
-  set_ena_Z(1);
-  set_ena_E(1);
-  GPIOC->BSRR = BIT_06;  // Turn Fan 0 on
+void steppers_enable_hal(bool enable) {
+  set_ena_X(enable);
+  set_ena_Y(enable);
+  set_ena_Z(enable);
+  set_ena_E(enable);
 }
 
 void stepper_init_hal() {

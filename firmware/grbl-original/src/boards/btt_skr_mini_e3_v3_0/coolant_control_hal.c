@@ -39,7 +39,7 @@ void coolant_init_hal() {
 #endif
 
   // Stop coolant flow
-  coolant_stop_hal();
+  /* TODO: coolant_stop_hal(); */
 }
 
 void coolant_set_state_hal(uint8_t mode) {

@@ -25,9 +25,9 @@ void coolant_init() {
   coolant_stop();
 }
 
-void coolant_stop() { coolant_stop_hal(); }
+void coolant_stop() { /* TODO: coolant_stop_hal(); */ }
 
-void coolant_set_state(uint8_t mode) { coolant_set_state_hal(mode); }
+void coolant_set_state(uint8_t mode) { /* TODO: coolant_set_state_hal(mode); */ }
 
 void coolant_run(uint8_t mode) {
   if (sys.state == STATE_CHECK_MODE) {
