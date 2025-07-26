@@ -27,9 +27,9 @@ void limits_init_hal() {
   // Unmask EXTI lines
   EXTI->IMR1 |= (1 << 0) | (1 << 1) | (1 << 2);
 
-  // Enable EXTI0_1 and EXTI2_3 in NVIC
-  NVIC->ISER[0] |= (1 << 5);  // EXTI0_1_IRQn = position 5
-  NVIC->ISER[0] |= (1 << 6);  // EXTI2_3_IRQn = position 6
+  // Enable interrupts
+  ENABLE_IRQ(EXTI0_1_IRQn);
+  ENABLE_IRQ(EXTI2_3_IRQn);
 }
 
 uint8_t limits_get_state_hal() {
@@ -41,13 +41,25 @@ void EXTI0_1_IRQHandler(void) {
   if (EXTI->RPR1 & (1 << 0)) {
     EXTI->RPR1 = (1 << 0);  // Clear
     // Handle PC0 edge
-    limits_triggered();
+    // TODO: limits_triggered();
   }
 
   if (EXTI->RPR1 & (1 << 1)) {
     EXTI->RPR1 = (1 << 1);  // Clear
     // Handle PC1 edge
-    limits_triggered();
+    // TODO: limits_triggered();
+  }
+
+  if (EXTI->FPR1 & (1 << 0)) {
+    EXTI->FPR1 = (1 << 0);  // Clear
+    // Handle PC0 edge
+    // TODO: limits_triggered();
+  }
+
+  if (EXTI->FPR1 & (1 << 1)) {
+    EXTI->FPR1 = (1 << 1);  // Clear
+    // Handle PC1 edge
+    // TODO: limits_triggered();
   }
 }
 
@@ -55,6 +67,12 @@ void EXTI2_3_IRQHandler(void) {
   if (EXTI->RPR1 & (1 << 2)) {
     EXTI->RPR1 = (1 << 2);  // Clear
     // Handle PC2 edge
-    limits_triggered();
+    // TODO: limits_triggered();
+  }
+
+  if (EXTI->FPR1 & (1 << 2)) {
+    EXTI->FPR1 = (1 << 2);  // Clear
+    // Handle PC2 edge
+    // TODO: limits_triggered();
   }
 }

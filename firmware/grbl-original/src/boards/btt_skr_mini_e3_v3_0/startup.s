@@ -5,6 +5,8 @@
 .global       g_pfnVectors
 .global       Reset_Handler
 .global       SysTick_IRQHandler
+.global       EXTI0_1_IRQHandler
+.global       EXTI2_3_IRQHandler
 .global       USB_UCPD1_2_IRQHandler
 .global       TIM6_DAC_IRQHandler
 .global       TIM7_IRQHandler
@@ -75,8 +77,8 @@ g_pfnVectors:
 .word         Default_Handler               // IRQ 2
 .word         Default_Handler               // IRQ 3
 .word         Default_Handler               // IRQ 4
-.word         Default_Handler               // IRQ 5
-.word         Default_Handler               // IRQ 6
+.word         EXTI0_1_IRQHandler            // IRQ 5
+.word         EXTI2_3_IRQHandler            // IRQ 6
 .word         Default_Handler               // IRQ 7
 .word         USB_UCPD1_2_IRQHandler        // IRQ 8
 .word         Default_Handler               // IRQ 9

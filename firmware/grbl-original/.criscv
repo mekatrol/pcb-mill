@@ -1,0 +1,46 @@
+{
+  "meta": {
+    "version": 2,
+    "help": "See: https://github.com/mekatrol/vscode-riscv-extension for description of configuration values."
+  },
+  "endOfFileHasBlankLine": true,
+  "commentOnlyLineColumn": 1,
+  "commentOnlyLineMatchNextColumn": true,
+  "commentCharacter": "@",
+  "disabled": false,
+  "tabs": {
+    "replaceTabsWithSpaces": 2,
+    "tabWidth": 2
+  },
+  "directive": {
+    "primaryColumn": 1,
+    "dataColumn": 15,
+    "commentColumn": 45
+  },
+  "label": {
+    "primaryColumn": 1,
+    "dataColumn": 15,
+    "commentColumn": 45,
+    "hasOwnLine": true
+  },
+  "localLabel": {
+    "primaryColumn": 1,
+    "dataColumn": 15,
+    "commentColumn": 45,
+    "hasOwnLine": true
+  },
+  "instruction": {
+    "supportedInstructionSets": [
+      "R32I",
+      "Pseudo"
+    ],
+    "primaryColumn": 4,
+    "dataColumn": 15,
+    "commentColumn": 45
+  },
+  "value": {
+    "primaryColumn": 4,
+    "dataColumn": 15,
+    "commentColumn": 45
+  }
+}
