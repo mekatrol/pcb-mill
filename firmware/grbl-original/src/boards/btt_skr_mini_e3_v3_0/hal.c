@@ -8,6 +8,7 @@
 #include "irq.h"
 #include "log.h"
 #include "memory_map.h"
+#include "motion.h"
 #include "register_bits.h"
 #include "timers.h"
 #include "tmc2209.h"
@@ -43,7 +44,7 @@ void board_init_hal() {
   timer7_init(1000, true);
   timer14_init();
 
-  set_timer7_interval(200);
+  set_timer7_interval(1000);
 
   // TMC2209 uart
   tmc2209_uart4_init();
@@ -53,36 +54,41 @@ void board_init_hal() {
 }
 
 void system_init_hal() {
+  init_motion(0, 0, 0, 0);
 }
 
-uint8_t tmc2209_configure_addr = 0;
+void do_motion_planning() {
+  // if (motion.steps_remaining > 0) {
+  //   // No new motion while still moving
+  //   return;
+  // }
+
+  steppers_enable_hal(true);
+
+  // if (motion.x.cur_pos == 0) {
+  //   start_motion(1000, 1000, 1000, 1000);
+  // } else {
+  //   start_motion(0, 0, 0, 0);
+  // }
+}
+
+uint32_t hal_tick_count = 0;
 
 void hal_tick() {
-  if (tmc2209_configure_addr > 3) {
+  uint32_t tick_count = get_systick();
+
+  if (tick_count == hal_tick_count) {
     return;
   }
 
-  uint8_t errors = 0;
+  hal_tick_count = tick_count;
 
-  uart_printf("Reading gconf for addr: 0x%x\r\n", tmc2209_configure_addr);
-
-  tmc2209_read_gconf(tmc2209_configure_addr);
-
-  uint8_t gconf[4];
-  uint32_t value;
-  int result = tmc2209_parse_reply(4, gconf, 0x00);
-  if (result == 0) {
-    value = gconf[0] | (gconf[1] << 8) | (gconf[2] << 16) | (gconf[3] << 24);
-    uart_printf("gconf: 0x%x [for addr: 0x%x]\r\n", value, tmc2209_configure_addr);
-  } else {
-    errors++;
+  // Run background tasks about every 100ms
+  if (hal_tick_count % 100 == 0) {
+    tmc2209_tick();
   }
 
-  if (errors == 0) {
-    set_timer7_interval(1000);
-  } else {
-    set_timer7_interval(100);
+  if (hal_tick_count % 2000 == 0) {
+    do_motion_planning();
   }
-
-  tmc2209_configure_addr++;
 }

@@ -1,6 +1,7 @@
 #include "clock.h"
 #include "gpio.h"
 #include "irq.h"
+#include "log.h"
 #include "memory_map.h"
 #include "register_bits.h"
 #include "timers.h"
@@ -232,4 +233,27 @@ int tmc2209_parse_reply(uint8_t sent_count, uint8_t *data_out, uint8_t reg) {
   }
 
   return 0;
+}
+
+void tmc_init(uint8_t addr) {
+  uart_printf("Reading gconf for addr: 0x%x\r\n", addr);
+
+  tmc2209_read_gconf(addr);
+
+  uint8_t gconf[4];
+  uint32_t value;
+  int result = tmc2209_parse_reply(4, gconf, 0x00);
+  if (result == 0) {
+    value = gconf[0] | (gconf[1] << 8) | (gconf[2] << 16) | (gconf[3] << 24);
+    uart_printf("gconf: 0x%x [for addr: 0x%x]\r\n", value, addr);
+  }
+}
+
+uint8_t tmc2209_configure_addr = 0;
+
+void tmc2209_tick() {
+  if (tmc2209_configure_addr <= 3) {
+    tmc_init(tmc2209_configure_addr);
+    tmc2209_configure_addr++;
+  }
 }

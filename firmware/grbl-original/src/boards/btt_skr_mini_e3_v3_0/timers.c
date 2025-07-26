@@ -67,6 +67,7 @@ void timer14_init() {
   // Set TIM14 to tick every interval ms:
   //  64 MHz / 64 = 1 MHz → 1 µs prescaled
   //  10 ticks = 10µs per tick (100kHz)
+  // This means that stepper pulse widths are a minimum of 10µs
   timer_init(TIM14, 64, 10, true, TIM14_IRQn, &RCC->APBENR2, RCC_APBENR2_TIM14EN);
 }
 

@@ -10,7 +10,8 @@
     "timers.h": "c",
     "tusb.h": "c",
     "fsdev_stm32.h": "c",
-    "motion.h": "c"
+    "motion.h": "c",
+    "clock.h": "c"
   },
-  "cortex-debug.variableUseNaturalFormat": false
+  "cortex-debug.variableUseNaturalFormat": true
 }

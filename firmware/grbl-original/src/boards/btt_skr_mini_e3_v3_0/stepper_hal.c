@@ -18,104 +18,124 @@
 #define STEP_Y_EN_POS (BIT_11_POS)          // PB11
 #define STEP_Y_EN (1 << STEP_Y_EN_POS)      //
 
-#define STEP_Z1_DIR_POS (BIT_05_POS)          // PC5
-#define STEP_Z1_DIR (1 << STEP_Z1_DIR_POS)    //
-#define STEP_Z1_STEP_POS (BIT_00_POS)         // PB0
-#define STEP_Z1_STEP (1 << STEP_Z1_STEP_POS)  //
-#define STEP_Z1_EN_POS (BIT_01_POS)           // PB1
-#define STEP_Z1_EN (1 << STEP_Z1_EN_POS)      //
+#define STEP_Z_DIR_POS (BIT_05_POS)         // PC5
+#define STEP_Z_DIR (1 << STEP_Z_DIR_POS)    //
+#define STEP_Z_STEP_POS (BIT_00_POS)        // PB0
+#define STEP_Z_STEP (1 << STEP_Z_STEP_POS)  //
+#define STEP_Z_EN_POS (BIT_01_POS)          // PB1
+#define STEP_Z_EN (1 << STEP_Z_EN_POS)      //
 
-#define STEP_Z2_DIR_POS (BIT_04_POS)          // PB4
-#define STEP_Z2_DIR (1 << STEP_Z2_DIR_POS)    //
-#define STEP_Z2_STEP_POS (BIT_03_POS)         // PB3
-#define STEP_Z2_STEP (1 << STEP_Z2_STEP_POS)  //
-#define STEP_Z2_EN_POS (BIT_01_POS)           // PD1
-#define STEP_Z2_EN (1 << STEP_Z2_EN_POS)      //
+#define STEP_E_DIR_POS (BIT_04_POS)         // PB4
+#define STEP_E_DIR (1 << STEP_E_DIR_POS)    //
+#define STEP_E_STEP_POS (BIT_03_POS)        // PB3
+#define STEP_E_STEP (1 << STEP_E_STEP_POS)  //
+#define STEP_E_EN_POS (BIT_01_POS)          // PD1
+#define STEP_E_EN (1 << STEP_E_EN_POS)      //
 
 volatile MotionState motion;
 
 static inline void step_low_X() {
-  GPIOB->BSRR = (1 << 13) << 16;  // Reset pin (LOW)
+  GPIOB->BSRR = STEP_X_STEP << 16;  // Reset pin (LOW)
 }
 
 static inline void step_high_X() {
-  GPIOB->BSRR = (1 << 13);  // Set pin (HIGH)
+  GPIOB->BSRR = STEP_X_STEP;  // Set pin (HIGH)
 }
 
 static inline void set_dir_X(int32_t dir) {
   if (dir > 0) {
-    GPIOB->BSRR = (1 << 12);        // Set pin (HIGH)
-  } else {                          //
-    GPIOB->BSRR = (1 << 12) << 16;  // Reset pin (LOW)
+    GPIOB->BSRR = STEP_X_DIR;        // Set pin (HIGH)
+  } else {                           //
+    GPIOB->BSRR = STEP_X_DIR << 16;  // Reset pin (LOW)
   }
 }
 
 static inline void set_ena_X(int32_t enable) {
   if (enable > 0) {
-    GPIOB->BSRR = (1 << 14) << 16;  // Reset pin (LOW)
+    GPIOB->BSRR = STEP_X_EN << 16;  // Reset pin (LOW)
   } else {                          //
-    GPIOB->BSRR = (1 << 14);        // Set pin (HIGH)
+    GPIOB->BSRR = STEP_X_EN;        // Set pin (HIGH)
   }
 }
 
 static inline void step_low_Y() {
-  GPIOB->BSRR = (1 << 10) << 16;  // Reset pin (LOW)
+  GPIOB->BSRR = STEP_Y_STEP << 16;  // Reset pin (LOW)
 }
 
 static inline void step_high_Y() {
-  GPIOB->BSRR = (1 << 10);  // Set pin (HIGH)
+  GPIOB->BSRR = STEP_Y_STEP;  // Set pin (HIGH)
 }
 
 static inline void set_dir_Y(int32_t dir) {
   if (dir > 0) {
-    GPIOB->BSRR = (1 << 2);        // Set pin (HIGH)
-  } else {                         //
-    GPIOB->BSRR = (1 << 2) << 16;  // Reset pin (LOW)
+    GPIOB->BSRR = STEP_Y_DIR;        // Set pin (HIGH)
+  } else {                           //
+    GPIOB->BSRR = STEP_Y_DIR << 16;  // Reset pin (LOW)
   }
 }
 
 static inline void set_ena_Y(int32_t enable) {
   if (enable > 0) {
-    GPIOB->BSRR = (1 << 11) << 16;  // Reset pin (LOW)
+    GPIOB->BSRR = STEP_Y_EN << 16;  // Reset pin (LOW)
   } else {                          //
-    GPIOB->BSRR = (1 << 11);        // Set pin (HIGH)
+    GPIOB->BSRR = STEP_Y_EN;        // Set pin (HIGH)
   }
 }
 
 static inline void step_low_Z() {
-  GPIOB->BSRR = (1 << 0) << 16;  // Reset pin (LOW)
-  GPIOB->BSRR = (1 << 3) << 16;  // Reset pin (LOW)
+  GPIOB->BSRR = STEP_Z_STEP << 16;  // Reset pin (LOW)
 }
 
 static inline void step_high_Z() {
-  GPIOB->BSRR = (1 << 0) << 0;  // Set pin (HIGH)
-  GPIOB->BSRR = (1 << 3) << 0;  // Set pin (HIGH)
+  GPIOB->BSRR = STEP_Z_STEP << 16;  // Set pin (HIGH)
 }
 
 static inline void set_dir_Z(int32_t dir) {
   if (dir > 0) {
-    GPIOB->BSRR = (1 << 1);        // Set pin (HIGH)
-    GPIOD->BSRR = (1 << 1);        // Set pin (HIGH)
-  } else {                         //
-    GPIOB->BSRR = (1 << 1) << 16;  // Reset pin (LOW)
-    GPIOD->BSRR = (1 << 1) << 16;  // Reset pin (LOW)
+    GPIOC->BSRR = STEP_Z_DIR;        // Set pin (HIGH)
+  } else {                           //
+    GPIOC->BSRR = STEP_Z_DIR << 16;  // Reset pin (LOW)
   }
 }
 
 static inline void set_ena_Z(int32_t enable) {
   if (enable > 0) {
-    GPIOB->BSRR = (1 << 14) << 16;  // Reset pin (LOW)
-    GPIOB->BSRR = (1 << 14) << 16;  // Reset pin (LOW)
+    GPIOB->BSRR = STEP_Z_EN << 16;  // Reset pin (LOW)
   } else {                          //
-    GPIOB->BSRR = (1 << 14);        // Set pin (HIGH)
-    GPIOB->BSRR = (1 << 14);        // Set pin (HIGH)
+    GPIOB->BSRR = STEP_Z_EN;        // Set pin (HIGH)
+  }
+}
+
+static inline void step_low_E() {
+  GPIOB->BSRR = STEP_E_STEP << 16;  // Reset pin (LOW)
+}
+
+static inline void step_high_E() {
+  GPIOB->BSRR = STEP_E_STEP;  // Set pin (HIGH)
+}
+
+static inline void set_dir_E(int32_t dir) {
+  if (dir > 0) {
+    GPIOB->BSRR = STEP_E_DIR;        // Set pin (HIGH)
+  } else {                           //
+    GPIOB->BSRR = STEP_E_DIR << 16;  // Reset pin (LOW)
+  }
+}
+
+static inline void set_ena_E(int32_t enable) {
+  if (enable > 0) {
+    GPIOD->BSRR = STEP_E_EN << 16;  // Reset pin (LOW)
+  } else {                          //
+    GPIOD->BSRR = STEP_E_EN;        // Set pin (HIGH)
   }
 }
 
 void steppers_enable_hal(bool invert) {
-  set_ena_X(1);
-  set_ena_Y(1);
-  set_ena_Z(1);
+  // set_ena_X(1);
+  // set_ena_Y(1);
+  // set_ena_Z(1);
+  set_ena_E(1);
+  GPIOC->BSRR = BIT_06;  // Turn Fan 0 on
 }
 
 void stepper_init_hal() {
@@ -135,21 +155,21 @@ void stepper_init_hal() {
   GPIOB->ODR |= STEP_Y_EN;                           // Disable stepper
   GPIOB->ODR &= ~STEP_Y_STEP;                        // Set state low
 
-  // Init Z1 stepper
-  GPIO_SET_MODE(GPIOB, STEP_Z1_DIR_POS, MODER_OUT);   // Set Z1 direction to output pin mode
-  GPIO_SET_MODE(GPIOB, STEP_Z1_STEP_POS, MODER_OUT);  // Set Z1 step to output pin mode
-  GPIO_SET_MODE(GPIOB, STEP_Z1_EN_POS, MODER_OUT);    // Set Z1 enable to output pin mode
-  GPIOC->ODR |= STEP_Z1_DIR;                          // Set initial direction to forward
-  GPIOB->ODR |= STEP_Z1_EN;                           // Disable stepper
-  GPIOB->ODR &= ~STEP_Z1_STEP;                        // Set state low
+  // Init Z stepper
+  GPIO_SET_MODE(GPIOC, STEP_Z_DIR_POS, MODER_OUT);   // Set Z1 direction to output pin mode
+  GPIO_SET_MODE(GPIOB, STEP_Z_STEP_POS, MODER_OUT);  // Set Z1 step to output pin mode
+  GPIO_SET_MODE(GPIOB, STEP_Z_EN_POS, MODER_OUT);    // Set Z1 enable to output pin mode
+  GPIOC->ODR |= STEP_Z_DIR;                          // Set initial direction to forward
+  GPIOB->ODR |= STEP_Z_EN;                           // Disable stepper
+  GPIOB->ODR &= ~STEP_Z_STEP;                        // Set state low
 
-  // Init Z2 stepper
-  GPIO_SET_MODE(GPIOB, STEP_Z2_DIR_POS, MODER_OUT);   // Set Z2 direction to output pin mode
-  GPIO_SET_MODE(GPIOB, STEP_Z2_STEP_POS, MODER_OUT);  // Set Z2 step to output pin mode
-  GPIO_SET_MODE(GPIOB, STEP_Z2_EN_POS, MODER_OUT);    // Set Z2 enable to output pin mode
-  GPIOB->ODR |= STEP_Z2_DIR;                          // Set initial direction to forward
-  GPIOD->ODR |= STEP_Z2_EN;                           // Disable stepper
-  GPIOB->ODR &= ~STEP_Z2_STEP;                        // Set state low
+  // Init E stepper
+  GPIO_SET_MODE(GPIOB, STEP_E_DIR_POS, MODER_OUT);   // Set Z2 direction to output pin mode
+  GPIO_SET_MODE(GPIOB, STEP_E_STEP_POS, MODER_OUT);  // Set Z2 step to output pin mode
+  GPIO_SET_MODE(GPIOD, STEP_E_EN_POS, MODER_OUT);    // Set Z2 enable to output pin mode
+  GPIOB->ODR |= STEP_E_DIR;                          // Set initial direction to forward
+  GPIOD->ODR |= STEP_E_EN;                           // Disable stepper
+  GPIOB->ODR &= ~STEP_E_STEP;                        // Set state low
 
   motion.x.step_low = step_low_X;
   motion.x.step_high = step_high_X;
@@ -165,4 +185,9 @@ void stepper_init_hal() {
   motion.z.step_high = step_high_Z;
   motion.z.set_dir = set_dir_Z;
   motion.z.set_ena = set_ena_Z;
+
+  motion.e.step_low = step_low_E;
+  motion.e.step_high = step_high_E;
+  motion.e.set_dir = set_dir_E;
+  motion.e.set_ena = set_ena_E;
 }

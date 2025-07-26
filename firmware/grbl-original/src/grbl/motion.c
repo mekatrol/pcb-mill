@@ -25,9 +25,13 @@ void stepper_interrupt(void) {
   if (motion.z.step_active) {
     axis_step_low(&motion.z);
   }
+  if (motion.e.step_active) {
+    axis_step_low(&motion.e);
+  }
 
-  if (motion.steps_remaining == 0)
+  if (motion.steps_remaining == 0) {
     return;
+  }
 
   motion.tick_counter++;
 
@@ -40,7 +44,7 @@ void stepper_interrupt(void) {
       if (motion.x.error >= motion.steps_remaining) {
         motion.x.error -= motion.steps_remaining;
         axis_step_high(&motion.x);
-        motion.x.current += motion.x.dir;
+        motion.x.cur_pos += motion.x.dir;
       }
     }
 
@@ -49,7 +53,7 @@ void stepper_interrupt(void) {
       if (motion.y.error >= motion.steps_remaining) {
         motion.y.error -= motion.steps_remaining;
         axis_step_high(&motion.y);
-        motion.y.current += motion.y.dir;
+        motion.y.cur_pos += motion.y.dir;
       }
     }
 
@@ -58,7 +62,16 @@ void stepper_interrupt(void) {
       if (motion.z.error >= motion.steps_remaining) {
         motion.z.error -= motion.steps_remaining;
         axis_step_high(&motion.z);
-        motion.z.current += motion.z.dir;
+        motion.z.cur_pos += motion.z.dir;
+      }
+    }
+
+    if (motion.e.delta != 0) {
+      motion.e.error += motion.e.delta;
+      if (motion.e.error >= motion.steps_remaining) {
+        motion.e.error -= motion.steps_remaining;
+        axis_step_high(&motion.e);
+        motion.e.cur_pos += motion.e.dir;
       }
     }
 
@@ -77,44 +90,55 @@ void stepper_interrupt(void) {
   }
 }
 
-void init_motion(int32_t x, int32_t y, int32_t z) {
-  motion.x.current = x;
-  motion.y.current = y;
-  motion.z.current = z;
+void init_motion(int32_t x, int32_t y, int32_t z, int32_t a) {
+  motion.x.cur_pos = x;
+  motion.y.cur_pos = y;
+  motion.z.cur_pos = z;
+  motion.e.cur_pos = a;
 }
 
-void start_motion(int32_t x1, int32_t y1, int32_t z1) {
-  // Init axes
-  int32_t dx = ABS(x1 - motion.x.current);
-  int32_t dy = ABS(y1 - motion.y.current);
-  int32_t dz = ABS(z1 - motion.z.current);
-
-  motion.x.target = x1;
-  motion.y.target = y1;
-  motion.z.target = z1;
+void start_motion(int32_t x, int32_t y, int32_t z, int32_t a) {
+  // Calcule axis deltas from their current position
+  int32_t dx = ABS(x - motion.x.cur_pos);
+  int32_t dy = ABS(y - motion.y.cur_pos);
+  int32_t dz = ABS(z - motion.z.cur_pos);
+  int32_t de = ABS(a - motion.e.cur_pos);
 
   motion.x.delta = dx;
   motion.y.delta = dy;
   motion.z.delta = dz;
+  motion.e.delta = de;
 
+  // Set target positions
+  motion.x.tgt_pos = x;
+  motion.y.tgt_pos = y;
+  motion.z.tgt_pos = z;
+  motion.e.tgt_pos = a;
+
+  // Set the number of steps remaining to the largest ssteps remaining of any axis
   motion.steps_remaining = dx;
   if (dy > motion.steps_remaining) motion.steps_remaining = dy;
   if (dz > motion.steps_remaining) motion.steps_remaining = dz;
+  if (de > motion.steps_remaining) motion.steps_remaining = de;
 
+  // Start with no error
   motion.x.error = motion.y.error = motion.z.error = 0;
 
-  motion.x.dir = (x1 >= motion.x.current) ? 1 : -1;
-  motion.y.dir = (y1 >= motion.y.current) ? 1 : -1;
-  motion.z.dir = (z1 >= motion.z.current) ? 1 : -1;
+  // Init direction to travel based on current position relevant to target position
+  motion.x.dir = (x >= motion.x.cur_pos) ? 1 : -1;
+  motion.y.dir = (y >= motion.y.cur_pos) ? 1 : -1;
+  motion.z.dir = (z >= motion.z.cur_pos) ? 1 : -1;
+  motion.e.dir = (z >= motion.e.cur_pos) ? 1 : -1;
 
   motion.x.set_dir(motion.x.dir);
   motion.y.set_dir(motion.y.dir);
   motion.z.set_dir(motion.z.dir);
+  motion.e.set_dir(motion.e.dir);
 
-  // Plan trapezoidal profile (basic example)
+  // Plan trapezoidal profile
   motion.accel_ticks = motion.steps_remaining / 4;
   motion.decel_start = motion.steps_remaining - motion.accel_ticks;
-  motion.step_rate_ticks = 50;  // Start slow (500 µs between steps = 2 kHz)
+  motion.step_rate_ticks = 100;  // Needs to be a minimum of 8 for bit toggle timing to work
   motion.tick_counter = 0;
   motion.step_phase = 0;
 }

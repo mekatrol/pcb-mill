@@ -4,9 +4,9 @@
 #include <stdint.h>
 
 typedef struct {
-  int32_t current;                  //
-  int32_t target;                   //
-  int32_t delta;                    //
+  int32_t cur_pos;                  // Axis current position
+  int32_t tgt_pos;                  // Axis target position
+  int32_t delta;                    // Axis position delta
   int32_t dir;                      // +1 or -1
   int32_t error;                    // for Bresenham-style interpolation
   uint8_t step_active;              // 1 if step pin is high and needs clearing
@@ -17,7 +17,7 @@ typedef struct {
 } Axis;
 
 typedef struct {
-  Axis x, y, z;
+  Axis x, y, z, e;
   int32_t steps_remaining;
   int32_t step_rate_ticks;  // how many timer ticks per step (inverse of speed)
   int32_t tick_counter;
@@ -30,7 +30,7 @@ typedef struct {
 extern volatile MotionState motion;
 
 void stepper_interrupt(void);
-void init_motion(int32_t x, int32_t y, int32_t z);
-void start_motion(int32_t x1, int32_t y1, int32_t z1);
+void init_motion(int32_t x, int32_t y, int32_t z, int32_t a);
+void start_motion(int32_t x, int32_t y, int32_t z, int32_t a);
 
 #endif  // __MOTION_H__
