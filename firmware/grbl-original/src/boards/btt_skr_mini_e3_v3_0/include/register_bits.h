@@ -2,37 +2,69 @@
 #define __REGISTER_BITS_H__
 
 #define BIT_00_POS 0
-#define BIT_00 (1 << BIT_00_POS)
+#define BIT_00 (1U << BIT_00_POS)
 #define BIT_01_POS 1
-#define BIT_01 (1 << BIT_01_POS)
+#define BIT_01 (1U << BIT_01_POS)
 #define BIT_02_POS 2
-#define BIT_02 (1 << BIT_02_POS)
+#define BIT_02 (1U << BIT_02_POS)
 #define BIT_03_POS 3
-#define BIT_03 (1 << BIT_03_POS)
+#define BIT_03 (1U << BIT_03_POS)
 #define BIT_04_POS 4
-#define BIT_04 (1 << BIT_04_POS)
+#define BIT_04 (1U << BIT_04_POS)
 #define BIT_05_POS 5
-#define BIT_05 (1 << BIT_05_POS)
+#define BIT_05 (1U << BIT_05_POS)
 #define BIT_06_POS 6
-#define BIT_06 (1 << BIT_06_POS)
+#define BIT_06 (1U << BIT_06_POS)
 #define BIT_07_POS 7
-#define BIT_07 (1 << BIT_07_POS)
+#define BIT_07 (1U << BIT_07_POS)
 #define BIT_08_POS 8
-#define BIT_08 (1 << BIT_08_POS)
+#define BIT_08 (1U << BIT_08_POS)
 #define BIT_09_POS 9
-#define BIT_09 (1 << BIT_09_POS)
+#define BIT_09 (1U << BIT_09_POS)
 #define BIT_10_POS 10
-#define BIT_10 (1 << BIT_10_POS)
+#define BIT_10 (1U << BIT_10_POS)
 #define BIT_11_POS 11
-#define BIT_11 (1 << BIT_11_POS)
+#define BIT_11 (1U << BIT_11_POS)
 #define BIT_12_POS 12
-#define BIT_12 (1 << BIT_12_POS)
+#define BIT_12 (1U << BIT_12_POS)
 #define BIT_13_POS 13
-#define BIT_13 (1 << BIT_13_POS)
+#define BIT_13 (1U << BIT_13_POS)
 #define BIT_14_POS 14
-#define BIT_14 (1 << BIT_14_POS)
+#define BIT_14 (1U << BIT_14_POS)
 #define BIT_15_POS 15
-#define BIT_15 (1 << BIT_15_POS)
+#define BIT_15 (1U << BIT_15_POS)
+#define BIT_16_POS 16
+#define BIT_16 (1U << BIT_16_POS)
+#define BIT_17_POS 17
+#define BIT_17 (1U << BIT_17_POS)
+#define BIT_18_POS 18
+#define BIT_18 (1U << BIT_18_POS)
+#define BIT_19_POS 19
+#define BIT_19 (1U << BIT_19_POS)
+#define BIT_20_POS 20
+#define BIT_20 (1U << BIT_20_POS)
+#define BIT_21_POS 21
+#define BIT_21 (1U << BIT_21_POS)
+#define BIT_22_POS 22
+#define BIT_22 (1U << BIT_22_POS)
+#define BIT_23_POS 23
+#define BIT_23 (1U << BIT_23_POS)
+#define BIT_24_POS 24
+#define BIT_24 (1U << BIT_24_POS)
+#define BIT_25_POS 25
+#define BIT_25 (1U << BIT_25_POS)
+#define BIT_26_POS 26
+#define BIT_26 (1U << BIT_26_POS)
+#define BIT_27_POS 27
+#define BIT_27 (1U << BIT_27_POS)
+#define BIT_28_POS 28
+#define BIT_28 (1U << BIT_28_POS)
+#define BIT_29_POS 29
+#define BIT_29 (1U << BIT_29_POS)
+#define BIT_30_POS 30
+#define BIT_30 (1U << BIT_30_POS)
+#define BIT_31_POS 31
+#define BIT_31 (1U << BIT_31_POS)
 
 #define __NVIC_PRIO_BITS 2U /*!< STM32G0xx uses 2 Bits for the Priority Levels */
 

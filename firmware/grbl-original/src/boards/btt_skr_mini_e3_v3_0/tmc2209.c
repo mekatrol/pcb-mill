@@ -46,15 +46,6 @@ void tmc2209_uart4_init() {
   GPIOC->AFRH &= ~((GPIO_AF_MSK << ((BIT_10_POS - 8) * GPIO_AF_BIT_COUNT)) | (GPIO_AF_MSK << ((BIT_11_POS - 8) * GPIO_AF_BIT_COUNT)));
   GPIOC->AFRH |= ((GPIO_AF1 << ((BIT_10_POS - 8) * GPIO_AF_BIT_COUNT)) | (GPIO_AF1 << ((BIT_11_POS - 8) * GPIO_AF_BIT_COUNT)));
 
-  // GPIOC->OTYPER &= ~((1 << BIT_10) | (1 << BIT_11)); // Push-pull
-
-  // // Set outputs to high speed
-  // GPIOC->OSPEEDR &= ~((OSPEEDR_MSK << (BIT_10_POS * OSPEEDR_BIT_COUNT)) | (OSPEEDR_MSK << (BIT_11_POS * OSPEEDR_BIT_COUNT)));
-  // GPIOC->OSPEEDR |= ((OSPEEDR_HIGH << (BIT_10_POS * OSPEEDR_BIT_COUNT)) | (OSPEEDR_HIGH << (BIT_11_POS * OSPEEDR_BIT_COUNT)));
-
-  // GPIOC->PUPDR &= ~((3 << (BIT_10_POS * 2)) | (3 << (BIT_11_POS * 2)));
-  // GPIOC->PUPDR |= (0 << (BIT_10_POS * 2)) | (1 << (BIT_11_POS * 2)); // No pull-up TX, pull-up RX
-
   // Configure USART4 (8-bit data, 1 stop bit)
   USART4->CR1 &= ~USART_CR1_UE;                             // Disable USART
   USART4->BRR = USART_BRR(F_SYS_CLOCK, TMC2209_BAUD_RATE);  // Set baud rate
@@ -311,21 +302,6 @@ uint32_t tmc2209_read_reg(uint8_t addr, uint8_t reg) {
   return value;
 }
 
-void tmc2209_set_report_register(const char *name, uint8_t addr, uint8_t reg, uint32_t value) {
-  uart_printf("   %s:", name);
-  uint32_t read_value = tmc2209_read_reg(addr, reg);
-  uart_printf(" 0x%x->", read_value);
-  tmc2209_send_write_reg(addr, reg, value);  // Write the value
-  tmc2209_wait_data_sent();                  // TMC2209 does not reply to writes, so need to make sure data is sent before continuing
-  read_value = tmc2209_read_reg(addr, reg);
-  uart_printf("0x%x\r\n", read_value);
-}
-
-void tmc2209_read_ifcnt(uint8_t addr) {
-  uint32_t ifcnt = tmc2209_read_reg(addr, TMC2209_REG_IFCNT);
-  uart_printf("   ifcnt: 0x%x\r\n", ifcnt);
-}
-
 bool tmc2209_gstat_init(uint8_t addr) {
   // Read ifcnt before writing to identify if write was successful
   uint32_t ifcnt_before = tmc2209_read_reg(addr, TMC2209_REG_IFCNT);
@@ -383,6 +359,43 @@ bool tmc2209_gconf_init(uint8_t addr) {
   return tmc2209_read_reg(addr, TMC2209_REG_IFCNT) > ifcnt_before;
 }
 
+bool tmc2209_mstep_init(uint8_t addr) {
+  // Read current chopconf value
+  uint32_t chopconf = tmc2209_read_reg(addr, TMC2209_REG_CHOPCONF);
+
+  // Read ifcnt before writing to identify if write was successful
+  uint32_t ifcnt_before = tmc2209_read_reg(addr, TMC2209_REG_IFCNT);
+
+  /* TMC2209 Microstep Resolution (MRES) Table - how many microsteps make up one full step of the motor.
+   *
+   *  MRES[3:0]       Microsteps     Description
+   *  ---------       ----------     -----------------------------
+   *  0b0000             256         Native microstepping
+   *  0b0001             128
+   *  0b0010              64
+   *  0b0011              32
+   *  0b0100              16         Often used (1/16)
+   *  0b0101               8
+   *  0b0110               4
+   *  0b0111               2
+   *  0b1000               1         Full step (no microstepping)
+   *  0b1001–0b1111     Invalid      Reserved or invalid setting
+   */
+
+  // Assuming: 1.8-degree step angle (360 degrees / 200 steps = 1.8 degrees/step)
+  // eg: 200 steps × 256 microsteps = 51,200 microsteps per revolution
+  // eg: 200 steps ×  16 microsteps =  3,200 microsteps per revolution
+
+  // Set MRES = 0b0100 (1/16 microstepping)
+  chopconf = (chopconf & ~(0xF << BIT_24_POS)) | (0b0100 << BIT_24_POS);  // Reset current and set new MRES in chopcong
+
+  // Write the updated gconf value
+  tmc2209_send_write_reg_with_wait(addr, TMC2209_REG_CHOPCONF, chopconf);
+
+  // Should have incremented
+  return tmc2209_read_reg(addr, TMC2209_REG_IFCNT) > ifcnt_before;
+}
+
 void tmc2209_device_initialise(uint8_t addr) {
   uart_printf("Initialising TMC2209 device at address: 0x%x\r\n", addr);
 
@@ -397,6 +410,10 @@ void tmc2209_device_initialise(uint8_t addr) {
   // Initialise hold/run
   result = tmc2209_hold_run_init(addr);
   uart_printf("    hold: %s\r\n", result ? "success" : "fail");
+
+  // Initialise microstepping
+  result = tmc2209_mstep_init(addr);
+  uart_printf("   mstep: %s\r\n", result ? "success" : "fail");
 
   uart_puts("\r\n");
 }
