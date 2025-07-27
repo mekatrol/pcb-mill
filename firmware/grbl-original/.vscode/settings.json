@@ -12,7 +12,9 @@
     "fsdev_stm32.h": "c",
     "motion.h": "c",
     "clock.h": "c",
-    "tmc2209.h": "c"
+    "tmc2209.h": "c",
+    "compare": "c",
+    "cstdint": "c"
   },
   "cortex-debug.variableUseNaturalFormat": false
 }

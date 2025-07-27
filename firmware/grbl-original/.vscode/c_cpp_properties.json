@@ -3,6 +3,12 @@
     {
       "name": "STM32G0B1",
       "includePath": [
+        "libs/tinyusb/src",
+        "libs/tinyusb/src/class/cdc",
+        "libs/tinyusb/src/common",
+        "libs/tinyusb/src/device",
+        "libs/tinyusb/src/portable",
+        "libs/tinyusb/src/portable/st/stm32_fsdev",
         "src/boards/btt_skr_mini_e3_v3_0",
         "src/boards/btt_skr_mini_e3_v3_0/include",
         "src/grbl",
@@ -17,6 +23,12 @@
       "browse": {
         "limitSymbolsToIncludedHeaders": true,
         "path": [
+          "libs/tinyusb/src",
+          "libs/tinyusb/src/class/cdc",
+          "libs/tinyusb/src/common",
+          "libs/tinyusb/src/device",
+          "libs/tinyusb/src/portable",
+          "libs/tinyusb/src/portable/st/stm32_fsdev",
           "src/boards/btt_skr_mini_e3_v3_0",
           "src/boards/btt_skr_mini_e3_v3_0/include",
           "src/grbl",

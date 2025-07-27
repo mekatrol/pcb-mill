@@ -3,6 +3,35 @@ import os
 import json
 from pathlib import Path
 
+
+def expand_foreach(expr, variables):
+    """Recursively expand all $(foreach ...) expressions in a string."""
+    foreach_pattern = re.compile(
+        r"\$\(\s*foreach\s+(\w+)\s*,\s*((?:[^()$]|\$\([^()]*\))+?)\s*,\s*((?:[^()$]|\$\([^()]*\))+?)\s*\)"
+    )
+
+    def eval_expr(e):
+        # Expand variables in expression
+        for key, val in variables.items():
+            e = e.replace(f"$({key})", val)
+        return expand_foreach(e, variables)  # Recurse
+
+    while True:
+        m = foreach_pattern.search(expr)
+        if not m:
+            break
+        var, list_expr, template = m.groups()
+
+        list_expanded = eval_expr(list_expr).strip().split()
+        template_expanded = eval_expr(template)
+
+        substituted = ' '.join(template_expanded.replace(
+            f"$({var})", item) for item in list_expanded)
+        expr = expr[:m.start()] + substituted + expr[m.end():]
+
+    return expr
+
+
 # Paths
 script_dir = Path(__file__).resolve().parent
 project_root = script_dir.parent
@@ -32,7 +61,7 @@ include_paths = []
 cflags_line_pattern = re.compile(r"^\s*CFLAGS\s*(\+?=)\s*(.*)$")
 
 with open(makefile_path) as f:
-    for line in f:
+    for lineno, line in enumerate(f, start=1):
         line = line.strip()
         m = cflags_line_pattern.match(line)
         if not m:
@@ -46,12 +75,16 @@ with open(makefile_path) as f:
         for key, val in variables.items():
             rhs = rhs.replace(f"$({key})", val)
 
+        # Expand foreach
+        rhs = expand_foreach(rhs, variables)
+
         # Extract -I paths only
         for token in rhs.split():
             if token.startswith("-I"):
                 path = token[2:]
                 if "$(" in path or path.endswith("))"):
-                    print(f"⚠️  Skipping unresolved Makefile include: {path}")
+                    print(
+                        f"⚠️  Skipping unresolved Makefile include: {path} [line: {lineno}]")
                     continue
                 include_paths.append(path)
 

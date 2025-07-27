@@ -43,7 +43,8 @@ typedef enum {
   CEC_IRQn = 30,                               /*!< CEC Interrupt(combined with EXTI 27)                               */
 } IRQn_Type;
 
-#define ENABLE_IRQ(irq_number) NVIC->ISER[(irq_number) / 32] |= (1 << ((irq_number) % 32));
+#define ENABLE_IRQ(irq_number) NVIC->ISER[(irq_number) / 32] = (1 << ((irq_number) % 32))
+#define DISABLE_IRQ(irq_number) NVIC->ICER[(irq_number) / 32] = (1 << ((irq_number) % 32))
 
 void disable_irq(void);
 void enable_irq(void);

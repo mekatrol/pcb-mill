@@ -1,21 +1,32 @@
 #include "irq.h"
 #include "memory_map.h"
 #include "register_bits.h"
+#include "tusb.h"
 
 #define RCC_CRRCR_HSI48ON (1 << 0)
 #define RCC_CRRCR_HSI48RDY (1 << 1)
 
-#define RCC_CCIPR_CLK48SEL_MASK (3 << 28)
-#define RCC_CCIPR_CLK48SEL_HSI48 (0 << 28)
+void usb_init_hal() {
+  // Set PA11 and PA12 to Alternate Function mode
+  GPIO_SET_MODE(GPIOA, BIT_11_POS, MODER_ALT);
+  GPIO_SET_MODE(GPIOA, BIT_12_POS, MODER_ALT);
 
-void usb_clock_init(void) {
-  // Enable HSI48
-  RCC->CRRCR |= RCC_CRRCR_HSI48ON;
-  while ((RCC->CRRCR & RCC_CRRCR_HSI48RDY) == 0);  // Wait for HSI48 ready
+  // Set AF0 (USB) for PA11 and PA12 (AFR = 0)
+  GPIOA->AFR[1] &= ~((GPIO_AF_MSK << ((BIT_11_POS - 8) * GPIO_AF_BIT_COUNT)) | (GPIO_AF_MSK << ((BIT_12_POS - 8) * GPIO_AF_BIT_COUNT)));
 
-  // Select HSI48 as USB clock source
-  RCC->CCIPR &= ~RCC_CCIPR_CLK48SEL_MASK;
-  RCC->CCIPR |= RCC_CCIPR_CLK48SEL_HSI48;
+  // No pull-up/pull-down
+  GPIOA->PUPDR &= ~((0x11 << (BIT_11_POS * 2)) | (0x11 << (BIT_12_POS * 2)));
+
+  // Push-pull output (default)
+  GPIOA->OTYPER &= ~(BIT_11 | BIT_12);
+
+  // Very high speed (11b)
+  GPIOA->OSPEEDR &= ~((0x11 << (BIT_11_POS * 2)) | (0x11 << (BIT_12_POS * 2)));
+  GPIOA->OSPEEDR |= ((0x11 << (BIT_11_POS * 2)) | (0x11 << (BIT_12_POS * 2)));
+
+  RCC->CR |= BIT_22;                     // Enable HSI48
+  while ((RCC->CR & BIT_23) == 0);       // Wait for HSI48 ready
+  RCC->CCIPR2 &= ~(0b11 << BIT_12_POS);  // Select HSI48 as USB clock source
 
   // Enable USB peripheral clock
   RCC->APBENR1 |= RCC_APBENR1_USBEN;
@@ -25,4 +36,5 @@ void usb_clock_init(void) {
 }
 
 void USB_UCPD1_2_IRQHandler() {
+  tud_int_handler(0);  // Port 0 for most STM32 single-port USB devices
 }

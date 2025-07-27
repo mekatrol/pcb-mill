@@ -1,5 +1,6 @@
 #include <stdbool.h>
 
+#include "clock.h"
 #include "memory_map.h"
 #include "motion.h"
 #include "register_bits.h"
@@ -130,7 +131,7 @@ static inline void set_ena_E(bool enable) {
   }
 }
 
-extern int32_t stepper_cooling_fan_run_on_remaining;
+extern int32_t stepper_cooling_fan_run_on_start;
 
 void steppers_enable_hal(bool enable) {
   set_ena_X(enable);
@@ -143,7 +144,7 @@ void steppers_enable_hal(bool enable) {
     GPIOC->BSRR = BIT_06;  // Turn Fan 0 on
   } else {
     // TODO: this should be a helper method to set fan run on, not direct manipulation
-    stepper_cooling_fan_run_on_remaining = 60;
+    stepper_cooling_fan_run_on_start = get_second_counter();
   }
 }
 

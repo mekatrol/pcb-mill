@@ -42,29 +42,28 @@ void EXTI0_1_IRQHandler(void) {
     EXTI->RPR1 = (1 << 0);  // Clear
     // Handle PC0 edge
     // TODO: limits_triggered();
-    steppers_enable_hal(false);
   }
 
   if (EXTI->RPR1 & (1 << 1)) {
     EXTI->RPR1 = (1 << 1);  // Clear
     // Handle PC1 edge
     // TODO: limits_triggered();
-    steppers_enable_hal(false);
   }
 
   if (EXTI->FPR1 & (1 << 0)) {
     EXTI->FPR1 = (1 << 0);  // Clear
     // Handle PC0 edge
     // TODO: limits_triggered();
-    steppers_enable_hal(false);
   }
 
   if (EXTI->FPR1 & (1 << 1)) {
     EXTI->FPR1 = (1 << 1);  // Clear
     // Handle PC1 edge
     // TODO: limits_triggered();
-    steppers_enable_hal(false);
   }
+
+  // Disable steppers
+  steppers_enable_hal(false);
 }
 
 void EXTI2_3_IRQHandler(void) {
@@ -72,13 +71,14 @@ void EXTI2_3_IRQHandler(void) {
     EXTI->RPR1 = (1 << 2);  // Clear
     // Handle PC2 edge
     // TODO: limits_triggered();
-    steppers_enable_hal(false);
   }
 
   if (EXTI->FPR1 & (1 << 2)) {
     EXTI->FPR1 = (1 << 2);  // Clear
     // Handle PC2 edge
     // TODO: limits_triggered();
-    steppers_enable_hal(false);
   }
+
+  // Disable steppers
+  steppers_enable_hal(false);
 }

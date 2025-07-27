@@ -2,6 +2,7 @@
 
 #include "clock.h"
 #include "gpio.h"
+#include "hal.h"
 #include "irq.h"
 #include "log.h"
 #include "memory_map.h"
@@ -421,14 +422,14 @@ void tmc2209_device_initialise(uint8_t addr) {
 
 // Default to initialising at boot
 TMC2209_Initialise_State init_state = STATE_INIT_X;
-int32_t stepper_cooling_fan_run_on_remaining = 0;
+int32_t stepper_cooling_fan_run_on_start = 0;
 uint32_t prev_seconds_count = 0;
 
 void tmc2209_state_initialise(uint32_t elapsed_ms, uint32_t elapsed_sec) {
   switch (init_state) {
     case STATE_INIT_BEGIN:
       prev_seconds_count = elapsed_sec;
-      stepper_cooling_fan_run_on_remaining = 0;
+      stepper_cooling_fan_run_on_start = 0;
       init_state = STATE_INIT_X;
       break;
 
@@ -450,6 +451,7 @@ void tmc2209_state_initialise(uint32_t elapsed_ms, uint32_t elapsed_sec) {
     case STATE_INIT_E:
       tmc2209_device_initialise(0x03);
       init_state = STATE_INIT_DONE;
+      // steppers_enable_hal(true);
       break;
 
     case STATE_INIT_DONE:
@@ -460,20 +462,16 @@ void tmc2209_state_initialise(uint32_t elapsed_ms, uint32_t elapsed_sec) {
   }
 }
 
+#define STEPPER_COOLING_RUN_ON_TIME 10  // 60 seconds
+
 void tmc2209_tick(uint32_t elapsed_ms, uint32_t elapsed_sec) {
   if (init_state != STATE_INIT_DONE) {
     tmc2209_state_initialise(elapsed_ms, elapsed_sec);
   }
 
-  // We need to consider if seconds counter overflowed (true if elapsed_sec < prev_seconds_count)
-  int32_t seconds_delta = (elapsed_sec < prev_seconds_count) ? elapsed_sec + (0xFFFF - prev_seconds_count) : elapsed_sec - prev_seconds_count;
-  prev_seconds_count = elapsed_sec;
-
-  if (stepper_cooling_fan_run_on_remaining > 0) {
-    stepper_cooling_fan_run_on_remaining -= seconds_delta;
-
-    if (stepper_cooling_fan_run_on_remaining <= 0) {
-      stepper_cooling_fan_run_on_remaining = 0;
+  if (stepper_cooling_fan_run_on_start > 0) {
+    if ((uint32_t)(elapsed_sec - stepper_cooling_fan_run_on_start) >= STEPPER_COOLING_RUN_ON_TIME) {
+      stepper_cooling_fan_run_on_start = 0;
       GPIOC->BSRR = BIT_06 << 16;  // Turn Fan 0 off
     }
   }

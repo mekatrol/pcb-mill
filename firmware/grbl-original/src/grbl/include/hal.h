@@ -39,6 +39,7 @@ void interrupts_enable();
 void interrupts_disable();
 
 void board_init_hal();
+void usb_init_hal();
 
 void system_init_hal();
 
