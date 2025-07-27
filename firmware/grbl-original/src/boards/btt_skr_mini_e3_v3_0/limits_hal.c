@@ -1,9 +1,7 @@
 #include <stdint.h>
 
+#include "core.h"
 #include "hal.h"
-#include "irq.h"
-#include "memory_map.h"
-#include "register_bits.h"
 
 void limits_init_hal() {
   // Enable SYSCFG clock
@@ -28,8 +26,8 @@ void limits_init_hal() {
   EXTI->IMR1 |= (1 << 0) | (1 << 1) | (1 << 2);
 
   // Enable interrupts
-  ENABLE_IRQ(EXTI0_1_IRQn);
-  ENABLE_IRQ(EXTI2_3_IRQn);
+  NVIC_EnableIRQ(EXTI0_1_IRQn);
+  NVIC_EnableIRQ(EXTI2_3_IRQn);
 }
 
 uint8_t limits_get_state_hal() {

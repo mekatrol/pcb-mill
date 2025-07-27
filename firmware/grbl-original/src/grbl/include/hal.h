@@ -5,8 +5,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "irq.h"
-
 #define RESET_BIT 0
 #define FEED_HOLD_BIT 1
 #define CYCLE_START_BIT 2

@@ -1,32 +1,13 @@
 
-#include "clock.h"
-
 #include <stdint.h>
 
-#include "irq.h"
-#include "memory_map.h"
-#include "register_bits.h"
+#include "core.h"
+#include "clock.h"
 
 volatile uint32_t systick_global = 0;
 volatile uint32_t second_counter_global = 0;
 
 #define HAL_TICK_FREQ_1KHZ 1U
-
-#define FLASH_ACR_LATENCY_POS (0U)
-#define FLASH_ACR_LATENCY_MSK (0x3UL << FLASH_ACR_LATENCY_POS)
-
-// Bit masks
-#define RCC_CR_HSEON (1 << 16)
-#define RCC_CR_HSERDY (1 << 17)
-#define RCC_CR_PLLON (1 << 24)
-#define RCC_CR_PLLRDY (1 << 25)
-#define RCC_CFGR_SW_PLL (0x3)
-#define RCC_CFGR_SWS_PLL ((RCC_CFGR_SW_PLL) << 2)
-#define RCC_CFGR_SWS_PLL_MSK ((RCC_CFGR_SW_PLL) << 2)
-
-#define _BIT_SHIFT(IRQn) (((((uint32_t)(int32_t)(IRQn))) & 0x03UL) * 8UL)
-#define _SHP_IDX(IRQn) ((((((uint32_t)(int32_t)(IRQn)) & 0x0FUL) - 8UL) >> 2UL))
-#define _IP_IDX(IRQn) ((((uint32_t)(int32_t)(IRQn)) >> 2UL))
 
 static inline void nvic_set_priority(IRQn_Type IRQn, uint32_t priority) {
   if ((int32_t)(IRQn) >= 0) {
@@ -71,7 +52,7 @@ void init_clock() {
   RCC->CR |= RCC_CR_PLLON;             // Enable PLL
   while (!(RCC->CR & RCC_CR_PLLRDY));  // Wait for PLL ready
 
-  FLASH->ACR = (FLASH->ACR & ~FLASH_ACR_LATENCY_MSK) | (1 << FLASH_ACR_LATENCY_POS);  // 1 wait state
+  FLASH->ACR = (FLASH->ACR & ~(0x11)) | (1 << 0);  // 1 wait state
 
   RCC->CFGR &= ~(0x3 << 0);  // Clear SW bits
   RCC->CFGR |= (0x2 << 0);   // Set SYSCLK = PLL

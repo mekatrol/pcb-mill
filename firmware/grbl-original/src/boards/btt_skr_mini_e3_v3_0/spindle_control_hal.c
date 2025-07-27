@@ -1,10 +1,8 @@
 #include <stdint.h>
 
+#include "core.h"
 #include "clock.h"
 #include "grbl.h"
-#include "irq.h"
-#include "memory_map.h"
-#include "register_bits.h"
 
 #define SPINDLE_PC9_POS BIT_09_POS
 #define SPINDLE_PC9 (1 << SPINDLE_PC9_POS)

@@ -1,10 +1,8 @@
 #include <stdint.h>
 
+#include "core.h"
 #include "clock.h"
 #include "grbl.h"
-#include "irq.h"
-#include "memory_map.h"
-#include "register_bits.h"
 
 #define COOLANT_FLOOD_PC6_POS BIT_06_POS
 #define COOLANT_FLOOD_PC6 (1 << COOLANT_FLOOD_PC6_POS)

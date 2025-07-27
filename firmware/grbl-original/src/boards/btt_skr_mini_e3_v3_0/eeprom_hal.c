@@ -1,9 +1,7 @@
 #include <stdint.h>
 
+#include "core.h"
 #include "clock.h"
-#include "irq.h"
-#include "memory_map.h"
-#include "register_bits.h"
 
 typedef enum {
   EE_WRITE = 0,
@@ -227,13 +225,13 @@ void init_eeprom(void) {
       (0b10 << (BIT_06_POS * 2)) | (0b10 << (BIT_07_POS * 2));
 
   // Reset AF on PB6 & PB7
-  GPIOB->AFRL &= ~((GPIO_AF_MSK << (BIT_06_POS * GPIO_AF_BIT_COUNT)) |
-                   (GPIO_AF_MSK << (BIT_07_POS * GPIO_AF_BIT_COUNT)));
+  GPIOB->AFR[0] &= ~((GPIO_AF_MSK << (BIT_06_POS * GPIO_AF_BIT_COUNT)) |
+                     (GPIO_AF_MSK << (BIT_07_POS * GPIO_AF_BIT_COUNT)));
 
   // See: Table 15. Port B alternate function mapping (AF0 to AF7)
   // AF6 -> PB6: I2C1_SCL, PB7: I2C1_SDA
-  GPIOB->AFRL |= ((GPIO_AF6 << (BIT_06_POS * GPIO_AF_BIT_COUNT)) |
-                  (GPIO_AF6 << (BIT_07_POS * GPIO_AF_BIT_COUNT)));
+  GPIOB->AFR[0] |= ((GPIO_AF6 << (BIT_06_POS * GPIO_AF_BIT_COUNT)) |
+                    (GPIO_AF6 << (BIT_07_POS * GPIO_AF_BIT_COUNT)));
 }
 
 uint8_t eeprom_get_char_hal(uint32_t addr) {

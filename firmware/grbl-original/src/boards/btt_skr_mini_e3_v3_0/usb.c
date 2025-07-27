@@ -1,6 +1,4 @@
-#include "irq.h"
-#include "memory_map.h"
-#include "register_bits.h"
+#include "core.h"
 #include "tusb.h"
 
 #define RCC_CRRCR_HSI48ON (1 << 0)
@@ -32,7 +30,7 @@ void usb_init_hal() {
   RCC->APBENR1 |= RCC_APBENR1_USBEN;
 
   // Enable USB IRQ
-  ENABLE_IRQ(USB_UCPD1_2_IRQn);
+  NVIC_EnableIRQ(USB_UCPD1_2_IRQn);
 }
 
 void USB_UCPD1_2_IRQHandler() {

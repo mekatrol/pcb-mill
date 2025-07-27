@@ -1,10 +1,8 @@
 #include <stdint.h>
 
+#include "core.h"
 #include "clock.h"
 #include "config.h"
-#include "irq.h"
-#include "memory_map.h"
-#include "register_bits.h"
 
 void serial_init_hal() {
   // Enable clock to UART2
@@ -15,8 +13,8 @@ void serial_init_hal() {
   GPIO_SET_MODE(GPIOA, BIT_03_POS, MODER_ALT);  // Set mode to alternate function (AF) on PA3
 
   // Configure PA2 and PA3 to alternate function AF1 (USART2)
-  GPIOA->AFRL &= ~((GPIO_AF_MSK << (BIT_02_POS * GPIO_AF_BIT_COUNT)) | (GPIO_AF_MSK << (BIT_03_POS * GPIO_AF_BIT_COUNT)));
-  GPIOA->AFRL |= ((GPIO_AF1 << (BIT_02_POS * GPIO_AF_BIT_COUNT)) | (GPIO_AF1 << (BIT_03_POS * GPIO_AF_BIT_COUNT)));
+  GPIOA->AFR[0] &= ~((GPIO_AF_MSK << (BIT_02_POS * GPIO_AF_BIT_COUNT)) | (GPIO_AF_MSK << (BIT_03_POS * GPIO_AF_BIT_COUNT)));
+  GPIOA->AFR[0] |= ((GPIO_AF1 << (BIT_02_POS * GPIO_AF_BIT_COUNT)) | (GPIO_AF1 << (BIT_03_POS * GPIO_AF_BIT_COUNT)));
 
   // Configure USART2
   USART2->CR1 &= ~USART_CR1_UE;                                          // Disable USART
@@ -25,7 +23,7 @@ void serial_init_hal() {
   USART2->CR3 = 0;                                                       // No half-duplex
   USART2->CR1 |= USART_CR1_UE;                                           // Enable USART
 
-  ENABLE_IRQ(USART2_LPUART2_IRQn);
+  NVIC_EnableIRQ(USART2_LPUART2_IRQn);
 }
 
 void serial_tx_enable_hal() {

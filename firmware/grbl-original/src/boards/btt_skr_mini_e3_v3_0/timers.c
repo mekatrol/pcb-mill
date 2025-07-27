@@ -1,11 +1,9 @@
 #include "timers.h"
 
+#include "core.h"
 #include "clock.h"
 #include "gpio.h"
 #include "hal.h"
-#include "irq.h"
-#include "memory_map.h"
-#include "register_bits.h"
 
 extern volatile uint32_t systick_global;
 
@@ -47,7 +45,7 @@ void timer_init(TIM_TypeDef *TIMx, uint32_t prescaler, uint32_t ticks, bool enab
   TIMx->DIER |= TIM_DIER_UIE;  // Enable
 
   // Enable TIMx interrupt in NVIC
-  ENABLE_IRQ(irq_number);
+  NVIC_EnableIRQ(irq_number);
 }
 
 void timer6_init() {

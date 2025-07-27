@@ -1,12 +1,10 @@
 #include "tmc2209.h"
 
+#include "core.h"
 #include "clock.h"
 #include "gpio.h"
 #include "hal.h"
-#include "irq.h"
 #include "log.h"
-#include "memory_map.h"
-#include "register_bits.h"
 #include "timers.h"
 
 typedef enum {
@@ -45,8 +43,8 @@ void tmc2209_uart4_init() {
   GPIOC->MODER &= ~((MODER_MSK << (BIT_10_POS * MODER_BIT_COUNT)) | (MODER_MSK << (BIT_11_POS * MODER_BIT_COUNT)));
   GPIOC->MODER |= ((MODER_ALT << (BIT_10_POS * MODER_BIT_COUNT)) | (MODER_ALT << (BIT_11_POS * MODER_BIT_COUNT)));
 
-  GPIOC->AFRH &= ~((GPIO_AF_MSK << ((BIT_10_POS - 8) * GPIO_AF_BIT_COUNT)) | (GPIO_AF_MSK << ((BIT_11_POS - 8) * GPIO_AF_BIT_COUNT)));
-  GPIOC->AFRH |= ((GPIO_AF1 << ((BIT_10_POS - 8) * GPIO_AF_BIT_COUNT)) | (GPIO_AF1 << ((BIT_11_POS - 8) * GPIO_AF_BIT_COUNT)));
+  GPIOC->AFR[1] &= ~((GPIO_AF_MSK << ((BIT_10_POS - 8) * GPIO_AF_BIT_COUNT)) | (GPIO_AF_MSK << ((BIT_11_POS - 8) * GPIO_AF_BIT_COUNT)));
+  GPIOC->AFR[1] |= ((GPIO_AF1 << ((BIT_10_POS - 8) * GPIO_AF_BIT_COUNT)) | (GPIO_AF1 << ((BIT_11_POS - 8) * GPIO_AF_BIT_COUNT)));
 
   // Configure USART4 (8-bit data, 1 stop bit)
   USART4->CR1 &= ~USART_CR1_UE;                             // Disable USART
@@ -58,7 +56,7 @@ void tmc2209_uart4_init() {
   USART4->CR1 |= USART_CR1_UE;                              // Enable USART
 
   // Enable USART4 interrupt in NVIC
-  ENABLE_IRQ(USART3_4_5_6_LPUART1_IRQn);
+  NVIC_EnableIRQ(USART3_4_5_6_LPUART1_IRQn);
 }
 
 void USART3_4_LPUART1_IRQHandler(void) {

@@ -1,6 +1,5 @@
+#include "core.h"
 #include "motion.h"
-
-#include "memory_map.h"
 
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 

@@ -2,32 +2,29 @@
 
 #include <stdint.h>
 
+#include "core.h"
 #include "clock.h"
 #include "eeprom_hal.h"
 #include "gpio.h"
-#include "irq.h"
 #include "log.h"
-#include "memory_map.h"
 #include "motion.h"
-#include "register_bits.h"
 #include "timers.h"
 #include "tmc2209.h"
 #include "tusb.h"
 
-inline void interrupts_enable() {
-  enable_irq();
+#include "stm32g0b1xx.h"
+
+inline __attribute__((always_inline)) void interrupts_enable() {
+  __enable_irq();
 }
 
-inline void interrupts_disable() {
-  disable_irq();
+inline __attribute__((always_inline)) void interrupts_disable() {
+  __disable_irq();
 }
 
 void init_gpio() {
-  // Enable GPIO ports
-  RCC->IOPENR |= IOPENR_PORTA_ENABLE;  // Enable PORTA
-  RCC->IOPENR |= IOPENR_PORTB_ENABLE;  // Enable PORTB
-  RCC->IOPENR |= IOPENR_PORTC_ENABLE;  // Enable PORTC
-  RCC->IOPENR |= IOPENR_PORTD_ENABLE;  // Enable PORTD
+  // Enable GPIO ports A, B, C & D
+  RCC->IOPENR |= (RCC_IOPENR_GPIOAEN | RCC_IOPENR_GPIOBEN | RCC_IOPENR_GPIOCEN | RCC_IOPENR_GPIODEN);
 
   GPIO_SET_MODE(GPIOD, BIT_08_POS, MODER_OUT);  // Set LED status (PD8) to ouput
   GPIO_SET_MODE(GPIOC, BIT_06_POS, MODER_OUT);  // Set FAN 0 (PC6) to output
