@@ -55,7 +55,7 @@ LDFLAGS := -mcpu=$(MCU) -mthumb -nostartfiles -Wl,-Map=$(OUT_MAP),--fatal-warnin
 
 CFLAGS += -I$(SRC_DIR)/grbl
 CFLAGS += -I$(SRC_DIR)/grbl/include
-CFLAGS += -I$(BOARD_DIR) -I$(BOARD_DIR)/include
+CFLAGS += -I$(BOARD_DIR) -I$(BOARD_DIR)/include -I$(BOARD_DIR)/include/core
 CFLAGS += -I$(TINYUSB_DIR)/src -I$(TINYUSB_DIR)/src/common -I$(TINYUSB_DIR)/src/class/cdc 
 CFLAGS += -I$(TINYUSB_DIR)/src/device -I$(TINYUSB_DIR)/src/portable -I$(TINYUSB_DIR)/src/portable/st/stm32_fsdev
 

@@ -11,6 +11,7 @@
         "libs/tinyusb/src/portable/st/stm32_fsdev",
         "src/boards/btt_skr_mini_e3_v3_0",
         "src/boards/btt_skr_mini_e3_v3_0/include",
+        "src/boards/btt_skr_mini_e3_v3_0/include/core",
         "src/grbl",
         "src/grbl/include",
         "${workspaceFolder}/**"
@@ -31,6 +32,7 @@
           "libs/tinyusb/src/portable/st/stm32_fsdev",
           "src/boards/btt_skr_mini_e3_v3_0",
           "src/boards/btt_skr_mini_e3_v3_0/include",
+          "src/boards/btt_skr_mini_e3_v3_0/include/core",
           "src/grbl",
           "src/grbl/include",
           "${workspaceFolder}/**"
