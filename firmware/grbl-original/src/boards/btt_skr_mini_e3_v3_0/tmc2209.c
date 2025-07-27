@@ -9,11 +9,12 @@
 #include "timers.h"
 
 typedef enum {
-  STATE_INIT_X = 0,
-  STATE_INIT_Y = 1,
-  STATE_INIT_Z = 2,
-  STATE_INIT_E = 3,
-  STATE_INIT_DONE = 4
+  STATE_INIT_BEGIN = 0,
+  STATE_INIT_X = STATE_INIT_BEGIN + 1,
+  STATE_INIT_Y = STATE_INIT_X + 1,
+  STATE_INIT_Z = STATE_INIT_Y + 1,
+  STATE_INIT_E = STATE_INIT_Z + 1,
+  STATE_INIT_DONE = STATE_INIT_E + 1
 
 } TMC2209_Initialise_State;
 
@@ -420,9 +421,17 @@ void tmc2209_device_initialise(uint8_t addr) {
 
 // Default to initialising at boot
 TMC2209_Initialise_State init_state = STATE_INIT_X;
+int32_t stepper_cooling_fan_run_on_remaining = 0;
+uint32_t prev_seconds_count = 0;
 
-void tmc2209_state_initialise() {
+void tmc2209_state_initialise(uint32_t elapsed_ms, uint32_t elapsed_sec) {
   switch (init_state) {
+    case STATE_INIT_BEGIN:
+      prev_seconds_count = elapsed_sec;
+      stepper_cooling_fan_run_on_remaining = 0;
+      init_state = STATE_INIT_X;
+      break;
+
     case STATE_INIT_X:
       tmc2209_device_initialise(0x00);
       init_state = STATE_INIT_Y;
@@ -451,8 +460,21 @@ void tmc2209_state_initialise() {
   }
 }
 
-void tmc2209_tick() {
+void tmc2209_tick(uint32_t elapsed_ms, uint32_t elapsed_sec) {
   if (init_state != STATE_INIT_DONE) {
-    tmc2209_state_initialise();
+    tmc2209_state_initialise(elapsed_ms, elapsed_sec);
+  }
+
+  // We need to consider if seconds counter overflowed (true if elapsed_sec < prev_seconds_count)
+  int32_t seconds_delta = (elapsed_sec < prev_seconds_count) ? elapsed_sec + (0xFFFF - prev_seconds_count) : elapsed_sec - prev_seconds_count;
+  prev_seconds_count = elapsed_sec;
+
+  if (stepper_cooling_fan_run_on_remaining > 0) {
+    stepper_cooling_fan_run_on_remaining -= seconds_delta;
+
+    if (stepper_cooling_fan_run_on_remaining <= 0) {
+      stepper_cooling_fan_run_on_remaining = 0;
+      GPIOC->BSRR = BIT_06 << 16;  // Turn Fan 0 off
+    }
   }
 }

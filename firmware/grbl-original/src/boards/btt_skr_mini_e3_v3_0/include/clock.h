@@ -8,5 +8,6 @@
 
 void init_clock();
 uint32_t get_systick();
+uint32_t get_second_counter();
 
 #endif  // __CLOCK_H__

@@ -130,6 +130,8 @@ static inline void set_ena_E(bool enable) {
   }
 }
 
+extern int32_t stepper_cooling_fan_run_on_remaining;
+
 void steppers_enable_hal(bool enable) {
   set_ena_X(enable);
   set_ena_Y(enable);
@@ -140,8 +142,8 @@ void steppers_enable_hal(bool enable) {
   if (enable) {
     GPIOC->BSRR = BIT_06;  // Turn Fan 0 on
   } else {
-    // TODO: should be delayed to cool heatsink OR use actual temp of steppers if avaluable through the UART
-    GPIOC->BSRR = BIT_06 << 16;  // Turn Fan 0 off
+    // TODO: this should be a helper method to set fan run on, not direct manipulation
+    stepper_cooling_fan_run_on_remaining = 60;
   }
 }
 

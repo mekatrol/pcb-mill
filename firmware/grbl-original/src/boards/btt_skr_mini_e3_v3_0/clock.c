@@ -8,6 +8,7 @@
 #include "register_bits.h"
 
 volatile uint32_t systick_global = 0;
+volatile uint32_t second_counter_global = 0;
 
 #define HAL_TICK_FREQ_1KHZ 1U
 
@@ -85,7 +86,17 @@ inline uint32_t get_systick() {
   return systick_inline;
 }
 
+inline uint32_t get_second_counter() {
+  uint32_t second_counter = second_counter_global;
+  return second_counter;
+}
+
 void SysTick_Handler() {
   // The global system tick, increments at 1Kz (every 1ms)
   systick_global++;
+
+  // Increment second counter
+  if (systick_global % 1000 == 0) {
+    second_counter_global++;
+  }
 }

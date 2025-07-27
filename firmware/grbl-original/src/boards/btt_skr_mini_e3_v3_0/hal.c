@@ -57,7 +57,7 @@ void system_init_hal() {
   init_motion(0, 0, 0, 0);
 
   // Enable steppers
-  // steppers_enable_hal(true);
+  steppers_enable_hal(true);
 }
 
 void do_motion_planning() {
@@ -75,23 +75,16 @@ void do_motion_planning() {
   // }
 }
 
-uint32_t hal_tick_count = 0;
-
 void hal_tick() {
-  uint32_t tick_count = get_systick();
-
-  if (tick_count == hal_tick_count) {
-    return;
-  }
-
-  hal_tick_count = tick_count;
+  uint32_t elapsed_ms_count = get_systick();
+  uint32_t elapsed_sec_count = get_second_counter();
 
   // Run background tasks about every 100ms
-  if (hal_tick_count % 100 == 0) {
-    tmc2209_tick();
+  if (elapsed_ms_count % 100 == 0) {
+    tmc2209_tick(elapsed_ms_count, elapsed_sec_count);
   }
 
-  if (hal_tick_count % 2000 == 0) {
+  if (elapsed_ms_count % 2000 == 0) {
     do_motion_planning();
   }
 }
