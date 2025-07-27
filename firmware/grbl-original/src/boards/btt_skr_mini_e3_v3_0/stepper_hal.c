@@ -87,7 +87,7 @@ static inline void step_low_Z() {
 }
 
 static inline void step_high_Z() {
-  GPIOB->BSRR = STEP_Z_STEP << 16;  // Set pin (HIGH)
+  GPIOB->BSRR = STEP_Z_STEP;  // Set pin (HIGH)
 }
 
 static inline void set_dir_Z(int32_t dir) {
