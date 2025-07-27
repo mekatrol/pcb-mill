@@ -2,7 +2,7 @@
 MCU = cortex-m0plus
 CHIP = STM32G0B1
 BOARD_NAME := btt_skr_mini_e3_v3_0
-DRIVER_NAMES := 
+DRIVER_NAMES :=
 
 # OS-specific commands and separator
 ifeq ($(OS),Windows_NT)
@@ -65,7 +65,7 @@ ASRCS := $(wildcard $(SRC_DIR)/grbl/*.s) \
 
 # Add driver paths and includes if any drivers defined
 ifneq ($(strip $(DRIVER_DIRS)),)
-  CFLAGS += $(foreach dir,$(DRIVER_DIRS),-I$(dir))
+  CFLAGS += $(foreach dir,$(DRIVER_DIRS),-I$(dir) -I$(dir)/include)
   CSRCS  += $(foreach dir,$(DRIVER_DIRS),$(wildcard $(dir)/*.c))
   ASRCS  += $(foreach dir,$(DRIVER_DIRS),$(wildcard $(dir)/*.s))
 endif
