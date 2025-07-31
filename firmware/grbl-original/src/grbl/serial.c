@@ -84,6 +84,11 @@ void serial_write(uint8_t data) {
 // Data Register Empty Interrupt handler
 uint8_t serial_data_can_send() {
   uint8_t tail = serial_tx_buffer_tail;  // Temporary serial_tx_buffer_tail (to optimize for volatile)
+
+  if (tail == serial_tx_buffer_head) {
+    return SERIAL_NO_DATA;
+  }
+
   uint16_t data = SERIAL_NO_DATA;
 
 #ifdef ENABLE_XONXOFF

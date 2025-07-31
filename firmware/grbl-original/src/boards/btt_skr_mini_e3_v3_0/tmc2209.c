@@ -23,11 +23,11 @@ typedef enum {
 
 // TMC2209 RX buffer
 #define TMC2209_RX_BUFFER_SIZE 16  // Characters are echoed (so rx buffer size should be twice maximum message length)
-uint8_t tmc2209_rx_buffer[TMC2209_RX_BUFFER_SIZE];
+static uint8_t tmc2209_rx_buffer[TMC2209_RX_BUFFER_SIZE];
 
 // TMC2209 TX buffer
 #define TMC2209_TX_BUFFER_SIZE 8
-uint8_t tmc2209_tx_buffer[TMC2209_TX_BUFFER_SIZE];
+static uint8_t tmc2209_tx_buffer[TMC2209_TX_BUFFER_SIZE];
 
 static serial_buffer_t serial_buffer = {
     .uart = USART4,
