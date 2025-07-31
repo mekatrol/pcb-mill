@@ -4,9 +4,6 @@
 #ifndef __TIMERS_H__
 #define __TIMERS_H__
 
-void delay_us(uint32_t us);
-void delay_ms(uint32_t ms);
-
 void timer6_init();
 void timer7_init(uint32_t interval, bool enable_interrupt);
 void timer14_init();

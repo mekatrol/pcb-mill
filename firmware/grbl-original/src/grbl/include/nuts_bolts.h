@@ -87,14 +87,6 @@
 // succeeds
 uint8_t read_float(char *line, uint8_t *char_counter, float *float_ptr);
 
-// Delays variable-defined milliseconds. Compiler compatibility fix for
-// delay_ms().
-void delay_ms(uint16_t ms);
-
-// Delays variable-defined microseconds. Compiler compatibility fix for
-// _delay_us().
-void delay_us(uint32_t us);
-
 // Computes hypotenuse, avoiding avr-gcc's bloated version and the extra error
 // checking.
 float hypot_f(float x, float y);

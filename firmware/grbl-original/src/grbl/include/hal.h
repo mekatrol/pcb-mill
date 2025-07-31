@@ -71,4 +71,7 @@ void eeprom_put_char_hal(uint32_t addr, uint8_t new_value);
 
 void hal_tick();
 
+void delay_us(uint32_t us);
+void delay_ms(uint32_t ms);
+
 #endif  // __HAL_H__

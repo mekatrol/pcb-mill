@@ -5,6 +5,7 @@
 #include "gpio.h"
 #include "hal.h"
 #include "log.h"
+#include "serial_buffer.h"
 #include "timers.h"
 
 typedef enum {
@@ -23,17 +24,25 @@ typedef enum {
 // TMC2209 RX buffer
 #define TMC2209_RX_BUFFER_SIZE 16  // Characters are echoed (so rx buffer size should be twice maximum message length)
 uint8_t tmc2209_rx_buffer[TMC2209_RX_BUFFER_SIZE];
-uint8_t tmc2209_rx_buffer_head = 0;
-volatile uint8_t tmc2209_rx_buffer_tail = 0;
 
 // TMC2209 TX buffer
 #define TMC2209_TX_BUFFER_SIZE 8
 uint8_t tmc2209_tx_buffer[TMC2209_TX_BUFFER_SIZE];
-uint8_t tmc2209_tx_buffer_head = 0;
-volatile uint8_t tmc2209_tx_buffer_tail = 0;
 
-// Number of bytes currently queued in rx buffer
-volatile uint8_t tmc2209_rx_count = 0;
+static serial_buffer_t serial_buffer = {
+    .uart = USART4,
+
+    .rx_buffer = tmc2209_rx_buffer,
+    .rx_buffer_head = 0,
+    .rx_buffer_tail = 0,
+    .rx_buffer_size = TMC2209_RX_BUFFER_SIZE,
+
+    .tx_buffer = tmc2209_tx_buffer,
+    .tx_buffer_head = 0,
+    .tx_buffer_tail = 0,
+    .tx_buffer_size = TMC2209_TX_BUFFER_SIZE,
+
+    /**/};
 
 void tmc2209_uart4_init() {
   // Enable USART4 clocks
@@ -59,97 +68,8 @@ void tmc2209_uart4_init() {
   NVIC_EnableIRQ(USART3_4_5_6_LPUART1_IRQn);
 }
 
-void USART3_4_LPUART1_IRQHandler(void) {
-  // Is the TX buffer empty?
-  if ((USART4->ISR & USART_ISR_TXE_TXFNF)) {
-    if (tmc2209_tx_buffer_tail != tmc2209_tx_buffer_head) {
-      uint8_t data = tmc2209_tx_buffer[tmc2209_tx_buffer_tail++];
-
-      if (tmc2209_tx_buffer_tail >= TMC2209_TX_BUFFER_SIZE) {
-        tmc2209_tx_buffer_tail = 0;
-      }
-
-      USART4->TDR = data;
-    } else {
-      // Disable TX empty interrupt until more data sent
-      USART4->CR1 &= ~(USART_CR1_TXEIE_TXFNFIE);
-    }
-  }
-
-  // Is RX FIFO not empty?
-  if (USART4->ISR & USART_ISR_RXNE_RXFNE) {
-    tmc2209_rx_buffer[tmc2209_rx_buffer_head++] = USART4->RDR;
-    tmc2209_rx_count++;
-
-    if (tmc2209_rx_buffer_head >= TMC2209_RX_BUFFER_SIZE) {
-      tmc2209_rx_buffer_head = 0;
-    }
-  }
-}
-
-void tmc2209_wait_data_sent() {
-  // Wait till tx buffer empty
-  // Total bits = 8 bytes × 10 bits
-  //            = 80 bits
-  // Bit rate   = 115200 bits/second
-  // Time       = 80 bits / 115200 bps
-  //            ≈ 0.000694 seconds
-  //            = 694 μs
-  delay_us(700);  // Wait 700µs for full 8 bytes to be sent
-
-  // Wait until transmit data register empty
-  while (!(USART4->ISR & USART_ISR_TXE_TXFNF));
-}
-
-void tmc2209_uart_send(uint8_t b) {
-  // Disable transmit empty interrupt while sending
-  USART4->CR1 &= ~(USART_CR1_TXEIE_TXFNFIE);
-
-  // Add byte to TX buffer
-  tmc2209_tx_buffer[tmc2209_tx_buffer_head++] = b;
-
-  if (tmc2209_tx_buffer_head >= TMC2209_TX_BUFFER_SIZE) {
-    tmc2209_tx_buffer_head = 0;
-  }
-
-  // Enable transmit empty interrupt
-  USART4->CR1 |= USART_CR1_TXEIE_TXFNFIE;
-}
-
-int16_t tmc2209_uart_recv() {
-  // Default to no data available
-  int16_t data = -1;
-
-  // Disable receive data interrupt while getting rx data
-  USART4->CR1 &= ~(USART_CR1_RXNEIE_RXFNEIE);
-
-  if (tmc2209_rx_buffer_tail != tmc2209_rx_buffer_head) {
-    // Read from rx buffer
-    data = tmc2209_rx_buffer[tmc2209_rx_buffer_tail++];
-
-    if (tmc2209_rx_buffer_tail >= TMC2209_RX_BUFFER_SIZE) {
-      tmc2209_rx_buffer_tail = 0;
-    }
-
-    tmc2209_rx_count--;
-  } else {
-    tmc2209_rx_count = 0;
-  }
-
-  // Enable receive data interrupt
-  USART4->CR1 |= USART_CR1_RXNEIE_RXFNEIE;
-
-  // Will be -1 if no data was available
-  return data;
-}
-
-bool tmc2209_wait_for_count(uint8_t count, uint32_t max_wait_ms) {
-  while (tmc2209_rx_count < count && max_wait_ms-- > 0) {
-    delay_ms(1);
-  }
-
-  // Was successful if rx count is at least desired count
-  return tmc2209_rx_count >= count;
+void USART3_4_LPUART1_IRQHandler() {
+  serial_uart_irq_handler(&serial_buffer);
 }
 
 uint8_t tmc2209_crc8(uint8_t *data, uint8_t length) {
@@ -172,23 +92,10 @@ uint8_t tmc2209_crc8(uint8_t *data, uint8_t length) {
   return crc;
 }
 
-void tmc2209_clear_buffers() {
-  // Disable interrupt while clearing
-  USART4->CR1 &= ~(USART_CR1_TXEIE_TXFNFIE | USART_CR1_RXNEIE_RXFNEIE);
-
-  // Reset heads, tails and count
-  tmc2209_tx_buffer_head = tmc2209_tx_buffer_tail = 0;
-  tmc2209_rx_buffer_head = tmc2209_rx_buffer_tail = 0;
-  tmc2209_rx_count = 0;
-
-  // Restore receive interrupt (TX interrupt will be enabled when data is next sent)
-  USART4->CR1 |= USART_CR1_RXNEIE_RXFNEIE;
-}
-
 // Reference: TMC2209 DATASHEET (Rev. 1.09 / 2023-FEB-16)
 // Section:   4.1.1 Write Access
 void tmc2209_send_write_reg(uint8_t addr, uint8_t reg, uint32_t data) {
-  tmc2209_clear_buffers();
+  serial_clear_buffers(&serial_buffer);
 
   uint8_t packet[8];
   packet[0] = 0x05;                     // Sync nibble
@@ -201,20 +108,20 @@ void tmc2209_send_write_reg(uint8_t addr, uint8_t reg, uint32_t data) {
   packet[7] = tmc2209_crc8(packet, 7);  // CRC
 
   for (int i = 0; i < 8; i++) {
-    tmc2209_uart_send(packet[i]);
+    serial_uart_send(&serial_buffer, packet[i]);
   }
 }
 
 // This helper waits till data actually sent before returning
 void tmc2209_send_write_reg_with_wait(uint8_t addr, uint8_t reg, uint32_t data) {
   tmc2209_send_write_reg(addr, reg, data);
-  tmc2209_wait_data_sent();  // TMC2209 does not reply to writes, so need to make sure data is sent before continuing
+  serial_wait_data_sent(&serial_buffer);  // TMC2209 does not reply to writes, so need to make sure data is sent before continuing
 }
 
 // Reference: TMC2209 DATASHEET (Rev. 1.09 / 2023-FEB-16)
 // Section:   4.1.2 Read Access
 void tmc2209_send_read_reg(uint8_t addr, uint8_t reg) {
-  tmc2209_clear_buffers();
+  serial_clear_buffers(&serial_buffer);
 
   uint8_t packet[4];
   packet[0] = 0x05;                     // Sync nibble
@@ -223,7 +130,7 @@ void tmc2209_send_read_reg(uint8_t addr, uint8_t reg) {
   packet[3] = tmc2209_crc8(packet, 3);  // CRC
 
   for (int i = 0; i < 4; i++) {
-    tmc2209_uart_send(packet[i]);
+    serial_uart_send(&serial_buffer, packet[i]);
   }
 }
 
@@ -232,45 +139,45 @@ int tmc2209_parse_response(uint8_t sent_count, uint8_t *data_out, uint8_t reg) {
   // via the one wire resitor, so we need to ignore first 'sent_count' bytes of received data (because we transmitted it)
 
   // Need the sent count plus expected rx count of 8
-  if (!tmc2209_wait_for_count(sent_count + 8, 100)) {
+  if (!serial_wait_for_count(&serial_buffer, sent_count + 8, 100)) {
     // Not enough data
     return -1;
   }
 
   // We need to remove echoed bytes
   while (sent_count--) {
-    tmc2209_uart_recv();
+    serial_uart_get(&serial_buffer);
   }
 
   uint8_t rx_data[8];
   uint8_t rx_data_index = 0;
 
   // Check sync
-  if ((tmc2209_uart_recv() & 0xFF) != 0x05) {
+  if ((serial_uart_get(&serial_buffer) & 0xFF) != 0x05) {
     return -2;
   }
   rx_data[rx_data_index++] = 0x05;
 
   // Check addr is 0xFF which is reserved for responses to master
-  if ((tmc2209_uart_recv() & 0xFF) != 0xFF) {
+  if ((serial_uart_get(&serial_buffer) & 0xFF) != 0xFF) {
     return -3;
   }
   rx_data[rx_data_index++] = 0xFF;
 
   // Check register
-  if ((tmc2209_uart_recv() & 0xFF) != reg) {
+  if ((serial_uart_get(&serial_buffer) & 0xFF) != reg) {
     return -4;
   }
   rx_data[rx_data_index++] = reg;
 
   // Read response data (4 bytes)
-  rx_data[rx_data_index++] = (tmc2209_uart_recv() & 0xFF);
-  rx_data[rx_data_index++] = (tmc2209_uart_recv() & 0xFF);
-  rx_data[rx_data_index++] = (tmc2209_uart_recv() & 0xFF);
-  rx_data[rx_data_index++] = (tmc2209_uart_recv() & 0xFF);
+  rx_data[rx_data_index++] = (serial_uart_get(&serial_buffer) & 0xFF);
+  rx_data[rx_data_index++] = (serial_uart_get(&serial_buffer) & 0xFF);
+  rx_data[rx_data_index++] = (serial_uart_get(&serial_buffer) & 0xFF);
+  rx_data[rx_data_index++] = (serial_uart_get(&serial_buffer) & 0xFF);
 
   // Read received CRC
-  uint8_t crc = (tmc2209_uart_recv() & 0xFF);
+  uint8_t crc = (serial_uart_get(&serial_buffer) & 0xFF);
 
   // Check CRC
   uint8_t calc_crc = tmc2209_crc8(rx_data, 7);
