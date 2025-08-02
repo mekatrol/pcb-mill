@@ -1,0 +1,10 @@
+{
+  "files.associations": {
+    "usart_hal.h": "c",
+    "hal_core.h": "c",
+    "stdint.h": "c",
+    "hal.h": "c",
+    "eeprom_hal.h": "c"
+  },
+  "cortex-debug.variableUseNaturalFormat": true
+}
