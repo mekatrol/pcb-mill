@@ -46,11 +46,11 @@ uint8_t const* tud_descriptor_configuration_cb(uint8_t index) {
 
 // String descriptors
 char const* string_desc_arr[] = {
-    (const char[]){0x09, 0x04},  // 0: LANGID (English)
-    "OpenAI Labs",               // 1: Manufacturer
-    "TinyUSB CDC Device",        // 2: Product
-    "12345678",                  // 3: Serial
-    "TinyUSB CDC Interface",     // 4: CDC Interface
+    (const char[]){0x09, 0x04},  // LANGID (English)
+    "ST",                        // Manufacturer
+    "PCB Mill",                  // Product
+    "9876543210",                // Serial
+    "PCB Mill",                  // CDC Interface
 };
 
 static uint16_t _desc_str[32];

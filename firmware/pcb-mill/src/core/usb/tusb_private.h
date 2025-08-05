@@ -27,12 +27,6 @@
 #ifndef TUSB_PRIVATE_H_
 #define TUSB_PRIVATE_H_
 
-// Internal Helper used by Host and Device Stack
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define TUP_USBIP_CONTROLLER_NUM 2
 extern tusb_role_t _tusb_rhport_role[TUP_USBIP_CONTROLLER_NUM];
 
@@ -45,19 +39,6 @@ typedef struct __attribute__((packed)) {
   volatile uint8_t stalled : 1;
   volatile uint8_t claimed : 1;
 } tu_edpt_state_t;
-
-typedef struct {
-  struct __attribute__((packed)) {
-    uint8_t is_host : 1;    // 1: host, 0: device
-    uint8_t is_mps512 : 1;  // 1: 512, 0: 64 since stream is used for Bulk only
-  };
-  uint8_t ep_addr;
-  uint16_t ep_bufsize;
-
-  uint8_t* ep_buf;  // TODO xfer_fifo can skip this buffer
-  tu_fifo_t ff;
-
-} tu_edpt_stream_t;
 
 //--------------------------------------------------------------------+
 // Endpoint
@@ -77,86 +58,5 @@ bool tu_edpt_claim(tu_edpt_state_t* ep_state);
 
 // Release an endpoint
 bool tu_edpt_release(tu_edpt_state_t* ep_state);
-
-//--------------------------------------------------------------------+
-// Endpoint Stream
-//--------------------------------------------------------------------+
-
-// Init an endpoint stream
-bool tu_edpt_stream_init(tu_edpt_stream_t* s, bool is_host, bool is_tx, bool overwritable,
-                         void* ff_buf, uint16_t ff_bufsize, uint8_t* ep_buf, uint16_t ep_bufsize);
-
-// Deinit an endpoint stream
-bool tu_edpt_stream_deinit(tu_edpt_stream_t* s);
-
-// Open an stream for an endpoint
-__attribute__((always_inline)) static inline void tu_edpt_stream_open(tu_edpt_stream_t* s, tusb_desc_endpoint_t const* desc_ep) {
-  tu_fifo_clear(&s->ff);
-  s->ep_addr = desc_ep->bEndpointAddress;
-  s->is_mps512 = (tu_edpt_packet_size(desc_ep) == 512) ? 1 : 0;
-}
-
-__attribute__((always_inline)) static inline void tu_edpt_stream_close(tu_edpt_stream_t* s) {
-  s->ep_addr = 0;
-}
-
-// Clear fifo
-__attribute__((always_inline)) static inline bool tu_edpt_stream_clear(tu_edpt_stream_t* s) {
-  return tu_fifo_clear(&s->ff);
-}
-
-//--------------------------------------------------------------------+
-// Stream Write
-//--------------------------------------------------------------------+
-
-// Write to stream
-uint32_t tu_edpt_stream_write(uint8_t hwid, tu_edpt_stream_t* s, void const* buffer, uint32_t bufsize);
-
-// Start an usb transfer if endpoint is not busy
-uint32_t tu_edpt_stream_write_xfer(uint8_t hwid, tu_edpt_stream_t* s);
-
-// Start an zero-length packet if needed
-bool tu_edpt_stream_write_zlp_if_needed(uint8_t hwid, tu_edpt_stream_t* s, uint32_t last_xferred_bytes);
-
-// Get the number of bytes available for writing to FIFO
-// Note: if no fifo, return endpoint size if not busy, 0 otherwise
-uint32_t tu_edpt_stream_write_available(uint8_t hwid, tu_edpt_stream_t* s);
-
-//--------------------------------------------------------------------+
-// Stream Read
-//--------------------------------------------------------------------+
-
-// Read from stream
-uint32_t tu_edpt_stream_read(uint8_t hwid, tu_edpt_stream_t* s, void* buffer, uint32_t bufsize);
-
-// Start an usb transfer if endpoint is not busy
-uint32_t tu_edpt_stream_read_xfer(uint8_t hwid, tu_edpt_stream_t* s);
-
-// Complete read transfer by writing EP -> FIFO. Must be called in the transfer complete callback
-__attribute__((always_inline)) static inline void tu_edpt_stream_read_xfer_complete(tu_edpt_stream_t* s, uint32_t xferred_bytes) {
-  if (tu_fifo_depth(&s->ff)) {
-    tu_fifo_write_n(&s->ff, s->ep_buf, (uint16_t)xferred_bytes);
-  }
-}
-
-// Complete read transfer with provided buffer
-__attribute__((always_inline)) static inline void tu_edpt_stream_read_xfer_complete_with_buf(tu_edpt_stream_t* s, const void* buf, uint32_t xferred_bytes) {
-  if (tu_fifo_depth(&s->ff)) {
-    tu_fifo_write_n(&s->ff, buf, (uint16_t)xferred_bytes);
-  }
-}
-
-// Get the number of bytes available for reading
-__attribute__((always_inline)) static inline uint32_t tu_edpt_stream_read_available(tu_edpt_stream_t* s) {
-  return (uint32_t)tu_fifo_count(&s->ff);
-}
-
-__attribute__((always_inline)) static inline bool tu_edpt_stream_peek(tu_edpt_stream_t* s, uint8_t* ch) {
-  return tu_fifo_peek(&s->ff, ch);
-}
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

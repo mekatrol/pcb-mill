@@ -1,4 +1,5 @@
 #include "board_hal.h"
+#include "dcd.h"
 #include "tusb.h"
 
 #define RCC_CRRCR_HSI48ON (1 << 0)
@@ -187,7 +188,7 @@ void usb_handle_setup() {
 }
 
 void USB_UCPD1_2_IRQHandler() {
-  tud_int_handler(0);  // Port 0 for most STM32 single-port USB devices
+  dcd_int_handler(0);  // Port 0 for most STM32 single-port USB devices
 }
 
 void USB_UCPD1_2_IRQHandler1(void) {
