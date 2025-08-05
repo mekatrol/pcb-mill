@@ -115,17 +115,6 @@ typedef struct {
   void* ptr_wrap;     ///< wrapped part start pointer
 } tu_fifo_buffer_info_t;
 
-#define TU_FIFO_INIT(_buffer, _depth, _type, _overwritable) { \
-    .buffer = _buffer,                                        \
-    .depth = _depth,                                          \
-    .item_size = sizeof(_type),                               \
-    .overwritable = _overwritable,                            \
-}
-
-#define TU_FIFO_DEF(_name, _depth, _type, _overwritable) \
-  uint8_t _name##_buf[_depth * sizeof(_type)];           \
-  tu_fifo_t _name = TU_FIFO_INIT(_name##_buf, _depth, _type, _overwritable)
-
 bool tu_fifo_set_overwritable(tu_fifo_t* f, bool overwritable);
 bool tu_fifo_clear(tu_fifo_t* f);
 bool tu_fifo_config(tu_fifo_t* f, void* buffer, uint16_t depth, uint16_t item_size, bool overwritable);

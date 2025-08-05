@@ -14,12 +14,6 @@ typedef struct {
 
 typedef osal_queue_def_t* osal_queue_t;
 
-#define OSAL_QUEUE_DEF(_int_set, _name, _depth, _type) \
-  uint8_t _name##_buf[_depth * sizeof(_type)];         \
-  osal_queue_def_t _name = {                           \
-      .interrupt_set = _int_set,                       \
-      .ff = TU_FIFO_INIT(_name##_buf, _depth, _type, false)}
-
 __attribute__((always_inline)) static inline osal_queue_t osal_queue_create(osal_queue_def_t* qdef) {
   tu_fifo_clear(&qdef->ff);
   return (osal_queue_t)qdef;

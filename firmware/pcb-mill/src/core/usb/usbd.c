@@ -195,7 +195,17 @@ __attribute__((always_inline)) static inline usbd_class_driver_t const* get_driv
 enum { RHPORT_INVALID = 0xFFu };
 static uint8_t _usbd_rhport = RHPORT_INVALID;
 
-OSAL_QUEUE_DEF(usbd_int_set, _usbd_qdef, CFG_TUD_TASK_QUEUE_SZ, dcd_event_t);
+uint8_t _usbd_qdef_buf[CFG_TUD_TASK_QUEUE_SZ * sizeof(dcd_event_t)];
+
+osal_queue_def_t _usbd_qdef = {
+    .interrupt_set = usbd_int_set,
+    .ff = {
+        .buffer = _usbd_qdef_buf,
+        .depth = CFG_TUD_TASK_QUEUE_SZ,
+        .item_size = sizeof(dcd_event_t),
+        .overwritable = false,
+    }};
+
 static osal_queue_t _usbd_q;
 
 __attribute__((always_inline)) static inline bool queue_event(dcd_event_t const* event, bool in_isr) {
@@ -284,7 +294,7 @@ bool tud_rhport_init(uint8_t rhport, const tusb_rhport_init_t* rh_init) {
   _usbd_rhport = rhport;
 
   // Init device controller driver
-  TU_ASSERT(dcd_init(rhport, rh_init));
+  dcd_init(rhport, rh_init);
   dcd_int_enable(rhport);
 
   return true;
