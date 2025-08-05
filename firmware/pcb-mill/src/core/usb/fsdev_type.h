@@ -51,7 +51,7 @@ TU_VERIFY_STATIC(FSDEV_BTABLE_BASE % 8 == 0, "BTABLE base must be aligned to 8 b
 #if FSDEV_PMA_SIZE == 512
 // 1x16 bit / word access scheme
 #define FSDEV_PMA_STRIDE 2
-#define pma_access_scheme TU_ATTR_ALIGNED(4)
+#define pma_access_scheme __attribute__((aligned(4)))
 #elif FSDEV_PMA_SIZE == 1024
 // 2x16 bit / word access scheme
 #define FSDEV_PMA_STRIDE 1
@@ -121,7 +121,7 @@ typedef struct {
 //--------------------------------------------------------------------+
 
 // volatile 32-bit aligned
-#define _va32 volatile TU_ATTR_ALIGNED(4)
+#define _va32 volatile __attribute__((aligned(4)))
 
 typedef struct {
   struct {
@@ -179,11 +179,11 @@ typedef enum {
 // - DTOG and STAT are write 1 to toggle
 //--------------------------------------------------------------------+
 
-TU_ATTR_ALWAYS_INLINE static inline uint32_t ep_read(uint32_t ep_id) {
+__attribute__((always_inline)) static inline uint32_t ep_read(uint32_t ep_id) {
   return FSDEV_REG->ep[ep_id].reg;
 }
 
-TU_ATTR_ALWAYS_INLINE static inline void ep_write(uint32_t ep_id, uint32_t value, bool need_exclusive) {
+__attribute__((always_inline)) static inline void ep_write(uint32_t ep_id, uint32_t value, bool need_exclusive) {
   if (need_exclusive) {
     dcd_int_disable(0);
   }
@@ -195,7 +195,7 @@ TU_ATTR_ALWAYS_INLINE static inline void ep_write(uint32_t ep_id, uint32_t value
   }
 }
 
-TU_ATTR_ALWAYS_INLINE static inline void ep_write_clear_ctr(uint32_t ep_id, tusb_dir_t dir) {
+__attribute__((always_inline)) static inline void ep_write_clear_ctr(uint32_t ep_id, tusb_dir_t dir) {
   uint32_t reg = FSDEV_REG->ep[ep_id].reg;
   reg |= USB_EP_CTR_TX | USB_EP_CTR_RX;
   reg &= USB_EPREG_MASK;
@@ -203,15 +203,15 @@ TU_ATTR_ALWAYS_INLINE static inline void ep_write_clear_ctr(uint32_t ep_id, tusb
   ep_write(ep_id, reg, false);
 }
 
-TU_ATTR_ALWAYS_INLINE static inline void ep_change_status(uint32_t* reg, tusb_dir_t dir, ep_stat_t state) {
+__attribute__((always_inline)) static inline void ep_change_status(uint32_t* reg, tusb_dir_t dir, ep_stat_t state) {
   *reg ^= (state << (USB_EPTX_STAT_Pos + (dir == TUSB_DIR_IN ? 0 : 8)));
 }
 
-TU_ATTR_ALWAYS_INLINE static inline void ep_change_dtog(uint32_t* reg, tusb_dir_t dir, uint8_t state) {
+__attribute__((always_inline)) static inline void ep_change_dtog(uint32_t* reg, tusb_dir_t dir, uint8_t state) {
   *reg ^= (state << (USB_EP_DTOG_TX_Pos + (dir == TUSB_DIR_IN ? 0 : 8)));
 }
 
-TU_ATTR_ALWAYS_INLINE static inline bool ep_is_iso(uint32_t reg) {
+__attribute__((always_inline)) static inline bool ep_is_iso(uint32_t reg) {
   return (reg & USB_EP_TYPE_MASK) == USB_EP_ISOCHRONOUS;
 }
 
@@ -219,7 +219,7 @@ TU_ATTR_ALWAYS_INLINE static inline bool ep_is_iso(uint32_t reg) {
 // BTable Helper
 //--------------------------------------------------------------------+
 
-TU_ATTR_ALWAYS_INLINE static inline uint32_t btable_get_addr(uint32_t ep_id, uint8_t buf_id) {
+__attribute__((always_inline)) static inline uint32_t btable_get_addr(uint32_t ep_id, uint8_t buf_id) {
 #ifdef FSDEV_BUS_32BIT
   return FSDEV_BTABLE->ep32[ep_id][buf_id].count_addr & 0x0000FFFFu;
 #else
@@ -227,7 +227,7 @@ TU_ATTR_ALWAYS_INLINE static inline uint32_t btable_get_addr(uint32_t ep_id, uin
 #endif
 }
 
-TU_ATTR_ALWAYS_INLINE static inline void btable_set_addr(uint32_t ep_id, uint8_t buf_id, uint16_t addr) {
+__attribute__((always_inline)) static inline void btable_set_addr(uint32_t ep_id, uint8_t buf_id, uint16_t addr) {
 #ifdef FSDEV_BUS_32BIT
   uint32_t count_addr = FSDEV_BTABLE->ep32[ep_id][buf_id].count_addr;
   count_addr = (count_addr & 0xFFFF0000u) | (addr & 0x0000FFFCu);
@@ -237,7 +237,7 @@ TU_ATTR_ALWAYS_INLINE static inline void btable_set_addr(uint32_t ep_id, uint8_t
 #endif
 }
 
-TU_ATTR_ALWAYS_INLINE static inline uint16_t btable_get_count(uint32_t ep_id, uint8_t buf_id) {
+__attribute__((always_inline)) static inline uint16_t btable_get_count(uint32_t ep_id, uint8_t buf_id) {
   uint16_t count;
 #ifdef FSDEV_BUS_32BIT
   count = (FSDEV_BTABLE->ep32[ep_id][buf_id].count_addr >> 16);
@@ -247,7 +247,7 @@ TU_ATTR_ALWAYS_INLINE static inline uint16_t btable_get_count(uint32_t ep_id, ui
   return count & 0x3FFU;
 }
 
-TU_ATTR_ALWAYS_INLINE static inline void btable_set_count(uint32_t ep_id, uint8_t buf_id, uint16_t byte_count) {
+__attribute__((always_inline)) static inline void btable_set_count(uint32_t ep_id, uint8_t buf_id, uint16_t byte_count) {
 #ifdef FSDEV_BUS_32BIT
   uint32_t count_addr = FSDEV_BTABLE->ep32[ep_id][buf_id].count_addr;
   count_addr = (count_addr & ~0x03FF0000u) | ((byte_count & 0x3FFu) << 16);
@@ -260,7 +260,7 @@ TU_ATTR_ALWAYS_INLINE static inline void btable_set_count(uint32_t ep_id, uint8_
 }
 
 /* Aligned buffer size according to hardware */
-TU_ATTR_ALWAYS_INLINE static inline uint16_t pma_align_buffer_size(uint16_t size, uint8_t* blsize, uint8_t* num_block) {
+__attribute__((always_inline)) static inline uint16_t pma_align_buffer_size(uint16_t size, uint8_t* blsize, uint8_t* num_block) {
   /* The STM32 full speed USB peripheral supports only a limited set of
    * buffer sizes given by the RX buffer entry format in the USB_BTABLE. */
   uint16_t block_in_bytes;
@@ -277,7 +277,7 @@ TU_ATTR_ALWAYS_INLINE static inline uint16_t pma_align_buffer_size(uint16_t size
   return (*num_block) * block_in_bytes;
 }
 
-TU_ATTR_ALWAYS_INLINE static inline void btable_set_rx_bufsize(uint32_t ep_id, uint8_t buf_id, uint16_t wCount) {
+__attribute__((always_inline)) static inline void btable_set_rx_bufsize(uint32_t ep_id, uint8_t buf_id, uint16_t wCount) {
   uint8_t blsize, num_block;
   (void)pma_align_buffer_size(wCount, &blsize, &num_block);
 

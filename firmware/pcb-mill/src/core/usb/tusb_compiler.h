@@ -32,10 +32,6 @@
 #ifndef _TUSB_COMPILER_H_
 #define _TUSB_COMPILER_H_
 
-#define TU_TOKEN(x) x
-#define TU_STRING(x) #x             ///< stringify without expand
-#define TU_XSTRING(x) TU_STRING(x)  ///< expand then stringify
-
 #define TU_STRCAT(a, b) a##b         ///< concat without expand
 #define TU_STRCAT3(a, b, c) a##b##c  ///< concat without expand
 
@@ -132,36 +128,11 @@
 
 // TODO refactor since __attribute__ is supported across many compiler
 #if defined(__GNUC__)
-#define TU_ATTR_ALIGNED(Bytes) __attribute__((aligned(Bytes)))
-#define TU_ATTR_SECTION(sec_name) __attribute__((section(#sec_name)))
-#define TU_ATTR_PACKED __attribute__((packed))
-#define TU_ATTR_WEAK __attribute__((weak))
-// #define TU_ATTR_WEAK_ALIAS(f)         __attribute__ ((weak, alias(#f)))
-#ifndef TU_ATTR_ALWAYS_INLINE  // allow to override for debug
-#define TU_ATTR_ALWAYS_INLINE __attribute__((always_inline))
-#endif
-#define TU_ATTR_DEPRECATED(mess) __attribute__((deprecated(mess)))  // warn if function with this attribute is used
-#define TU_ATTR_UNUSED __attribute__((unused))                      // Function/Variable is meant to be possibly unused
-#define TU_ATTR_USED __attribute__((used))                          // Function/Variable is meant to be used
 
 #define TU_ATTR_PACKED_BEGIN
 #define TU_ATTR_PACKED_END
 #define TU_ATTR_BIT_FIELD_ORDER_BEGIN
 #define TU_ATTR_BIT_FIELD_ORDER_END
-
-#if __GNUC__ < 5
-#define TU_ATTR_FALLTHROUGH \
-  do {                      \
-  } while (0) /* fallthrough */
-#else
-#if __has_attribute(__fallthrough__)
-#define TU_ATTR_FALLTHROUGH __attribute__((fallthrough))
-#else
-#define TU_ATTR_FALLTHROUGH \
-  do {                      \
-  } while (0) /* fallthrough */
-#endif
-#endif
 
 // Endian conversion use well-known host to network (big endian) naming
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
@@ -191,13 +162,13 @@
 #elif defined(__TI_COMPILER_VERSION__)
 #define TU_ATTR_ALIGNED(Bytes) __attribute__((aligned(Bytes)))
 #define TU_ATTR_SECTION(sec_name) __attribute__((section(#sec_name)))
-#define TU_ATTR_PACKED __attribute__((packed))
-#define TU_ATTR_WEAK __attribute__((weak))
+#define __attribute__((packed)) __attribute__((packed))
+#define __attribute__((weak)) __attribute__((weak))
 // #define TU_ATTR_WEAK_ALIAS(f)         __attribute__ ((weak, alias(#f)))
-#define TU_ATTR_ALWAYS_INLINE __attribute__((always_inline))
+#define __attribute__((always_inline)) __attribute__((always_inline))
 #define TU_ATTR_DEPRECATED(mess) __attribute__((deprecated(mess)))  // warn if function with this attribute is used
 #define TU_ATTR_UNUSED __attribute__((unused))                      // Function/Variable is meant to be possibly unused
-#define TU_ATTR_USED __attribute__((used))
+#define __attribute__((used)) __attribute__((used))
 #define TU_ATTR_FALLTHROUGH __attribute__((fallthrough))
 
 #define TU_ATTR_PACKED_BEGIN
@@ -219,15 +190,15 @@
 #include <intrinsics.h>
 #define TU_ATTR_ALIGNED(Bytes) __attribute__((aligned(Bytes)))
 #define TU_ATTR_SECTION(sec_name) __attribute__((section(#sec_name)))
-#define TU_ATTR_PACKED __attribute__((packed))
-#define TU_ATTR_WEAK __attribute__((weak))
+#define __attribute__((packed)) __attribute__((packed))
+#define __attribute__((weak)) __attribute__((weak))
 // #define TU_ATTR_WEAK_ALIAS(f)         __attribute__ ((weak, alias(#f)))
-#ifndef TU_ATTR_ALWAYS_INLINE  // allow to override for debug
-#define TU_ATTR_ALWAYS_INLINE __attribute__((always_inline))
+#ifndef __attribute__((always_inline))  // allow to override for debug
+#define __attribute__((always_inline)) __attribute__((always_inline))
 #endif
 #define TU_ATTR_DEPRECATED(mess) __attribute__((deprecated(mess)))  // warn if function with this attribute is used
 #define TU_ATTR_UNUSED __attribute__((unused))                      // Function/Variable is meant to be possibly unused
-#define TU_ATTR_USED __attribute__((used))                          // Function/Variable is meant to be used
+#define __attribute__((used)) __attribute__((used))                 // Function/Variable is meant to be used
 #define TU_ATTR_FALLTHROUGH \
   do {                      \
   } while (0) /* fallthrough */
@@ -250,13 +221,13 @@
 #elif defined(__CCRX__)
 #define TU_ATTR_ALIGNED(Bytes)
 #define TU_ATTR_SECTION(sec_name)
-#define TU_ATTR_PACKED
-#define TU_ATTR_WEAK
+#define __attribute__((packed))
+#define __attribute__((weak))
 // #define TU_ATTR_WEAK_ALIAS(f)
-#define TU_ATTR_ALWAYS_INLINE
+#define __attribute__((always_inline))
 #define TU_ATTR_DEPRECATED(mess)
 #define TU_ATTR_UNUSED
-#define TU_ATTR_USED
+#define __attribute__((used))
 #define TU_ATTR_FALLTHROUGH \
   do {                      \
   } while (0) /* fallthrough */

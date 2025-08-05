@@ -40,14 +40,14 @@ extern tusb_role_t _tusb_rhport_role[TUP_USBIP_CONTROLLER_NUM];
 // Endpoint
 //--------------------------------------------------------------------+
 
-typedef struct TU_ATTR_PACKED {
+typedef struct __attribute__((packed)) {
   volatile uint8_t busy : 1;
   volatile uint8_t stalled : 1;
   volatile uint8_t claimed : 1;
 } tu_edpt_state_t;
 
 typedef struct {
-  struct TU_ATTR_PACKED {
+  struct __attribute__((packed)) {
     uint8_t is_host : 1;    // 1: host, 0: device
     uint8_t is_mps512 : 1;  // 1: 512, 0: 64 since stream is used for Bulk only
   };
@@ -93,18 +93,18 @@ bool tu_edpt_stream_init(tu_edpt_stream_t* s, bool is_host, bool is_tx, bool ove
 bool tu_edpt_stream_deinit(tu_edpt_stream_t* s);
 
 // Open an stream for an endpoint
-TU_ATTR_ALWAYS_INLINE static inline void tu_edpt_stream_open(tu_edpt_stream_t* s, tusb_desc_endpoint_t const* desc_ep) {
+__attribute__((always_inline)) static inline void tu_edpt_stream_open(tu_edpt_stream_t* s, tusb_desc_endpoint_t const* desc_ep) {
   tu_fifo_clear(&s->ff);
   s->ep_addr = desc_ep->bEndpointAddress;
   s->is_mps512 = (tu_edpt_packet_size(desc_ep) == 512) ? 1 : 0;
 }
 
-TU_ATTR_ALWAYS_INLINE static inline void tu_edpt_stream_close(tu_edpt_stream_t* s) {
+__attribute__((always_inline)) static inline void tu_edpt_stream_close(tu_edpt_stream_t* s) {
   s->ep_addr = 0;
 }
 
 // Clear fifo
-TU_ATTR_ALWAYS_INLINE static inline bool tu_edpt_stream_clear(tu_edpt_stream_t* s) {
+__attribute__((always_inline)) static inline bool tu_edpt_stream_clear(tu_edpt_stream_t* s) {
   return tu_fifo_clear(&s->ff);
 }
 
@@ -136,25 +136,25 @@ uint32_t tu_edpt_stream_read(uint8_t hwid, tu_edpt_stream_t* s, void* buffer, ui
 uint32_t tu_edpt_stream_read_xfer(uint8_t hwid, tu_edpt_stream_t* s);
 
 // Complete read transfer by writing EP -> FIFO. Must be called in the transfer complete callback
-TU_ATTR_ALWAYS_INLINE static inline void tu_edpt_stream_read_xfer_complete(tu_edpt_stream_t* s, uint32_t xferred_bytes) {
+__attribute__((always_inline)) static inline void tu_edpt_stream_read_xfer_complete(tu_edpt_stream_t* s, uint32_t xferred_bytes) {
   if (tu_fifo_depth(&s->ff)) {
     tu_fifo_write_n(&s->ff, s->ep_buf, (uint16_t)xferred_bytes);
   }
 }
 
 // Complete read transfer with provided buffer
-TU_ATTR_ALWAYS_INLINE static inline void tu_edpt_stream_read_xfer_complete_with_buf(tu_edpt_stream_t* s, const void* buf, uint32_t xferred_bytes) {
+__attribute__((always_inline)) static inline void tu_edpt_stream_read_xfer_complete_with_buf(tu_edpt_stream_t* s, const void* buf, uint32_t xferred_bytes) {
   if (tu_fifo_depth(&s->ff)) {
     tu_fifo_write_n(&s->ff, buf, (uint16_t)xferred_bytes);
   }
 }
 
 // Get the number of bytes available for reading
-TU_ATTR_ALWAYS_INLINE static inline uint32_t tu_edpt_stream_read_available(tu_edpt_stream_t* s) {
+__attribute__((always_inline)) static inline uint32_t tu_edpt_stream_read_available(tu_edpt_stream_t* s) {
   return (uint32_t)tu_fifo_count(&s->ff);
 }
 
-TU_ATTR_ALWAYS_INLINE static inline bool tu_edpt_stream_peek(tu_edpt_stream_t* s, uint8_t* ch) {
+__attribute__((always_inline)) static inline bool tu_edpt_stream_peek(tu_edpt_stream_t* s, uint8_t* ch) {
   return tu_fifo_peek(&s->ff, ch);
 }
 

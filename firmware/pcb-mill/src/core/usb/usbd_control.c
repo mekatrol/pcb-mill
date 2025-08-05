@@ -35,7 +35,7 @@
 //--------------------------------------------------------------------+
 // Callback weak stubs (called if application does not provide)
 //--------------------------------------------------------------------+
-TU_ATTR_WEAK void dcd_edpt0_status_complete(uint8_t rhport, const tusb_control_request_t* request) {
+__attribute__((weak)) void dcd_edpt0_status_complete(uint8_t rhport, const tusb_control_request_t* request) {
   (void)rhport;
   (void)request;
 }
@@ -170,7 +170,6 @@ bool usbd_control_xfer_cb(uint8_t rhport, uint8_t ep_addr, xfer_result_t result,
   if (_ctrl_xfer.request.bmRequestType_bit.direction == TUSB_DIR_OUT) {
     TU_VERIFY(_ctrl_xfer.buffer);
     memcpy(_ctrl_xfer.buffer, _ctrl_epbuf.buf, xferred_bytes);
-    TU_LOG_MEM(CFG_TUD_LOG_LEVEL, _ctrl_xfer.buffer, xferred_bytes, 2);
   }
 
   _ctrl_xfer.total_xferred += (uint16_t)xferred_bytes;

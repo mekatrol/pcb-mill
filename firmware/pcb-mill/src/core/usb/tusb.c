@@ -45,7 +45,7 @@ tusb_role_t _tusb_rhport_role[TUP_USBIP_CONTROLLER_NUM] = {TUSB_ROLE_INVALID};
 // Weak/Default API, can be overwritten by Application
 //--------------------------------------------------------------------
 
-TU_ATTR_WEAK void tusb_time_delay_ms_api(uint32_t ms) {
+__attribute__((weak)) void tusb_time_delay_ms_api(uint32_t ms) {
 #if CFG_TUSB_OS != OPT_OS_NONE
   osal_task_delay(ms);
 #else
@@ -229,7 +229,6 @@ bool tu_edpt_release(tu_edpt_state_t* ep_state, osal_mutex_t mutex) {
 
 bool tu_edpt_validate(tusb_desc_endpoint_t const* desc_ep, tusb_speed_t speed, bool is_host) {
   uint16_t const max_packet_size = tu_edpt_packet_size(desc_ep);
-  TU_LOG2("  Open EP %02X with Size = %u\r\n", desc_ep->bEndpointAddress, max_packet_size);
 
   switch (desc_ep->bmAttributes.xfer) {
     case TUSB_XFER_ISOCHRONOUS: {
@@ -247,7 +246,6 @@ bool tu_edpt_validate(tusb_desc_endpoint_t const* desc_ep, tusb_speed_t speed, b
         if (is_host && max_packet_size == 512) {
           // HACK: while in host mode, some device incorrectly always report 512 regardless of link speed
           // overwrite descriptor to force 64
-          TU_LOG1("  WARN: EP max packet size is 512 in fullspeed, force to 64\r\n");
           tusb_desc_endpoint_t* hacked_ep = (tusb_desc_endpoint_t*)(uintptr_t)desc_ep;
           hacked_ep->wMaxPacketSize = tu_htole16(64);
         } else {
@@ -278,7 +276,6 @@ void tu_edpt_bind_driver(uint8_t ep2drv[][2], tusb_desc_interface_t const* desc_
   while (p_desc < desc_end) {
     if (TUSB_DESC_ENDPOINT == tu_desc_type(p_desc)) {
       uint8_t const ep_addr = ((tusb_desc_endpoint_t const*)p_desc)->bEndpointAddress;
-      TU_LOG(2, "  Bind EP %02x to driver id %u\r\n", ep_addr, driver_id);
       ep2drv[tu_edpt_number(ep_addr)][tu_edpt_dir(ep_addr)] = driver_id;
     }
     p_desc = tu_desc_next(p_desc);
@@ -349,7 +346,7 @@ bool tu_edpt_stream_deinit(tu_edpt_stream_t* s) {
   return true;
 }
 
-TU_ATTR_ALWAYS_INLINE static inline bool stream_claim(uint8_t hwid, tu_edpt_stream_t* s) {
+__attribute__((always_inline)) static inline bool stream_claim(uint8_t hwid, tu_edpt_stream_t* s) {
   if (s->is_host) {
 #if CFG_TUH_ENABLED
     return usbh_edpt_claim(hwid, s->ep_addr);
@@ -362,7 +359,7 @@ TU_ATTR_ALWAYS_INLINE static inline bool stream_claim(uint8_t hwid, tu_edpt_stre
   return false;
 }
 
-TU_ATTR_ALWAYS_INLINE static inline bool stream_xfer(uint8_t hwid, tu_edpt_stream_t* s, uint16_t count) {
+__attribute__((always_inline)) static inline bool stream_xfer(uint8_t hwid, tu_edpt_stream_t* s, uint16_t count) {
   if (s->is_host) {
 #if CFG_TUH_ENABLED
     return usbh_edpt_xfer(hwid, s->ep_addr, count ? s->ep_buf : NULL, count);
@@ -375,7 +372,7 @@ TU_ATTR_ALWAYS_INLINE static inline bool stream_xfer(uint8_t hwid, tu_edpt_strea
   return false;
 }
 
-TU_ATTR_ALWAYS_INLINE static inline bool stream_release(uint8_t hwid, tu_edpt_stream_t* s) {
+__attribute__((always_inline)) static inline bool stream_release(uint8_t hwid, tu_edpt_stream_t* s) {
   if (s->is_host) {
 #if CFG_TUH_ENABLED
     return usbh_edpt_release(hwid, s->ep_addr);

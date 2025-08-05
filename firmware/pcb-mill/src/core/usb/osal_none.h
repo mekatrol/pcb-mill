@@ -37,7 +37,7 @@ extern "C" {
 
 #if CFG_TUH_ENABLED
 // currently only needed/available in host mode
-TU_ATTR_WEAK void osal_task_delay(uint32_t msec);
+__attribute__((weak)) void osal_task_delay(uint32_t msec);
 #endif
 
 //--------------------------------------------------------------------+
@@ -51,17 +51,17 @@ typedef struct {
 #define OSAL_SPINLOCK_DEF(_name, _int_set) \
   osal_spinlock_t _name = {.interrupt_set = _int_set}
 
-TU_ATTR_ALWAYS_INLINE static inline void osal_spin_init(osal_spinlock_t* ctx) {
+__attribute__((always_inline)) static inline void osal_spin_init(osal_spinlock_t* ctx) {
   (void)ctx;
 }
 
-TU_ATTR_ALWAYS_INLINE static inline void osal_spin_lock(osal_spinlock_t* ctx, bool in_isr) {
+__attribute__((always_inline)) static inline void osal_spin_lock(osal_spinlock_t* ctx, bool in_isr) {
   if (!in_isr) {
     ctx->interrupt_set(false);
   }
 }
 
-TU_ATTR_ALWAYS_INLINE static inline void osal_spin_unlock(osal_spinlock_t* ctx, bool in_isr) {
+__attribute__((always_inline)) static inline void osal_spin_unlock(osal_spinlock_t* ctx, bool in_isr) {
   if (!in_isr) {
     ctx->interrupt_set(true);
   }
@@ -76,24 +76,24 @@ typedef struct {
 
 typedef osal_semaphore_def_t* osal_semaphore_t;
 
-TU_ATTR_ALWAYS_INLINE static inline osal_semaphore_t osal_semaphore_create(osal_semaphore_def_t* semdef) {
+__attribute__((always_inline)) static inline osal_semaphore_t osal_semaphore_create(osal_semaphore_def_t* semdef) {
   semdef->count = 0;
   return semdef;
 }
 
-TU_ATTR_ALWAYS_INLINE static inline bool osal_semaphore_delete(osal_semaphore_t semd_hdl) {
+__attribute__((always_inline)) static inline bool osal_semaphore_delete(osal_semaphore_t semd_hdl) {
   (void)semd_hdl;
   return true;  // nothing to do
 }
 
-TU_ATTR_ALWAYS_INLINE static inline bool osal_semaphore_post(osal_semaphore_t sem_hdl, bool in_isr) {
+__attribute__((always_inline)) static inline bool osal_semaphore_post(osal_semaphore_t sem_hdl, bool in_isr) {
   (void)in_isr;
   sem_hdl->count++;
   return true;
 }
 
 // TODO blocking for now
-TU_ATTR_ALWAYS_INLINE static inline bool osal_semaphore_wait(osal_semaphore_t sem_hdl, uint32_t msec) {
+__attribute__((always_inline)) static inline bool osal_semaphore_wait(osal_semaphore_t sem_hdl, uint32_t msec) {
   (void)msec;
 
   while (sem_hdl->count == 0) {
@@ -103,7 +103,7 @@ TU_ATTR_ALWAYS_INLINE static inline bool osal_semaphore_wait(osal_semaphore_t se
   return true;
 }
 
-TU_ATTR_ALWAYS_INLINE static inline void osal_semaphore_reset(osal_semaphore_t sem_hdl) {
+__attribute__((always_inline)) static inline void osal_semaphore_reset(osal_semaphore_t sem_hdl) {
   sem_hdl->count = 0;
 }
 
@@ -118,21 +118,21 @@ typedef osal_semaphore_t osal_mutex_t;
 // Note: multiple cores MCUs usually do provide IPC API for mutex
 // or we can use std atomic function
 
-TU_ATTR_ALWAYS_INLINE static inline osal_mutex_t osal_mutex_create(osal_mutex_def_t* mdef) {
+__attribute__((always_inline)) static inline osal_mutex_t osal_mutex_create(osal_mutex_def_t* mdef) {
   mdef->count = 1;
   return mdef;
 }
 
-TU_ATTR_ALWAYS_INLINE static inline bool osal_mutex_delete(osal_mutex_t mutex_hdl) {
+__attribute__((always_inline)) static inline bool osal_mutex_delete(osal_mutex_t mutex_hdl) {
   (void)mutex_hdl;
   return true;  // nothing to do
 }
 
-TU_ATTR_ALWAYS_INLINE static inline bool osal_mutex_lock(osal_mutex_t mutex_hdl, uint32_t msec) {
+__attribute__((always_inline)) static inline bool osal_mutex_lock(osal_mutex_t mutex_hdl, uint32_t msec) {
   return osal_semaphore_wait(mutex_hdl, msec);
 }
 
-TU_ATTR_ALWAYS_INLINE static inline bool osal_mutex_unlock(osal_mutex_t mutex_hdl) {
+__attribute__((always_inline)) static inline bool osal_mutex_unlock(osal_mutex_t mutex_hdl) {
   return osal_semaphore_post(mutex_hdl, false);
 }
 
@@ -163,17 +163,17 @@ typedef osal_queue_def_t* osal_queue_t;
       .interrupt_set = _int_set,                       \
       .ff = TU_FIFO_INIT(_name##_buf, _depth, _type, false)}
 
-TU_ATTR_ALWAYS_INLINE static inline osal_queue_t osal_queue_create(osal_queue_def_t* qdef) {
+__attribute__((always_inline)) static inline osal_queue_t osal_queue_create(osal_queue_def_t* qdef) {
   tu_fifo_clear(&qdef->ff);
   return (osal_queue_t)qdef;
 }
 
-TU_ATTR_ALWAYS_INLINE static inline bool osal_queue_delete(osal_queue_t qhdl) {
+__attribute__((always_inline)) static inline bool osal_queue_delete(osal_queue_t qhdl) {
   (void)qhdl;
   return true;  // nothing to do
 }
 
-TU_ATTR_ALWAYS_INLINE static inline bool osal_queue_receive(osal_queue_t qhdl, void* data, uint32_t msec) {
+__attribute__((always_inline)) static inline bool osal_queue_receive(osal_queue_t qhdl, void* data, uint32_t msec) {
   (void)msec;  // not used, always behave as msec = 0
 
   qhdl->interrupt_set(false);
@@ -183,7 +183,7 @@ TU_ATTR_ALWAYS_INLINE static inline bool osal_queue_receive(osal_queue_t qhdl, v
   return success;
 }
 
-TU_ATTR_ALWAYS_INLINE static inline bool osal_queue_send(osal_queue_t qhdl, void const* data, bool in_isr) {
+__attribute__((always_inline)) static inline bool osal_queue_send(osal_queue_t qhdl, void const* data, bool in_isr) {
   if (!in_isr) {
     qhdl->interrupt_set(false);
   }
@@ -197,7 +197,7 @@ TU_ATTR_ALWAYS_INLINE static inline bool osal_queue_send(osal_queue_t qhdl, void
   return success;
 }
 
-TU_ATTR_ALWAYS_INLINE static inline bool osal_queue_empty(osal_queue_t qhdl) {
+__attribute__((always_inline)) static inline bool osal_queue_empty(osal_queue_t qhdl) {
   // Skip queue lock/unlock since this function is primarily called
   // with interrupt disabled before going into low power mode
   return tu_fifo_empty(&qhdl->ff);

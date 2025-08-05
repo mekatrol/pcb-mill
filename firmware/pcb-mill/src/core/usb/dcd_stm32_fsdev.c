@@ -170,7 +170,7 @@ static bool dcd_read_packet_memory_ff(tu_fifo_t *ff, uint16_t src, uint16_t wNBy
 
 static void edpt0_open(uint8_t rhport);
 
-TU_ATTR_ALWAYS_INLINE static inline void edpt0_prepare_setup(void) {
+__attribute__((always_inline)) static inline void edpt0_prepare_setup(void) {
   btable_set_rx_bufsize(0, BTABLE_BUF_RX, 8);
 }
 
@@ -178,7 +178,7 @@ TU_ATTR_ALWAYS_INLINE static inline void edpt0_prepare_setup(void) {
 // Inline helper
 //--------------------------------------------------------------------+
 
-TU_ATTR_ALWAYS_INLINE static inline xfer_ctl_t *xfer_ctl_ptr(uint8_t epnum, uint8_t dir) {
+__attribute__((always_inline)) static inline xfer_ctl_t *xfer_ctl_ptr(uint8_t epnum, uint8_t dir) {
   return &xfer_status[epnum][dir];
 }
 
@@ -305,7 +305,7 @@ static void handle_ctr_tx(uint32_t ep_id) {
 static void handle_ctr_setup(uint32_t ep_id) {
   uint16_t rx_count = btable_get_count(ep_id, BTABLE_BUF_RX);
   uint16_t rx_addr = btable_get_addr(ep_id, BTABLE_BUF_RX);
-  uint8_t setup_packet[8] TU_ATTR_ALIGNED(4);
+  uint8_t setup_packet[8] __attribute__((aligned(4)));
 
   dcd_read_packet_memory(setup_packet, rx_addr, rx_count);
 

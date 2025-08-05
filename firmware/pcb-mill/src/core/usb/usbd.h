@@ -40,11 +40,7 @@ extern "C" {
 // New API to replace tud_init() to init device stack on specific roothub port
 bool tud_rhport_init(uint8_t rhport, const tusb_rhport_init_t* rh_init);
 
-// Init device stack on roothub port
-#if TUSB_VERSION_NUMBER > 2000  // 0.20.0
-TU_ATTR_DEPRECATED("Please use tusb_init(rhport, rh_init) instead")
-#endif
-TU_ATTR_ALWAYS_INLINE static inline bool tud_init(uint8_t rhport) {
+__attribute__((always_inline)) static inline bool tud_init(uint8_t rhport) {
   const tusb_rhport_init_t rh_init = {
       .role = TUSB_ROLE_DEVICE,
       .speed = TUD_OPT_HIGH_SPEED ? TUSB_SPEED_HIGH : TUSB_SPEED_FULL};
@@ -63,7 +59,7 @@ bool tud_inited(void);
 void tud_task_ext(uint32_t timeout_ms, bool in_isr);
 
 // Task function should be called in main/rtos loop
-TU_ATTR_ALWAYS_INLINE static inline void tud_task(void) {
+__attribute__((always_inline)) static inline void tud_task(void) {
   tud_task_ext(UINT32_MAX, false);
 }
 
@@ -91,7 +87,7 @@ bool tud_mounted(void);
 bool tud_suspended(void);
 
 // Check if device is ready to transfer
-TU_ATTR_ALWAYS_INLINE static inline bool tud_ready(void) {
+__attribute__((always_inline)) static inline bool tud_ready(void) {
   return tud_mounted() && !tud_suspended();
 }
 

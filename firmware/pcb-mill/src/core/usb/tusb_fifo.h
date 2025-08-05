@@ -107,7 +107,7 @@ typedef struct {
   uint8_t* buffer;  // buffer pointer
   uint16_t depth;   // max items
 
-  struct TU_ATTR_PACKED {
+  struct __attribute__((packed)) {
     uint16_t item_size : 15;  // size of each item
     bool overwritable : 1;    // ovwerwritable when full
   };
@@ -145,7 +145,7 @@ bool tu_fifo_clear(tu_fifo_t* f);
 bool tu_fifo_config(tu_fifo_t* f, void* buffer, uint16_t depth, uint16_t item_size, bool overwritable);
 
 #if OSAL_MUTEX_REQUIRED
-TU_ATTR_ALWAYS_INLINE static inline void tu_fifo_config_mutex(tu_fifo_t* f, osal_mutex_t wr_mutex, osal_mutex_t rd_mutex) {
+__attribute__((always_inline)) static inline void tu_fifo_config_mutex(tu_fifo_t* f, osal_mutex_t wr_mutex, osal_mutex_t rd_mutex) {
   f->mutex_wr = wr_mutex;
   f->mutex_rd = rd_mutex;
 }
@@ -175,7 +175,7 @@ bool tu_fifo_full(tu_fifo_t* f);
 bool tu_fifo_overflowed(tu_fifo_t* f);
 void tu_fifo_correct_read_pointer(tu_fifo_t* f);
 
-TU_ATTR_ALWAYS_INLINE static inline uint16_t tu_fifo_depth(tu_fifo_t* f) {
+__attribute__((always_inline)) static inline uint16_t tu_fifo_depth(tu_fifo_t* f) {
   return f->depth;
 }
 

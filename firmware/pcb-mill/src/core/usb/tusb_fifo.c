@@ -38,11 +38,11 @@
 
 #if OSAL_MUTEX_REQUIRED
 
-TU_ATTR_ALWAYS_INLINE static inline void _ff_lock(osal_mutex_t mutex) {
+__attribute__((always_inline)) static inline void _ff_lock(osal_mutex_t mutex) {
   if (mutex) osal_mutex_lock(mutex, OSAL_TIMEOUT_WAIT_FOREVER);
 }
 
-TU_ATTR_ALWAYS_INLINE static inline void _ff_unlock(osal_mutex_t mutex) {
+__attribute__((always_inline)) static inline void _ff_unlock(osal_mutex_t mutex) {
   if (mutex) osal_mutex_unlock(mutex);
 }
 
@@ -294,7 +294,7 @@ static void _ff_pull_n(tu_fifo_t* f, void* app_buf, uint16_t n, uint16_t rd_ptr,
 //--------------------------------------------------------------------+
 
 // return only the index difference and as such can be used to determine an overflow i.e overflowable count
-TU_ATTR_ALWAYS_INLINE static inline uint16_t _ff_count(uint16_t depth, uint16_t wr_idx, uint16_t rd_idx) {
+__attribute__((always_inline)) static inline uint16_t _ff_count(uint16_t depth, uint16_t wr_idx, uint16_t rd_idx) {
   // In case we have non-power of two depth we need a further modification
   if (wr_idx >= rd_idx) {
     return (uint16_t)(wr_idx - rd_idx);
@@ -304,7 +304,7 @@ TU_ATTR_ALWAYS_INLINE static inline uint16_t _ff_count(uint16_t depth, uint16_t 
 }
 
 // return remaining slot in fifo
-TU_ATTR_ALWAYS_INLINE static inline uint16_t _ff_remaining(uint16_t depth, uint16_t wr_idx, uint16_t rd_idx) {
+__attribute__((always_inline)) static inline uint16_t _ff_remaining(uint16_t depth, uint16_t wr_idx, uint16_t rd_idx) {
   uint16_t const count = _ff_count(depth, wr_idx, rd_idx);
   return (depth > count) ? (depth - count) : 0;
 }
@@ -347,7 +347,7 @@ static uint16_t backward_index(uint16_t depth, uint16_t idx, uint16_t offset)
 #endif
 
 // index to pointer, simply an modulo with minus.
-TU_ATTR_ALWAYS_INLINE static inline uint16_t idx2ptr(uint16_t depth, uint16_t idx) {
+__attribute__((always_inline)) static inline uint16_t idx2ptr(uint16_t depth, uint16_t idx) {
   // Only run at most 3 times since index is limit in the range of [0..2*depth)
   while (idx >= depth) idx -= depth;
   return idx;
@@ -356,7 +356,7 @@ TU_ATTR_ALWAYS_INLINE static inline uint16_t idx2ptr(uint16_t depth, uint16_t id
 // Works on local copies of w
 // When an overwritable fifo is overflowed, rd_idx will be re-index so that it forms
 // an full fifo i.e _ff_count() = depth
-TU_ATTR_ALWAYS_INLINE static inline uint16_t _ff_correct_read_index(tu_fifo_t* f, uint16_t wr_idx) {
+__attribute__((always_inline)) static inline uint16_t _ff_correct_read_index(tu_fifo_t* f, uint16_t wr_idx) {
   uint16_t rd_idx;
   if (wr_idx >= f->depth) {
     rd_idx = wr_idx - f->depth;
@@ -426,9 +426,6 @@ static uint16_t _tu_fifo_write_n(tu_fifo_t* f, const void* data, uint16_t n, tu_
 
   uint8_t const* buf8 = (uint8_t const*)data;
 
-  TU_LOG(TU_FIFO_DBG, "rd = %3u, wr = %3u, count = %3u, remain = %3u, n = %3u:  ",
-         rd_idx, wr_idx, _ff_count(f->depth, wr_idx, rd_idx), _ff_remaining(f->depth, wr_idx, rd_idx), n);
-
   if (!f->overwritable) {
     // limit up to full
     uint16_t const remain = _ff_remaining(f->depth, wr_idx, rd_idx);
@@ -475,15 +472,11 @@ static uint16_t _tu_fifo_write_n(tu_fifo_t* f, const void* data, uint16_t n, tu_
   if (n) {
     uint16_t wr_ptr = idx2ptr(f->depth, wr_idx);
 
-    TU_LOG(TU_FIFO_DBG, "actual_n = %u, wr_ptr = %u", n, wr_ptr);
-
     // Write data
     _ff_push_n(f, buf8, n, wr_ptr, copy_mode);
 
     // Advance index
     f->wr_idx = advance_index(f->depth, wr_idx, n);
-
-    TU_LOG(TU_FIFO_DBG, "\tnew_wr = %u\r\n", f->wr_idx);
   }
 
   _ff_unlock(f->mutex_wr);

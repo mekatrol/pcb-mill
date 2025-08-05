@@ -39,38 +39,38 @@ extern "C" {
 #define TUD_EPBUF_DCACHE_SIZE(_size) (CFG_TUD_MEM_DCACHE_ENABLE ? (TU_DIV_CEIL(_size, CFG_TUD_MEM_DCACHE_LINE_SIZE) * CFG_TUD_MEM_DCACHE_LINE_SIZE) : (_size))
 
 // Declare an endpoint buffer with uint8_t[size]
-#define TUD_EPBUF_DEF(_name, _size)                                               \
-  union {                                                                         \
-    CFG_TUD_MEM_ALIGN uint8_t _name[_size];                                       \
-    TU_ATTR_ALIGNED(CFG_TUD_MEM_DCACHE_ENABLE ? CFG_TUD_MEM_DCACHE_LINE_SIZE : 1) \
-    uint8_t _name##_dcache_padding[TUD_EPBUF_DCACHE_SIZE(_size)];                 \
+#define TUD_EPBUF_DEF(_name, _size)                                                        \
+  union {                                                                                  \
+    CFG_TUD_MEM_ALIGN uint8_t _name[_size];                                                \
+    __attribute__((aligned(CFG_TUD_MEM_DCACHE_ENABLE ? CFG_TUD_MEM_DCACHE_LINE_SIZE : 1))) \
+    uint8_t _name##_dcache_padding[TUD_EPBUF_DCACHE_SIZE(_size)];                          \
   }
 
 // Declare an endpoint buffer with a type
-#define TUD_EPBUF_TYPE_DEF(_type, _name)                                          \
-  union {                                                                         \
-    CFG_TUD_MEM_ALIGN _type _name;                                                \
-    TU_ATTR_ALIGNED(CFG_TUD_MEM_DCACHE_ENABLE ? CFG_TUD_MEM_DCACHE_LINE_SIZE : 1) \
-    uint8_t _name##_dcache_padding[TUD_EPBUF_DCACHE_SIZE(sizeof(_type))];         \
+#define TUD_EPBUF_TYPE_DEF(_type, _name)                                                   \
+  union {                                                                                  \
+    CFG_TUD_MEM_ALIGN _type _name;                                                         \
+    __attribute__((aligned(CFG_TUD_MEM_DCACHE_ENABLE ? CFG_TUD_MEM_DCACHE_LINE_SIZE : 1))) \
+    uint8_t _name##_dcache_padding[TUD_EPBUF_DCACHE_SIZE(sizeof(_type))];                  \
   }
 
 //------------- Host DCache declaration -------------//
 #define TUH_EPBUF_DCACHE_SIZE(_size) (CFG_TUH_MEM_DCACHE_ENABLE ? (TU_DIV_CEIL(_size, CFG_TUH_MEM_DCACHE_LINE_SIZE) * CFG_TUH_MEM_DCACHE_LINE_SIZE) : (_size))
 
 // Declare an endpoint buffer with uint8_t[size]
-#define TUH_EPBUF_DEF(_name, _size)                                               \
-  union {                                                                         \
-    CFG_TUH_MEM_ALIGN uint8_t _name[_size];                                       \
-    TU_ATTR_ALIGNED(CFG_TUH_MEM_DCACHE_ENABLE ? CFG_TUH_MEM_DCACHE_LINE_SIZE : 1) \
-    uint8_t _name##_dcache_padding[TUH_EPBUF_DCACHE_SIZE(_size)];                 \
+#define TUH_EPBUF_DEF(_name, _size)                                                        \
+  union {                                                                                  \
+    CFG_TUH_MEM_ALIGN uint8_t _name[_size];                                                \
+    __attribute__((aligned(CFG_TUH_MEM_DCACHE_ENABLE ? CFG_TUH_MEM_DCACHE_LINE_SIZE : 1))) \
+    uint8_t _name##_dcache_padding[TUH_EPBUF_DCACHE_SIZE(_size)];                          \
   }
 
 // Declare an endpoint buffer with a type
-#define TUH_EPBUF_TYPE_DEF(_type, _name)                                          \
-  union {                                                                         \
-    CFG_TUH_MEM_ALIGN _type _name;                                                \
-    TU_ATTR_ALIGNED(CFG_TUH_MEM_DCACHE_ENABLE ? CFG_TUH_MEM_DCACHE_LINE_SIZE : 1) \
-    uint8_t _name##_dcache_padding[TUH_EPBUF_DCACHE_SIZE(sizeof(_type))];         \
+#define TUH_EPBUF_TYPE_DEF(_type, _name)                                                   \
+  union {                                                                                  \
+    CFG_TUH_MEM_ALIGN _type _name;                                                         \
+    __attribute__((aligned(CFG_TUH_MEM_DCACHE_ENABLE ? CFG_TUH_MEM_DCACHE_LINE_SIZE : 1))) \
+    uint8_t _name##_dcache_padding[TUH_EPBUF_DCACHE_SIZE(sizeof(_type))];                  \
   }
 
 /*------------------------------------------------------------------*/
@@ -331,7 +331,7 @@ TU_ATTR_PACKED_BEGIN
 TU_ATTR_BIT_FIELD_ORDER_BEGIN
 
 /// USB Device Descriptor
-typedef struct TU_ATTR_PACKED {
+typedef struct __attribute__((packed)) {
   uint8_t bLength;          ///< Size of this descriptor in bytes.
   uint8_t bDescriptorType;  ///< DEVICE Descriptor Type.
   uint16_t bcdUSB;          ///< BUSB Specification Release Number in Binary-Coded Decimal (i.e., 2.10 is 210H).
@@ -353,7 +353,7 @@ typedef struct TU_ATTR_PACKED {
 TU_VERIFY_STATIC(sizeof(tusb_desc_device_t) == 18, "size is not correct");
 
 // USB Binary Device Object Store (BOS) Descriptor
-typedef struct TU_ATTR_PACKED {
+typedef struct __attribute__((packed)) {
   uint8_t bLength;          ///< Size of this descriptor in bytes
   uint8_t bDescriptorType;  ///< CONFIGURATION Descriptor Type
   uint16_t wTotalLength;    ///< Total length of data returned for this descriptor
@@ -363,7 +363,7 @@ typedef struct TU_ATTR_PACKED {
 TU_VERIFY_STATIC(sizeof(tusb_desc_bos_t) == 5, "size is not correct");
 
 /// USB Configuration Descriptor
-typedef struct TU_ATTR_PACKED {
+typedef struct __attribute__((packed)) {
   uint8_t bLength;          ///< Size of this descriptor in bytes
   uint8_t bDescriptorType;  ///< CONFIGURATION Descriptor Type
   uint16_t wTotalLength;    ///< Total length of data returned for this configuration. Includes the combined length of all descriptors (configuration, interface, endpoint, and class- or vendor-specific) returned for this configuration.
@@ -378,7 +378,7 @@ typedef struct TU_ATTR_PACKED {
 TU_VERIFY_STATIC(sizeof(tusb_desc_configuration_t) == 9, "size is not correct");
 
 /// USB Interface Descriptor
-typedef struct TU_ATTR_PACKED {
+typedef struct __attribute__((packed)) {
   uint8_t bLength;          ///< Size of this descriptor in bytes
   uint8_t bDescriptorType;  ///< INTERFACE Descriptor Type
 
@@ -394,13 +394,13 @@ typedef struct TU_ATTR_PACKED {
 TU_VERIFY_STATIC(sizeof(tusb_desc_interface_t) == 9, "size is not correct");
 
 /// USB Endpoint Descriptor
-typedef struct TU_ATTR_PACKED {
+typedef struct __attribute__((packed)) {
   uint8_t bLength;          // Size of this descriptor in bytes
   uint8_t bDescriptorType;  // ENDPOINT Descriptor Type
 
   uint8_t bEndpointAddress;  // The address of the endpoint
 
-  struct TU_ATTR_PACKED {
+  struct __attribute__((packed)) {
     uint8_t xfer : 2;   // Control, ISO, Bulk, Interrupt
     uint8_t sync : 2;   // None, Asynchronous, Adaptive, Synchronous
     uint8_t usage : 2;  // Data, Feedback, Implicit feedback
@@ -414,7 +414,7 @@ typedef struct TU_ATTR_PACKED {
 TU_VERIFY_STATIC(sizeof(tusb_desc_endpoint_t) == 7, "size is not correct");
 
 /// USB Other Speed Configuration Descriptor
-typedef struct TU_ATTR_PACKED {
+typedef struct __attribute__((packed)) {
   uint8_t bLength;          ///< Size of descriptor
   uint8_t bDescriptorType;  ///< Other_speed_Configuration Type
   uint16_t wTotalLength;    ///< Total length of data returned
@@ -427,7 +427,7 @@ typedef struct TU_ATTR_PACKED {
 } tusb_desc_other_speed_t;
 
 /// USB Device Qualifier Descriptor
-typedef struct TU_ATTR_PACKED {
+typedef struct __attribute__((packed)) {
   uint8_t bLength;          ///< Size of descriptor
   uint8_t bDescriptorType;  ///< Device Qualifier Type
   uint16_t bcdUSB;          ///< USB specification version number (e.g., 0200H for V2.00)
@@ -444,7 +444,7 @@ typedef struct TU_ATTR_PACKED {
 TU_VERIFY_STATIC(sizeof(tusb_desc_device_qualifier_t) == 10, "size is not correct");
 
 /// USB Interface Association Descriptor (IAD ECN)
-typedef struct TU_ATTR_PACKED {
+typedef struct __attribute__((packed)) {
   uint8_t bLength;          ///< Size of descriptor
   uint8_t bDescriptorType;  ///< Other_speed_Configuration Type
 
@@ -461,14 +461,14 @@ typedef struct TU_ATTR_PACKED {
 TU_VERIFY_STATIC(sizeof(tusb_desc_interface_assoc_t) == 8, "size is not correct");
 
 // USB String Descriptor
-typedef struct TU_ATTR_PACKED {
+typedef struct __attribute__((packed)) {
   uint8_t bLength;          ///< Size of this descriptor in bytes
   uint8_t bDescriptorType;  ///< Descriptor Type
   uint16_t utf16le[];
 } tusb_desc_string_t;
 
 // USB Binary Device Object Store (BOS)
-typedef struct TU_ATTR_PACKED {
+typedef struct __attribute__((packed)) {
   uint8_t bLength;
   uint8_t bDescriptorType;
   uint8_t bDevCapabilityType;
@@ -478,7 +478,7 @@ typedef struct TU_ATTR_PACKED {
 } tusb_desc_bos_platform_t;
 
 // USB WebUSB URL Descriptor
-typedef struct TU_ATTR_PACKED {
+typedef struct __attribute__((packed)) {
   uint8_t bLength;
   uint8_t bDescriptorType;
   uint8_t bScheme;
@@ -486,12 +486,12 @@ typedef struct TU_ATTR_PACKED {
 } tusb_desc_webusb_url_t;
 
 // DFU Functional Descriptor
-typedef struct TU_ATTR_PACKED {
+typedef struct __attribute__((packed)) {
   uint8_t bLength;
   uint8_t bDescriptorType;
 
   union {
-    struct TU_ATTR_PACKED {
+    struct __attribute__((packed)) {
       uint8_t bitCanDnload : 1;
       uint8_t bitCanUpload : 1;
       uint8_t bitManifestationTolerant : 1;
@@ -511,9 +511,9 @@ typedef struct TU_ATTR_PACKED {
 //
 //--------------------------------------------------------------------+
 
-typedef struct TU_ATTR_PACKED {
+typedef struct __attribute__((packed)) {
   union {
-    struct TU_ATTR_PACKED {
+    struct __attribute__((packed)) {
       uint8_t recipient : 5;  ///< Recipient type tusb_request_recipient_t.
       uint8_t type : 2;       ///< Request type tusb_request_type_t.
       uint8_t direction : 1;  ///< Direction type. tusb_dir_t
@@ -533,31 +533,31 @@ TU_VERIFY_STATIC(sizeof(tusb_control_request_t) == 8, "size is not correct");
 TU_ATTR_PACKED_END  // End of all packed definitions
     TU_ATTR_BIT_FIELD_ORDER_END
 
-        //--------------------------------------------------------------------+
-        // Endpoint helper
-        //--------------------------------------------------------------------+
+    //--------------------------------------------------------------------+
+    // Endpoint helper
+    //--------------------------------------------------------------------+
 
-        // Get direction from Endpoint address
-        TU_ATTR_ALWAYS_INLINE static inline tusb_dir_t
-        tu_edpt_dir(uint8_t addr) {
+    // Get direction from Endpoint address
+    __attribute__((always_inline)) static inline tusb_dir_t
+    tu_edpt_dir(uint8_t addr) {
   return (addr & TUSB_DIR_IN_MASK) ? TUSB_DIR_IN : TUSB_DIR_OUT;
 }
 
 // Get Endpoint number from address
-TU_ATTR_ALWAYS_INLINE static inline uint8_t tu_edpt_number(uint8_t addr) {
+__attribute__((always_inline)) static inline uint8_t tu_edpt_number(uint8_t addr) {
   return (uint8_t)(addr & (~TUSB_DIR_IN_MASK));
 }
 
-TU_ATTR_ALWAYS_INLINE static inline uint8_t tu_edpt_addr(uint8_t num, uint8_t dir) {
+__attribute__((always_inline)) static inline uint8_t tu_edpt_addr(uint8_t num, uint8_t dir) {
   return (uint8_t)(num | (dir ? TUSB_DIR_IN_MASK : 0));
 }
 
-TU_ATTR_ALWAYS_INLINE static inline uint16_t tu_edpt_packet_size(tusb_desc_endpoint_t const* desc_ep) {
+__attribute__((always_inline)) static inline uint16_t tu_edpt_packet_size(tusb_desc_endpoint_t const* desc_ep) {
   return tu_le16toh(desc_ep->wMaxPacketSize) & 0x7FF;
 }
 
 #if CFG_TUSB_DEBUG
-TU_ATTR_ALWAYS_INLINE static inline const char* tu_edpt_type_str(tusb_xfer_type_t t) {
+__attribute__((always_inline)) static inline const char* tu_edpt_type_str(tusb_xfer_type_t t) {
   tu_static const char* str[] = {"control", "isochronous", "bulk", "interrupt"};
   return str[t];
 }
@@ -568,27 +568,27 @@ TU_ATTR_ALWAYS_INLINE static inline const char* tu_edpt_type_str(tusb_xfer_type_
 //--------------------------------------------------------------------+
 
 // return next descriptor
-TU_ATTR_ALWAYS_INLINE static inline uint8_t const* tu_desc_next(void const* desc) {
+__attribute__((always_inline)) static inline uint8_t const* tu_desc_next(void const* desc) {
   uint8_t const* desc8 = (uint8_t const*)desc;
   return desc8 + desc8[DESC_OFFSET_LEN];
 }
 
 // get descriptor length
-TU_ATTR_ALWAYS_INLINE static inline uint8_t tu_desc_len(void const* desc) {
+__attribute__((always_inline)) static inline uint8_t tu_desc_len(void const* desc) {
   return ((uint8_t const*)desc)[DESC_OFFSET_LEN];
 }
 
 // get descriptor type
-TU_ATTR_ALWAYS_INLINE static inline uint8_t tu_desc_type(void const* desc) {
+__attribute__((always_inline)) static inline uint8_t tu_desc_type(void const* desc) {
   return ((uint8_t const*)desc)[DESC_OFFSET_TYPE];
 }
 
 // get descriptor subtype
-TU_ATTR_ALWAYS_INLINE static inline uint8_t tu_desc_subtype(void const* desc) {
+__attribute__((always_inline)) static inline uint8_t tu_desc_subtype(void const* desc) {
   return ((uint8_t const*)desc)[DESC_OFFSET_SUBTYPE];
 }
 
-TU_ATTR_ALWAYS_INLINE static inline uint8_t tu_desc_is_valid(void const* desc, uint8_t const* desc_end) {
+__attribute__((always_inline)) static inline uint8_t tu_desc_is_valid(void const* desc, uint8_t const* desc_end) {
   const uint8_t* desc8 = (uint8_t const*)desc;
   return (desc8 < desc_end) && (tu_desc_next(desc) <= desc_end);
 }

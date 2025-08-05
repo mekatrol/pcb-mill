@@ -242,7 +242,7 @@ TU_ATTR_PACKED_BEGIN
 TU_ATTR_BIT_FIELD_ORDER_BEGIN
 
 /// Header Functional Descriptor (Communication Interface)
-typedef struct TU_ATTR_PACKED {
+typedef struct __attribute__((packed)) {
   uint8_t bLength;             ///< Size of this descriptor in bytes.
   uint8_t bDescriptorType;     ///< Descriptor Type, must be Class-Specific
   uint8_t bDescriptorSubType;  ///< Descriptor SubType one of above CDC_FUNC_DESC_
@@ -250,7 +250,7 @@ typedef struct TU_ATTR_PACKED {
 } cdc_desc_func_header_t;
 
 /// Union Functional Descriptor (Communication Interface)
-typedef struct TU_ATTR_PACKED {
+typedef struct __attribute__((packed)) {
   uint8_t bLength;                ///< Size of this descriptor in bytes.
   uint8_t bDescriptorType;        ///< Descriptor Type, must be Class-Specific
   uint8_t bDescriptorSubType;     ///< Descriptor SubType one of above CDC_FUCN_DESC_
@@ -259,7 +259,7 @@ typedef struct TU_ATTR_PACKED {
 } cdc_desc_func_union_t;
 
 #define cdc_desc_func_union_n_t(no_slave)    \
-  struct TU_ATTR_PACKED {                    \
+  struct __attribute__((packed)) {           \
     uint8_t bLength;                         \
     uint8_t bDescriptorType;                 \
     uint8_t bDescriptorSubType;              \
@@ -268,7 +268,7 @@ typedef struct TU_ATTR_PACKED {
   }
 
 /// Country Selection Functional Descriptor (Communication Interface)
-typedef struct TU_ATTR_PACKED {
+typedef struct __attribute__((packed)) {
   uint8_t bLength;              ///< Size of this descriptor in bytes.
   uint8_t bDescriptorType;      ///< Descriptor Type, must be Class-Specific
   uint8_t bDescriptorSubType;   ///< Descriptor SubType one of above CDC_FUCN_DESC_
@@ -277,7 +277,7 @@ typedef struct TU_ATTR_PACKED {
 } cdc_desc_func_country_selection_t;
 
 #define cdc_desc_func_country_selection_n_t(no_country) \
-  struct TU_ATTR_PACKED {                               \
+  struct __attribute__((packed)) {                      \
     uint8_t bLength;                                    \
     uint8_t bDescriptorType;                            \
     uint8_t bDescriptorSubType;                         \
@@ -291,7 +291,7 @@ typedef struct TU_ATTR_PACKED {
 
 /// \brief Call Management Functional Descriptor
 /// \details This functional descriptor describes the processing of calls for the Communications Class interface.
-typedef struct TU_ATTR_PACKED {
+typedef struct __attribute__((packed)) {
   uint8_t bLength;             ///< Size of this descriptor in bytes.
   uint8_t bDescriptorType;     ///< Descriptor Type, must be Class-Specific
   uint8_t bDescriptorSubType;  ///< Descriptor SubType one of above CDC_FUCN_DESC_
@@ -305,7 +305,7 @@ typedef struct TU_ATTR_PACKED {
   uint8_t bDataInterface;
 } cdc_desc_func_call_management_t;
 
-typedef struct TU_ATTR_PACKED {
+typedef struct __attribute__((packed)) {
   uint8_t support_comm_request : 1;                     ///< Device supports the request combination of Set_Comm_Feature, Clear_Comm_Feature, and Get_Comm_Feature.
   uint8_t support_line_request : 1;                     ///< Device supports the request combination of Set_Line_Coding, Set_Control_Line_State, Get_Line_Coding, and the notification Serial_State.
   uint8_t support_send_break : 1;                       ///< Device supports the request Send_Break
@@ -317,7 +317,7 @@ TU_VERIFY_STATIC(sizeof(cdc_acm_capability_t) == 1, "mostly problem with compile
 
 /// Abstract Control Management Functional Descriptor
 /// This functional descriptor describes the commands supported by by the Communications Class interface with SubClass code of \ref CDC_COMM_SUBCLASS_ABSTRACT_CONTROL_MODEL
-typedef struct TU_ATTR_PACKED {
+typedef struct __attribute__((packed)) {
   uint8_t bLength;             ///< Size of this descriptor in bytes.
   uint8_t bDescriptorType;     ///< Descriptor Type, must be Class-Specific
   uint8_t bDescriptorSubType;  ///< Descriptor SubType one of above CDC_FUCN_DESC_
@@ -326,7 +326,7 @@ typedef struct TU_ATTR_PACKED {
 
 /// \brief Direct Line Management Functional Descriptor
 /// \details This functional descriptor describes the commands supported by the Communications Class interface with SubClass code of \ref CDC_FUNC_DESC_DIRECT_LINE_MANAGEMENT
-typedef struct TU_ATTR_PACKED {
+typedef struct __attribute__((packed)) {
   uint8_t bLength;             ///< Size of this descriptor in bytes.
   uint8_t bDescriptorType;     ///< Descriptor Type, must be Class-Specific
   uint8_t bDescriptorSubType;  ///< Descriptor SubType one of above CDC_FUCN_DESC_
@@ -341,7 +341,7 @@ typedef struct TU_ATTR_PACKED {
 /// \brief Telephone Ringer Functional Descriptor
 /// \details The Telephone Ringer functional descriptor describes the ringer capabilities supported by the Communications Class interface,
 /// with the SubClass code of \ref CDC_COMM_SUBCLASS_TELEPHONE_CONTROL_MODEL
-typedef struct TU_ATTR_PACKED {
+typedef struct __attribute__((packed)) {
   uint8_t bLength;             ///< Size of this descriptor in bytes.
   uint8_t bDescriptorType;     ///< Descriptor Type, must be Class-Specific
   uint8_t bDescriptorSubType;  ///< Descriptor SubType one of above CDC_FUCN_DESC_
@@ -352,7 +352,7 @@ typedef struct TU_ATTR_PACKED {
 /// \brief Telephone Operational Modes Functional Descriptor
 /// \details The Telephone Operational Modes functional descriptor describes the operational modes supported by
 /// the Communications Class interface, with the SubClass code of \ref CDC_COMM_SUBCLASS_TELEPHONE_CONTROL_MODEL
-typedef struct TU_ATTR_PACKED {
+typedef struct __attribute__((packed)) {
   uint8_t bLength;             ///< Size of this descriptor in bytes.
   uint8_t bDescriptorType;     ///< Descriptor Type, must be Class-Specific
   uint8_t bDescriptorSubType;  ///< Descriptor SubType one of above CDC_FUCN_DESC_
@@ -367,7 +367,7 @@ typedef struct TU_ATTR_PACKED {
 /// \brief Telephone Call and Line State Reporting Capabilities Descriptor
 /// \details The Telephone Call and Line State Reporting Capabilities functional descriptor describes the abilities of a
 /// telephone device to report optional call and line states.
-typedef struct TU_ATTR_PACKED {
+typedef struct __attribute__((packed)) {
   uint8_t bLength;             ///< Size of this descriptor in bytes.
   uint8_t bDescriptorType;     ///< Descriptor Type, must be Class-Specific
   uint8_t bDescriptorSubType;  ///< Descriptor SubType one of above CDC_FUCN_DESC_
@@ -385,14 +385,14 @@ typedef struct TU_ATTR_PACKED {
 } cdc_desc_func_telephone_call_state_reporting_capabilities_t;
 
 // TODO remove
-TU_ATTR_ALWAYS_INLINE static inline uint8_t cdc_functional_desc_typeof(uint8_t const* p_desc) {
+__attribute__((always_inline)) static inline uint8_t cdc_functional_desc_typeof(uint8_t const* p_desc) {
   return p_desc[2];
 }
 
 //--------------------------------------------------------------------+
 // Requests
 //--------------------------------------------------------------------+
-typedef struct TU_ATTR_PACKED {
+typedef struct __attribute__((packed)) {
   uint32_t bit_rate;
   uint8_t stop_bits;  ///< 0: 1 stop bit - 1: 1.5 stop bits - 2: 2 stop bits
   uint8_t parity;     ///< 0: None - 1: Odd - 2: Even - 3: Mark - 4: Space
@@ -401,8 +401,8 @@ typedef struct TU_ATTR_PACKED {
 
 TU_VERIFY_STATIC(sizeof(cdc_line_coding_t) == 7, "size is not correct");
 
-typedef union TU_ATTR_PACKED {
-  struct TU_ATTR_PACKED {
+typedef union __attribute__((packed)) {
+  struct __attribute__((packed)) {
     uint8_t dtr : 1;
     uint8_t rts : 1;
     uint8_t : 6;
@@ -416,8 +416,8 @@ TU_VERIFY_STATIC(sizeof(cdc_line_control_state_t) == 1, "size is not correct");
 // Notifications
 //--------------------------------------------------------------------+
 // PSTN 1.2 section 6.5.4 table 31
-typedef union TU_ATTR_PACKED {
-  struct TU_ATTR_PACKED {
+typedef union __attribute__((packed)) {
+  struct __attribute__((packed)) {
     uint16_t bRxCarrier : 1;  // DCD
     uint16_t bTxCarrier : 1;  // DSR
     uint16_t bBreak : 1;      // Break Detected
@@ -427,7 +427,7 @@ typedef union TU_ATTR_PACKED {
     uint16_t bOverRun : 1;
     uint16_t : 9;
   };
-  struct TU_ATTR_PACKED {
+  struct __attribute__((packed)) {
     uint16_t dcd : 1;
     uint16_t dsr : 1;
     uint16_t brk : 1;
@@ -439,12 +439,12 @@ typedef union TU_ATTR_PACKED {
 TU_VERIFY_STATIC(sizeof(cdc_notify_uart_state_t) == 2, "size is not correct");
 
 // CDC 1.2 section 6.3.3 table 21
-typedef struct TU_ATTR_PACKED {
+typedef struct __attribute__((packed)) {
   uint32_t upstream_bitrate;
   uint32_t downstream_bitrate;
 } cdc_notify_conn_speed_change_t;
 
-typedef struct TU_ATTR_PACKED {
+typedef struct __attribute__((packed)) {
   tusb_control_request_t request;
   union {
     cdc_notify_uart_state_t serial_state;

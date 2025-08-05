@@ -52,7 +52,7 @@ typedef enum {
   DCD_EVENT_COUNT
 } dcd_eventid_t;
 
-typedef struct TU_ATTR_ALIGNED(4) {
+typedef struct __attribute__((aligned(4))) {
   uint8_t rhport;
   uint8_t event_id;
 
@@ -162,7 +162,7 @@ bool dcd_edpt_xfer(uint8_t rhport, uint8_t ep_addr, uint8_t* buffer, uint16_t to
 
 // Submit an transfer using fifo, When complete dcd_event_xfer_complete() is invoked to notify the stack
 // This API is optional, may be useful for register-based for transferring data.
-bool dcd_edpt_xfer_fifo(uint8_t rhport, uint8_t ep_addr, tu_fifo_t* ff, uint16_t total_bytes) TU_ATTR_WEAK;
+bool dcd_edpt_xfer_fifo(uint8_t rhport, uint8_t ep_addr, tu_fifo_t* ff, uint16_t total_bytes) __attribute__((weak));
 
 // Stall endpoint, any queuing transfer should be removed from endpoint
 void dcd_edpt_stall(uint8_t rhport, uint8_t ep_addr);
@@ -193,7 +193,7 @@ void dcd_edpt_close(uint8_t rhport, uint8_t ep_addr);
 extern void dcd_event_handler(dcd_event_t const* event, bool in_isr);
 
 // helper to send bus signal event
-TU_ATTR_ALWAYS_INLINE static inline void dcd_event_bus_signal(uint8_t rhport, dcd_eventid_t eid, bool in_isr) {
+__attribute__((always_inline)) static inline void dcd_event_bus_signal(uint8_t rhport, dcd_eventid_t eid, bool in_isr) {
   dcd_event_t event;
   event.rhport = rhport;
   event.event_id = eid;
@@ -201,7 +201,7 @@ TU_ATTR_ALWAYS_INLINE static inline void dcd_event_bus_signal(uint8_t rhport, dc
 }
 
 // helper to send bus reset event
-TU_ATTR_ALWAYS_INLINE static inline void dcd_event_bus_reset(uint8_t rhport, tusb_speed_t speed, bool in_isr) {
+__attribute__((always_inline)) static inline void dcd_event_bus_reset(uint8_t rhport, tusb_speed_t speed, bool in_isr) {
   dcd_event_t event;
   event.rhport = rhport;
   event.event_id = DCD_EVENT_BUS_RESET;
@@ -210,7 +210,7 @@ TU_ATTR_ALWAYS_INLINE static inline void dcd_event_bus_reset(uint8_t rhport, tus
 }
 
 // helper to send setup received
-TU_ATTR_ALWAYS_INLINE static inline void dcd_event_setup_received(uint8_t rhport, uint8_t const* setup, bool in_isr) {
+__attribute__((always_inline)) static inline void dcd_event_setup_received(uint8_t rhport, uint8_t const* setup, bool in_isr) {
   dcd_event_t event;
   event.rhport = rhport;
   event.event_id = DCD_EVENT_SETUP_RECEIVED;
@@ -219,7 +219,7 @@ TU_ATTR_ALWAYS_INLINE static inline void dcd_event_setup_received(uint8_t rhport
 }
 
 // helper to send transfer complete event
-TU_ATTR_ALWAYS_INLINE static inline void dcd_event_xfer_complete(uint8_t rhport, uint8_t ep_addr, uint32_t xferred_bytes, uint8_t result, bool in_isr) {
+__attribute__((always_inline)) static inline void dcd_event_xfer_complete(uint8_t rhport, uint8_t ep_addr, uint32_t xferred_bytes, uint8_t result, bool in_isr) {
   dcd_event_t event;
   event.rhport = rhport;
   event.event_id = DCD_EVENT_XFER_COMPLETE;
@@ -229,7 +229,7 @@ TU_ATTR_ALWAYS_INLINE static inline void dcd_event_xfer_complete(uint8_t rhport,
   dcd_event_handler(&event, in_isr);
 }
 
-TU_ATTR_ALWAYS_INLINE static inline void dcd_event_sof(uint8_t rhport, uint32_t frame_count, bool in_isr) {
+__attribute__((always_inline)) static inline void dcd_event_sof(uint8_t rhport, uint32_t frame_count, bool in_isr) {
   dcd_event_t event;
   event.rhport = rhport;
   event.event_id = DCD_EVENT_SOF;

@@ -56,7 +56,7 @@ typedef struct {
 
   /*------------- From this point, data is not cleared by bus reset -------------*/
   char wanted_char;
-  TU_ATTR_ALIGNED(4)
+  __attribute__((aligned(4)))
   cdc_line_coding_t line_coding;
 
   // FIFO
@@ -418,7 +418,6 @@ bool cdcd_control_xfer_cb(uint8_t rhport, uint8_t stage, const tusb_control_requ
   switch (request->bRequest) {
     case CDC_REQUEST_SET_LINE_CODING:
       if (stage == CONTROL_STAGE_SETUP) {
-        TU_LOG_DRV("  Set Line Coding\r\n");
         tud_control_xfer(rhport, request, &p_cdc->line_coding, sizeof(cdc_line_coding_t));
       } else if (stage == CONTROL_STAGE_ACK) {
         if (tud_cdc_line_coding_cb) {
@@ -429,7 +428,6 @@ bool cdcd_control_xfer_cb(uint8_t rhport, uint8_t stage, const tusb_control_requ
 
     case CDC_REQUEST_GET_LINE_CODING:
       if (stage == CONTROL_STAGE_SETUP) {
-        TU_LOG_DRV("  Get Line Coding\r\n");
         tud_control_xfer(rhport, request, &p_cdc->line_coding, sizeof(cdc_line_coding_t));
       }
       break;
@@ -455,8 +453,6 @@ bool cdcd_control_xfer_cb(uint8_t rhport, uint8_t stage, const tusb_control_requ
           tu_fifo_set_overwritable(&p_cdc->tx_ff, false);
         }
 
-        TU_LOG_DRV("  Set Control Line State: DTR = %d, RTS = %d\r\n", dtr, rts);
-
         // Invoke callback
         if (tud_cdc_line_state_cb) {
           tud_cdc_line_state_cb(itf, dtr, rts);
@@ -468,7 +464,6 @@ bool cdcd_control_xfer_cb(uint8_t rhport, uint8_t stage, const tusb_control_requ
       if (stage == CONTROL_STAGE_SETUP) {
         tud_control_status(rhport, request);
       } else if (stage == CONTROL_STAGE_ACK) {
-        TU_LOG_DRV("  Send Break\r\n");
         if (tud_cdc_send_break_cb) {
           tud_cdc_send_break_cb(itf, request->wValue);
         }

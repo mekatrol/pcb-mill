@@ -34,9 +34,6 @@
 #define TUSB_VERSION_MINOR 18
 #define TUSB_VERSION_REVISION 0
 
-#define TUSB_VERSION_NUMBER (TUSB_VERSION_MAJOR * 10000 + TUSB_VERSION_MINOR * 100 + TUSB_VERSION_REVISION)
-#define TUSB_VERSION_STRING TU_XSTRING(TUSB_VERSION_MAJOR) "." TU_XSTRING(TUSB_VERSION_MINOR) "." TU_XSTRING(TUSB_VERSION_REVISION)
-
 //--------------------------------------------------------------------+
 // Supported MCUs
 // CFG_TUSB_MCU must be defined to one of following value
@@ -412,7 +409,7 @@
 // Alignment requirement of buffer used for usb transferring. if MEM_ALIGN is different for
 // host and device controller use: CFG_TUD_MEM_ALIGN, CFG_TUH_MEM_ALIGN instead
 #ifndef CFG_TUSB_MEM_ALIGN
-#define CFG_TUSB_MEM_ALIGN TU_ATTR_ALIGNED(4)
+#define CFG_TUSB_MEM_ALIGN __attribute__((aligned(4)))
 #endif
 
 #ifndef CFG_TUSB_MEM_DCACHE_LINE_SIZE
