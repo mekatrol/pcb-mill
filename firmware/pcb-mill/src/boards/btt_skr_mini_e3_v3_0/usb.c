@@ -1,6 +1,5 @@
 #include "board_hal.h"
 #include "dcd.h"
-#include "tusb.h"
 
 #define RCC_CRRCR_HSI48ON (1 << 0)
 #define RCC_CRRCR_HSI48RDY (1 << 1)

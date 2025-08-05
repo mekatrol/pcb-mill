@@ -1,6 +1,5 @@
 #include "dcd.h"
 #include "tusb_option.h"
-#include "tusb.h"
 #include "tusb_private.h"
 #include "usbd_pvt.h"
 
@@ -9,93 +8,6 @@ tusb_role_t _tusb_rhport_role[TUP_USBIP_CONTROLLER_NUM] = {TUSB_ROLE_INVALID};
 //--------------------------------------------------------------------+
 // Public API
 //--------------------------------------------------------------------+
-bool tusb_rhport_init(uint8_t rhport, const tusb_rhport_init_t* rh_init) {
-  //  backward compatible called with tusb_init(void)
-  if (rh_init == NULL) {
-    // init device stack CFG_TUSB_RHPORTx_MODE must be defined
-    const tusb_rhport_init_t dev_init = {
-        .role = TUSB_ROLE_DEVICE,
-        .speed = TUD_OPT_HIGH_SPEED ? TUSB_SPEED_HIGH : TUSB_SPEED_FULL};
-    TU_ASSERT(tud_rhport_init(TUD_OPT_RHPORT, &dev_init));
-    _tusb_rhport_role[TUD_OPT_RHPORT] = TUSB_ROLE_DEVICE;
-
-    return true;
-  }
-
-  // new API with explicit rhport and role
-  TU_ASSERT(rhport < TUP_USBIP_CONTROLLER_NUM && rh_init->role != TUSB_ROLE_INVALID);
-  _tusb_rhport_role[rhport] = rh_init->role;
-
-  if (rh_init->role == TUSB_ROLE_DEVICE) {
-    TU_ASSERT(tud_rhport_init(rhport, rh_init));
-  }
-
-  return true;
-}
-
-bool tusb_inited(void) {
-  bool ret = false;
-
-  ret = ret || tud_inited();
-
-  return ret;
-}
-
-void tusb_int_handler(uint8_t rhport, bool in_isr) {
-  TU_VERIFY(rhport < TUP_USBIP_CONTROLLER_NUM, );
-
-  if (_tusb_rhport_role[rhport] == TUSB_ROLE_DEVICE) {
-    (void)in_isr;
-    dcd_int_handler(rhport);
-  }
-}
-
-bool tusb_deinit(uint8_t rhport) {
-  TU_VERIFY(rhport < TUP_USBIP_CONTROLLER_NUM);
-  bool ret = false;
-
-  if (_tusb_rhport_role[rhport] == TUSB_ROLE_DEVICE) {
-    TU_ASSERT(tud_deinit(rhport));
-    _tusb_rhport_role[rhport] = TUSB_ROLE_INVALID;
-    ret = true;
-  }
-
-  return ret;
-}
-
-//--------------------------------------------------------------------+
-// Descriptor helper
-//--------------------------------------------------------------------+
-
-uint8_t const* tu_desc_find(uint8_t const* desc, uint8_t const* end, uint8_t byte1) {
-  while (desc + 1 < end) {
-    if (desc[1] == byte1) {
-      return desc;
-    }
-    desc += desc[DESC_OFFSET_LEN];
-  }
-  return NULL;
-}
-
-uint8_t const* tu_desc_find2(uint8_t const* desc, uint8_t const* end, uint8_t byte1, uint8_t byte2) {
-  while (desc + 2 < end) {
-    if (desc[1] == byte1 && desc[2] == byte2) {
-      return desc;
-    }
-    desc += desc[DESC_OFFSET_LEN];
-  }
-  return NULL;
-}
-
-uint8_t const* tu_desc_find3(uint8_t const* desc, uint8_t const* end, uint8_t byte1, uint8_t byte2, uint8_t byte3) {
-  while (desc + 3 < end) {
-    if (desc[1] == byte1 && desc[2] == byte2 && desc[3] == byte3) {
-      return desc;
-    }
-    desc += desc[DESC_OFFSET_LEN];
-  }
-  return NULL;
-}
 
 //--------------------------------------------------------------------+
 // Endpoint Helper for both Host and Device stack

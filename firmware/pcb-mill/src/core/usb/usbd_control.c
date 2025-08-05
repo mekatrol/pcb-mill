@@ -29,7 +29,6 @@
 #if CFG_TUD_ENABLED
 
 #include "dcd.h"
-#include "tusb.h"
 #include "usbd_pvt.h"
 
 //--------------------------------------------------------------------+

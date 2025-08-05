@@ -1,4 +1,8 @@
-#include "tusb.h"
+
+#include <stdint.h>
+
+#include "usbd.h"
+#include "cdc_device.h"
 
 // Device descriptor
 tusb_desc_device_t const desc_device = {

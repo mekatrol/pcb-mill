@@ -1,4 +1,8 @@
 {
-  "files.associations": {},
+  "files.associations": {
+    "tusb_common.h": "c",
+    "tusb.h": "c",
+    "tusb_private.h": "c"
+  },
   "cortex-debug.variableUseNaturalFormat": false
 }

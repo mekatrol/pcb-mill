@@ -29,7 +29,8 @@
 #if CFG_TUD_ENABLED
 
 #include "dcd.h"
-#include "tusb.h"
+#include "cdc_device.h"
+
 #include "tusb_private.h"
 
 #include "usbd.h"

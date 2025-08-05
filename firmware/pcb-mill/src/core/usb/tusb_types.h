@@ -593,15 +593,6 @@ __attribute__((always_inline)) static inline uint8_t tu_desc_is_valid(void const
   return (desc8 < desc_end) && (tu_desc_next(desc) <= desc_end);
 }
 
-// find descriptor that match byte1 (type)
-uint8_t const* tu_desc_find(uint8_t const* desc, uint8_t const* end, uint8_t byte1);
-
-// find descriptor that match byte1 (type) and byte2
-uint8_t const* tu_desc_find2(uint8_t const* desc, uint8_t const* end, uint8_t byte1, uint8_t byte2);
-
-// find descriptor that match byte1 (type) and byte2
-uint8_t const* tu_desc_find3(uint8_t const* desc, uint8_t const* end, uint8_t byte1, uint8_t byte2, uint8_t byte3);
-
 #ifdef __cplusplus
 }
 #endif

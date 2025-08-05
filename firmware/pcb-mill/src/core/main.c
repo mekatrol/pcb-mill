@@ -1,5 +1,8 @@
 #include "hal.h"
-#include "tusb.h"
+
+#include "osal.h"
+#include "usbd.h"
+#include "cdc_device.h"
 
 config_interface_t machine_config = {
     .version = 1 << 16  // Version 1.0

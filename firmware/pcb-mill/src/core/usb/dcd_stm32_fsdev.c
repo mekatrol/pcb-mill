@@ -58,7 +58,6 @@
  *   - This is different to the normal "alternate function" GPIO interface, needs to go through SYSCFG->CFGRx register
  * - Enable USB clock; Perhaps use __HAL_RCC_USB_CLK_ENABLE();
  * - (Optionally configure GPIO HAL to tell it the USB driver is using the USB pins)
- * - call tusb_init();
  * - periodically call tusb_task();
  *
  * Assumptions of the driver:
