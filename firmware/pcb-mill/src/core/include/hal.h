@@ -20,7 +20,10 @@ void delay_ms(uint32_t ms);
 void steppers_enable_hal(bool enable);
 void stepper_interrupt();
 
-// Enable limit switches
+// Initialise limit detection
 void limits_init_hal();
+
+// Initialise USB
+void usb_init_hal();
 
 #endif  // __HAL_H__

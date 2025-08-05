@@ -1,9 +1,74 @@
 #include "hal.h"
+#include "tusb.h"
 
 config_interface_t machine_config = {
     .version = 1 << 16  // Version 1.0
                         /* end default machine configuration*/
 };
+
+//--------------------------------------------------------------------+
+// Device callbacks
+//--------------------------------------------------------------------+
+
+// Invoked when device is mounted
+void tud_mount_cb(void) {
+}
+
+// Invoked when device is unmounted
+void tud_umount_cb(void) {
+}
+
+// Invoked when usb bus is suspended
+// remote_wakeup_en : if host allow us  to perform remote wakeup
+// Within 7ms, device must draw an average of current less than 2.5 mA from bus
+void tud_suspend_cb(bool remote_wakeup_en) {
+  (void)remote_wakeup_en;
+}
+
+// Invoked when usb bus is resumed
+void tud_resume_cb(void) {
+}
+
+//--------------------------------------------------------------------+
+// USB CDC
+//--------------------------------------------------------------------+
+void cdc_task(void) {
+  // Only check if connected
+  if (tud_cdc_connected()) {
+    if (tud_cdc_available()) {
+      // Echo data
+      char buf[64];
+      uint32_t count = tud_cdc_read(buf, sizeof(buf));
+      tud_cdc_write(buf, count);
+      tud_cdc_write_flush();
+    }
+  }
+}
+
+// Invoked when cdc when line state changed e.g connected/disconnected
+void tud_cdc_line_state_cb(uint8_t itf, bool dtr, bool rts) {
+  (void)itf;
+  (void)rts;
+
+  // TODO set some indicator
+  if (dtr) {
+    // Terminal connected
+  } else {
+    // Terminal disconnected
+  }
+}
+
+// Invoked when CDC interface received data from host
+void tud_cdc_rx_cb(uint8_t itf) {
+  (void)itf;
+  // while (tud_cdc_available()) {
+  //   char c = tud_cdc_read_char();
+  //   // Process character
+  //   // You could echo it back:
+  //   tud_cdc_write_char(c);
+  //   tud_cdc_write_flush();
+  // }
+}
 
 void main() {
   // Initialise boards specific hardware
@@ -12,7 +77,12 @@ void main() {
   // Enable board interrupts
   interrupts_enable();
 
+  // Initialise limit detection
   limits_init_hal();
+
+  // Initialise USB
+  usb_init_hal();
+  tud_init(0);
 
   uint32_t config_version = config_get_version();
 
@@ -30,5 +100,8 @@ void main() {
 #endif  // DIAG_PRINT_SUPPORTED
 
   // Loop forever
-  while (true);
+  while (true) {
+    tud_task();  // Handle USB events
+    cdc_task();
+  }
 }

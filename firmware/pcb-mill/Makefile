@@ -55,10 +55,12 @@ LDFLAGS := -mcpu=$(MCU) -mthumb -nostartfiles -Wl,-Map=$(OUT_MAP),--fatal-warnin
 CFLAGS += -I$(SRC_DIR)/config
 CFLAGS += -I$(SRC_DIR)/core
 CFLAGS += -I$(SRC_DIR)/core/include
+CFLAGS += -I$(SRC_DIR)/core/usb
 CFLAGS += -I$(BOARD_DIR) -I$(BOARD_DIR)/include -I$(BOARD_DIR)/include/core
 
 # Core sources
 CSRCS := $(wildcard $(SRC_DIR)/core/*.c) \
+		 $(wildcard $(SRC_DIR)/core/usb/*.c) \
          $(wildcard $(BOARD_DIR)/*.c)
 
 ASRCS := $(wildcard $(SRC_DIR)/core/*.s) \
@@ -75,7 +77,7 @@ SRCS := $(CSRCS) $(ASRCS)
 
 # Object files
 C_OBJS := $(patsubst %.c,$(OBJ_DIR)/%.o,$(CSRCS))
-A_OBJS := $(patsubst %.s,$(OBJ_DIR)/%.o,$(subst $(SRC_DIR)/,,$(ASRCS)))
+A_OBJS := $(patsubst %.s,$(OBJ_DIR)/%.o,$(ASRCS))
 OBJS   := $(A_OBJS) $(C_OBJS)
 
 # Default target
@@ -92,16 +94,16 @@ $(OBJ_DIR)/%.o: %.c
 	@$(MKDIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-# Assemble ASM sources
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.s | $(OBJ_DIR)
-	@echo "[AS] $<"
-	@$(MKDIR)
-	$(AS) $(ASFLAGS) -o $@ $<
-
-$(OBJ_DIR)/lib/%.o: lib/%.c | $(OBJ_DIR)
+$(OBJ_DIR)/usb%.o: usb/%.c
 	@echo "[CC] $<"
 	@$(MKDIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
+
+# Assemble ASM sources
+$(OBJ_DIR)/%.o: %.s | $(OBJ_DIR)
+	@echo "[AS] $<"
+	@$(MKDIR)
+	$(AS) $(ASFLAGS) -o $@ $<
 
 # Link ELF
 $(OUT_ELF): $(OBJS) | $(OBJ_DIR)
