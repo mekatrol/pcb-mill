@@ -268,25 +268,16 @@ bool tud_rhport_init(uint8_t rhport, const tusb_rhport_init_t* rh_init) {
   if (tud_inited()) {
     return true;  // skip if already initialized
   }
-  TU_ASSERT(rh_init);
 
   memset(&_usbd_dev, 0, sizeof(usbd_device_t));
   _usbd_queued_setup = 0;
 
   // Init device queue & task
   _usbd_q = osal_queue_create(&_usbd_qdef);
-  TU_ASSERT(_usbd_q);
-
-  // Get application driver if available
-  if (usbd_app_driver_get_cb) {
-    _app_driver = usbd_app_driver_get_cb(&_app_driver_count);
-    TU_ASSERT(_app_driver_count + BUILTIN_DRIVER_COUNT <= UINT8_MAX);
-  }
 
   // Init class drivers
   for (uint8_t i = 0; i < TOTAL_DRIVER_COUNT; i++) {
     usbd_class_driver_t const* driver = get_driver(i);
-    TU_ASSERT(driver && driver->init);
     driver->init();
   }
 
