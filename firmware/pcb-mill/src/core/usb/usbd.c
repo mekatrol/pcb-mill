@@ -147,7 +147,7 @@ typedef struct {
 
 } usbd_device_t;
 
-tu_static usbd_device_t _usbd_dev;
+static usbd_device_t _usbd_dev;
 static volatile uint8_t _usbd_queued_setup;
 
 //--------------------------------------------------------------------+
@@ -160,7 +160,7 @@ static volatile uint8_t _usbd_queued_setup;
 #endif
 
 // Built-in class drivers
-tu_static usbd_class_driver_t const _usbd_driver[] = {
+static usbd_class_driver_t const _usbd_driver[] = {
 #if CFG_TUD_CDC
     {.name = DRIVER_NAME("CDC"),
      .init = cdcd_init,
@@ -311,8 +311,8 @@ tu_static usbd_class_driver_t const _usbd_driver[] = {
 enum { BUILTIN_DRIVER_COUNT = TU_ARRAY_SIZE(_usbd_driver) };
 
 // Additional class drivers implemented by application
-tu_static usbd_class_driver_t const* _app_driver = NULL;
-tu_static uint8_t _app_driver_count = 0;
+static usbd_class_driver_t const* _app_driver = NULL;
+static uint8_t _app_driver_count = 0;
 
 #define TOTAL_DRIVER_COUNT ((uint8_t)(_app_driver_count + BUILTIN_DRIVER_COUNT))
 
@@ -333,7 +333,7 @@ __attribute__((always_inline)) static inline usbd_class_driver_t const* get_driv
 // DCD Event
 //--------------------------------------------------------------------+
 enum { RHPORT_INVALID = 0xFFu };
-tu_static uint8_t _usbd_rhport = RHPORT_INVALID;
+static uint8_t _usbd_rhport = RHPORT_INVALID;
 
 static OSAL_SPINLOCK_DEF(_usbd_spin, usbd_int_set);
 

@@ -558,7 +558,7 @@ __attribute__((always_inline)) static inline uint16_t tu_edpt_packet_size(tusb_d
 
 #if CFG_TUSB_DEBUG
 __attribute__((always_inline)) static inline const char* tu_edpt_type_str(tusb_xfer_type_t t) {
-  tu_static const char* str[] = {"control", "isochronous", "bulk", "interrupt"};
+  static const char* str[] = {"control", "isochronous", "bulk", "interrupt"};
   return str[t];
 }
 #endif
