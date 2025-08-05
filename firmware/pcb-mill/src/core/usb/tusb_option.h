@@ -206,13 +206,7 @@
 //--------------------------------------------------------------------+
 
 // Allow to use command line to change the config name/location
-#ifdef CFG_TUSB_CONFIG_FILE
-#include CFG_TUSB_CONFIG_FILE
-#else
 #include "tusb_config.h"
-#endif
-
-#include "tusb_mcu.h"
 
 //--------------------------------------------------------------------+
 // USBIP
@@ -282,15 +276,8 @@
 
 //------------- Root hub as Device -------------//
 
-#if defined(CFG_TUSB_RHPORT0_MODE) && ((CFG_TUSB_RHPORT0_MODE) & OPT_MODE_DEVICE)
 #define TUD_RHPORT_MODE (CFG_TUSB_RHPORT0_MODE)
 #define TUD_OPT_RHPORT 0
-#elif defined(CFG_TUSB_RHPORT1_MODE) && ((CFG_TUSB_RHPORT1_MODE) & OPT_MODE_DEVICE)
-#define TUD_RHPORT_MODE (CFG_TUSB_RHPORT1_MODE)
-#define TUD_OPT_RHPORT 1
-#else
-#define TUD_RHPORT_MODE OPT_MODE_NONE
-#endif
 
 #ifndef CFG_TUD_ENABLED
 // fallback to use CFG_TUSB_RHPORTx_MODE
@@ -306,7 +293,7 @@
 #define TUSB_OPT_DEVICE_ENABLED CFG_TUD_ENABLED
 
 // highspeed support indicator
-#define TUD_OPT_HIGH_SPEED (CFG_TUD_MAX_SPEED ? (CFG_TUD_MAX_SPEED & OPT_MODE_HIGH_SPEED) : TUP_RHPORT_HIGHSPEED)
+#define TUD_OPT_HIGH_SPEED (CFG_TUD_MAX_SPEED & OPT_MODE_HIGH_SPEED)
 
 //------------- Root hub as Host -------------//
 
@@ -326,7 +313,7 @@
 #define TUSB_OPT_HOST_ENABLED CFG_TUH_ENABLED
 
 // highspeed support indicator
-#define TUH_OPT_HIGH_SPEED (CFG_TUH_MAX_SPEED ? (CFG_TUH_MAX_SPEED & OPT_MODE_HIGH_SPEED) : TUP_RHPORT_HIGHSPEED)
+#define TUH_OPT_HIGH_SPEED (CFG_TUH_MAX_SPEED & OPT_MODE_HIGH_SPEED)
 
 //--------------------------------------------------------------------+
 // Common Options (Default)
