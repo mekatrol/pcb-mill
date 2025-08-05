@@ -1,43 +1,57 @@
-/*
- * The MIT License (MIT)
- *
- * Copyright (c) 2019 Ha Thach (tinyusb.org)
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *
- * This file is part of the TinyUSB stack.
- */
-
 #ifndef _TUSB_OSAL_H_
 #define _TUSB_OSAL_H_
 
 #include "tusb_common.h"
+#include "tusb_fifo.h"
 
 typedef void (*osal_task_func_t)(void*);
 
 // Timeout
-#define OSAL_TIMEOUT_NOTIMEOUT (0)              // Return immediately
-#define OSAL_TIMEOUT_NORMAL (10)                // Default timeout
-#define OSAL_TIMEOUT_WAIT_FOREVER (UINT32_MAX)  // Wait forever
-#define OSAL_TIMEOUT_CONTROL_XFER OSAL_TIMEOUT_WAIT_FOREVER
+typedef struct {
+  void (*interrupt_set)(bool);
+  tu_fifo_t ff;
+} osal_queue_def_t;
 
-// OS thin implementation
-#include "osal_none.h"
+typedef osal_queue_def_t* osal_queue_t;
+
+#define OSAL_QUEUE_DEF(_int_set, _name, _depth, _type) \
+  uint8_t _name##_buf[_depth * sizeof(_type)];         \
+  osal_queue_def_t _name = {                           \
+      .interrupt_set = _int_set,                       \
+      .ff = TU_FIFO_INIT(_name##_buf, _depth, _type, false)}
+
+__attribute__((always_inline)) static inline osal_queue_t osal_queue_create(osal_queue_def_t* qdef) {
+  tu_fifo_clear(&qdef->ff);
+  return (osal_queue_t)qdef;
+}
+
+__attribute__((always_inline)) static inline bool osal_queue_delete(osal_queue_t qhdl) {
+  (void)qhdl;
+  return true;  // nothing to do
+}
+
+__attribute__((always_inline)) static inline bool osal_queue_receive(osal_queue_t qhdl, void* data, uint32_t msec) {
+  (void)msec;  // not used, always behave as msec = 0
+
+  qhdl->interrupt_set(false);
+  const bool success = tu_fifo_read(&qhdl->ff, data);
+  qhdl->interrupt_set(true);
+
+  return success;
+}
+
+__attribute__((always_inline)) static inline bool osal_queue_send(osal_queue_t qhdl, void const* data, bool in_isr) {
+  if (!in_isr) {
+    qhdl->interrupt_set(false);
+  }
+
+  const bool success = tu_fifo_write(&qhdl->ff, data);
+
+  if (!in_isr) {
+    qhdl->interrupt_set(true);
+  }
+
+  return success;
+}
 
 #endif /* _TUSB_OSAL_H_ */

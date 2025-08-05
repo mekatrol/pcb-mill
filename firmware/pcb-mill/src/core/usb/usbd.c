@@ -335,8 +335,6 @@ __attribute__((always_inline)) static inline usbd_class_driver_t const* get_driv
 enum { RHPORT_INVALID = 0xFFu };
 static uint8_t _usbd_rhport = RHPORT_INVALID;
 
-static OSAL_SPINLOCK_DEF(_usbd_spin, usbd_int_set);
-
 OSAL_QUEUE_DEF(usbd_int_set, _usbd_qdef, CFG_TUD_TASK_QUEUE_SZ, dcd_event_t);
 static osal_queue_t _usbd_q;
 
@@ -415,8 +413,6 @@ bool tud_rhport_init(uint8_t rhport, const tusb_rhport_init_t* rh_init) {
   tu_varclr(&_usbd_dev);
   _usbd_queued_setup = 0;
 
-  osal_spin_init(&_usbd_spin);
-
   // Init device queue & task
   _usbd_q = osal_queue_create(&_usbd_qdef);
   TU_ASSERT(_usbd_q);
@@ -487,25 +483,6 @@ static void usbd_reset(uint8_t rhport) {
   usbd_control_reset();
 }
 
-bool tud_task_event_ready(void) {
-  TU_VERIFY(tud_inited());  // Skip if stack is not initialized
-  return !osal_queue_empty(_usbd_q);
-}
-
-/* USB Device Driver task
- * This top level thread manages all device controller event and delegates events to class-specific drivers.
- * This should be called periodically within the mainloop or rtos thread.
- *
-    int main(void) {
-      application_init();
-      tusb_init(0, TUSB_ROLE_DEVICE);
-
-      while(1) { // the mainloop
-        application_code();
-        tud_task(); // tinyusb device task
-      }
-    }
- */
 void tud_task_ext(uint32_t timeout_ms, bool in_isr) {
   (void)in_isr;  // not implemented yet
 
@@ -1125,13 +1102,6 @@ void usbd_int_set(bool enabled) {
   } else {
     dcd_int_disable(_usbd_rhport);
   }
-}
-
-void usbd_spin_lock(bool in_isr) {
-  osal_spin_lock(&_usbd_spin, in_isr);
-}
-void usbd_spin_unlock(bool in_isr) {
-  osal_spin_unlock(&_usbd_spin, in_isr);
 }
 
 // Parse consecutive endpoint descriptors (IN & OUT)

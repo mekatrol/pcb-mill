@@ -1,17 +1,4 @@
 {
-  "files.associations": {
-    "usart_hal.h": "c",
-    "hal_core.h": "c",
-    "stdint.h": "c",
-    "hal.h": "c",
-    "eeprom_hal.h": "c",
-    "cdc_device.h": "c",
-    "board_hal.h": "c",
-    "stm32g0b1xx.h": "c",
-    "usbd_pvt.h": "c",
-    "tusb_option.h": "c",
-    "usbd.h": "c",
-    "osal_none.h": "c"
-  },
+  "files.associations": {},
   "cortex-debug.variableUseNaturalFormat": false
 }
