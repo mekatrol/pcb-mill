@@ -160,15 +160,14 @@ bool tu_edpt_validate(tusb_desc_endpoint_t const* desc_ep, tusb_speed_t speed, b
   return true;
 }
 
-void tu_edpt_bind_driver(uint8_t ep2drv[][2], tusb_desc_interface_t const* desc_itf, uint16_t desc_len,
-                         uint8_t driver_id) {
+void tu_edpt_bind_driver(uint8_t ep2drv[][2], tusb_desc_interface_t const* desc_itf, uint16_t desc_len) {
   uint8_t const* p_desc = (uint8_t const*)desc_itf;
   uint8_t const* desc_end = p_desc + desc_len;
 
   while (p_desc < desc_end) {
     if (TUSB_DESC_ENDPOINT == tu_desc_type(p_desc)) {
       uint8_t const ep_addr = ((tusb_desc_endpoint_t const*)p_desc)->bEndpointAddress;
-      ep2drv[tu_edpt_number(ep_addr)][tu_edpt_dir(ep_addr)] = driver_id;
+      ep2drv[tu_edpt_number(ep_addr)][tu_edpt_dir(ep_addr)] = 0;
     }
     p_desc = tu_desc_next(p_desc);
   }
