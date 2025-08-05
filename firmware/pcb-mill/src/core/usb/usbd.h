@@ -167,44 +167,6 @@ void tud_sof_cb(uint32_t frame_count);
 bool tud_vendor_control_xfer_cb(uint8_t rhport, uint8_t stage, tusb_control_request_t const* request);
 
 //--------------------------------------------------------------------+
-// Binary Device Object Store (BOS) Descriptor Templates
-//--------------------------------------------------------------------+
-
-#define TUD_BOS_DESC_LEN 5
-
-// total length, number of device caps
-#define TUD_BOS_DESCRIPTOR(_total_len, _caps_num) \
-  5, TUSB_DESC_BOS, U16_TO_U8S_LE(_total_len), _caps_num
-
-// Device Capability Platform 128-bit UUID + Data
-#define TUD_BOS_PLATFORM_DESCRIPTOR(...) \
-  4 + TU_ARGS_NUM(__VA_ARGS__), TUSB_DESC_DEVICE_CAPABILITY, DEVICE_CAPABILITY_PLATFORM, 0x00, __VA_ARGS__
-
-//------------- WebUSB BOS Platform -------------//
-
-// Descriptor Length
-#define TUD_BOS_WEBUSB_DESC_LEN 24
-
-// Vendor Code, iLandingPage
-#define TUD_BOS_WEBUSB_DESCRIPTOR(_vendor_code, _ipage) \
-  TUD_BOS_PLATFORM_DESCRIPTOR(TUD_BOS_WEBUSB_UUID, U16_TO_U8S_LE(0x0100), _vendor_code, _ipage)
-
-#define TUD_BOS_WEBUSB_UUID                       \
-  0x38, 0xB6, 0x08, 0x34, 0xA9, 0x09, 0xA0, 0x47, \
-      0x8B, 0xFD, 0xA0, 0x76, 0x88, 0x15, 0xB6, 0x65
-
-//------------- Microsoft OS 2.0 Platform -------------//
-#define TUD_BOS_MICROSOFT_OS_DESC_LEN 28
-
-// Total Length of descriptor set, vendor code
-#define TUD_BOS_MS_OS_20_DESCRIPTOR(_desc_set_len, _vendor_code) \
-  TUD_BOS_PLATFORM_DESCRIPTOR(TUD_BOS_MS_OS_20_UUID, U32_TO_U8S_LE(0x06030000), U16_TO_U8S_LE(_desc_set_len), _vendor_code, 0)
-
-#define TUD_BOS_MS_OS_20_UUID                     \
-  0xDF, 0x60, 0xDD, 0xD8, 0x89, 0x45, 0xC7, 0x4C, \
-      0x9C, 0xD2, 0x65, 0x9D, 0x9E, 0x64, 0x8A, 0x9F
-
-//--------------------------------------------------------------------+
 // Configuration Descriptor Templates
 //--------------------------------------------------------------------+
 
