@@ -107,19 +107,8 @@
  */
 
 #include "tusb_option.h"
-
-#if CFG_TUD_ENABLED && defined(TUP_USBIP_FSDEV) && \
-    !(defined(TUP_USBIP_FSDEV_CH32) && CFG_TUD_WCH_USBIP_FSDEV == 0)
-
 #include "dcd.h"
-
-#if defined(TUP_USBIP_FSDEV_STM32)
 #include "fsdev_stm32.h"
-#elif defined(TUP_USBIP_FSDEV_CH32)
-#include "fsdev_ch32.h"
-#else
-#error "Unknown USB IP"
-#endif
 
 #include "fsdev_type.h"
 
@@ -973,5 +962,3 @@ static bool dcd_read_packet_memory_ff(tu_fifo_t *ff, uint16_t src, uint16_t wNBy
   tu_fifo_advance_write_pointer(ff, cnt_total);
   return true;
 }
-
-#endif

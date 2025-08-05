@@ -1041,7 +1041,7 @@ static bool process_get_descriptor(uint8_t rhport, tusb_control_request_t const*
 //--------------------------------------------------------------------+
 // DCD Event Handler
 //--------------------------------------------------------------------+
-TU_ATTR_FAST_FUNC void dcd_event_handler(dcd_event_t const* event, bool in_isr) {
+void dcd_event_handler(dcd_event_t const* event, bool in_isr) {
   bool send = false;
   switch (event->event_id) {
     case DCD_EVENT_UNPLUGGED:
@@ -1345,21 +1345,13 @@ void usbd_sof_enable(uint8_t rhport, sof_consumer_t consumer, bool en) {
 }
 
 bool usbd_edpt_iso_alloc(uint8_t rhport, uint8_t ep_addr, uint16_t largest_packet_size) {
-#ifdef TUP_DCD_EDPT_ISO_ALLOC
   rhport = _usbd_rhport;
 
   TU_ASSERT(tu_edpt_number(ep_addr) < CFG_TUD_ENDPPOINT_MAX);
   return dcd_edpt_iso_alloc(rhport, ep_addr, largest_packet_size);
-#else
-  (void)rhport;
-  (void)ep_addr;
-  (void)largest_packet_size;
-  return false;
-#endif
 }
 
 bool usbd_edpt_iso_activate(uint8_t rhport, tusb_desc_endpoint_t const* desc_ep) {
-#ifdef TUP_DCD_EDPT_ISO_ALLOC
   rhport = _usbd_rhport;
 
   uint8_t const epnum = tu_edpt_number(desc_ep->bEndpointAddress);
@@ -1372,11 +1364,6 @@ bool usbd_edpt_iso_activate(uint8_t rhport, tusb_desc_endpoint_t const* desc_ep)
   _usbd_dev.ep_status[epnum][dir].busy = 0;
   _usbd_dev.ep_status[epnum][dir].claimed = 0;
   return dcd_edpt_iso_activate(rhport, desc_ep);
-#else
-  (void)rhport;
-  (void)desc_ep;
-  return false;
-#endif
 }
 
 #endif

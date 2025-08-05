@@ -216,9 +216,6 @@ __attribute__((always_inline)) static inline bool tu_is_power_of_two(uint32_t va
   return (value != 0) && ((value & (value - 1)) == 0);
 }
 
-//------------- Unaligned Access -------------//
-#if TUP_ARCH_STRICT_ALIGN
-
 // Rely on compiler to generate correct code for unaligned access
 typedef struct {
   uint16_t val;
@@ -246,57 +243,6 @@ __attribute__((always_inline)) static inline void tu_unaligned_write16(void *mem
   tu_unaligned_uint16_t *ua16 = (tu_unaligned_uint16_t *)mem;
   ua16->val = value;
 }
-
-#elif TUP_MCU_STRICT_ALIGN
-
-// MCU such as LPC_IP3511 Highspeed cannot access unaligned memory on USB_RAM although it is ARM M4.
-// We have to manually pick up bytes since tu_unaligned_uint32_t will still generate unaligned code
-// NOTE: volatile cast to memory to prevent compiler to optimize and generate unaligned code
-// TODO Big Endian may need minor changes
-__attribute__((always_inline)) static inline uint32_t tu_unaligned_read32(const void *mem) {
-  volatile uint8_t const *buf8 = (uint8_t const *)mem;
-  return tu_u32(buf8[3], buf8[2], buf8[1], buf8[0]);
-}
-
-__attribute__((always_inline)) static inline void tu_unaligned_write32(void *mem, uint32_t value) {
-  volatile uint8_t *buf8 = (uint8_t *)mem;
-  buf8[0] = tu_u32_byte0(value);
-  buf8[1] = tu_u32_byte1(value);
-  buf8[2] = tu_u32_byte2(value);
-  buf8[3] = tu_u32_byte3(value);
-}
-
-__attribute__((always_inline)) static inline uint16_t tu_unaligned_read16(const void *mem) {
-  volatile uint8_t const *buf8 = (uint8_t const *)mem;
-  return tu_u16(buf8[1], buf8[0]);
-}
-
-__attribute__((always_inline)) static inline void tu_unaligned_write16(void *mem, uint16_t value) {
-  volatile uint8_t *buf8 = (uint8_t *)mem;
-  buf8[0] = tu_u16_low(value);
-  buf8[1] = tu_u16_high(value);
-}
-
-#else
-
-// MCU that could access unaligned memory natively
-__attribute__((always_inline)) static inline uint32_t tu_unaligned_read32(const void *mem) {
-  return *((uint32_t const *)mem);
-}
-
-__attribute__((always_inline)) static inline uint16_t tu_unaligned_read16(const void *mem) {
-  return *((uint16_t const *)mem);
-}
-
-__attribute__((always_inline)) static inline void tu_unaligned_write32(void *mem, uint32_t value) {
-  *((uint32_t *)mem) = value;
-}
-
-__attribute__((always_inline)) static inline void tu_unaligned_write16(void *mem, uint16_t value) {
-  *((uint16_t *)mem) = value;
-}
-
-#endif
 
 // To be removed
 //------------- Binary constant -------------//

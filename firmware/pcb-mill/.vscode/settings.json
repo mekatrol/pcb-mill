@@ -10,7 +10,8 @@
     "stm32g0b1xx.h": "c",
     "usbd_pvt.h": "c",
     "tusb_option.h": "c",
-    "usbd.h": "c"
+    "usbd.h": "c",
+    "osal_none.h": "c"
   },
   "cortex-debug.variableUseNaturalFormat": false
 }

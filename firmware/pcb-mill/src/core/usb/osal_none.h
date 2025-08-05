@@ -1,44 +1,5 @@
-/*
- * The MIT License (MIT)
- *
- * Copyright (c) 2019 Ha Thach (tinyusb.org)
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *
- * This file is part of the TinyUSB stack.
- */
-
 #ifndef TUSB_OSAL_NONE_H_
 #define TUSB_OSAL_NONE_H_
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-//--------------------------------------------------------------------+
-// TASK API
-//--------------------------------------------------------------------+
-
-#if CFG_TUH_ENABLED
-// currently only needed/available in host mode
-__attribute__((weak)) void osal_task_delay(uint32_t msec);
-#endif
 
 //--------------------------------------------------------------------+
 // Spinlock API
@@ -114,35 +75,9 @@ __attribute__((always_inline)) static inline void osal_semaphore_reset(osal_sema
 typedef osal_semaphore_def_t osal_mutex_def_t;
 typedef osal_semaphore_t osal_mutex_t;
 
-#if OSAL_MUTEX_REQUIRED
-// Note: multiple cores MCUs usually do provide IPC API for mutex
-// or we can use std atomic function
-
-__attribute__((always_inline)) static inline osal_mutex_t osal_mutex_create(osal_mutex_def_t* mdef) {
-  mdef->count = 1;
-  return mdef;
-}
-
-__attribute__((always_inline)) static inline bool osal_mutex_delete(osal_mutex_t mutex_hdl) {
-  (void)mutex_hdl;
-  return true;  // nothing to do
-}
-
-__attribute__((always_inline)) static inline bool osal_mutex_lock(osal_mutex_t mutex_hdl, uint32_t msec) {
-  return osal_semaphore_wait(mutex_hdl, msec);
-}
-
-__attribute__((always_inline)) static inline bool osal_mutex_unlock(osal_mutex_t mutex_hdl) {
-  return osal_semaphore_post(mutex_hdl, false);
-}
-
-#else
-
 #define osal_mutex_create(_mdef) (NULL)
 #define osal_mutex_lock(_mutex_hdl, _ms) (true)
 #define osal_mutex_unlock(_mutex_hdl) (true)
-
-#endif
 
 //--------------------------------------------------------------------+
 // QUEUE API
@@ -202,9 +137,5 @@ __attribute__((always_inline)) static inline bool osal_queue_empty(osal_queue_t 
   // with interrupt disabled before going into low power mode
   return tu_fifo_empty(&qhdl->ff);
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

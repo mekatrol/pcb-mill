@@ -1,29 +1,3 @@
-/*
- * The MIT License (MIT)
- *
- * Copyright (c) 2019 Ha Thach (tinyusb.org)
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *
- * This file is part of the TinyUSB stack.
- */
-
 #ifndef _TUSB_OPTION_H_
 #define _TUSB_OPTION_H_
 
@@ -198,11 +172,6 @@
 #define OPT_MCU_MAX32650 2402  ///< ADI MAX32650/1/2
 #define OPT_MCU_MAX78002 2403  ///< ADI MAX78002
 
-// Check if configured MCU is one of listed
-// Apply _TU_CHECK_MCU with || as separator to list of input
-#define _TU_CHECK_MCU(_m) (CFG_TUSB_MCU == _m)
-#define TU_CHECK_MCU(...) (TU_ARGS_APPLY(_TU_CHECK_MCU, ||, __VA_ARGS__))
-
 //--------------------------------------------------------------------+
 // Supported OS
 //--------------------------------------------------------------------+
@@ -341,15 +310,7 @@
 
 //------------- Root hub as Host -------------//
 
-#if defined(CFG_TUSB_RHPORT0_MODE) && ((CFG_TUSB_RHPORT0_MODE) & OPT_MODE_HOST)
-#define TUH_RHPORT_MODE (CFG_TUSB_RHPORT0_MODE)
-#define TUH_OPT_RHPORT 0
-#elif defined(CFG_TUSB_RHPORT1_MODE) && ((CFG_TUSB_RHPORT1_MODE) & OPT_MODE_HOST)
-#define TUH_RHPORT_MODE (CFG_TUSB_RHPORT1_MODE)
-#define TUH_OPT_RHPORT 1
-#else
 #define TUH_RHPORT_MODE OPT_MODE_NONE
-#endif
 
 #ifndef CFG_TUH_ENABLED
 // fallback to use CFG_TUSB_RHPORTx_MODE
@@ -368,27 +329,8 @@
 #define TUH_OPT_HIGH_SPEED (CFG_TUH_MAX_SPEED ? (CFG_TUH_MAX_SPEED & OPT_MODE_HIGH_SPEED) : TUP_RHPORT_HIGHSPEED)
 
 //--------------------------------------------------------------------+
-// TODO move later
-//--------------------------------------------------------------------+
-
-// TUP_MCU_STRICT_ALIGN will overwrite TUP_ARCH_STRICT_ALIGN.
-// In case TUP_MCU_STRICT_ALIGN = 1 and TUP_ARCH_STRICT_ALIGN =0, we will not reply on compiler
-// to generate unaligned access code.
-// LPC_IP3511 Highspeed cannot access unaligned memory on USB_RAM
-#if TUD_OPT_HIGH_SPEED && TU_CHECK_MCU(OPT_MCU_LPC54XXX, OPT_MCU_LPC55XX)
-#define TUP_MCU_STRICT_ALIGN 1
-#else
-#define TUP_MCU_STRICT_ALIGN 0
-#endif
-
-//--------------------------------------------------------------------+
 // Common Options (Default)
 //--------------------------------------------------------------------+
-
-// Debug enable to print out error message
-#ifndef CFG_TUSB_DEBUG
-#define CFG_TUSB_DEBUG 0
-#endif
 
 // Level where CFG_TUSB_DEBUG must be at least for USBH is logged
 #ifndef CFG_TUH_LOG_LEVEL
@@ -418,11 +360,6 @@
 #endif
 
 #define CFG_TUSB_MEM_DCACHE_LINE_SIZE CFG_TUSB_MEM_DCACHE_LINE_SIZE_DEFAULT
-#endif
-
-// OS selection
-#ifndef CFG_TUSB_OS
-#define CFG_TUSB_OS OPT_OS_NONE
 #endif
 
 #ifndef CFG_TUSB_OS_INC_PATH
@@ -459,21 +396,13 @@
 #define CFG_TUD_MEM_DCACHE_LINE_SIZE CFG_TUSB_MEM_DCACHE_LINE_SIZE
 #endif
 
-#ifndef CFG_TUD_ENDPOINT0_SIZE
-#define CFG_TUD_ENDPOINT0_SIZE 64
-#endif
-
 #ifndef CFG_TUD_INTERFACE_MAX
 #define CFG_TUD_INTERFACE_MAX 16
 #endif
 
 // default to max hardware endpoint, but can be smaller to save RAM
 #ifndef CFG_TUD_ENDPPOINT_MAX
-#define CFG_TUD_ENDPPOINT_MAX TUP_DCD_ENDPOINT_MAX
-#endif
-
-#if CFG_TUD_ENDPPOINT_MAX > TUP_DCD_ENDPOINT_MAX
-#error "CFG_TUD_ENDPPOINT_MAX must be less than or equal to TUP_DCD_ENDPOINT_MAX"
+#define CFG_TUD_ENDPPOINT_MAX 8
 #endif
 
 // USB 2.0 7.1.20: compliance test mode support
@@ -486,36 +415,12 @@
 #define CFG_TUD_BTH 0
 #endif
 
-#if CFG_TUD_BTH && !defined(CFG_TUD_BTH_ISO_ALT_COUNT)
-#error CFG_TUD_BTH_ISO_ALT_COUNT must be defined to tell Bluetooth driver the number of ISO endpoints to use
-#endif
-
-#ifndef CFG_TUD_CDC
-#define CFG_TUD_CDC 0
-#endif
-
-#ifndef CFG_TUD_MSC
-#define CFG_TUD_MSC 0
-#endif
-
-#ifndef CFG_TUD_HID
-#define CFG_TUD_HID 0
-#endif
-
 #ifndef CFG_TUD_AUDIO
 #define CFG_TUD_AUDIO 0
 #endif
 
 #ifndef CFG_TUD_VIDEO
 #define CFG_TUD_VIDEO 0
-#endif
-
-#ifndef CFG_TUD_MIDI
-#define CFG_TUD_MIDI 0
-#endif
-
-#ifndef CFG_TUD_VENDOR
-#define CFG_TUD_VENDOR 0
 #endif
 
 #ifndef CFG_TUD_USBTMC
@@ -530,31 +435,11 @@
 #define CFG_TUD_DFU 0
 #endif
 
-#ifndef CFG_TUD_ECM_RNDIS
-#ifdef CFG_TUD_NET
-#warning "CFG_TUD_NET is renamed to CFG_TUD_ECM_RNDIS"
-#define CFG_TUD_ECM_RNDIS CFG_TUD_NET
-#else
 #define CFG_TUD_ECM_RNDIS 0
-#endif
-#endif
 
 #ifndef CFG_TUD_NCM
 #define CFG_TUD_NCM 0
 #endif
-
-//--------------------------------------------------------------------
-// Host Options (Default)
-//--------------------------------------------------------------------
-#if CFG_TUH_ENABLED
-#ifndef CFG_TUH_DEVICE_MAX
-#define CFG_TUH_DEVICE_MAX 1
-#endif
-
-#ifndef CFG_TUH_ENUMERATION_BUFSIZE
-#define CFG_TUH_ENUMERATION_BUFSIZE 256
-#endif
-#endif  // CFG_TUH_ENABLED
 
 // Attribute to place data in accessible RAM for host controller (default: CFG_TUSB_MEM_SECTION)
 #ifndef CFG_TUH_MEM_SECTION
@@ -692,16 +577,7 @@
 #define tuc_int_handler(_p)
 #endif
 
-//------------------------------------------------------------------
-// Configuration Validation
-//------------------------------------------------------------------
-#if CFG_TUD_ENDPOINT0_SIZE > 64
-#error Control Endpoint Max Packet Size cannot be larger than 64
-#endif
-
 // To avoid GCC compiler warnings when -pedantic option is used (strict ISO C)
 typedef int make_iso_compilers_happy;
 
 #endif /* _TUSB_OPTION_H_ */
-
-/** @} */
