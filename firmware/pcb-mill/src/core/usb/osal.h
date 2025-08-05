@@ -37,12 +37,6 @@ typedef void (*osal_task_func_t)(void*);
 #define OSAL_TIMEOUT_WAIT_FOREVER (UINT32_MAX)  // Wait forever
 #define OSAL_TIMEOUT_CONTROL_XFER OSAL_TIMEOUT_WAIT_FOREVER
 
-// Mutex is required when using a preempted RTOS or MCU has multiple cores
-#define OSAL_MUTEX_REQUIRED 0
-#define OSAL_MUTEX_DEF(_name) \
-  uint8_t:                    \
-  0
-
 // OS thin implementation
 #include "osal_none.h"
 

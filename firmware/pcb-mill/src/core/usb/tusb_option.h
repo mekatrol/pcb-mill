@@ -208,68 +208,6 @@
 // Allow to use command line to change the config name/location
 #include "tusb_config.h"
 
-//--------------------------------------------------------------------+
-// USBIP
-//--------------------------------------------------------------------+
-
-#ifndef CFG_TUD_DWC2_SLAVE_ENABLE
-#ifndef CFG_TUD_DWC2_SLAVE_ENABLE_DEFAULT
-#define CFG_TUD_DWC2_SLAVE_ENABLE_DEFAULT 1
-#endif
-
-#define CFG_TUD_DWC2_SLAVE_ENABLE CFG_TUD_DWC2_SLAVE_ENABLE_DEFAULT
-#endif
-
-// Enable DWC2 DMA for device
-#ifndef CFG_TUD_DWC2_DMA_ENABLE
-#ifndef CFG_TUD_DWC2_DMA_ENABLE_DEFAULT
-#define CFG_TUD_DWC2_DMA_ENABLE_DEFAULT 0
-#endif
-
-#define CFG_TUD_DWC2_DMA_ENABLE CFG_TUD_DWC2_DMA_ENABLE_DEFAULT
-#endif
-
-// Enable CI_HS VBUS Charge. Set this to 1 if the USB_VBUS pin is not connected to 5V VBUS (note: 3.3V is insufficient).
-#ifndef CFG_TUD_CI_HS_VBUS_CHARGE
-#ifndef CFG_TUD_CI_HS_VBUS_CHARGE_DEFAULT
-#define CFG_TUD_CI_HS_VBUS_CHARGE_DEFAULT 0
-#endif
-
-#define CFG_TUD_CI_HS_VBUS_CHARGE CFG_TUD_CI_HS_VBUS_CHARGE_DEFAULT
-#endif
-
-// Enable DWC2 Slave mode for host
-#ifndef CFG_TUH_DWC2_SLAVE_ENABLE
-#ifndef CFG_TUH_DWC2_SLAVE_ENABLE_DEFAULT
-#define CFG_TUH_DWC2_SLAVE_ENABLE_DEFAULT 1
-#endif
-
-#define CFG_TUH_DWC2_SLAVE_ENABLE CFG_TUH_DWC2_SLAVE_ENABLE_DEFAULT
-#endif
-
-// Enable DWC2 DMA for host
-#ifndef CFG_TUH_DWC2_DMA_ENABLE
-#ifndef CFG_TUH_DWC2_DMA_ENABLE_DEFAULT
-#define CFG_TUH_DWC2_DMA_ENABLE_DEFAULT 0
-#endif
-
-#define CFG_TUH_DWC2_DMA_ENABLE CFG_TUH_DWC2_DMA_ENABLE_DEFAULT
-#endif
-
-// Enable PIO-USB software host controller
-#ifndef CFG_TUH_RPI_PIO_USB
-#define CFG_TUH_RPI_PIO_USB 0
-#endif
-
-#ifndef CFG_TUD_RPI_PIO_USB
-#define CFG_TUD_RPI_PIO_USB 0
-#endif
-
-// MAX3421 Host controller option
-#ifndef CFG_TUH_MAX3421
-#define CFG_TUH_MAX3421 0
-#endif
-
 //--------------------------------------------------------------------
 // RootHub Mode detection
 //--------------------------------------------------------------------

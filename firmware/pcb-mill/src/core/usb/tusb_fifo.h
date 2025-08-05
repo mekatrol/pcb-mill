@@ -28,10 +28,6 @@
 #ifndef _TUSB_FIFO_H_
 #define _TUSB_FIFO_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 // Due to the use of unmasked pointers, this FIFO does not suffer from losing
 // one item slice. Furthermore, write and read operations are completely
 // decoupled as write and read functions do not modify a common state. Henceforth,
@@ -43,10 +39,6 @@ extern "C" {
 
 #include "tusb_common.h"
 #include "osal.h"
-
-// mutex is only needed for RTOS
-// for OS None, we don't get preempted
-#define CFG_FIFO_MUTEX OSAL_MUTEX_REQUIRED
 
 /* Write/Read index is always in the range of:
  *      0 .. 2*depth-1
@@ -114,12 +106,6 @@ typedef struct {
 
   volatile uint16_t wr_idx;  // write index
   volatile uint16_t rd_idx;  // read index
-
-#if OSAL_MUTEX_REQUIRED
-  osal_mutex_t mutex_wr;
-  osal_mutex_t mutex_rd;
-#endif
-
 } tu_fifo_t;
 
 typedef struct {
@@ -144,20 +130,8 @@ bool tu_fifo_set_overwritable(tu_fifo_t* f, bool overwritable);
 bool tu_fifo_clear(tu_fifo_t* f);
 bool tu_fifo_config(tu_fifo_t* f, void* buffer, uint16_t depth, uint16_t item_size, bool overwritable);
 
-#if OSAL_MUTEX_REQUIRED
-__attribute__((always_inline)) static inline void tu_fifo_config_mutex(tu_fifo_t* f, osal_mutex_t wr_mutex, osal_mutex_t rd_mutex) {
-  f->mutex_wr = wr_mutex;
-  f->mutex_rd = rd_mutex;
-}
-#else
-#define tu_fifo_config_mutex(_f, _wr_mutex, _rd_mutex)
-#endif
-
 bool tu_fifo_write(tu_fifo_t* f, void const* data);
 uint16_t tu_fifo_write_n(tu_fifo_t* f, void const* data, uint16_t n);
-#ifdef TUP_MEM_CONST_ADDR
-uint16_t tu_fifo_write_n_const_addr_full_words(tu_fifo_t* f, const void* data, uint16_t n);
-#endif
 
 bool tu_fifo_read(tu_fifo_t* f, void* buffer);
 uint16_t tu_fifo_read_n(tu_fifo_t* f, void* buffer, uint16_t n);
@@ -180,7 +154,6 @@ __attribute__((always_inline)) static inline uint16_t tu_fifo_depth(tu_fifo_t* f
 }
 
 // Pointer modifications intended to be used in combinations with DMAs.
-// USE WITH CARE - NO SAFETY CHECKS CONDUCTED HERE! NOT MUTEX PROTECTED!
 void tu_fifo_advance_write_pointer(tu_fifo_t* f, uint16_t n);
 void tu_fifo_advance_read_pointer(tu_fifo_t* f, uint16_t n);
 
@@ -189,9 +162,5 @@ void tu_fifo_advance_read_pointer(tu_fifo_t* f, uint16_t n);
 // reading/writing from/to and a valid linear length along which no wrap occurs.
 void tu_fifo_get_read_info(tu_fifo_t* f, tu_fifo_buffer_info_t* info);
 void tu_fifo_get_write_info(tu_fifo_t* f, tu_fifo_buffer_info_t* info);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* _TUSB_FIFO_H_ */

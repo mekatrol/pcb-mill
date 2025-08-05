@@ -65,9 +65,6 @@ typedef struct {
 
   uint8_t rx_ff_buf[CFG_TUD_CDC_RX_BUFSIZE];
   uint8_t tx_ff_buf[CFG_TUD_CDC_TX_BUFSIZE];
-
-  OSAL_MUTEX_DEF(rx_ff_mutex);
-  OSAL_MUTEX_DEF(tx_ff_mutex);
 } cdcd_interface_t;
 
 #define ITF_MEM_RESET_SIZE offsetof(cdcd_interface_t, wanted_char)
@@ -286,37 +283,10 @@ void cdcd_init(void) {
     // know if data is actually polled by terminal. This way the most current data is prioritized.
     // Default: is overwritable
     tu_fifo_config(&p_cdc->tx_ff, p_cdc->tx_ff_buf, TU_ARRAY_SIZE(p_cdc->tx_ff_buf), 1, _cdcd_cfg.tx_overwritabe_if_not_connected);
-
-#if OSAL_MUTEX_REQUIRED
-    osal_mutex_t mutex_rd = osal_mutex_create(&p_cdc->rx_ff_mutex);
-    osal_mutex_t mutex_wr = osal_mutex_create(&p_cdc->tx_ff_mutex);
-    TU_ASSERT(mutex_rd != NULL && mutex_wr != NULL, );
-
-    tu_fifo_config_mutex(&p_cdc->rx_ff, NULL, mutex_rd);
-    tu_fifo_config_mutex(&p_cdc->tx_ff, mutex_wr, NULL);
-#endif
   }
 }
 
 bool cdcd_deinit(void) {
-#if OSAL_MUTEX_REQUIRED
-  for (uint8_t i = 0; i < CFG_TUD_CDC; i++) {
-    cdcd_interface_t* p_cdc = &_cdcd_itf[i];
-    osal_mutex_t mutex_rd = p_cdc->rx_ff.mutex_rd;
-    osal_mutex_t mutex_wr = p_cdc->tx_ff.mutex_wr;
-
-    if (mutex_rd) {
-      osal_mutex_delete(mutex_rd);
-      tu_fifo_config_mutex(&p_cdc->rx_ff, NULL, NULL);
-    }
-
-    if (mutex_wr) {
-      osal_mutex_delete(mutex_wr);
-      tu_fifo_config_mutex(&p_cdc->tx_ff, NULL, NULL);
-    }
-  }
-#endif
-
   return true;
 }
 

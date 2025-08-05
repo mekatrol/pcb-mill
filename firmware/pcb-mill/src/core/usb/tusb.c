@@ -196,34 +196,21 @@ uint8_t const* tu_desc_find3(uint8_t const* desc, uint8_t const* end, uint8_t by
 // Endpoint Helper for both Host and Device stack
 //--------------------------------------------------------------------+
 
-bool tu_edpt_claim(tu_edpt_state_t* ep_state, osal_mutex_t mutex) {
-  (void)mutex;
-
-  // pre-check to help reducing mutex lock
-  TU_VERIFY((ep_state->busy == 0) && (ep_state->claimed == 0));
-  (void)osal_mutex_lock(mutex, OSAL_TIMEOUT_WAIT_FOREVER);
-
+bool tu_edpt_claim(tu_edpt_state_t* ep_state) {
   // can only claim the endpoint if it is not busy and not claimed yet.
   bool const available = (ep_state->busy == 0) && (ep_state->claimed == 0);
   if (available) {
     ep_state->claimed = 1;
   }
-
-  (void)osal_mutex_unlock(mutex);
   return available;
 }
 
-bool tu_edpt_release(tu_edpt_state_t* ep_state, osal_mutex_t mutex) {
-  (void)mutex;
-  (void)osal_mutex_lock(mutex, OSAL_TIMEOUT_WAIT_FOREVER);
-
+bool tu_edpt_release(tu_edpt_state_t* ep_state) {
   // can only release the endpoint if it is claimed and not busy
   bool const ret = (ep_state->claimed == 1) && (ep_state->busy == 0);
   if (ret) {
     ep_state->claimed = 0;
   }
-
-  (void)osal_mutex_unlock(mutex);
   return ret;
 }
 
@@ -324,13 +311,6 @@ bool tu_edpt_stream_init(tu_edpt_stream_t* s, bool is_host, bool is_tx, bool ove
   s->is_host = is_host;
   tu_fifo_config(&s->ff, ff_buf, ff_bufsize, 1, overwritable);
 
-#if OSAL_MUTEX_REQUIRED
-  if (ff_buf && ff_bufsize) {
-    osal_mutex_t new_mutex = osal_mutex_create(&s->ff_mutexdef);
-    tu_fifo_config_mutex(&s->ff, is_tx ? new_mutex : NULL, is_tx ? NULL : new_mutex);
-  }
-#endif
-
   s->ep_buf = ep_buf;
   s->ep_bufsize = ep_bufsize;
 
@@ -339,10 +319,6 @@ bool tu_edpt_stream_init(tu_edpt_stream_t* s, bool is_host, bool is_tx, bool ove
 
 bool tu_edpt_stream_deinit(tu_edpt_stream_t* s) {
   (void)s;
-#if OSAL_MUTEX_REQUIRED
-  if (s->ff.mutex_wr) osal_mutex_delete(s->ff.mutex_wr);
-  if (s->ff.mutex_rd) osal_mutex_delete(s->ff.mutex_rd);
-#endif
   return true;
 }
 

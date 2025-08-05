@@ -337,17 +337,8 @@ static uint8_t _usbd_rhport = RHPORT_INVALID;
 
 static OSAL_SPINLOCK_DEF(_usbd_spin, usbd_int_set);
 
-// Event queue: usbd_int_set() is used as mutex in OS NONE config
 OSAL_QUEUE_DEF(usbd_int_set, _usbd_qdef, CFG_TUD_TASK_QUEUE_SZ, dcd_event_t);
 static osal_queue_t _usbd_q;
-
-// Mutex for claiming endpoint
-#if OSAL_MUTEX_REQUIRED
-static osal_mutex_def_t _ubsd_mutexdef;
-static osal_mutex_t _usbd_mutex;
-#else
-#define _usbd_mutex NULL
-#endif
 
 __attribute__((always_inline)) static inline bool queue_event(dcd_event_t const* event, bool in_isr) {
   TU_ASSERT(osal_queue_send(_usbd_q, event, in_isr));
@@ -426,12 +417,6 @@ bool tud_rhport_init(uint8_t rhport, const tusb_rhport_init_t* rh_init) {
 
   osal_spin_init(&_usbd_spin);
 
-#if OSAL_MUTEX_REQUIRED
-  // Init device mutex
-  _usbd_mutex = osal_mutex_create(&_ubsd_mutexdef);
-  TU_ASSERT(_usbd_mutex);
-#endif
-
   // Init device queue & task
   _usbd_q = osal_queue_create(&_usbd_qdef);
   TU_ASSERT(_usbd_q);
@@ -479,12 +464,6 @@ bool tud_deinit(uint8_t rhport) {
   // Deinit device queue & task
   osal_queue_delete(_usbd_q);
   _usbd_q = NULL;
-
-#if OSAL_MUTEX_REQUIRED
-  // TODO make sure there is no task waiting on this mutex
-  osal_mutex_delete(_usbd_mutex);
-  _usbd_mutex = NULL;
-#endif
 
   _usbd_rhport = RHPORT_INVALID;
 
@@ -1210,7 +1189,7 @@ bool usbd_edpt_claim(uint8_t rhport, uint8_t ep_addr) {
   uint8_t const dir = tu_edpt_dir(ep_addr);
   tu_edpt_state_t* ep_state = &_usbd_dev.ep_status[epnum][dir];
 
-  return tu_edpt_claim(ep_state, _usbd_mutex);
+  return tu_edpt_claim(ep_state);
 }
 
 bool usbd_edpt_release(uint8_t rhport, uint8_t ep_addr) {
@@ -1220,7 +1199,7 @@ bool usbd_edpt_release(uint8_t rhport, uint8_t ep_addr) {
   uint8_t const dir = tu_edpt_dir(ep_addr);
   tu_edpt_state_t* ep_state = &_usbd_dev.ep_status[epnum][dir];
 
-  return tu_edpt_release(ep_state, _usbd_mutex);
+  return tu_edpt_release(ep_state);
 }
 
 bool usbd_edpt_xfer(uint8_t rhport, uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes) {

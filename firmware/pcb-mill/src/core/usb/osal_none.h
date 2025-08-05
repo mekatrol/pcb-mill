@@ -69,17 +69,6 @@ __attribute__((always_inline)) static inline void osal_semaphore_reset(osal_sema
 }
 
 //--------------------------------------------------------------------+
-// MUTEX API
-// Within tinyusb, mutex is never used in ISR context
-//--------------------------------------------------------------------+
-typedef osal_semaphore_def_t osal_mutex_def_t;
-typedef osal_semaphore_t osal_mutex_t;
-
-#define osal_mutex_create(_mdef) (NULL)
-#define osal_mutex_lock(_mutex_hdl, _ms) (true)
-#define osal_mutex_unlock(_mutex_hdl) (true)
-
-//--------------------------------------------------------------------+
 // QUEUE API
 //--------------------------------------------------------------------+
 #include "tusb_fifo.h"
@@ -91,7 +80,6 @@ typedef struct {
 
 typedef osal_queue_def_t* osal_queue_t;
 
-// _int_set is used as mutex in OS NONE (disable/enable USB ISR)
 #define OSAL_QUEUE_DEF(_int_set, _name, _depth, _type) \
   uint8_t _name##_buf[_depth * sizeof(_type)];         \
   osal_queue_def_t _name = {                           \
