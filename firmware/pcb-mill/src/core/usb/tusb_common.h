@@ -95,10 +95,6 @@ __attribute__((weak)) extern void *tusb_app_phys_to_virt(void *phys_addr);
 // Internal Inline Functions
 //--------------------------------------------------------------------+
 
-//------------- Mem -------------//
-#define tu_memclr(buffer, size) memset((buffer), 0, (size))
-#define tu_varclr(_var) tu_memclr(_var, sizeof(*(_var)))
-
 // This is a backport of memset_s from c11
 __attribute__((always_inline)) static inline int tu_memset_s(void *dest, size_t destsz, int ch, size_t count) {
   // TODO may check if desst and src is not NULL

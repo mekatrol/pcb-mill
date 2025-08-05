@@ -130,7 +130,7 @@ void usbd_control_set_complete_callback(usbd_control_xfer_cb_t fp);
 bool usbd_control_xfer_cb(uint8_t rhport, uint8_t ep_addr, xfer_result_t result, uint32_t xferred_bytes);
 
 void usbd_control_reset(void) {
-  tu_varclr(&_ctrl_xfer);
+  memset(&_ctrl_xfer, 0, sizeof(usbd_control_xfer_t));
 }
 
 // Set complete callback

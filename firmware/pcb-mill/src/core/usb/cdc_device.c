@@ -264,7 +264,7 @@ bool tud_cdc_n_write_clear(uint8_t itf) {
 // USBD Driver API
 //--------------------------------------------------------------------+
 void cdcd_init(void) {
-  tu_memclr(_cdcd_itf, sizeof(_cdcd_itf));
+  memset(_cdcd_itf, 0, sizeof(_cdcd_itf));
   for (uint8_t i = 0; i < CFG_TUD_CDC; i++) {
     cdcd_interface_t* p_cdc = &_cdcd_itf[i];
 
@@ -296,7 +296,7 @@ void cdcd_reset(uint8_t rhport) {
   for (uint8_t i = 0; i < CFG_TUD_CDC; i++) {
     cdcd_interface_t* p_cdc = &_cdcd_itf[i];
 
-    tu_memclr(p_cdc, ITF_MEM_RESET_SIZE);
+    memset(p_cdc, 0, ITF_MEM_RESET_SIZE);
     if (!_cdcd_cfg.rx_persistent) {
       tu_fifo_clear(&p_cdc->rx_ff);
     }
