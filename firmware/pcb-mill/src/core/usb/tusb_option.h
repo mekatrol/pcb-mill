@@ -24,12 +24,7 @@
 #define OPT_MODE_HIGH_SPEED 0x0400     ///< High Speed
 #define OPT_MODE_SPEED_MASK 0xff00
 
-//--------------------------------------------------------------------+
-// Include tusb_config.h
-//--------------------------------------------------------------------+
-
-// Allow to use command line to change the config name/location
-#include "tusb_config.h"
+#include "usb.h"
 
 //--------------------------------------------------------------------
 // RootHub Mode detection
