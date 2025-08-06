@@ -72,7 +72,6 @@ extern "C" {
 
 // Tinyusb Common Headers
 #include "tusb_option.h"
-#include "tusb_verify.h"
 #include "tusb_types.h"
 
 //--------------------------------------------------------------------+

@@ -37,14 +37,18 @@ bool tu_edpt_validate(tusb_desc_endpoint_t const* desc_ep, tusb_speed_t speed, b
   switch (desc_ep->bmAttributes.xfer) {
     case TUSB_XFER_ISOCHRONOUS: {
       uint16_t const spec_size = (speed == TUSB_SPEED_HIGH ? 1024 : 1023);
-      TU_ASSERT(max_packet_size <= spec_size);
+      if (max_packet_size > spec_size) {
+        return false;
+      }
       break;
     }
 
     case TUSB_XFER_BULK:
       if (speed == TUSB_SPEED_HIGH) {
         // Bulk highspeed must be EXACTLY 512
-        TU_ASSERT(max_packet_size == 512);
+        if (max_packet_size != 512) {
+          return false;
+        }
       } else {
         // Bulk fullspeed can only be 8, 16, 32, 64
         if (is_host && max_packet_size == 512) {
@@ -53,15 +57,19 @@ bool tu_edpt_validate(tusb_desc_endpoint_t const* desc_ep, tusb_speed_t speed, b
           tusb_desc_endpoint_t* hacked_ep = (tusb_desc_endpoint_t*)(uintptr_t)desc_ep;
           hacked_ep->wMaxPacketSize = 64;
         } else {
-          TU_ASSERT(max_packet_size == 8 || max_packet_size == 16 ||
-                    max_packet_size == 32 || max_packet_size == 64);
+          if (max_packet_size != 8 && max_packet_size != 16 &&
+              max_packet_size != 32 && max_packet_size != 64) {
+            return false;
+          }
         }
       }
       break;
 
     case TUSB_XFER_INTERRUPT: {
       uint16_t const spec_size = (speed == TUSB_SPEED_HIGH ? 1024 : 64);
-      TU_ASSERT(max_packet_size <= spec_size);
+      if (max_packet_size > spec_size) {
+        return false;
+      }
       break;
     }
 

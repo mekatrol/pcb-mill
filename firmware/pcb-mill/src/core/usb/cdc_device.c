@@ -214,7 +214,9 @@ uint32_t tud_cdc_n_write_flush() {
   const uint16_t count = tu_fifo_read_n(&p_cdc->tx_ff, p_epbuf->epin, CFG_TUD_ENDPOINT0_SIZE);
 
   if (count) {
-    TU_ASSERT(usbd_edpt_xfer(p_cdc->rhport, p_cdc->ep_in, p_epbuf->epin, count), 0);
+    if (!usbd_edpt_xfer(p_cdc->rhport, p_cdc->ep_in, p_epbuf->epin, count)) {
+      return 0;
+    }
     return count;
   } else {
     // Release endpoint since we don't make any transfer
@@ -302,7 +304,9 @@ uint16_t cdcd_open(uint8_t rhport, const tusb_desc_interface_t* itf_desc, uint16
   if (TUSB_DESC_ENDPOINT == tu_desc_type(p_desc)) {
     // notification endpoint
     const tusb_desc_endpoint_t* desc_ep = (const tusb_desc_endpoint_t*)p_desc;
-    TU_ASSERT(usbd_edpt_open(rhport, desc_ep), 0);
+    if (!usbd_edpt_open(rhport, desc_ep)) {
+      return 0;
+    }
     p_cdc->ep_notify = desc_ep->bEndpointAddress;
 
     drv_len += tu_desc_len(p_desc);
@@ -317,7 +321,9 @@ uint16_t cdcd_open(uint8_t rhport, const tusb_desc_interface_t* itf_desc, uint16
     p_desc = tu_desc_next(p_desc);
 
     // Open endpoint pair
-    TU_ASSERT(usbd_open_edpt_pair(rhport, p_desc, 2, TUSB_XFER_BULK, &p_cdc->ep_out, &p_cdc->ep_in), 0);
+    if (!usbd_open_edpt_pair(rhport, p_desc, 2, TUSB_XFER_BULK, &p_cdc->ep_out, &p_cdc->ep_in)) {
+      return 0;
+    }
 
     drv_len += 2 * sizeof(tusb_desc_endpoint_t);
   }
@@ -449,7 +455,9 @@ bool cdcd_xfer_cb(uint8_t rhport, uint8_t ep_addr, xfer_result_t result, uint32_
       // xferred_bytes is multiple of EP Packet size and not zero
       if (!tu_fifo_count(&p_cdc->tx_ff) && xferred_bytes && (0 == (xferred_bytes & (CFG_TUD_CDC_TX_BUFSIZE - 1)))) {
         if (usbd_edpt_claim(rhport, p_cdc->ep_in)) {
-          TU_ASSERT(usbd_edpt_xfer(rhport, p_cdc->ep_in, NULL, 0));
+          if (!usbd_edpt_xfer(rhport, p_cdc->ep_in, NULL, 0)) {
+            return false;
+          }
         }
       }
     }

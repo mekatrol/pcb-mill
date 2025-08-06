@@ -89,7 +89,6 @@ static void _ff_push_n(tu_fifo_t* f, void const* app_buf, uint16_t n, uint16_t w
         memcpy(ff_buf, app_buf, lin_bytes);
 
         // Write data wrapped around
-        // TU_ASSERT(nWrap_bytes <= f->depth, );
         memcpy(f->buffer, ((uint8_t const*)app_buf) + lin_bytes, wrap_bytes);
       }
       break;

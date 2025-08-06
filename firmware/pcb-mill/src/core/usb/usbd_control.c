@@ -118,11 +118,17 @@ bool tud_control_xfer(uint8_t rhport, const tusb_control_request_t* request, voi
 
   if (request->wLength > 0U) {
     if (_ctrl_xfer.data_len > 0U) {
-      TU_ASSERT(buffer);
+      if (!buffer) {
+        return false;
+      }
     }
-    TU_ASSERT(data_stage_xact(rhport));
+    if (!data_stage_xact(rhport)) {
+      return false;
+    }
   } else {
-    TU_ASSERT(status_stage_xact(rhport, request));
+    if (!status_stage_xact(rhport, request)) {
+      return false;
+    }
   }
 
   return true;
@@ -161,7 +167,9 @@ bool usbd_control_xfer_cb(uint8_t rhport, uint8_t ep_addr, xfer_result_t result,
 
   // Endpoint Address is opposite to direction bit, this is Status Stage complete event
   if (tu_edpt_dir(ep_addr) != _ctrl_xfer.request.bmRequestType_bit.direction) {
-    TU_ASSERT(0 == xferred_bytes);
+    if (xferred_bytes != 0) {
+      return false;
+    }
 
     // invoke optional dcd hook if available
     dcd_edpt0_status_complete(rhport, &_ctrl_xfer.request);
@@ -198,7 +206,9 @@ bool usbd_control_xfer_cb(uint8_t rhport, uint8_t ep_addr, xfer_result_t result,
     }
 
     if (is_ok) {
-      TU_ASSERT(status_stage_xact(rhport, &_ctrl_xfer.request));
+      if (!status_stage_xact(rhport, &_ctrl_xfer.request)) {
+        return false;
+      }
     } else {
       // Stall both IN and OUT control endpoint
       dcd_edpt_stall(rhport, EDPT_CTRL_OUT);
@@ -206,7 +216,9 @@ bool usbd_control_xfer_cb(uint8_t rhport, uint8_t ep_addr, xfer_result_t result,
     }
   } else {
     // More data to transfer
-    TU_ASSERT(data_stage_xact(rhport));
+    if (!data_stage_xact(rhport)) {
+      return false;
+    }
   }
 
   return true;

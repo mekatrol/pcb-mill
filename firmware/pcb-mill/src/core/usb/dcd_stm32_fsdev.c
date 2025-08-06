@@ -474,7 +474,7 @@ void dcd_edpt0_status_complete(uint8_t rhport, tusb_control_request_t const *req
 /***
  * Allocate a section of PMA
  * In case of double buffering, high 16bit is the address of 2nd buffer
- * During failure, TU_ASSERT is used. If this happens, rework/reallocate memory manually.
+ * During failure, 0xFFFF is returned. If this happens, rework/reallocate memory manually.
  */
 static uint32_t dcd_pma_alloc(uint16_t len, bool dbuf) {
   uint8_t blsize, num_block;
@@ -491,7 +491,9 @@ static uint32_t dcd_pma_alloc(uint16_t len, bool dbuf) {
   }
 
   // Verify packet buffer is not overflowed
-  TU_ASSERT(ep_buf_ptr <= FSDEV_PMA_SIZE, 0xFFFF);
+  if (ep_buf_ptr > FSDEV_PMA_SIZE) {
+    return 0xFFFF;
+  }
 
   return addr;
 }
@@ -530,7 +532,7 @@ static uint8_t dcd_ep_alloc(uint8_t ep_addr, uint8_t ep_type) {
   }
 
   // Allocation failed
-  TU_ASSERT(0);
+  return 0;
 }
 
 void edpt0_open(uint8_t rhport) {
@@ -568,7 +570,9 @@ bool dcd_edpt_open(uint8_t rhport, tusb_desc_endpoint_t const *desc_ep) {
   tusb_dir_t const dir = tu_edpt_dir(ep_addr);
   const uint16_t packet_size = tu_edpt_packet_size(desc_ep);
   uint8_t const ep_idx = dcd_ep_alloc(ep_addr, desc_ep->bmAttributes.xfer);
-  TU_ASSERT(ep_idx < FSDEV_EP_COUNT);
+  if (ep_idx >= FSDEV_EP_COUNT) {
+    return false;
+  }
 
   uint32_t ep_reg = ep_read(ep_idx) & ~USB_EPREG_MASK;
   ep_reg |= tu_edpt_number(ep_addr) | USB_EP_CTR_TX | USB_EP_CTR_RX;
@@ -584,7 +588,7 @@ bool dcd_edpt_open(uint8_t rhport, tusb_desc_endpoint_t const *desc_ep) {
 
     default:
       // Note: ISO endpoint should use alloc / active functions
-      TU_ASSERT(false);
+      return false;
   }
 
   /* Create a packet memory buffer area. */
