@@ -257,7 +257,7 @@ typedef struct __attribute__((packed)) {
   struct {
     uint8_t handle_call : 1;     ///< 0 - Device sends/receives call management information only over the Communications Class interface. 1 - Device can send/receive call management information over a Data Class interface.
     uint8_t send_recv_call : 1;  ///< 0 - Device does not handle call management itself. 1 - Device handles call management itself.
-    uint8_t TU_RESERVED : 6;
+    uint8_t reserved : 6;
   } bmCapabilities;
 
   uint8_t bDataInterface;
@@ -268,10 +268,10 @@ typedef struct __attribute__((packed)) {
   uint8_t support_line_request : 1;                     ///< Device supports the request combination of Set_Line_Coding, Set_Control_Line_State, Get_Line_Coding, and the notification Serial_State.
   uint8_t support_send_break : 1;                       ///< Device supports the request Send_Break
   uint8_t support_notification_network_connection : 1;  ///< Device supports the notification Network_Connection.
-  uint8_t TU_RESERVED : 4;
+  uint8_t reserved : 4;
 } cdc_acm_capability_t;
 
-TU_VERIFY_STATIC(sizeof(cdc_acm_capability_t) == 1, "mostly problem with compiler");
+_Static_assert(sizeof(cdc_acm_capability_t) == 1, "mostly problem with compiler");
 
 /// Abstract Control Management Functional Descriptor
 /// This functional descriptor describes the commands supported by by the Communications Class interface with SubClass code of \ref CDC_COMM_SUBCLASS_ABSTRACT_CONTROL_MODEL
@@ -292,7 +292,7 @@ typedef struct __attribute__((packed)) {
     uint8_t require_pulse_setup : 1;    ///< Device requires extra Pulse_Setup request during pulse dialing sequence to disengage holding circuit.
     uint8_t support_aux_request : 1;    ///< Device supports the request combination of Set_Aux_Line_State, Ring_Aux_Jack, and notification Aux_Jack_Hook_State.
     uint8_t support_pulse_request : 1;  ///< Device supports the request combination of Pulse_Setup, Send_Pulse, and Set_Pulse_Time.
-    uint8_t TU_RESERVED : 5;
+    uint8_t reserved : 5;
   } bmCapabilities;
 } cdc_desc_func_direct_line_management_t;
 
@@ -318,7 +318,7 @@ typedef struct __attribute__((packed)) {
     uint8_t simple_mode : 1;
     uint8_t standalone_mode : 1;
     uint8_t computer_centric_mode : 1;
-    uint8_t TU_RESERVED : 5;
+    uint8_t reserved : 5;
   } bmCapabilities;
 } cdc_desc_func_telephone_operational_modes_t;
 
@@ -357,7 +357,7 @@ typedef struct __attribute__((packed)) {
   uint8_t data_bits;  ///< can be 5, 6, 7, 8 or 16
 } cdc_line_coding_t;
 
-TU_VERIFY_STATIC(sizeof(cdc_line_coding_t) == 7, "size is not correct");
+_Static_assert(sizeof(cdc_line_coding_t) == 7, "size is not correct");
 
 typedef union __attribute__((packed)) {
   struct __attribute__((packed)) {
@@ -368,7 +368,7 @@ typedef union __attribute__((packed)) {
   uint8_t value;
 } cdc_line_control_state_t;
 
-TU_VERIFY_STATIC(sizeof(cdc_line_control_state_t) == 1, "size is not correct");
+_Static_assert(sizeof(cdc_line_control_state_t) == 1, "size is not correct");
 
 //--------------------------------------------------------------------+
 // Notifications
@@ -394,7 +394,7 @@ typedef union __attribute__((packed)) {
   uint16_t value;
 } cdc_notify_uart_state_t;
 
-TU_VERIFY_STATIC(sizeof(cdc_notify_uart_state_t) == 2, "size is not correct");
+_Static_assert(sizeof(cdc_notify_uart_state_t) == 2, "size is not correct");
 
 // CDC 1.2 section 6.3.3 table 21
 typedef struct __attribute__((packed)) {
@@ -410,6 +410,6 @@ typedef struct __attribute__((packed)) {
   };
 } cdc_notify_msg_t;
 
-TU_VERIFY_STATIC(sizeof(cdc_notify_msg_t) == 16, "size is not correct");
+_Static_assert(sizeof(cdc_notify_msg_t) == 16, "size is not correct");
 
 #endif

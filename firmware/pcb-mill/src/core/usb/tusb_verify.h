@@ -29,7 +29,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "tusb_option.h"
-#include "tusb_compiler.h"
 
 /*------------------------------------------------------------------*/
 /* This file use an advanced macro technique to mimic the default parameter
@@ -55,22 +54,12 @@
  *
  *   #define TU_VERIFY(cond)                  if(cond) return false;
  *   #define TU_VERIFY(cond,ret)              if(cond) return ret;
- *
- *   #define TU_ASSERT(cond)                  if(cond) {TU_MESS_FAILED(); TU_BREAKPOINT(), return false;}
- *   #define TU_ASSERT(cond,ret)              if(cond) {TU_MESS_FAILED(); TU_BREAKPOINT(), return ret;}
  *------------------------------------------------------------------*/
 
 //--------------------------------------------------------------------+
 // TU_VERIFY Helper
 //--------------------------------------------------------------------+
-
-#define TU_MESS_FAILED() \
-  do {                   \
-  } while (0)
-
-#define TU_BREAKPOINT() \
-  do {                  \
-  } while (0)
+#define TU_GET_3RD_ARG(arg1, arg2, arg3, ...) arg3
 
 /*------------------------------------------------------------------*/
 /* TU_VERIFY
@@ -98,8 +87,6 @@
 #define TU_ASSERT_DEFINE(_cond, _ret) \
   do {                                \
     if (!(_cond)) {                   \
-      TU_MESS_FAILED();               \
-      TU_BREAKPOINT();                \
       return _ret;                    \
     }                                 \
   } while (0)

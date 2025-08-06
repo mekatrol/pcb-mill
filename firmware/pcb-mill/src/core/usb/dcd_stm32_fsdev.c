@@ -306,7 +306,6 @@ static void handle_ctr_setup(uint32_t ep_id) {
     // Hardware should reset EP0 RX/TX to NAK and both toggle to 1
   } else {
     // Missed setup packet !!!
-    TU_BREAKPOINT();
     edpt0_prepare_setup();
   }
 }
@@ -449,7 +448,6 @@ void dcd_int_handler(uint8_t rhport) {
   }
 
   if (int_status & USB_ISTR_PMAOVR) {
-    TU_BREAKPOINT();
     FSDEV_REG->ISTR = (fsdev_bus_t)~USB_ISTR_PMAOVR;
   }
 }

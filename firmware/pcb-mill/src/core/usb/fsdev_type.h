@@ -40,7 +40,7 @@ extern "C" {
 #define FSDEV_BTABLE_BASE 0U
 #endif
 
-TU_VERIFY_STATIC(FSDEV_BTABLE_BASE % 8 == 0, "BTABLE base must be aligned to 8 bytes");
+_Static_assert(FSDEV_BTABLE_BASE % 8 == 0, "BTABLE base must be aligned to 8 bytes");
 
 // FSDEV_PMA_SIZE is PMA buffer size in bytes.
 // - 512-byte devices, access with a stride of two words (use every other 16-bit address)
@@ -105,8 +105,8 @@ typedef union {
   } ep32[FSDEV_EP_COUNT][2];
 } fsdev_btable_t;
 
-TU_VERIFY_STATIC(sizeof(fsdev_btable_t) == FSDEV_EP_COUNT * 8 * FSDEV_PMA_STRIDE, "size is not correct");
-TU_VERIFY_STATIC(FSDEV_BTABLE_BASE + FSDEV_EP_COUNT * 8 <= FSDEV_PMA_SIZE, "BTABLE does not fit in PMA RAM");
+_Static_assert(sizeof(fsdev_btable_t) == FSDEV_EP_COUNT * 8 * FSDEV_PMA_STRIDE, "size is not correct");
+_Static_assert(FSDEV_BTABLE_BASE + FSDEV_EP_COUNT * 8 <= FSDEV_PMA_SIZE, "BTABLE does not fit in PMA RAM");
 
 #define FSDEV_BTABLE ((volatile fsdev_btable_t*)(FSDEV_PMA_BASE + FSDEV_PMA_STRIDE * (FSDEV_BTABLE_BASE)))
 
@@ -138,8 +138,8 @@ typedef struct {
   _va32 fsdev_bus_t BCDR;       // 58: Battery Charging Detector Register (32-bit only)
 } fsdev_regs_t;
 
-TU_VERIFY_STATIC(offsetof(fsdev_regs_t, CNTR) == 0x40, "Wrong offset");
-TU_VERIFY_STATIC(sizeof(fsdev_regs_t) == 0x5C, "Size is not correct");
+_Static_assert(offsetof(fsdev_regs_t, CNTR) == 0x40, "Wrong offset");
+_Static_assert(sizeof(fsdev_regs_t) == 0x5C, "Size is not correct");
 
 #define FSDEV_REG ((fsdev_regs_t*)FSDEV_REG_BASE)
 

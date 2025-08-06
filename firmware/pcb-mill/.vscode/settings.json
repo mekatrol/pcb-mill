@@ -3,7 +3,8 @@
     "tusb_common.h": "c",
     "tusb.h": "c",
     "tusb_private.h": "c",
-    "usb.h": "c"
+    "usb.h": "c",
+    "tusb_compiler.h": "c"
   },
   "cortex-debug.variableUseNaturalFormat": false
 }

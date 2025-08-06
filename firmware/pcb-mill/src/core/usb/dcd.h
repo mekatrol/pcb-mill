@@ -85,7 +85,7 @@ typedef struct __attribute__((aligned(4))) {
   };
 } dcd_event_t;
 
-// TU_VERIFY_STATIC(sizeof(dcd_event_t) <= 12, "size is not correct");
+// _Static_assert(sizeof(dcd_event_t) <= 12, "size is not correct");
 
 //--------------------------------------------------------------------+
 // Memory API

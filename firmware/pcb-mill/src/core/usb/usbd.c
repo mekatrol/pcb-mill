@@ -404,7 +404,6 @@ void tud_task_ext(uint32_t timeout_ms, bool in_isr) {
         break;
 
       default:
-        TU_BREAKPOINT();
         break;
     }
   }
@@ -445,7 +444,6 @@ static bool process_control_request(uint8_t rhport, tusb_control_request_t const
 
       if (TUSB_REQ_TYPE_STANDARD != p_request->bmRequestType_bit.type) {
         // Non-standard request is not supported
-        TU_BREAKPOINT();
         return false;
       }
 
@@ -490,8 +488,6 @@ static bool process_control_request(uint8_t rhport, tusb_control_request_t const
             if (cfg_num) {
               // switch to new configuration if not zero
               if (!process_set_config(rhport, cfg_num)) {
-                TU_MESS_FAILED();
-                TU_BREAKPOINT();
                 _usbd_dev.cfg_num = 0;
                 return false;
               }
@@ -542,7 +538,6 @@ static bool process_control_request(uint8_t rhport, tusb_control_request_t const
 
         // Unknown/Unsupported request
         default:
-          TU_BREAKPOINT();
           return false;
       }
       break;
@@ -622,7 +617,6 @@ static bool process_control_request(uint8_t rhport, tusb_control_request_t const
 
           // Unknown/Unsupported request
           default:
-            TU_BREAKPOINT();
             return false;
         }
       }
@@ -630,7 +624,6 @@ static bool process_control_request(uint8_t rhport, tusb_control_request_t const
 
     // Unknown recipient
     default:
-      TU_BREAKPOINT();
       return false;
   }
 
@@ -650,7 +643,7 @@ static bool process_set_config(uint8_t rhport, uint8_t cfg_num) {
 
   // Parse interface descriptor
   uint8_t const* p_desc = ((uint8_t const*)desc_cfg) + sizeof(tusb_desc_configuration_t);
-  uint8_t const* desc_end = ((uint8_t const*)desc_cfg) + tu_le16toh(desc_cfg->wTotalLength);
+  uint8_t const* desc_end = ((uint8_t const*)desc_cfg) + desc_cfg->wTotalLength;
 
   while (p_desc < desc_end) {
     uint8_t assoc_itf_count = 1;
@@ -737,7 +730,7 @@ static bool process_get_descriptor(uint8_t rhport, tusb_control_request_t const*
       TU_VERIFY(desc_bos);
 
       // Use offsetof to avoid pointer to the odd/misaligned address
-      uint16_t const total_len = tu_le16toh(tu_unaligned_read16((const void*)(desc_bos + offsetof(tusb_desc_bos_t, wTotalLength))));
+      uint16_t const total_len = tu_unaligned_read16((const void*)(desc_bos + offsetof(tusb_desc_bos_t, wTotalLength)));
 
       return tud_control_xfer(rhport, p_request, (void*)desc_bos, total_len);
     }
@@ -757,7 +750,7 @@ static bool process_get_descriptor(uint8_t rhport, tusb_control_request_t const*
       }
 
       // Use offsetof to avoid pointer to the odd/misaligned address
-      uint16_t const total_len = tu_le16toh(tu_unaligned_read16((const void*)(desc_config + offsetof(tusb_desc_configuration_t, wTotalLength))));
+      uint16_t const total_len = tu_unaligned_read16((const void*)(desc_config + offsetof(tusb_desc_configuration_t, wTotalLength)));
 
       return tud_control_xfer(rhport, p_request, (void*)desc_config, total_len);
     }
@@ -765,7 +758,7 @@ static bool process_get_descriptor(uint8_t rhport, tusb_control_request_t const*
 
     case TUSB_DESC_STRING: {
       // String Descriptor always uses the desc set from user
-      uint8_t const* desc_str = (uint8_t const*)tud_descriptor_string_cb(desc_index, tu_le16toh(p_request->wIndex));
+      uint8_t const* desc_str = (uint8_t const*)tud_descriptor_string_cb(desc_index, p_request->wIndex);
       TU_VERIFY(desc_str);
 
       // first byte of descriptor is its size
@@ -977,7 +970,6 @@ bool usbd_edpt_xfer(uint8_t rhport, uint8_t ep_addr, uint8_t* buffer, uint16_t t
     // DCD error, mark endpoint as ready to allow next transfer
     _usbd_dev.ep_status[epnum][dir].busy = 0;
     _usbd_dev.ep_status[epnum][dir].claimed = 0;
-    TU_BREAKPOINT();
     return false;
   }
 }
@@ -1005,7 +997,6 @@ bool usbd_edpt_xfer_fifo(uint8_t rhport, uint8_t ep_addr, tu_fifo_t* ff, uint16_
     // DCD error, mark endpoint as ready to allow next transfer
     _usbd_dev.ep_status[epnum][dir].busy = 0;
     _usbd_dev.ep_status[epnum][dir].claimed = 0;
-    TU_BREAKPOINT();
     return false;
   }
 }

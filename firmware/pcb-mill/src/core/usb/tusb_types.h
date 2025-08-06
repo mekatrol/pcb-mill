@@ -3,7 +3,6 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include "tusb_compiler.h"
 
 /*------------------------------------------------------------------*/
 /* CONSTANTS
@@ -278,7 +277,7 @@ typedef struct __attribute__((packed)) {
   uint8_t bNumConfigurations;  ///< Number of possible configurations.
 } tusb_desc_device_t;
 
-TU_VERIFY_STATIC(sizeof(tusb_desc_device_t) == 18, "size is not correct");
+_Static_assert(sizeof(tusb_desc_device_t) == 18, "size is not correct");
 
 // USB Binary Device Object Store (BOS) Descriptor
 typedef struct __attribute__((packed)) {
@@ -288,7 +287,7 @@ typedef struct __attribute__((packed)) {
   uint8_t bNumDeviceCaps;   ///< Number of device capability descriptors in the BOS
 } tusb_desc_bos_t;
 
-TU_VERIFY_STATIC(sizeof(tusb_desc_bos_t) == 5, "size is not correct");
+_Static_assert(sizeof(tusb_desc_bos_t) == 5, "size is not correct");
 
 /// USB Configuration Descriptor
 typedef struct __attribute__((packed)) {
@@ -303,7 +302,7 @@ typedef struct __attribute__((packed)) {
   uint8_t bMaxPower;            ///< Maximum power consumption of the USB device from the bus in this specific configuration when the device is fully operational. Expressed in 2 mA units (i.e., 50 = 100 mA).
 } tusb_desc_configuration_t;
 
-TU_VERIFY_STATIC(sizeof(tusb_desc_configuration_t) == 9, "size is not correct");
+_Static_assert(sizeof(tusb_desc_configuration_t) == 9, "size is not correct");
 
 /// USB Interface Descriptor
 typedef struct __attribute__((packed)) {
@@ -319,7 +318,7 @@ typedef struct __attribute__((packed)) {
   uint8_t iInterface;          ///< Index of string descriptor describing this interface
 } tusb_desc_interface_t;
 
-TU_VERIFY_STATIC(sizeof(tusb_desc_interface_t) == 9, "size is not correct");
+_Static_assert(sizeof(tusb_desc_interface_t) == 9, "size is not correct");
 
 /// USB Endpoint Descriptor
 typedef struct __attribute__((packed)) {
@@ -339,7 +338,7 @@ typedef struct __attribute__((packed)) {
   uint8_t bInterval;        // Polling interval, in frames or microframes depending on the operating speed
 } tusb_desc_endpoint_t;
 
-TU_VERIFY_STATIC(sizeof(tusb_desc_endpoint_t) == 7, "size is not correct");
+_Static_assert(sizeof(tusb_desc_endpoint_t) == 7, "size is not correct");
 
 /// USB Other Speed Configuration Descriptor
 typedef struct __attribute__((packed)) {
@@ -369,7 +368,7 @@ typedef struct __attribute__((packed)) {
   uint8_t bReserved;           ///< Reserved for future use, must be zero
 } tusb_desc_device_qualifier_t;
 
-TU_VERIFY_STATIC(sizeof(tusb_desc_device_qualifier_t) == 10, "size is not correct");
+_Static_assert(sizeof(tusb_desc_device_qualifier_t) == 10, "size is not correct");
 
 /// USB Interface Association Descriptor (IAD ECN)
 typedef struct __attribute__((packed)) {
@@ -386,7 +385,7 @@ typedef struct __attribute__((packed)) {
   uint8_t iFunction;  ///< Index of the string descriptor describing the interface association.
 } tusb_desc_interface_assoc_t;
 
-TU_VERIFY_STATIC(sizeof(tusb_desc_interface_assoc_t) == 8, "size is not correct");
+_Static_assert(sizeof(tusb_desc_interface_assoc_t) == 8, "size is not correct");
 
 // USB String Descriptor
 typedef struct __attribute__((packed)) {
@@ -456,7 +455,7 @@ typedef struct __attribute__((packed)) {
   uint16_t wLength;
 } tusb_control_request_t;
 
-TU_VERIFY_STATIC(sizeof(tusb_control_request_t) == 8, "size is not correct");
+_Static_assert(sizeof(tusb_control_request_t) == 8, "size is not correct");
 
 //--------------------------------------------------------------------+
 // Endpoint helper
@@ -478,7 +477,7 @@ __attribute__((always_inline)) static inline uint8_t tu_edpt_addr(uint8_t num, u
 }
 
 __attribute__((always_inline)) static inline uint16_t tu_edpt_packet_size(tusb_desc_endpoint_t const* desc_ep) {
-  return tu_le16toh(desc_ep->wMaxPacketSize) & 0x7FF;
+  return desc_ep->wMaxPacketSize & 0x7FF;
 }
 
 //--------------------------------------------------------------------+

@@ -51,7 +51,7 @@ bool tu_edpt_validate(tusb_desc_endpoint_t const* desc_ep, tusb_speed_t speed, b
           // HACK: while in host mode, some device incorrectly always report 512 regardless of link speed
           // overwrite descriptor to force 64
           tusb_desc_endpoint_t* hacked_ep = (tusb_desc_endpoint_t*)(uintptr_t)desc_ep;
-          hacked_ep->wMaxPacketSize = tu_htole16(64);
+          hacked_ep->wMaxPacketSize = 64;
         } else {
           TU_ASSERT(max_packet_size == 8 || max_packet_size == 16 ||
                     max_packet_size == 32 || max_packet_size == 64);
