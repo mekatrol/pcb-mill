@@ -31,18 +31,6 @@
 
 #include "cdc_device.h"
 
-// Level where CFG_TUSB_DEBUG must be at least for this driver is logged
-#ifndef CFG_TUD_CDC_LOG_LEVEL
-#define CFG_TUD_CDC_LOG_LEVEL CFG_TUD_LOG_LEVEL
-#endif
-
-#define TU_LOG_DRV(...) TU_LOG(CFG_TUD_CDC_LOG_LEVEL, __VA_ARGS__)
-
-//--------------------------------------------------------------------+
-// MACRO CONSTANT TYPEDEF
-//--------------------------------------------------------------------+
-#define BULK_PACKET_SIZE (TUD_OPT_HIGH_SPEED ? 512 : 64)
-
 typedef struct {
   uint8_t rhport;
   uint8_t itf_num;
@@ -68,15 +56,15 @@ typedef struct {
 #define ITF_MEM_RESET_SIZE offsetof(cdcd_interface_t, wanted_char)
 
 typedef struct {
-  TUD_EPBUF_DEF(epout, CFG_TUD_CDC_EP_BUFSIZE);
-  TUD_EPBUF_DEF(epin, CFG_TUD_CDC_EP_BUFSIZE);
+  TUD_EPBUF_DEF(epout, CFG_TUD_ENDPOINT0_SIZE);
+  TUD_EPBUF_DEF(epin, CFG_TUD_ENDPOINT0_SIZE);
 } cdcd_epbuf_t;
 
 //--------------------------------------------------------------------+
 // INTERNAL OBJECT & FUNCTION DECLARATION
 //--------------------------------------------------------------------+
 static cdcd_interface_t _cdcd_itf;
-CFG_TUD_MEM_SECTION static cdcd_epbuf_t _cdcd_epbuf;
+static cdcd_epbuf_t _cdcd_epbuf;
 
 static tud_cdc_configure_t _cdcd_cfg = TUD_CDC_CONFIGURE_DEFAULT();
 
@@ -94,7 +82,7 @@ static bool _prep_out_transaction() {
   // TODO Actually we can still carry out the transfer, keeping count of received bytes
   // and slowly move it to the FIFO when read().
   // This pre-check reduces endpoint claiming
-  TU_VERIFY(available >= CFG_TUD_CDC_EP_BUFSIZE);
+  TU_VERIFY(available >= CFG_TUD_ENDPOINT0_SIZE);
 
   // claim endpoint
   TU_VERIFY(usbd_edpt_claim(p_cdc->rhport, p_cdc->ep_out));
@@ -102,8 +90,8 @@ static bool _prep_out_transaction() {
   // fifo can be changed before endpoint is claimed
   available = tu_fifo_remaining(&p_cdc->rx_ff);
 
-  if (available >= CFG_TUD_CDC_EP_BUFSIZE) {
-    return usbd_edpt_xfer(rhport, p_cdc->ep_out, p_epbuf->epout, CFG_TUD_CDC_EP_BUFSIZE);
+  if (available >= CFG_TUD_ENDPOINT0_SIZE) {
+    return usbd_edpt_xfer(rhport, p_cdc->ep_out, p_epbuf->epout, CFG_TUD_ENDPOINT0_SIZE);
   } else {
     // Release endpoint since we don't make any transfer
     usbd_edpt_release(p_cdc->rhport, p_cdc->ep_out);
@@ -173,7 +161,7 @@ uint32_t tud_cdc_n_write(const void* buffer, uint32_t bufsize) {
   uint16_t wr_count = tu_fifo_write_n(&p_cdc->tx_ff, buffer, (uint16_t)TU_MIN(bufsize, UINT16_MAX));
 
   // flush if queue more than packet size
-  if (tu_fifo_count(&p_cdc->tx_ff) >= BULK_PACKET_SIZE) {
+  if (tu_fifo_count(&p_cdc->tx_ff) >= CFG_TUD_CDC_TX_BUFSIZE) {
     tud_cdc_n_write_flush();
   }
 
@@ -193,7 +181,7 @@ uint32_t tud_cdc_n_write_flush() {
   TU_VERIFY(usbd_edpt_claim(p_cdc->rhport, p_cdc->ep_in), 0);  // Claim the endpoint
 
   // Pull data from FIFO
-  const uint16_t count = tu_fifo_read_n(&p_cdc->tx_ff, p_epbuf->epin, CFG_TUD_CDC_EP_BUFSIZE);
+  const uint16_t count = tu_fifo_read_n(&p_cdc->tx_ff, p_epbuf->epin, CFG_TUD_ENDPOINT0_SIZE);
 
   if (count) {
     TU_ASSERT(usbd_edpt_xfer(p_cdc->rhport, p_cdc->ep_in, p_epbuf->epin, count), 0);
@@ -426,7 +414,7 @@ bool cdcd_xfer_cb(uint8_t rhport, uint8_t ep_addr, xfer_result_t result, uint32_
     if (0 == tud_cdc_n_write_flush()) {
       // If there is no data left, a ZLP should be sent if
       // xferred_bytes is multiple of EP Packet size and not zero
-      if (!tu_fifo_count(&p_cdc->tx_ff) && xferred_bytes && (0 == (xferred_bytes & (BULK_PACKET_SIZE - 1)))) {
+      if (!tu_fifo_count(&p_cdc->tx_ff) && xferred_bytes && (0 == (xferred_bytes & (CFG_TUD_CDC_TX_BUFSIZE - 1)))) {
         if (usbd_edpt_claim(rhport, p_cdc->ep_in)) {
           TU_ASSERT(usbd_edpt_xfer(rhport, p_cdc->ep_in, NULL, 0));
         }

@@ -137,10 +137,6 @@ void dcd_disconnect(uint8_t rhport);
 // Enable/Disable Start-of-frame interrupt. Default is disabled
 void dcd_sof_enable(uint8_t rhport, bool en);
 
-#if CFG_TUD_TEST_MODE
-// Put device into a test mode (needs power cycle to quit)
-void dcd_enter_test_mode(uint8_t rhport, tusb_feature_test_mode_t test_selector);
-#endif
 //--------------------------------------------------------------------+
 // Endpoint API
 //--------------------------------------------------------------------+

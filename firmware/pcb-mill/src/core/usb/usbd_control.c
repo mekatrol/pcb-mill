@@ -26,8 +26,6 @@
 
 #include "tusb_option.h"
 
-#if CFG_TUD_ENABLED
-
 #include "dcd.h"
 #include "usbd_pvt.h"
 
@@ -58,7 +56,7 @@ typedef struct {
 
 static usbd_control_xfer_t _ctrl_xfer;
 
-CFG_TUD_MEM_SECTION static struct {
+static struct {
   TUD_EPBUF_DEF(buf, CFG_TUD_ENDPOINT0_SIZE);
 } _ctrl_epbuf;
 
@@ -184,10 +182,6 @@ bool usbd_control_xfer_cb(uint8_t rhport, uint8_t ep_addr, xfer_result_t result,
     // invoke complete callback if set
     // callback can still stall control in status phase e.g out data does not make sense
     if (_ctrl_xfer.complete_cb) {
-#if CFG_TUSB_DEBUG >= CFG_TUD_LOG_LEVEL
-      usbd_driver_print_control_complete_name(_ctrl_xfer.complete_cb);
-#endif
-
       is_ok = _ctrl_xfer.complete_cb(rhport, CONTROL_STAGE_DATA, &_ctrl_xfer.request);
     }
 
@@ -205,5 +199,3 @@ bool usbd_control_xfer_cb(uint8_t rhport, uint8_t ep_addr, xfer_result_t result,
 
   return true;
 }
-
-#endif

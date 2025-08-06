@@ -26,8 +26,6 @@
 
 #include "tusb_option.h"
 
-#if CFG_TUD_ENABLED
-
 #include "dcd.h"
 #include "cdc_device.h"
 
@@ -1102,5 +1100,3 @@ bool usbd_edpt_iso_activate(uint8_t rhport, tusb_desc_endpoint_t const* desc_ep)
   _usbd_dev.ep_status[epnum][dir].claimed = 0;
   return dcd_edpt_iso_activate(rhport, desc_ep);
 }
-
-#endif

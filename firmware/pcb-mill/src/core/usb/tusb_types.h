@@ -31,27 +31,23 @@
 #include <stdint.h>
 #include "tusb_compiler.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 //------------- Device DCache declaration -------------//
-#define TUD_EPBUF_DCACHE_SIZE(_size) (CFG_TUD_MEM_DCACHE_ENABLE ? (TU_DIV_CEIL(_size, CFG_TUD_MEM_DCACHE_LINE_SIZE) * CFG_TUD_MEM_DCACHE_LINE_SIZE) : (_size))
+#define TUD_EPBUF_DCACHE_SIZE(_size) (CFG_TUD_MEM_DCACHE_ENABLE_DEFAULT ? (TU_DIV_CEIL(_size, CFG_TUSB_MEM_DCACHE_LINE_SIZE) * CFG_TUSB_MEM_DCACHE_LINE_SIZE) : (_size))
 
 // Declare an endpoint buffer with uint8_t[size]
-#define TUD_EPBUF_DEF(_name, _size)                                                        \
-  union {                                                                                  \
-    CFG_TUD_MEM_ALIGN uint8_t _name[_size];                                                \
-    __attribute__((aligned(CFG_TUD_MEM_DCACHE_ENABLE ? CFG_TUD_MEM_DCACHE_LINE_SIZE : 1))) \
-    uint8_t _name##_dcache_padding[TUD_EPBUF_DCACHE_SIZE(_size)];                          \
+#define TUD_EPBUF_DEF(_name, _size)                                                                 \
+  union {                                                                                           \
+    __attribute__((aligned(4))) uint8_t _name[_size];                                               \
+    __attribute__((aligned(CFG_TUD_MEM_DCACHE_ENABLE_DEFAULT ? CFG_TUSB_MEM_DCACHE_LINE_SIZE : 1))) \
+    uint8_t _name##_dcache_padding[TUD_EPBUF_DCACHE_SIZE(_size)];                                   \
   }
 
 // Declare an endpoint buffer with a type
-#define TUD_EPBUF_TYPE_DEF(_type, _name)                                                   \
-  union {                                                                                  \
-    CFG_TUD_MEM_ALIGN _type _name;                                                         \
-    __attribute__((aligned(CFG_TUD_MEM_DCACHE_ENABLE ? CFG_TUD_MEM_DCACHE_LINE_SIZE : 1))) \
-    uint8_t _name##_dcache_padding[TUD_EPBUF_DCACHE_SIZE(sizeof(_type))];                  \
+#define TUD_EPBUF_TYPE_DEF(_type, _name)                                                            \
+  union {                                                                                           \
+    __attribute__((aligned(4))) _type _name;                                                        \
+    __attribute__((aligned(CFG_TUD_MEM_DCACHE_ENABLE_DEFAULT ? CFG_TUSB_MEM_DCACHE_LINE_SIZE : 1))) \
+    uint8_t _name##_dcache_padding[TUD_EPBUF_DCACHE_SIZE(sizeof(_type))];                           \
   }
 
 //------------- Host DCache declaration -------------//
@@ -60,7 +56,7 @@ extern "C" {
 // Declare an endpoint buffer with uint8_t[size]
 #define TUH_EPBUF_DEF(_name, _size)                                                        \
   union {                                                                                  \
-    CFG_TUH_MEM_ALIGN uint8_t _name[_size];                                                \
+    __attribute__((aligned(4))) uint8_t _name[_size];                                      \
     __attribute__((aligned(CFG_TUH_MEM_DCACHE_ENABLE ? CFG_TUH_MEM_DCACHE_LINE_SIZE : 1))) \
     uint8_t _name##_dcache_padding[TUH_EPBUF_DCACHE_SIZE(_size)];                          \
   }
@@ -68,7 +64,7 @@ extern "C" {
 // Declare an endpoint buffer with a type
 #define TUH_EPBUF_TYPE_DEF(_type, _name)                                                   \
   union {                                                                                  \
-    CFG_TUH_MEM_ALIGN _type _name;                                                         \
+    __attribute__((aligned(4))) _type _name;                                               \
     __attribute__((aligned(CFG_TUH_MEM_DCACHE_ENABLE ? CFG_TUH_MEM_DCACHE_LINE_SIZE : 1))) \
     uint8_t _name##_dcache_padding[TUH_EPBUF_DCACHE_SIZE(sizeof(_type))];                  \
   }
@@ -592,9 +588,5 @@ __attribute__((always_inline)) static inline uint8_t tu_desc_is_valid(void const
   const uint8_t* desc8 = (uint8_t const*)desc;
   return (desc8 < desc_end) && (tu_desc_next(desc) <= desc_end);
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif  // TUSB_TYPES_H_
