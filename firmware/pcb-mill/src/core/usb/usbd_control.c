@@ -99,7 +99,7 @@ static bool data_stage_xact(uint8_t rhport) {
   if (_ctrl_xfer.request.bmRequestType_bit.direction == TUSB_DIR_IN) {
     ep_addr = EDPT_CTRL_IN;
     if (xact_len) {
-      if (tu_memcpy_s(_ctrl_epbuf.buf, CFG_TUD_ENDPOINT0_SIZE, _ctrl_xfer.buffer, xact_len) != 0) {
+      if (memcpy_s(_ctrl_epbuf.buf, CFG_TUD_ENDPOINT0_SIZE, _ctrl_xfer.buffer, xact_len) != 0) {
         return false;
       }
     }

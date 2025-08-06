@@ -74,57 +74,14 @@
 // Internal Inline Functions
 //--------------------------------------------------------------------+
 
-// This is a backport of memset_s from c11
-__attribute__((always_inline)) static inline int tu_memset_s(void *dest, size_t destsz, int ch, size_t count) {
-  // TODO may check if desst and src is not NULL
-  if (count > destsz) {
-    return -1;
-  }
-  memset(dest, ch, count);
-  return 0;
-}
-
 // This is a backport of memcpy_s from c11
-__attribute__((always_inline)) static inline int tu_memcpy_s(void *dest, size_t destsz, const void *src, size_t count) {
+__attribute__((always_inline)) static inline int memcpy_s(void *dest, size_t destsz, const void *src, size_t count) {
   // TODO may check if desst and src is not NULL
   if (count > destsz) {
     return -1;
   }
   memcpy(dest, src, count);
   return 0;
-}
-
-__attribute__((always_inline)) static inline bool tu_mem_is_zero(const void *buffer, size_t size) {
-  const uint8_t *buf8 = (const uint8_t *)buffer;
-  for (size_t i = 0; i < size; i++) {
-    if (buf8[i] != 0) {
-      return false;
-    }
-  }
-  return true;
-}
-
-__attribute__((always_inline)) static inline bool tu_mem_is_ff(const void *buffer, size_t size) {
-  const uint8_t *buf8 = (const uint8_t *)buffer;
-  for (size_t i = 0; i < size; i++) {
-    if (buf8[i] != 0xff) {
-      return false;
-    }
-  }
-  return true;
-}
-
-//------------- Bytes -------------//
-__attribute__((always_inline)) static inline uint32_t tu_u32(uint8_t b3, uint8_t b2, uint8_t b1, uint8_t b0) {
-  return (((uint32_t)b3) << 24) | (((uint32_t)b2) << 16) | (((uint32_t)b1) << 8) | b0;
-}
-
-__attribute__((always_inline)) static inline uint32_t tu_u32_from_u16(uint16_t high, uint16_t low) {
-  return (((uint32_t)high) << 16) | low;
-}
-
-__attribute__((always_inline)) static inline uint16_t tu_u16(uint8_t high, uint8_t low) {
-  return (uint16_t)((((uint16_t)high) << 8) | low);
 }
 
 __attribute__((always_inline)) static inline uint8_t tu_u32_byte3(uint32_t ui32) { return TU_U32_BYTE3(ui32); }
