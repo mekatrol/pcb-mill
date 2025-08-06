@@ -90,7 +90,9 @@ static bool _prep_out_transaction() {
   cdcd_epbuf_t* p_epbuf = &_cdcd_epbuf;
 
   // Skip if usb is not ready yet
-  TU_VERIFY(tud_ready() && p_cdc->ep_out);
+  if (!(tud_ready() && p_cdc->ep_out)) {
+    return false;
+  }
 
   uint16_t available = tu_fifo_remaining(&p_cdc->rx_ff);
 
@@ -98,10 +100,14 @@ static bool _prep_out_transaction() {
   // TODO Actually we can still carry out the transfer, keeping count of received bytes
   // and slowly move it to the FIFO when read().
   // This pre-check reduces endpoint claiming
-  TU_VERIFY(available >= CFG_TUD_ENDPOINT0_SIZE);
+  if (available < CFG_TUD_ENDPOINT0_SIZE) {
+    return false;
+  }
 
   // claim endpoint
-  TU_VERIFY(usbd_edpt_claim(p_cdc->rhport, p_cdc->ep_out));
+  if (!usbd_edpt_claim(p_cdc->rhport, p_cdc->ep_out)) {
+    return false;
+  }
 
   // fifo can be changed before endpoint is claimed
   available = tu_fifo_remaining(&p_cdc->rx_ff);
@@ -119,7 +125,9 @@ static bool _prep_out_transaction() {
 // APPLICATION API
 //--------------------------------------------------------------------+
 bool tud_cdc_configure(const tud_cdc_configure_t* driver_cfg) {
-  TU_VERIFY(driver_cfg);
+  if (!driver_cfg) {
+    return false;
+  }
   _cdcd_cfg = *driver_cfg;
   return true;
 }
@@ -187,14 +195,20 @@ uint32_t tud_cdc_n_write(const void* buffer, uint32_t bufsize) {
 uint32_t tud_cdc_n_write_flush() {
   cdcd_interface_t* p_cdc = &_cdcd_itf;
   cdcd_epbuf_t* p_epbuf = &_cdcd_epbuf;
-  TU_VERIFY(tud_ready(), 0);  // Skip if usb is not ready yet
+  // Skip if usb is not ready yet
+  if (!tud_ready()) {
+    return 0;
+  }
 
   // No data to send
   if (!tu_fifo_count(&p_cdc->tx_ff)) {
     return 0;
   }
 
-  TU_VERIFY(usbd_edpt_claim(p_cdc->rhport, p_cdc->ep_in), 0);  // Claim the endpoint
+  // Claim the endpoint
+  if (!usbd_edpt_claim(p_cdc->rhport, p_cdc->ep_in)) {
+    return 0;
+  }
 
   // Pull data from FIFO
   const uint16_t count = tu_fifo_read_n(&p_cdc->tx_ff, p_epbuf->epin, CFG_TUD_ENDPOINT0_SIZE);
@@ -263,9 +277,10 @@ void cdcd_reset(uint8_t rhport) {
 
 uint16_t cdcd_open(uint8_t rhport, const tusb_desc_interface_t* itf_desc, uint16_t max_len) {
   // Only support ACM subclass
-  TU_VERIFY(TUSB_CLASS_CDC == itf_desc->bInterfaceClass &&
-                CDC_COMM_SUBCLASS_ABSTRACT_CONTROL_MODEL == itf_desc->bInterfaceSubClass,
-            0);
+  if (TUSB_CLASS_CDC != itf_desc->bInterfaceClass ||
+      CDC_COMM_SUBCLASS_ABSTRACT_CONTROL_MODEL != itf_desc->bInterfaceSubClass) {
+    return 0;
+  }
 
   // Find available interface
   cdcd_interface_t* p_cdc;
@@ -318,7 +333,9 @@ uint16_t cdcd_open(uint8_t rhport, const tusb_desc_interface_t* itf_desc, uint16
 // return false to stall control endpoint (e.g unsupported request)
 bool cdcd_control_xfer_cb(uint8_t rhport, uint8_t stage, const tusb_control_request_t* request) {
   // Handle class request only
-  TU_VERIFY(request->bmRequestType_bit.type == TUSB_REQ_TYPE_CLASS);
+  if (request->bmRequestType_bit.type != TUSB_REQ_TYPE_CLASS) {
+    return false;
+  }
 
   cdcd_interface_t* p_cdc;
 

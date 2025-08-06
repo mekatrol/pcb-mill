@@ -99,7 +99,9 @@ static bool data_stage_xact(uint8_t rhport) {
   if (_ctrl_xfer.request.bmRequestType_bit.direction == TUSB_DIR_IN) {
     ep_addr = EDPT_CTRL_IN;
     if (xact_len) {
-      TU_VERIFY(0 == tu_memcpy_s(_ctrl_epbuf.buf, CFG_TUD_ENDPOINT0_SIZE, _ctrl_xfer.buffer, xact_len));
+      if (tu_memcpy_s(_ctrl_epbuf.buf, CFG_TUD_ENDPOINT0_SIZE, _ctrl_xfer.buffer, xact_len) != 0) {
+        return false;
+      }
     }
   }
 
@@ -173,7 +175,9 @@ bool usbd_control_xfer_cb(uint8_t rhport, uint8_t ep_addr, xfer_result_t result,
   }
 
   if (_ctrl_xfer.request.bmRequestType_bit.direction == TUSB_DIR_OUT) {
-    TU_VERIFY(_ctrl_xfer.buffer);
+    if (!_ctrl_xfer.buffer) {
+      return false;
+    }
     memcpy(_ctrl_xfer.buffer, _ctrl_epbuf.buf, xferred_bytes);
   }
 

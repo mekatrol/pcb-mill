@@ -552,7 +552,9 @@ static bool process_control_request(uint8_t rhport, tusb_control_request_t const
       if (!invoke_class_control(rhport, &_usbd_driver, p_request)) {
         // For GET_INTERFACE and SET_INTERFACE, it is mandatory to respond even if the class
         // driver doesn't use alternate settings or implement this
-        TU_VERIFY(TUSB_REQ_TYPE_STANDARD == p_request->bmRequestType_bit.type);
+        if (TUSB_REQ_TYPE_STANDARD != p_request->bmRequestType_bit.type) {
+          return false;
+        }
 
         switch (p_request->bRequest) {
           case TUSB_REQ_GET_INTERFACE:
@@ -727,7 +729,9 @@ static bool process_get_descriptor(uint8_t rhport, tusb_control_request_t const*
     case TUSB_DESC_BOS: {
       // requested by host if USB > 2.0 ( i.e 2.1 or 3.x )
       uintptr_t desc_bos = (uintptr_t)tud_descriptor_bos_cb();
-      TU_VERIFY(desc_bos);
+      if (!desc_bos) {
+        return false;
+      }
 
       // Use offsetof to avoid pointer to the odd/misaligned address
       uint16_t const total_len = tu_unaligned_read16((const void*)(desc_bos + offsetof(tusb_desc_bos_t, wTotalLength)));
@@ -742,11 +746,15 @@ static bool process_get_descriptor(uint8_t rhport, tusb_control_request_t const*
 
       if (desc_type == TUSB_DESC_CONFIGURATION) {
         desc_config = (uintptr_t)tud_descriptor_configuration_cb(desc_index);
-        TU_ASSERT(desc_config);
+        if (!desc_config) {
+          return false;
+        }
       } else {
         // Host only request this after getting Device Qualifier descriptor
         desc_config = (uintptr_t)tud_descriptor_other_speed_configuration_cb(desc_index);
-        TU_VERIFY(desc_config);
+        if (!desc_config) {
+          return false;
+        }
       }
 
       // Use offsetof to avoid pointer to the odd/misaligned address
@@ -759,7 +767,9 @@ static bool process_get_descriptor(uint8_t rhport, tusb_control_request_t const*
     case TUSB_DESC_STRING: {
       // String Descriptor always uses the desc set from user
       uint8_t const* desc_str = (uint8_t const*)tud_descriptor_string_cb(desc_index, p_request->wIndex);
-      TU_VERIFY(desc_str);
+      if (!desc_str) {
+        return false;
+      }
 
       // first byte of descriptor is its size
       return tud_control_xfer(rhport, p_request, (void*)(uintptr_t)desc_str, tu_desc_len(desc_str));
@@ -768,7 +778,9 @@ static bool process_get_descriptor(uint8_t rhport, tusb_control_request_t const*
 
     case TUSB_DESC_DEVICE_QUALIFIER: {
       uint8_t const* desc_qualifier = tud_descriptor_device_qualifier_cb();
-      TU_VERIFY(desc_qualifier);
+      if (!desc_qualifier) {
+        return false;
+      }
       return tud_control_xfer(rhport, p_request, (void*)(uintptr_t)desc_qualifier, tu_desc_len(desc_qualifier));
     }
       // break; // unreachable
@@ -930,9 +942,6 @@ bool usbd_edpt_open(uint8_t rhport, tusb_desc_endpoint_t const* desc_ep) {
 
 bool usbd_edpt_claim(uint8_t rhport, uint8_t ep_addr) {
   (void)rhport;
-
-  // TODO add this check later, also make sure we don't starve an out endpoint while suspending
-  // TU_VERIFY(tud_ready());
 
   uint8_t const epnum = tu_edpt_number(ep_addr);
   uint8_t const dir = tu_edpt_dir(ep_addr);
