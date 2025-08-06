@@ -56,10 +56,26 @@ typedef struct {
 #define ITF_MEM_RESET_SIZE offsetof(cdcd_interface_t, wanted_char)
 
 typedef struct {
-  TUD_EPBUF_DEF(epout, CFG_TUD_ENDPOINT0_SIZE);
-  TUD_EPBUF_DEF(epin, CFG_TUD_ENDPOINT0_SIZE);
-} cdcd_epbuf_t;
+  union {
+    __attribute__((aligned(4)))
+    uint8_t epout[CFG_TUD_ENDPOINT0_SIZE];
 
+    __attribute__((aligned(CFG_TUD_MEM_DCACHE_ENABLE_DEFAULT ? CFG_TUSB_MEM_DCACHE_LINE_SIZE : 1)))
+    uint8_t epout_dcache_padding[(CFG_TUD_MEM_DCACHE_ENABLE_DEFAULT ? (TU_DIV_CEIL(CFG_TUD_ENDPOINT0_SIZE, CFG_TUSB_MEM_DCACHE_LINE_SIZE) *
+                                                                       CFG_TUSB_MEM_DCACHE_LINE_SIZE)
+                                                                    : CFG_TUD_ENDPOINT0_SIZE)];
+  };
+
+  union {
+    __attribute__((aligned(4)))
+    uint8_t epin[CFG_TUD_ENDPOINT0_SIZE];
+
+    __attribute__((aligned(CFG_TUD_MEM_DCACHE_ENABLE_DEFAULT ? CFG_TUSB_MEM_DCACHE_LINE_SIZE : 1)))
+    uint8_t epin_dcache_padding[(CFG_TUD_MEM_DCACHE_ENABLE_DEFAULT ? (TU_DIV_CEIL(CFG_TUD_ENDPOINT0_SIZE, CFG_TUSB_MEM_DCACHE_LINE_SIZE) *
+                                                                      CFG_TUSB_MEM_DCACHE_LINE_SIZE)
+                                                                   : CFG_TUD_ENDPOINT0_SIZE)];
+  };
+} cdcd_epbuf_t;
 //--------------------------------------------------------------------+
 // INTERNAL OBJECT & FUNCTION DECLARATION
 //--------------------------------------------------------------------+

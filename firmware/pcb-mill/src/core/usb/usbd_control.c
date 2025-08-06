@@ -57,7 +57,15 @@ typedef struct {
 static usbd_control_xfer_t _ctrl_xfer;
 
 static struct {
-  TUD_EPBUF_DEF(buf, CFG_TUD_ENDPOINT0_SIZE);
+  union {
+    __attribute__((aligned(4)))
+    uint8_t buf[CFG_TUD_ENDPOINT0_SIZE];
+
+    __attribute__((aligned(CFG_TUD_MEM_DCACHE_ENABLE_DEFAULT ? CFG_TUSB_MEM_DCACHE_LINE_SIZE : 1)))
+    uint8_t buf_dcache_padding[(CFG_TUD_MEM_DCACHE_ENABLE_DEFAULT ? (TU_DIV_CEIL(CFG_TUD_ENDPOINT0_SIZE, CFG_TUSB_MEM_DCACHE_LINE_SIZE) *
+                                                                     CFG_TUSB_MEM_DCACHE_LINE_SIZE)
+                                                                  : (CFG_TUD_ENDPOINT0_SIZE))];
+  };
 } _ctrl_epbuf;
 
 //--------------------------------------------------------------------+

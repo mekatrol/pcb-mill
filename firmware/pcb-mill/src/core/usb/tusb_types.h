@@ -1,73 +1,9 @@
-/*
- * The MIT License (MIT)
- *
- * Copyright (c) 2019 Ha Thach (tinyusb.org)
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *
- * This file is part of the TinyUSB stack.
- */
-
 #ifndef TUSB_TYPES_H_
 #define TUSB_TYPES_H_
 
 #include <stdbool.h>
 #include <stdint.h>
 #include "tusb_compiler.h"
-
-//------------- Device DCache declaration -------------//
-#define TUD_EPBUF_DCACHE_SIZE(_size) (CFG_TUD_MEM_DCACHE_ENABLE_DEFAULT ? (TU_DIV_CEIL(_size, CFG_TUSB_MEM_DCACHE_LINE_SIZE) * CFG_TUSB_MEM_DCACHE_LINE_SIZE) : (_size))
-
-// Declare an endpoint buffer with uint8_t[size]
-#define TUD_EPBUF_DEF(_name, _size)                                                                 \
-  union {                                                                                           \
-    __attribute__((aligned(4))) uint8_t _name[_size];                                               \
-    __attribute__((aligned(CFG_TUD_MEM_DCACHE_ENABLE_DEFAULT ? CFG_TUSB_MEM_DCACHE_LINE_SIZE : 1))) \
-    uint8_t _name##_dcache_padding[TUD_EPBUF_DCACHE_SIZE(_size)];                                   \
-  }
-
-// Declare an endpoint buffer with a type
-#define TUD_EPBUF_TYPE_DEF(_type, _name)                                                            \
-  union {                                                                                           \
-    __attribute__((aligned(4))) _type _name;                                                        \
-    __attribute__((aligned(CFG_TUD_MEM_DCACHE_ENABLE_DEFAULT ? CFG_TUSB_MEM_DCACHE_LINE_SIZE : 1))) \
-    uint8_t _name##_dcache_padding[TUD_EPBUF_DCACHE_SIZE(sizeof(_type))];                           \
-  }
-
-//------------- Host DCache declaration -------------//
-#define TUH_EPBUF_DCACHE_SIZE(_size) (CFG_TUH_MEM_DCACHE_ENABLE ? (TU_DIV_CEIL(_size, CFG_TUH_MEM_DCACHE_LINE_SIZE) * CFG_TUH_MEM_DCACHE_LINE_SIZE) : (_size))
-
-// Declare an endpoint buffer with uint8_t[size]
-#define TUH_EPBUF_DEF(_name, _size)                                                        \
-  union {                                                                                  \
-    __attribute__((aligned(4))) uint8_t _name[_size];                                      \
-    __attribute__((aligned(CFG_TUH_MEM_DCACHE_ENABLE ? CFG_TUH_MEM_DCACHE_LINE_SIZE : 1))) \
-    uint8_t _name##_dcache_padding[TUH_EPBUF_DCACHE_SIZE(_size)];                          \
-  }
-
-// Declare an endpoint buffer with a type
-#define TUH_EPBUF_TYPE_DEF(_type, _name)                                                   \
-  union {                                                                                  \
-    __attribute__((aligned(4))) _type _name;                                               \
-    __attribute__((aligned(CFG_TUH_MEM_DCACHE_ENABLE ? CFG_TUH_MEM_DCACHE_LINE_SIZE : 1))) \
-    uint8_t _name##_dcache_padding[TUH_EPBUF_DCACHE_SIZE(sizeof(_type))];                  \
-  }
 
 /*------------------------------------------------------------------*/
 /* CONSTANTS
@@ -322,10 +258,6 @@ typedef struct {
 // USB Descriptors
 //--------------------------------------------------------------------+
 
-// Start of all packed definitions for compiler without per-type packed
-TU_ATTR_PACKED_BEGIN
-TU_ATTR_BIT_FIELD_ORDER_BEGIN
-
 /// USB Device Descriptor
 typedef struct __attribute__((packed)) {
   uint8_t bLength;          ///< Size of this descriptor in bytes.
@@ -526,16 +458,13 @@ typedef struct __attribute__((packed)) {
 
 TU_VERIFY_STATIC(sizeof(tusb_control_request_t) == 8, "size is not correct");
 
-TU_ATTR_PACKED_END  // End of all packed definitions
-    TU_ATTR_BIT_FIELD_ORDER_END
+//--------------------------------------------------------------------+
+// Endpoint helper
+//--------------------------------------------------------------------+
 
-    //--------------------------------------------------------------------+
-    // Endpoint helper
-    //--------------------------------------------------------------------+
-
-    // Get direction from Endpoint address
-    __attribute__((always_inline)) static inline tusb_dir_t
-    tu_edpt_dir(uint8_t addr) {
+// Get direction from Endpoint address
+__attribute__((always_inline)) static inline tusb_dir_t
+tu_edpt_dir(uint8_t addr) {
   return (addr & TUSB_DIR_IN_MASK) ? TUSB_DIR_IN : TUSB_DIR_OUT;
 }
 
@@ -551,13 +480,6 @@ __attribute__((always_inline)) static inline uint8_t tu_edpt_addr(uint8_t num, u
 __attribute__((always_inline)) static inline uint16_t tu_edpt_packet_size(tusb_desc_endpoint_t const* desc_ep) {
   return tu_le16toh(desc_ep->wMaxPacketSize) & 0x7FF;
 }
-
-#if CFG_TUSB_DEBUG
-__attribute__((always_inline)) static inline const char* tu_edpt_type_str(tusb_xfer_type_t t) {
-  static const char* str[] = {"control", "isochronous", "bulk", "interrupt"};
-  return str[t];
-}
-#endif
 
 //--------------------------------------------------------------------+
 // Descriptor helper

@@ -122,11 +122,6 @@
 // TODO refactor since __attribute__ is supported across many compiler
 #if defined(__GNUC__)
 
-#define TU_ATTR_PACKED_BEGIN
-#define TU_ATTR_PACKED_END
-#define TU_ATTR_BIT_FIELD_ORDER_BEGIN
-#define TU_ATTR_BIT_FIELD_ORDER_END
-
 // Endian conversion use well-known host to network (big endian) naming
 #define TU_BYTE_ORDER TU_LITTLE_ENDIAN
 
