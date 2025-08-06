@@ -127,36 +127,4 @@ void tud_sof_cb(uint32_t frame_count);
 // Invoked when received control request with VENDOR TYPE
 bool tud_vendor_control_xfer_cb(uint8_t rhport, uint8_t stage, tusb_control_request_t const* request);
 
-//--------------------------------------------------------------------+
-// Configuration Descriptor Templates
-//--------------------------------------------------------------------+
-
-#define TUD_CONFIG_DESC_LEN (9)
-
-// Config number, interface count, string index, total length, attribute, power in mA
-#define TUD_CONFIG_DESCRIPTOR(config_num, _itfcount, _stridx, _total_len, _attribute, _power_ma) \
-  9, TUSB_DESC_CONFIGURATION, U16_TO_U8S_LE(_total_len), _itfcount, config_num, _stridx, TU_BIT(7) | _attribute, (_power_ma) / 2
-
-//--------------------------------------------------------------------+
-// CDC Descriptor Templates
-//--------------------------------------------------------------------+
-
-// Length of template descriptor: 66 bytes
-#define TUD_CDC_DESC_LEN (8 + 9 + 5 + 5 + 4 + 5 + 7 + 9 + 7 + 7)
-
-// CDC Descriptor Template
-// Interface number, string index, EP notification address and size, EP data address (out, in) and size.
-#define TUD_CDC_DESCRIPTOR(_itfnum, _stridx, _ep_notif, _ep_notif_size, _epout, _epin, _epsize)                                                                                          \
-  /* Interface Associate */                                                                                                                                                              \
-  8, TUSB_DESC_INTERFACE_ASSOCIATION, _itfnum, 2, TUSB_CLASS_CDC, CDC_COMM_SUBCLASS_ABSTRACT_CONTROL_MODEL, CDC_COMM_PROTOCOL_NONE, 0,  /* CDC Control Interface */                      \
-      9, TUSB_DESC_INTERFACE, _itfnum, 0, 1, TUSB_CLASS_CDC, CDC_COMM_SUBCLASS_ABSTRACT_CONTROL_MODEL, CDC_COMM_PROTOCOL_NONE, _stridx, /* CDC Header */                                 \
-      5, TUSB_DESC_CS_INTERFACE, CDC_FUNC_DESC_HEADER, U16_TO_U8S_LE(0x0120),                                                           /* CDC Call */                                   \
-      5, TUSB_DESC_CS_INTERFACE, CDC_FUNC_DESC_CALL_MANAGEMENT, 0, (uint8_t)((_itfnum) + 1),                                            /* CDC ACM: support line request + send break */ \
-      4, TUSB_DESC_CS_INTERFACE, CDC_FUNC_DESC_ABSTRACT_CONTROL_MANAGEMENT, 6,                                                          /* CDC Union */                                  \
-      5, TUSB_DESC_CS_INTERFACE, CDC_FUNC_DESC_UNION, _itfnum, (uint8_t)((_itfnum) + 1),                                                /* Endpoint Notification */                      \
-      7, TUSB_DESC_ENDPOINT, _ep_notif, TUSB_XFER_INTERRUPT, U16_TO_U8S_LE(_ep_notif_size), 1,                                          /* CDC Data Interface */                         \
-      9, TUSB_DESC_INTERFACE, (uint8_t)((_itfnum) + 1), 0, 2, TUSB_CLASS_CDC_DATA, 0, 0, 0,                                             /* Endpoint Out */                               \
-      7, TUSB_DESC_ENDPOINT, _epout, TUSB_XFER_BULK, U16_TO_U8S_LE(_epsize), 0,                                                         /* Endpoint In */                                \
-      7, TUSB_DESC_ENDPOINT, _epin, TUSB_XFER_BULK, U16_TO_U8S_LE(_epsize), 0
-
 #endif /* _TUSB_USBD_H_ */

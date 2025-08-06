@@ -27,10 +27,6 @@
 #ifndef _TUSB_COMMON_H_
 #define _TUSB_COMMON_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 //--------------------------------------------------------------------+
 // Macros Helper
 //--------------------------------------------------------------------+
@@ -73,21 +69,6 @@ extern "C" {
 // Tinyusb Common Headers
 #include "tusb_option.h"
 #include "tusb_types.h"
-
-//--------------------------------------------------------------------+
-// Optional API implemented by application if needed
-// TODO move to a more obvious place/file
-//--------------------------------------------------------------------+
-
-// flush data cache
-__attribute__((weak)) extern void tusb_app_dcache_flush(uintptr_t addr, uint32_t data_size);
-
-// invalidate data cache
-__attribute__((weak)) extern void tusb_app_dcache_invalidate(uintptr_t addr, uint32_t data_size);
-
-// Optional physical <-> virtual address translation
-__attribute__((weak)) extern void *tusb_app_virt_to_phys(void *virt_addr);
-__attribute__((weak)) extern void *tusb_app_phys_to_virt(void *phys_addr);
 
 //--------------------------------------------------------------------+
 // Internal Inline Functions
@@ -201,11 +182,6 @@ __attribute__((always_inline)) static inline uint8_t tu_log2(uint32_t value) {
   return result;
 }
 
-// static inline uint8_t tu_log2(uint32_t value)
-//{
-//    return sizeof(uint32_t) * CHAR_BIT - __builtin_clz(x) - 1;
-// }
-
 __attribute__((always_inline)) static inline bool tu_is_power_of_two(uint32_t value) {
   return (value != 0) && ((value & (value - 1)) == 0);
 }
@@ -237,28 +213,5 @@ __attribute__((always_inline)) static inline void tu_unaligned_write16(void *mem
   tu_unaligned_uint16_t *ua16 = (tu_unaligned_uint16_t *)mem;
   ua16->val = value;
 }
-
-// To be removed
-//------------- Binary constant -------------//
-#if defined(__GNUC__) && !defined(__CC_ARM)
-
-#define TU_BIN8(x) ((uint8_t)(0b##x))
-#define TU_BIN16(b1, b2) ((uint16_t)(0b##b1##b2))
-#define TU_BIN32(b1, b2, b3, b4) ((uint32_t)(0b##b1##b2##b3##b4))
-
-#else
-
-//  internal macro of B8, B16, B32
-#define _B8__(x) (((x & 0x0000000FUL) ? 1 : 0) + ((x & 0x000000F0UL) ? 2 : 0) + ((x & 0x00000F00UL) ? 4 : 0) + ((x & 0x0000F000UL) ? 8 : 0) + ((x & 0x000F0000UL) ? 16 : 0) + ((x & 0x00F00000UL) ? 32 : 0) + ((x & 0x0F000000UL) ? 64 : 0) + ((x & 0xF0000000UL) ? 128 : 0))
-
-#define TU_BIN8(d) ((uint8_t)_B8__(0x##d##UL))
-#define TU_BIN16(dmsb, dlsb) (((uint16_t)TU_BIN8(dmsb) << 8) + TU_BIN8(dlsb))
-#define TU_BIN32(dmsb, db2, db3, dlsb) \
-  (((uint32_t)TU_BIN8(dmsb) << 24) + ((uint32_t)TU_BIN8(db2) << 16) + ((uint32_t)TU_BIN8(db3) << 8) + TU_BIN8(dlsb))
-#endif
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* _TUSB_COMMON_H_ */
