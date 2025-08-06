@@ -60,49 +60,17 @@
  *   #define TU_ASSERT(cond,ret)              if(cond) {TU_MESS_FAILED(); TU_BREAKPOINT(), return ret;}
  *------------------------------------------------------------------*/
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 //--------------------------------------------------------------------+
 // TU_VERIFY Helper
 //--------------------------------------------------------------------+
 
-#if CFG_TUSB_DEBUG
-#include <stdio.h>
-#define TU_MESS_FAILED() tu_printf("%s %d: ASSERT FAILED\r\n", __func__, __LINE__)
-#else
 #define TU_MESS_FAILED() \
   do {                   \
   } while (0)
-#endif
 
-// Halt CPU (breakpoint) when hitting error, only apply for Cortex M3, M4, M7, M33. M55
-#if defined(__ARM_ARCH_7M__) || defined(__ARM_ARCH_7EM__) || defined(__ARM_ARCH_8M_MAIN__) || defined(__ARM_ARCH_8_1M_MAIN__) || \
-    defined(__ARM7M__) || defined(__ARM7EM__) || defined(__ARM8M_MAINLINE__) || defined(__ARM8EM_MAINLINE__)
-#define TU_BREAKPOINT()                                                                                               \
-  do {                                                                                                                \
-    volatile uint32_t* ARM_CM_DHCSR = ((volatile uint32_t*)0xE000EDF0UL); /* Cortex M CoreDebug->DHCSR */             \
-    if ((*ARM_CM_DHCSR) & 1UL) __asm("BKPT #0\n");                        /* Only halt mcu if debugger is attached */ \
-  } while (0)
-
-#elif defined(__riscv) && !TUSB_MCU_VENDOR_ESPRESSIF
-#define TU_BREAKPOINT() \
-  do {                  \
-    __asm("ebreak\n");  \
-  } while (0)
-
-#elif defined(_mips)
-#define TU_BREAKPOINT() \
-  do {                  \
-    __asm("sdbbp 0");   \
-  } while (0)
-
-#else
 #define TU_BREAKPOINT() \
   do {                  \
   } while (0)
-#endif
 
 /*------------------------------------------------------------------*/
 /* TU_VERIFY
@@ -139,12 +107,6 @@ extern "C" {
 #define TU_ASSERT_1ARGS(_cond) TU_ASSERT_DEFINE(_cond, false)
 #define TU_ASSERT_2ARGS(_cond, _ret) TU_ASSERT_DEFINE(_cond, _ret)
 
-#ifndef TU_ASSERT
 #define TU_ASSERT(...) TU_GET_3RD_ARG(__VA_ARGS__, TU_ASSERT_2ARGS, TU_ASSERT_1ARGS, _dummy)(__VA_ARGS__)
-#endif
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

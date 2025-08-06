@@ -49,8 +49,7 @@ void cdc_task(void) {
 }
 
 // Invoked when cdc when line state changed e.g connected/disconnected
-void tud_cdc_line_state_cb(uint8_t itf, bool dtr, bool rts) {
-  (void)itf;
+void tud_cdc_line_state_cb(bool dtr, bool rts) {
   (void)rts;
 
   // TODO set some indicator
@@ -62,8 +61,7 @@ void tud_cdc_line_state_cb(uint8_t itf, bool dtr, bool rts) {
 }
 
 // Invoked when CDC interface received data from host
-void tud_cdc_rx_cb(uint8_t itf) {
-  (void)itf;
+void tud_cdc_rx_cb() {
   // while (tud_cdc_available()) {
   //   char c = tud_cdc_read_char();
   //   // Process character
