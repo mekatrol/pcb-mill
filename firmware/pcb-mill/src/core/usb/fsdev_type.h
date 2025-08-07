@@ -30,7 +30,7 @@ __attribute__((always_inline)) static inline uint32_t ep_read(uint32_t ep_id) {
 
 __attribute__((always_inline)) static inline void ep_write(uint32_t ep_id, uint32_t value, bool need_exclusive) {
   if (need_exclusive) {
-    NVIC_EnableIRQ(USB_UCPD1_2_IRQn);
+    NVIC_DisableIRQ(USB_UCPD1_2_IRQn);
   }
 
   USB->chep[ep_id].CHEPnR = value;
