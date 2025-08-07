@@ -1,12 +1,10 @@
 #include "tusb_option.h"
-
 #include "dcd.h"
 #include "cdc_device.h"
-
 #include "tusb_private.h"
-
 #include "usbd.h"
 #include "usbd_pvt.h"
+#include "stm32g0xx.h"
 
 //--------------------------------------------------------------------+
 // USBD Configuration
@@ -36,12 +34,6 @@ __attribute__((weak)) uint8_t const* tud_descriptor_other_speed_configuration_cb
   return NULL;
 }
 
-__attribute__((weak)) void tud_mount_cb(void) {
-}
-
-__attribute__((weak)) void tud_umount_cb(void) {
-}
-
 __attribute__((weak)) bool tud_vendor_control_xfer_cb(uint8_t stage, tusb_control_request_t const* request) {
   (void)stage;
   (void)request;
@@ -53,9 +45,6 @@ __attribute__((weak)) bool dcd_deinit() {
 }
 
 __attribute__((weak)) void dcd_connect() {
-}
-
-__attribute__((weak)) void dcd_disconnect() {
 }
 
 __attribute__((weak)) bool dcd_dcache_clean(const void* addr, uint32_t data_size) {
@@ -188,7 +177,7 @@ bool tud_remote_wakeup(void) {
 }
 
 bool tud_disconnect(void) {
-  dcd_disconnect();
+  USB->BCDR &= ~(USB_BCDR_DPPU);
   return true;
 }
 
@@ -197,9 +186,6 @@ bool tud_connect(void) {
   return true;
 }
 
-//--------------------------------------------------------------------+
-// USBD Task
-//--------------------------------------------------------------------+
 bool usb_init_driver() {
   memset(&_usbd_dev, 0, sizeof(usbd_device_t));
   _usbd_queued_setup = 0;
@@ -212,25 +198,7 @@ bool usb_init_driver() {
 
   // Init device controller driver
   dcd_init();
-  dcd_int_enable();
-
-  return true;
-}
-
-bool tud_deinit() {
-  // Deinit device controller driver
-  dcd_int_disable();
-  dcd_disconnect();
-  dcd_deinit();
-
-  // Deinit class drivers
-  if (_usbd_driver.deinit) {
-    _usbd_driver.deinit();
-  }
-
-  // Deinit device queue & task
-  osal_queue_delete(_usbd_q);
-  _usbd_q = NULL;
+  NVIC_EnableIRQ(USB_UCPD1_2_IRQn);
 
   return true;
 }
@@ -248,9 +216,7 @@ static void usbd_reset() {
   usbd_control_reset();
 }
 
-void tud_task_ext(uint32_t timeout_ms, bool in_isr) {
-  (void)in_isr;  // not implemented yet
-
+void tud_task_ext(uint32_t timeout_ms) {
   // Loop until there is no more events in the queue
   while (1) {
     dcd_event_t event;
@@ -303,7 +269,7 @@ void tud_task_ext(uint32_t timeout_ms, bool in_isr) {
         _usbd_dev.ep_status[epnum][ep_dir].busy = 0;
         _usbd_dev.ep_status[epnum][ep_dir].claimed = 0;
 
-        if (0 == epnum) {
+        if (epnum == 0) {
           usbd_control_xfer_cb(ep_addr, (xfer_result_t)event.xfer_complete.result, event.xfer_complete.len);
         } else {
           _usbd_driver.xfer_cb(ep_addr, (xfer_result_t)event.xfer_complete.result, event.xfer_complete.len);
@@ -421,9 +387,10 @@ static bool process_control_request(tusb_control_request_t const* p_request) {
                 _usbd_dev.cfg_num = 0;
                 return false;
               }
-              tud_mount_cb();
+
+              // TODO: USB mount
             } else {
-              tud_umount_cb();
+              // TODO: USB unmount
             }
           }
 
@@ -826,9 +793,9 @@ void dcd_event_handler(dcd_event_t const* event, bool in_isr) {
 
 void usbd_int_set(bool enabled) {
   if (enabled) {
-    dcd_int_enable();
+    NVIC_EnableIRQ(USB_UCPD1_2_IRQn);
   } else {
-    dcd_int_disable();
+    NVIC_DisableIRQ(USB_UCPD1_2_IRQn);
   }
 }
 

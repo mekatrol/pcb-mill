@@ -3,14 +3,10 @@
 
 #include "stdint.h"
 
+#include "stm32g0xx.h"
+
 #define FSDEV_BTABLE_BASE 0U
 
-// FSDEV_PMA_SIZE is PMA buffer size in bytes.
-// - 2048-byte devices, access with 32-bit address
-
-//--------------------------------------------------------------------+
-// BTable Typedef
-//--------------------------------------------------------------------+
 enum {
   BTABLE_BUF_TX = 0,
   BTABLE_BUF_RX = 1
@@ -23,18 +19,18 @@ typedef struct {
   } ep32[CFG_TUD_ENDPPOINT_MAX][2];
 } fsdev_btable_t;
 
-#define FSDEV_BTABLE ((volatile fsdev_btable_t*)(FSDEV_PMA_BASE + FSDEV_BTABLE_BASE))
+#define FSDEV_BTABLE ((volatile fsdev_btable_t*)(USB_DRD_PMAADDR + FSDEV_BTABLE_BASE))
 
 typedef struct {
   volatile uint32_t value;
 } fsdev_pma_buf_t;
 
-#define PMA_BUF_AT(_addr) ((fsdev_pma_buf_t*)(FSDEV_PMA_BASE + _addr))
+#define PMA_BUF_AT(_addr) ((fsdev_pma_buf_t*)(USB_DRD_PMAADDR + _addr))
 
 #define USB_EPTX_STAT 0x0030U
 #define USB_EPTX_STAT_Pos 4u
 #define USB_EP_DTOG_TX_Pos 6u
-#define USB_EP_CTR_TX_Pos 7u
+#define USB_EP_VTTX_Pos 7u
 
 typedef enum {
   EP_STAT_DISABLED = 0,
@@ -58,21 +54,21 @@ __attribute__((always_inline)) static inline uint32_t ep_read(uint32_t ep_id) {
 
 __attribute__((always_inline)) static inline void ep_write(uint32_t ep_id, uint32_t value, bool need_exclusive) {
   if (need_exclusive) {
-    dcd_int_disable(0);
+    NVIC_EnableIRQ(USB_UCPD1_2_IRQn);
   }
 
   USB->chep[ep_id].CHEPnR = value;
 
   if (need_exclusive) {
-    dcd_int_enable(0);
+    NVIC_EnableIRQ(USB_UCPD1_2_IRQn);
   }
 }
 
 __attribute__((always_inline)) static inline void ep_write_clear_ctr(uint32_t ep_id, tusb_dir_t dir) {
   uint32_t reg = USB->chep[ep_id].CHEPnR;
-  reg |= USB_EP_CTR_TX | USB_EP_CTR_RX;
-  reg &= USB_EPREG_MASK;
-  reg &= ~(1 << (USB_EP_CTR_TX_Pos + (dir == TUSB_DIR_IN ? 0 : 8)));
+  reg |= USB_EP_VTTX | USB_EP_VTRX;
+  reg &= USB_CHEP_REG_MASK;
+  reg &= ~(1 << (USB_EP_VTTX_Pos + (dir == TUSB_DIR_IN ? 0 : 8)));
   ep_write(ep_id, reg, false);
 }
 

@@ -1,12 +1,4 @@
 {
-  "files.associations": {
-    "tusb_common.h": "c",
-    "tusb.h": "c",
-    "tusb_private.h": "c",
-    "usb.h": "c",
-    "tusb_compiler.h": "c",
-    "usbd.h": "c",
-    "dcd.h": "c"
-  },
+  "files.associations": {},
   "cortex-debug.variableUseNaturalFormat": false
 }

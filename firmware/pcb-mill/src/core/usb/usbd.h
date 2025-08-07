@@ -3,22 +3,7 @@
 
 #include "usb.h"
 
-//--------------------------------------------------------------------+
-// Application API
-//--------------------------------------------------------------------+
-
-// Deinit device stack on roothub port
-bool tud_deinit();
-
-// Task function should be called in main/rtos loop, extended version of tud_task()
-// - timeout_ms: millisecond to wait, zero = no wait, 0xFFFFFFFF = wait forever
-// - in_isr: if function is called in ISR
-void tud_task_ext(uint32_t timeout_ms, bool in_isr);
-
-// Task function should be called in main/rtos loop
-__attribute__((always_inline)) static inline void tud_task(void) {
-  tud_task_ext(UINT32_MAX, false);
-}
+void tud_task_ext(uint32_t timeout_ms);
 
 // Get current bus speed
 tusb_speed_t tud_speed_get(void);
@@ -88,13 +73,7 @@ uint8_t const* tud_descriptor_device_qualifier_cb(void);
 // Configuration descriptor in the other speed e.g if high speed then this is for full speed and vice versa
 uint8_t const* tud_descriptor_other_speed_configuration_cb(uint8_t index);
 
-// Invoked when device is mounted (configured)
-void tud_mount_cb(void);
-
-// Invoked when device is unmounted
-void tud_umount_cb(void);
-
-// Invoked when there is a new usb event, which need to be processed by tud_task()/tud_task_ext()
+// Invoked when there is a new usb event
 void tud_event_hook_cb(uint32_t eventid, bool in_isr);
 
 // Invoked when received control request with VENDOR TYPE

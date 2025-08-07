@@ -85,12 +85,6 @@ bool dcd_deinit();
 // Interrupt Handler
 void dcd_int_handler();
 
-// Enable device interrupt
-void dcd_int_enable();
-
-// Disable device interrupt
-void dcd_int_disable();
-
 // Receive Set Address request, mcu port must also include status IN response
 void dcd_set_address(uint8_t dev_addr);
 
@@ -99,9 +93,6 @@ void dcd_remote_wakeup();
 
 // Connect by enabling internal pull-up resistor on D+/D-
 void dcd_connect();
-
-// Disconnect by disabling internal pull-up resistor on D+/D-
-void dcd_disconnect();
 
 // Enable/Disable Start-of-frame interrupt. Default is disabled
 void dcd_sof_enable(bool en);

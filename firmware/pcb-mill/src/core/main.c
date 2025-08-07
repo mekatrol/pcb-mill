@@ -76,7 +76,7 @@ void main() {
 
   // Loop forever
   while (true) {
-    tud_task();  // Handle USB events
+    tud_task_ext(UINT32_MAX);
     cdc_task();
   }
 }

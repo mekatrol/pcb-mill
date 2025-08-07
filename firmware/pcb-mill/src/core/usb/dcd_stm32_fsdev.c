@@ -1,8 +1,7 @@
 #include "tusb_option.h"
 #include "dcd.h"
-#include "fsdev_stm32.h"
-
 #include "fsdev_type.h"
+#include "stm32g0xx.h"
 
 //--------------------------------------------------------------------+
 // MACRO CONSTANT TYPEDEF
@@ -68,7 +67,7 @@ __attribute__((always_inline)) static inline xfer_ctl_t *xfer_ctl_ptr(uint8_t ep
 //--------------------------------------------------------------------+
 void dcd_init() {
   // Perform USB peripheral reset
-  USB->CNTR = USB_CNTR_FRES | USB_CNTR_PDWN;
+  USB->CNTR = USB_CNTR_USBRST | USB_CNTR_PDWN;
   USB->CNTR &= ~USB_CNTR_PDWN;
   USB->CNTR = 0;  // Enable USB
   USB->ISTR = 0;  // Clear pending interrupts
@@ -107,7 +106,7 @@ void dcd_set_address(uint8_t dev_addr) {
 }
 
 void dcd_remote_wakeup() {
-  USB->CNTR |= USB_CNTR_RESUME;
+  USB->CNTR |= USB_CNTR_L2RES;
   remoteWakeCountdown = 4u;  // required to be 1 to 15 ms, ESOF should trigger every 1ms.
 }
 
@@ -132,9 +131,9 @@ static void handle_bus_reset() {
 
 // Handle CTR interrupt for the TX/IN direction
 static void handle_ctr_tx(uint32_t ep_id) {
-  uint32_t ep_reg = ep_read(ep_id) | USB_EP_CTR_TX | USB_EP_CTR_RX;
+  uint32_t ep_reg = ep_read(ep_id) | USB_EP_VTTX | USB_EP_VTRX;
 
-  uint8_t const ep_num = ep_reg & USB_EPADDR_FIELD;
+  uint8_t const ep_num = ep_reg & USB_CHEP_ADDR;
   xfer_ctl_t *xfer = xfer_ctl_ptr(ep_num, TUSB_DIR_IN);
 
   if (ep_is_iso(ep_reg)) {
@@ -178,8 +177,8 @@ static void handle_ctr_setup(uint32_t ep_id) {
 
 // Handle CTR interrupt for the RX/OUT direction
 static void handle_ctr_rx(uint32_t ep_id) {
-  uint32_t ep_reg = ep_read(ep_id) | USB_EP_CTR_TX | USB_EP_CTR_RX;
-  uint8_t const ep_num = ep_reg & USB_EPADDR_FIELD;
+  uint32_t ep_reg = ep_read(ep_id) | USB_EP_VTTX | USB_EP_VTRX;
+  uint8_t const ep_num = ep_reg & USB_CHEP_ADDR;
   bool const is_iso = ep_is_iso(ep_reg);
   xfer_ctl_t *xfer = xfer_ctl_ptr(ep_num, TUSB_DIR_OUT);
 
@@ -216,7 +215,7 @@ static void handle_ctr_rx(uint32_t ep_id) {
       uint16_t const cnt = min_u16(xfer->total_len - xfer->queued_len, xfer->max_packet_size);
       btable_set_rx_bufsize(ep_id, BTABLE_BUF_RX, cnt);
     }
-    ep_reg &= USB_EPREG_MASK | EP_STAT_MASK(TUSB_DIR_OUT);  // will change RX Status, reserved other toggle bits
+    ep_reg &= USB_CHEP_REG_MASK | EP_STAT_MASK(TUSB_DIR_OUT);  // will change RX Status, reserved other toggle bits
     ep_change_status(&ep_reg, TUSB_DIR_OUT, EP_STAT_VALID);
     ep_write(ep_id, ep_reg, false);
   }
@@ -236,12 +235,13 @@ void dcd_int_handler() {
     USB->ISTR = ~USB_ISTR_RESET;
     handle_bus_reset();
     dcd_event_bus_reset(TUSB_SPEED_FULL, true);
+
     return;  // Don't do the rest of the things here; perhaps they've been cleared?
   }
 
   if (int_status & USB_ISTR_WKUP) {
-    USB->CNTR &= ~USB_CNTR_LPMODE;
-    USB->CNTR &= ~USB_CNTR_FSUSP;
+    USB->CNTR &= ~USB_CNTR_SUSPRDY;
+    USB->CNTR &= ~USB_CNTR_SUSPEN;
 
     USB->ISTR = ~USB_ISTR_WKUP;
     dcd_event_bus_signal(DCD_EVENT_RESUME, true);
@@ -252,8 +252,8 @@ void dcd_int_handler() {
      * these events cannot be differentiated, so we only trigger suspend. */
 
     /* Force low-power mode in the macrocell */
-    USB->CNTR |= USB_CNTR_FSUSP;
-    USB->CNTR |= USB_CNTR_LPMODE;
+    USB->CNTR |= USB_CNTR_SUSPEN;
+    USB->CNTR |= USB_CNTR_SUSPRDY;
 
     /* clear of the ISTR bit must be done after setting of CNTR_FSUSP */
     USB->ISTR = ~USB_ISTR_SUSP;
@@ -262,7 +262,7 @@ void dcd_int_handler() {
 
   if (int_status & USB_ISTR_ESOF) {
     if (remoteWakeCountdown == 1u) {
-      USB->CNTR &= ~USB_CNTR_RESUME;
+      USB->CNTR &= ~USB_CNTR_L2RES;
     }
     if (remoteWakeCountdown > 0u) {
       remoteWakeCountdown--;
@@ -273,10 +273,10 @@ void dcd_int_handler() {
   // loop to handle all pending CTR interrupts
   while (USB->ISTR & USB_ISTR_CTR) {
     // skip DIR bit, and use CTR TX/RX instead, since there is chance we have both TX/RX completed in one interrupt
-    uint32_t const ep_id = USB->ISTR & USB_ISTR_EP_ID;
+    uint32_t const ep_id = USB->ISTR & USB_ISTR_IDN;
     uint32_t const ep_reg = ep_read(ep_id);
 
-    if (ep_reg & USB_EP_CTR_RX) {
+    if (ep_reg & USB_EP_VTRX) {
       /* https://www.st.com/resource/en/errata_sheet/es0561-stm32h503cbebkbrb-device-errata-stmicroelectronics.pdf
        * https://www.st.com/resource/en/errata_sheet/es0587-stm32u535xx-and-stm32u545xx-device-errata-stmicroelectronics.pdf
        * From H503/U535 errata: Buffer description table update completes after CTR interrupt triggers
@@ -305,7 +305,7 @@ void dcd_int_handler() {
       }
     }
 
-    if (ep_reg & USB_EP_CTR_TX) {
+    if (ep_reg & USB_EP_VTTX) {
       ep_write_clear_ctr(ep_id, TUSB_DIR_IN);
       handle_ctr_tx(ep_id);
     }
@@ -313,6 +313,8 @@ void dcd_int_handler() {
 
   if (int_status & USB_ISTR_PMAOVR) {
     USB->ISTR = ~USB_ISTR_PMAOVR;
+
+    // TODO: overrun/underrun
   }
 }
 
@@ -353,7 +355,7 @@ static uint32_t dcd_pma_alloc(uint16_t len, bool dbuf) {
   }
 
   // Verify packet buffer is not overflowed
-  if (ep_buf_ptr > FSDEV_PMA_SIZE) {
+  if (ep_buf_ptr > USB_DRD_PMA_SIZE) {
     return 0xFFFF;
   }
 
@@ -413,7 +415,7 @@ void edpt0_open() {
   btable_set_addr(0, BTABLE_BUF_RX, pma_addr0);
   btable_set_addr(0, BTABLE_BUF_TX, pma_addr1);
 
-  uint32_t ep_reg = ep_read(0) & ~USB_EPREG_MASK;  // only get toggle bits
+  uint32_t ep_reg = ep_read(0) & ~USB_CHEP_REG_MASK;  // only get toggle bits
   ep_reg |= USB_EP_CONTROL;
   ep_change_status(&ep_reg, TUSB_DIR_IN, EP_STAT_NAK);
   ep_change_status(&ep_reg, TUSB_DIR_OUT, EP_STAT_NAK);
@@ -433,8 +435,8 @@ bool dcd_edpt_open(tusb_desc_endpoint_t const *desc_ep) {
     return false;
   }
 
-  uint32_t ep_reg = ep_read(ep_idx) & ~USB_EPREG_MASK;
-  ep_reg |= tu_edpt_number(ep_addr) | USB_EP_CTR_TX | USB_EP_CTR_RX;
+  uint32_t ep_reg = ep_read(ep_idx) & ~USB_CHEP_REG_MASK;
+  ep_reg |= tu_edpt_number(ep_addr) | USB_EP_VTTX | USB_EP_VTRX;
 
   // Set type
   switch (desc_ep->bmAttributes.xfer) {
@@ -463,7 +465,7 @@ bool dcd_edpt_open(tusb_desc_endpoint_t const *desc_ep) {
 
   // reserve other direction toggle bits
   if (dir == TUSB_DIR_IN) {
-    ep_reg &= ~(USB_EPRX_STAT | USB_EP_DTOG_RX);
+    ep_reg &= ~(USB_CH_RX_VALID | USB_EP_DTOG_RX);
   } else {
     ep_reg &= ~(USB_EPTX_STAT | USB_EP_DTOG_TX);
   }
@@ -474,7 +476,7 @@ bool dcd_edpt_open(tusb_desc_endpoint_t const *desc_ep) {
 }
 
 void dcd_edpt_close_all() {
-  dcd_int_disable();
+  NVIC_DisableIRQ(USB_UCPD1_2_IRQn);
 
   for (uint32_t i = 1; i < CFG_TUD_ENDPPOINT_MAX; i++) {
     // Reset endpoint
@@ -486,7 +488,7 @@ void dcd_edpt_close_all() {
     ep_alloc_status[i].allocated[1] = false;
   }
 
-  dcd_int_enable();
+  NVIC_EnableIRQ(USB_UCPD1_2_IRQn);
 
   // Reset PMA allocation
   ep_buf_ptr = FSDEV_BTABLE_BASE + 8 * CFG_TUD_ENDPPOINT_MAX + 2 * CFG_TUD_ENDPOINT0_SIZE;
@@ -499,7 +501,7 @@ bool dcd_edpt_iso_alloc(uint8_t ep_addr, uint16_t largest_packet_size) {
 
   /* Create a packet memory buffer area. Enable double buffering for devices with 2048 bytes PMA,
      for smaller devices double buffering occupy too much space. */
-#if FSDEV_PMA_SIZE > 1024u
+#if USB_DRD_PMA_SIZE > 1024u
   uint32_t pma_addr = dcd_pma_alloc(largest_packet_size, true);
   uint16_t pma_addr2 = pma_addr >> 16;
 #else
@@ -526,8 +528,8 @@ bool dcd_edpt_iso_activate(tusb_desc_endpoint_t const *desc_ep) {
 
   xfer->max_packet_size = tu_edpt_packet_size(desc_ep);
 
-  uint32_t ep_reg = ep_read(ep_idx) & ~USB_EPREG_MASK;
-  ep_reg |= tu_edpt_number(ep_addr) | USB_EP_ISOCHRONOUS | USB_EP_CTR_TX | USB_EP_CTR_RX;
+  uint32_t ep_reg = ep_read(ep_idx) & ~USB_CHEP_REG_MASK;
+  ep_reg |= tu_edpt_number(ep_addr) | USB_EP_ISOCHRONOUS | USB_EP_VTTX | USB_EP_VTRX;
   ep_change_status(&ep_reg, TUSB_DIR_IN, EP_STAT_DISABLED);
   ep_change_status(&ep_reg, TUSB_DIR_OUT, EP_STAT_DISABLED);
   ep_change_dtog(&ep_reg, dir, 0);
@@ -541,7 +543,7 @@ bool dcd_edpt_iso_activate(tusb_desc_endpoint_t const *desc_ep) {
 // Currently, single-buffered, and only 64 bytes at a time (max)
 static void dcd_transmit_packet(xfer_ctl_t *xfer, uint16_t ep_ix) {
   uint16_t len = min_u16(xfer->total_len - xfer->queued_len, xfer->max_packet_size);
-  uint32_t ep_reg = ep_read(ep_ix) | USB_EP_CTR_TX | USB_EP_CTR_RX;  // reserve CTR
+  uint32_t ep_reg = ep_read(ep_ix) | USB_EP_VTTX | USB_EP_VTRX;  // reserve CTR
 
   bool const is_iso = ep_is_iso(ep_reg);
 
@@ -566,7 +568,7 @@ static void dcd_transmit_packet(xfer_ctl_t *xfer, uint16_t ep_ix) {
   if (is_iso) {
     xfer->iso_in_sending = true;
   }
-  ep_reg &= USB_EPREG_MASK | EP_STAT_MASK(TUSB_DIR_IN);  // only change TX Status, reserve other toggle bits
+  ep_reg &= USB_CHEP_REG_MASK | EP_STAT_MASK(TUSB_DIR_IN);  // only change TX Status, reserve other toggle bits
   ep_write(ep_ix, ep_reg, true);
 }
 
@@ -577,8 +579,8 @@ static bool edpt_xfer(uint8_t ep_num, tusb_dir_t dir) {
   if (dir == TUSB_DIR_IN) {
     dcd_transmit_packet(xfer, ep_idx);
   } else {
-    uint32_t ep_reg = ep_read(ep_idx) | USB_EP_CTR_TX | USB_EP_CTR_RX;  // reserve CTR
-    ep_reg &= USB_EPREG_MASK | EP_STAT_MASK(dir);
+    uint32_t ep_reg = ep_read(ep_idx) | USB_EP_VTTX | USB_EP_VTRX;  // reserve CTR
+    ep_reg &= USB_CHEP_REG_MASK | EP_STAT_MASK(dir);
 
     uint16_t cnt = min_u16(xfer->total_len, xfer->max_packet_size);
 
@@ -628,8 +630,8 @@ void dcd_edpt_stall(uint8_t ep_addr) {
   xfer_ctl_t *xfer = xfer_ctl_ptr(ep_num, dir);
   uint8_t const ep_idx = xfer->ep_idx;
 
-  uint32_t ep_reg = ep_read(ep_idx) | USB_EP_CTR_TX | USB_EP_CTR_RX;  // reserve CTR bits
-  ep_reg &= USB_EPREG_MASK | EP_STAT_MASK(dir);
+  uint32_t ep_reg = ep_read(ep_idx) | USB_EP_VTTX | USB_EP_VTRX;  // reserve CTR bits
+  ep_reg &= USB_CHEP_REG_MASK | EP_STAT_MASK(dir);
   ep_change_status(&ep_reg, dir, EP_STAT_STALL);
 
   ep_write(ep_idx, ep_reg, true);
@@ -641,8 +643,8 @@ void dcd_edpt_clear_stall(uint8_t ep_addr) {
   xfer_ctl_t *xfer = xfer_ctl_ptr(ep_num, dir);
   uint8_t const ep_idx = xfer->ep_idx;
 
-  uint32_t ep_reg = ep_read(ep_idx) | USB_EP_CTR_TX | USB_EP_CTR_RX;  // reserve CTR bits
-  ep_reg &= USB_EPREG_MASK | EP_STAT_MASK(dir) | EP_DTOG_MASK(dir);
+  uint32_t ep_reg = ep_read(ep_idx) | USB_EP_VTTX | USB_EP_VTRX;  // reserve CTR bits
+  ep_reg &= USB_CHEP_REG_MASK | EP_STAT_MASK(dir) | EP_DTOG_MASK(dir);
 
   if (!ep_is_iso(ep_reg)) {
     ep_change_status(&ep_reg, dir, EP_STAT_NAK);
