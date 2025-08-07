@@ -8,10 +8,7 @@
 //--------------------------------------------------------------------+
 
 // Deinit device stack on roothub port
-bool tud_deinit(uint8_t rhport);
-
-// Check if device stack is already initialized
-bool tud_inited(void);
+bool tud_deinit();
 
 // Task function should be called in main/rtos loop, extended version of tud_task()
 // - timeout_ms: millisecond to wait, zero = no wait, 0xFFFFFFFF = wait forever
@@ -55,10 +52,10 @@ bool tud_connect(void);
 // Carry out Data and Status stage of control transfer
 // - If len = 0, it is equivalent to sending status only
 // - If len > wLength : it will be truncated
-bool tud_control_xfer(uint8_t rhport, tusb_control_request_t const* request, void* buffer, uint16_t len);
+bool tud_control_xfer(tusb_control_request_t const* request, void* buffer, uint16_t len);
 
 // Send STATUS (zero length) packet
-bool tud_control_status(uint8_t rhport, tusb_control_request_t const* request);
+bool tud_control_status(tusb_control_request_t const* request);
 
 //--------------------------------------------------------------------+
 // Application Callbacks
@@ -105,9 +102,9 @@ void tud_suspend_cb(bool remote_wakeup_en);
 void tud_resume_cb(void);
 
 // Invoked when there is a new usb event, which need to be processed by tud_task()/tud_task_ext()
-void tud_event_hook_cb(uint8_t rhport, uint32_t eventid, bool in_isr);
+void tud_event_hook_cb(uint32_t eventid, bool in_isr);
 
 // Invoked when received control request with VENDOR TYPE
-bool tud_vendor_control_xfer_cb(uint8_t rhport, uint8_t stage, tusb_control_request_t const* request);
+bool tud_vendor_control_xfer_cb(uint8_t stage, tusb_control_request_t const* request);
 
 #endif /* _TUSB_USBD_H_ */

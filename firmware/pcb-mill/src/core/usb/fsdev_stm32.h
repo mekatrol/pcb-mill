@@ -35,9 +35,7 @@
 #define USB_ISTR_ALL_EVENTS (USB_ISTR_PMAOVR | USB_ISTR_ERR | USB_ISTR_WKUP | USB_ISTR_SUSP | \
                              USB_ISTR_RESET | USB_ISTR_SOF | USB_ISTR_ESOF | USB_ISTR_L1REQ_FORCED)
 
-void dcd_int_enable(uint8_t rhport) {
-  (void)rhport;
-
+void dcd_int_enable() {
   // forces write to RAM before allowing ISR to execute
   __DSB();
   __ISB();
@@ -45,19 +43,15 @@ void dcd_int_enable(uint8_t rhport) {
   NVIC_EnableIRQ(USB_UCPD1_2_IRQn);
 }
 
-void dcd_int_disable(uint8_t rhport) {
-  (void)rhport;
-
+void dcd_int_disable() {
   NVIC_DisableIRQ(USB_UCPD1_2_IRQn);
 }
 
-void dcd_disconnect(uint8_t rhport) {
-  (void)rhport;
+void dcd_disconnect() {
   USB->BCDR &= ~(USB_BCDR_DPPU);
 }
 
-void dcd_connect(uint8_t rhport) {
-  (void)rhport;
+void dcd_connect() {
   USB->BCDR |= USB_BCDR_DPPU;
 }
 

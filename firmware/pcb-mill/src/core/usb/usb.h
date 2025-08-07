@@ -67,6 +67,6 @@ __attribute__((always_inline)) static inline uint16_t tu_unaligned_read16(const 
   return ua16->val;
 }
 
-bool tud_rhport_init(uint8_t rhport);
+bool tud_rhport_init();
 
 #endif  // __USB_H__
