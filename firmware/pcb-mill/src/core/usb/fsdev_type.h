@@ -1,7 +1,7 @@
 #ifndef TUSB_FSDEV_TYPE_H
 #define TUSB_FSDEV_TYPE_H
 
-#include "stdint.h"
+#include <stdint.h>
 
 #include "stm32g0xx.h"
 
