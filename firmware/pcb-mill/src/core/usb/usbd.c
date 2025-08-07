@@ -83,10 +83,10 @@ typedef struct {
   uint8_t speed;
   volatile uint8_t sof_consumer;
 
-  uint8_t itf2drv[CFG_TUD_INTERFACE_MAX];    // map interface number to driver (0xff is invalid)
-  uint8_t ep2drv[CFG_TUD_ENDPPOINT_MAX][2];  // map endpoint to driver ( 0xff is invalid ), can use only 4-bit each
+  uint8_t itf2drv[CFG_TUD_INTERFACE_MAX];  // map interface number to driver (0xff is invalid)
+  uint8_t ep2drv[USB_ENDPOINT_MAX][2];     // map endpoint to driver ( 0xff is invalid ), can use only 4-bit each
 
-  tu_edpt_state_t ep_status[CFG_TUD_ENDPPOINT_MAX][2];
+  tu_edpt_state_t ep_status[USB_ENDPOINT_MAX][2];
 
 } usbd_device_t;
 
@@ -840,7 +840,7 @@ void usbd_defer_func(osal_task_func_t func, void* param, bool in_isr) {
 //--------------------------------------------------------------------+
 
 bool usbd_edpt_open(tusb_desc_endpoint_t const* desc_ep) {
-  if (tu_edpt_number(desc_ep->bEndpointAddress) >= CFG_TUD_ENDPPOINT_MAX) {
+  if (tu_edpt_number(desc_ep->bEndpointAddress) >= USB_ENDPOINT_MAX) {
     return false;
   }
 

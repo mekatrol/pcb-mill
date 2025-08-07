@@ -9,14 +9,13 @@
 #include <string.h>
 #include <stdio.h>
 
-// Tinyusb Common Headers
+#include "stm32g0xx.h"
 #include "tusb_option.h"
 #include "tusb_types.h"
 
 #define USB ((USB_DRD_TypeDef *)USB_BASE)
 
-#define CFG_TUD_ENDPPOINT_MAX 8
-
+#define USB_ENDPOINT_MAX 8
 #define CFG_TUD_ENDPOINT0_SIZE 64
 
 // CDC buffer sizes
@@ -38,6 +37,31 @@
 #define BIT_MASK(n) (1UL << (n))
 
 #define MIN(_x, _y) (((_x) < (_y)) ? (_x) : (_y))
+
+enum {
+  ENDPOINT_TX_BUFFER = 0,
+  ENDPOINT_RX_BUFFER = 1
+};
+
+// This is the same as USB_DRD_PMABuffDescTypeDef
+typedef struct
+{
+  union {
+    struct {
+      volatile uint32_t count_addr;
+    } buffer[2];
+
+    volatile uint32_t TXBD;
+    volatile uint32_t RXBD;
+  };
+} usbram_register_t;
+
+// Buffer Table is located in Packet Memory Area (PMA)
+typedef struct {
+  usbram_register_t endpoint[USB_ENDPOINT_MAX];
+} usbram_register_map_t;
+
+#define USBRAM_REGSITER ((volatile usbram_register_map_t *)(USB_DRD_PMAADDR))
 
 __attribute__((always_inline)) static inline bool bit_set_test(uint32_t value, uint32_t pos) { return (value & BIT_MASK(pos)) ? true : false; }
 __attribute__((always_inline)) static inline uint16_t min_u16(uint16_t x, uint16_t y) { return (x < y) ? x : y; }

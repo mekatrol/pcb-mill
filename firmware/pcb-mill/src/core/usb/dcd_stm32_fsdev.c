@@ -25,8 +25,8 @@ typedef struct {
   bool allocated[2];
 } ep_alloc_t;
 
-static xfer_ctl_t xfer_status[CFG_TUD_ENDPPOINT_MAX][2];
-static ep_alloc_t ep_alloc_status[CFG_TUD_ENDPPOINT_MAX];
+static xfer_ctl_t xfer_status[USB_ENDPOINT_MAX][2];
+static ep_alloc_t ep_alloc_status[USB_ENDPOINT_MAX];
 static uint8_t remoteWakeCountdown;  // When wake is requested
 
 //--------------------------------------------------------------------+
@@ -51,7 +51,7 @@ static bool dcd_read_packet_memory_ff(tu_fifo_t *ff, uint16_t src, uint16_t wNBy
 static void edpt0_open();
 
 __attribute__((always_inline)) static inline void edpt0_prepare_setup(void) {
-  btable_set_rx_bufsize(0, BTABLE_BUF_RX, 8);
+  usb_pma_set_rx_bufsize(0, ENDPOINT_RX_BUFFER, 8);
 }
 
 //--------------------------------------------------------------------+
@@ -73,7 +73,7 @@ void dcd_init() {
   USB->ISTR = 0;  // Clear pending interrupts
 
   // Reset endpoints to disabled
-  for (uint32_t i = 0; i < CFG_TUD_ENDPPOINT_MAX; i++) {
+  for (uint32_t i = 0; i < USB_ENDPOINT_MAX; i++) {
     // This doesn't clear all bits since some bits are "toggle", but does set the type to DISABLED.
     ep_write(i, 0u, false);
   }
@@ -113,7 +113,7 @@ void dcd_remote_wakeup() {
 static void handle_bus_reset() {
   USB->DADDR = 0u;  // disable USB Function
 
-  for (uint32_t i = 0; i < CFG_TUD_ENDPPOINT_MAX; i++) {
+  for (uint32_t i = 0; i < USB_ENDPOINT_MAX; i++) {
     // Clear EP allocation status
     ep_alloc_status[i].ep_num = 0xFF;
     ep_alloc_status[i].ep_type = 0xFF;
@@ -122,7 +122,7 @@ static void handle_bus_reset() {
   }
 
   // Reset PMA allocation (to end of EP buffer table)
-  ep_buf_ptr = FSDEV_BTABLE_BASE + 8 * CFG_TUD_ENDPPOINT_MAX;
+  ep_buf_ptr = 8 * USB_ENDPOINT_MAX;
 
   edpt0_open();  // open control endpoint (both IN & OUT)
 
@@ -145,7 +145,7 @@ static void handle_ctr_tx(uint32_t ep_id) {
     }
     xfer->iso_in_sending = false;
     uint8_t buf_id = (ep_reg & USB_EP_DTOG_TX) ? 0 : 1;
-    btable_set_count(ep_id, buf_id, 0);
+    usb_pma_set_count(ep_id, buf_id, 0);
   }
 
   if (xfer->total_len != xfer->queued_len) {
@@ -156,8 +156,8 @@ static void handle_ctr_tx(uint32_t ep_id) {
 }
 
 static void handle_ctr_setup(uint32_t ep_id) {
-  uint16_t rx_count = btable_get_count(ep_id, BTABLE_BUF_RX);
-  uint16_t rx_addr = btable_get_addr(ep_id, BTABLE_BUF_RX);
+  uint16_t rx_count = usb_pma_get_count(ep_id, ENDPOINT_RX_BUFFER);
+  uint16_t rx_addr = usb_pma_get_addr(ep_id, ENDPOINT_RX_BUFFER);
   uint8_t setup_packet[8] __attribute__((aligned(4)));
 
   dcd_read_packet_memory(setup_packet, rx_addr, rx_count);
@@ -186,10 +186,10 @@ static void handle_ctr_rx(uint32_t ep_id) {
   if (is_iso) {
     buf_id = (ep_reg & USB_EP_DTOG_RX) ? 0 : 1;  // ISO are double buffered
   } else {
-    buf_id = BTABLE_BUF_RX;
+    buf_id = ENDPOINT_RX_BUFFER;
   }
-  uint16_t const rx_count = btable_get_count(ep_id, buf_id);
-  uint16_t pma_addr = (uint16_t)btable_get_addr(ep_id, buf_id);
+  uint16_t const rx_count = usb_pma_get_count(ep_id, buf_id);
+  uint16_t pma_addr = (uint16_t)usb_pma_get_addr(ep_id, buf_id);
 
   if (xfer->ff) {
     dcd_read_packet_memory_ff(xfer->ff, pma_addr, rx_count);
@@ -202,7 +202,7 @@ static void handle_ctr_rx(uint32_t ep_id) {
     // all bytes received or short packet
 
     // For ch32v203: reset rx bufsize to mps to prevent race condition to cause PMAOVR (occurs with msc write10)
-    btable_set_rx_bufsize(ep_id, BTABLE_BUF_RX, xfer->max_packet_size);
+    usb_pma_set_rx_bufsize(ep_id, ENDPOINT_RX_BUFFER, xfer->max_packet_size);
 
     dcd_event_xfer_complete(ep_num, xfer->queued_len, XFER_RESULT_SUCCESS, true);
 
@@ -213,7 +213,7 @@ static void handle_ctr_rx(uint32_t ep_id) {
     // Set endpoint active again for receiving more data. Note that isochronous endpoints stay active always
     if (!is_iso) {
       uint16_t const cnt = min_u16(xfer->total_len - xfer->queued_len, xfer->max_packet_size);
-      btable_set_rx_bufsize(ep_id, BTABLE_BUF_RX, cnt);
+      usb_pma_set_rx_bufsize(ep_id, ENDPOINT_RX_BUFFER, cnt);
     }
     ep_reg &= USB_CHEP_REG_MASK | EP_STAT_MASK(TUSB_DIR_OUT);  // will change RX Status, reserved other toggle bits
     ep_change_status(&ep_reg, TUSB_DIR_OUT, EP_STAT_VALID);
@@ -349,7 +349,7 @@ static uint8_t dcd_ep_alloc(uint8_t ep_addr, uint8_t ep_type) {
   uint8_t const epnum = tu_edpt_number(ep_addr);
   uint8_t const dir = tu_edpt_dir(ep_addr);
 
-  for (uint8_t i = 0; i < CFG_TUD_ENDPPOINT_MAX; i++) {
+  for (uint8_t i = 0; i < USB_ENDPOINT_MAX; i++) {
     // Check if already allocated
     if (ep_alloc_status[i].allocated[dir] &&
         ep_alloc_status[i].ep_type == ep_type &&
@@ -392,8 +392,8 @@ void edpt0_open() {
   uint16_t pma_addr0 = dcd_pma_alloc(CFG_TUD_ENDPOINT0_SIZE, false);
   uint16_t pma_addr1 = dcd_pma_alloc(CFG_TUD_ENDPOINT0_SIZE, false);
 
-  btable_set_addr(0, BTABLE_BUF_RX, pma_addr0);
-  btable_set_addr(0, BTABLE_BUF_TX, pma_addr1);
+  usb_pma_set_addr(0, ENDPOINT_RX_BUFFER, pma_addr0);
+  usb_pma_set_addr(0, ENDPOINT_TX_BUFFER, pma_addr1);
 
   uint32_t ep_reg = ep_read(0) & ~USB_CHEP_REG_MASK;  // only get toggle bits
   ep_reg |= USB_EP_CONTROL;
@@ -411,7 +411,7 @@ bool dcd_edpt_open(tusb_desc_endpoint_t const *desc_ep) {
   tusb_dir_t const dir = tu_edpt_dir(ep_addr);
   const uint16_t packet_size = tu_edpt_packet_size(desc_ep);
   uint8_t const ep_idx = dcd_ep_alloc(ep_addr, desc_ep->bmAttributes.xfer);
-  if (ep_idx >= CFG_TUD_ENDPPOINT_MAX) {
+  if (ep_idx >= USB_ENDPOINT_MAX) {
     return false;
   }
 
@@ -434,7 +434,7 @@ bool dcd_edpt_open(tusb_desc_endpoint_t const *desc_ep) {
 
   /* Create a packet memory buffer area. */
   uint16_t pma_addr = dcd_pma_alloc(packet_size, false);
-  btable_set_addr(ep_idx, dir == TUSB_DIR_IN ? BTABLE_BUF_TX : BTABLE_BUF_RX, pma_addr);
+  usb_pma_set_addr(ep_idx, dir == TUSB_DIR_IN ? ENDPOINT_TX_BUFFER : ENDPOINT_RX_BUFFER, pma_addr);
 
   xfer_ctl_t *xfer = xfer_ctl_ptr(ep_num, dir);
   xfer->max_packet_size = packet_size;
@@ -458,7 +458,7 @@ bool dcd_edpt_open(tusb_desc_endpoint_t const *desc_ep) {
 void dcd_edpt_close_all() {
   NVIC_DisableIRQ(USB_UCPD1_2_IRQn);
 
-  for (uint32_t i = 1; i < CFG_TUD_ENDPPOINT_MAX; i++) {
+  for (uint32_t i = 1; i < USB_ENDPOINT_MAX; i++) {
     // Reset endpoint
     ep_write(i, 0, false);
     // Clear EP allocation status
@@ -471,7 +471,7 @@ void dcd_edpt_close_all() {
   NVIC_EnableIRQ(USB_UCPD1_2_IRQn);
 
   // Reset PMA allocation
-  ep_buf_ptr = FSDEV_BTABLE_BASE + 8 * CFG_TUD_ENDPPOINT_MAX + 2 * CFG_TUD_ENDPOINT0_SIZE;
+  ep_buf_ptr = 8 * USB_ENDPOINT_MAX + 2 * CFG_TUD_ENDPOINT0_SIZE;
 }
 
 bool dcd_edpt_iso_alloc(uint8_t ep_addr, uint16_t largest_packet_size) {
@@ -489,8 +489,8 @@ bool dcd_edpt_iso_alloc(uint8_t ep_addr, uint16_t largest_packet_size) {
   uint16_t pma_addr2 = pma_addr;
 #endif
 
-  btable_set_addr(ep_idx, 0, pma_addr);
-  btable_set_addr(ep_idx, 1, pma_addr2);
+  usb_pma_set_addr(ep_idx, 0, pma_addr);
+  usb_pma_set_addr(ep_idx, 1, pma_addr2);
 
   xfer_ctl_t *xfer = xfer_ctl_ptr(ep_num, dir);
   xfer->ep_idx = ep_idx;
@@ -531,9 +531,9 @@ static void dcd_transmit_packet(xfer_ctl_t *xfer, uint16_t ep_ix) {
   if (is_iso) {
     buf_id = (ep_reg & USB_EP_DTOG_TX) ? 1 : 0;
   } else {
-    buf_id = BTABLE_BUF_TX;
+    buf_id = ENDPOINT_TX_BUFFER;
   }
-  uint16_t addr_ptr = (uint16_t)btable_get_addr(ep_ix, buf_id);
+  uint16_t addr_ptr = (uint16_t)usb_pma_get_addr(ep_ix, buf_id);
 
   if (xfer->ff) {
     dcd_write_packet_memory_ff(xfer->ff, addr_ptr, len);
@@ -542,7 +542,7 @@ static void dcd_transmit_packet(xfer_ctl_t *xfer, uint16_t ep_ix) {
   }
   xfer->queued_len += len;
 
-  btable_set_count(ep_ix, buf_id, len);
+  usb_pma_set_count(ep_ix, buf_id, len);
   ep_change_status(&ep_reg, TUSB_DIR_IN, EP_STAT_VALID);
 
   if (is_iso) {
@@ -565,10 +565,10 @@ static bool edpt_xfer(uint8_t ep_num, tusb_dir_t dir) {
     uint16_t cnt = min_u16(xfer->total_len, xfer->max_packet_size);
 
     if (ep_is_iso(ep_reg)) {
-      btable_set_rx_bufsize(ep_idx, 0, cnt);
-      btable_set_rx_bufsize(ep_idx, 1, cnt);
+      usb_pma_set_rx_bufsize(ep_idx, 0, cnt);
+      usb_pma_set_rx_bufsize(ep_idx, 1, cnt);
     } else {
-      btable_set_rx_bufsize(ep_idx, BTABLE_BUF_RX, cnt);
+      usb_pma_set_rx_bufsize(ep_idx, ENDPOINT_RX_BUFFER, cnt);
     }
 
     ep_change_status(&ep_reg, dir, EP_STAT_VALID);
@@ -643,7 +643,7 @@ static bool dcd_write_packet_memory(uint16_t dst, const void *__restrict src, ui
   if (nbytes == 0) return true;
   uint32_t n_write = nbytes / sizeof(uint32_t);
 
-  fsdev_pma_buf_t *pma_buf = PMA_BUF_AT(dst);
+  usb_pma_buf_t *pma_buf = USB_PMA_BUF_AT(dst);
   const uint8_t *src8 = src;
 
   while (n_write--) {
@@ -672,7 +672,7 @@ static bool dcd_read_packet_memory(void *__restrict dst, uint16_t src, uint16_t 
   if (nbytes == 0) return true;
   uint32_t n_read = nbytes / sizeof(uint32_t);
 
-  fsdev_pma_buf_t *pma_buf = PMA_BUF_AT(src);
+  usb_pma_buf_t *pma_buf = USB_PMA_BUF_AT(src);
   uint8_t *dst8 = (uint8_t *)dst;
 
   while (n_read--) {
