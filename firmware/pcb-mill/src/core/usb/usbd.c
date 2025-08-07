@@ -404,7 +404,7 @@ void tud_task_ext(uint32_t timeout_ms, bool in_isr) {
         break;
 
       case DCD_EVENT_SOF:
-        if (tu_bit_test(_usbd_dev.sof_consumer, SOF_CONSUMER_USER)) {
+        if (bit_set_test(_usbd_dev.sof_consumer, SOF_CONSUMER_USER)) {
           tud_sof_cb(event.sof.frame_count);
         }
         break;
@@ -585,10 +585,10 @@ static bool process_control_request(uint8_t rhport, tusb_control_request_t const
 
     //------------- Endpoint Request -------------//
     case TUSB_REQ_RCPT_ENDPOINT: {
-      uint8_t const ep_addr = tu_u16_low(p_request->wIndex);
+      uint8_t const ep_addr = U16_LOW(p_request->wIndex);
       uint8_t const ep_num = tu_edpt_number(ep_addr);
 
-      if (ep_num >= TU_ARRAY_SIZE(_usbd_dev.ep2drv)) {
+      if (ep_num >= ARRAY_SIZE(_usbd_dev.ep2drv)) {
         return false;
       }
 
@@ -712,8 +712,8 @@ static bool process_set_config(uint8_t rhport, uint8_t cfg_num) {
 
 // return descriptor's buffer and update desc_len
 static bool process_get_descriptor(uint8_t rhport, tusb_control_request_t const* p_request) {
-  tusb_desc_type_t const desc_type = (tusb_desc_type_t)tu_u16_high(p_request->wValue);
-  uint8_t const desc_index = tu_u16_low(p_request->wValue);
+  tusb_desc_type_t const desc_type = (tusb_desc_type_t)U16_HIGH(p_request->wValue);
+  uint8_t const desc_index = U16_LOW(p_request->wValue);
 
   switch (desc_type) {
     case TUSB_DESC_DEVICE: {
@@ -850,7 +850,7 @@ void dcd_event_handler(dcd_event_t const* event, bool in_isr) {
         queue_event(&event_resume, in_isr);
       }
 
-      if (tu_bit_test(_usbd_dev.sof_consumer, SOF_CONSUMER_USER)) {
+      if (bit_set_test(_usbd_dev.sof_consumer, SOF_CONSUMER_USER)) {
         dcd_event_t const event_sof = {.rhport = event->rhport, .event_id = DCD_EVENT_SOF, .sof.frame_count = event->sof.frame_count};
         queue_event(&event_sof, in_isr);
       }

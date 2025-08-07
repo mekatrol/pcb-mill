@@ -62,7 +62,7 @@ static struct {
     uint8_t buf[CFG_TUD_ENDPOINT0_SIZE];
 
     __attribute__((aligned(CFG_TUD_MEM_DCACHE_ENABLE_DEFAULT ? CFG_TUSB_MEM_DCACHE_LINE_SIZE : 1)))
-    uint8_t buf_dcache_padding[(CFG_TUD_MEM_DCACHE_ENABLE_DEFAULT ? (TU_DIV_CEIL(CFG_TUD_ENDPOINT0_SIZE, CFG_TUSB_MEM_DCACHE_LINE_SIZE) *
+    uint8_t buf_dcache_padding[(CFG_TUD_MEM_DCACHE_ENABLE_DEFAULT ? (DIV_CEIL(CFG_TUD_ENDPOINT0_SIZE, CFG_TUSB_MEM_DCACHE_LINE_SIZE) *
                                                                      CFG_TUSB_MEM_DCACHE_LINE_SIZE)
                                                                   : (CFG_TUD_ENDPOINT0_SIZE))];
   };
@@ -93,7 +93,7 @@ bool tud_control_status(uint8_t rhport, const tusb_control_request_t* request) {
 // Each transaction has up to Endpoint0's max packet size.
 // This function can also transfer an zero-length packet
 static bool data_stage_xact(uint8_t rhport) {
-  const uint16_t xact_len = tu_min16(_ctrl_xfer.data_len - _ctrl_xfer.total_xferred, CFG_TUD_ENDPOINT0_SIZE);
+  const uint16_t xact_len = min_u16(_ctrl_xfer.data_len - _ctrl_xfer.total_xferred, CFG_TUD_ENDPOINT0_SIZE);
   uint8_t ep_addr = EDPT_CTRL_OUT;
 
   if (_ctrl_xfer.request.bmRequestType_bit.direction == TUSB_DIR_IN) {
@@ -116,7 +116,7 @@ bool tud_control_xfer(uint8_t rhport, const tusb_control_request_t* request, voi
   _ctrl_xfer.request = (*request);
   _ctrl_xfer.buffer = (uint8_t*)buffer;
   _ctrl_xfer.total_xferred = 0U;
-  _ctrl_xfer.data_len = tu_min16(len, request->wLength);
+  _ctrl_xfer.data_len = min_u16(len, request->wLength);
 
   if (request->wLength > 0U) {
     if (_ctrl_xfer.data_len > 0U) {

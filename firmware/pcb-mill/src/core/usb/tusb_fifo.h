@@ -37,7 +37,7 @@
 // read pointers can be updated from within a DMA ISR. Overflows are detectable
 // within a certain number (see tu_fifo_overflow()).
 
-#include "tusb_common.h"
+#include "usb.h"
 #include "osal.h"
 
 /* Write/Read index is always in the range of:

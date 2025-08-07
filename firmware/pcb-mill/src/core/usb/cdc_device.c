@@ -61,7 +61,7 @@ typedef struct {
     uint8_t epout[CFG_TUD_ENDPOINT0_SIZE];
 
     __attribute__((aligned(CFG_TUD_MEM_DCACHE_ENABLE_DEFAULT ? CFG_TUSB_MEM_DCACHE_LINE_SIZE : 1)))
-    uint8_t epout_dcache_padding[(CFG_TUD_MEM_DCACHE_ENABLE_DEFAULT ? (TU_DIV_CEIL(CFG_TUD_ENDPOINT0_SIZE, CFG_TUSB_MEM_DCACHE_LINE_SIZE) *
+    uint8_t epout_dcache_padding[(CFG_TUD_MEM_DCACHE_ENABLE_DEFAULT ? (DIV_CEIL(CFG_TUD_ENDPOINT0_SIZE, CFG_TUSB_MEM_DCACHE_LINE_SIZE) *
                                                                        CFG_TUSB_MEM_DCACHE_LINE_SIZE)
                                                                     : CFG_TUD_ENDPOINT0_SIZE)];
   };
@@ -71,7 +71,7 @@ typedef struct {
     uint8_t epin[CFG_TUD_ENDPOINT0_SIZE];
 
     __attribute__((aligned(CFG_TUD_MEM_DCACHE_ENABLE_DEFAULT ? CFG_TUSB_MEM_DCACHE_LINE_SIZE : 1)))
-    uint8_t epin_dcache_padding[(CFG_TUD_MEM_DCACHE_ENABLE_DEFAULT ? (TU_DIV_CEIL(CFG_TUD_ENDPOINT0_SIZE, CFG_TUSB_MEM_DCACHE_LINE_SIZE) *
+    uint8_t epin_dcache_padding[(CFG_TUD_MEM_DCACHE_ENABLE_DEFAULT ? (DIV_CEIL(CFG_TUD_ENDPOINT0_SIZE, CFG_TUSB_MEM_DCACHE_LINE_SIZE) *
                                                                       CFG_TUSB_MEM_DCACHE_LINE_SIZE)
                                                                    : CFG_TUD_ENDPOINT0_SIZE)];
   };
@@ -138,7 +138,7 @@ bool tud_cdc_n_ready() {
 
 bool tud_cdc_n_connected() {
   // DTR (bit 0) active  is considered as connected
-  return tud_ready() && tu_bit_test(_cdcd_itf.line_state, 0);
+  return tud_ready() && bit_set_test(_cdcd_itf.line_state, 0);
 }
 
 uint8_t tud_cdc_n_get_line_state() {
@@ -162,7 +162,7 @@ uint32_t tud_cdc_n_available() {
 
 uint32_t tud_cdc_n_read(void* buffer, uint32_t bufsize) {
   cdcd_interface_t* p_cdc = &_cdcd_itf;
-  uint32_t num_read = tu_fifo_read_n(&p_cdc->rx_ff, buffer, (uint16_t)TU_MIN(bufsize, UINT16_MAX));
+  uint32_t num_read = tu_fifo_read_n(&p_cdc->rx_ff, buffer, (uint16_t)MIN(bufsize, UINT16_MAX));
   _prep_out_transaction();
   return num_read;
 }
@@ -182,7 +182,7 @@ void tud_cdc_n_read_flush() {
 //--------------------------------------------------------------------+
 uint32_t tud_cdc_n_write(const void* buffer, uint32_t bufsize) {
   cdcd_interface_t* p_cdc = &_cdcd_itf;
-  uint16_t wr_count = tu_fifo_write_n(&p_cdc->tx_ff, buffer, (uint16_t)TU_MIN(bufsize, UINT16_MAX));
+  uint16_t wr_count = tu_fifo_write_n(&p_cdc->tx_ff, buffer, (uint16_t)MIN(bufsize, UINT16_MAX));
 
   // flush if queue more than packet size
   if (tu_fifo_count(&p_cdc->tx_ff) >= CFG_TUD_CDC_TX_BUFSIZE) {
@@ -250,12 +250,12 @@ void cdcd_init() {
   p_cdc->line_coding.data_bits = 8;
 
   // Config RX fifo
-  tu_fifo_config(&p_cdc->rx_ff, p_cdc->rx_ff_buf, TU_ARRAY_SIZE(p_cdc->rx_ff_buf), 1, false);
+  tu_fifo_config(&p_cdc->rx_ff, p_cdc->rx_ff_buf, ARRAY_SIZE(p_cdc->rx_ff_buf), 1, false);
 
   // TX fifo can be configured to change to overwritable if not connected (DTR bit not set). Without DTR we do not
   // know if data is actually polled by terminal. This way the most current data is prioritized.
   // Default: is overwritable
-  tu_fifo_config(&p_cdc->tx_ff, p_cdc->tx_ff_buf, TU_ARRAY_SIZE(p_cdc->tx_ff_buf), 1, _cdcd_cfg.tx_overwritabe_if_not_connected);
+  tu_fifo_config(&p_cdc->tx_ff, p_cdc->tx_ff_buf, ARRAY_SIZE(p_cdc->tx_ff_buf), 1, _cdcd_cfg.tx_overwritabe_if_not_connected);
 }
 
 bool cdcd_deinit(void) {
@@ -374,8 +374,8 @@ bool cdcd_control_xfer_cb(uint8_t rhport, uint8_t stage, const tusb_control_requ
         //        This signal corresponds to V.24 signal 108/2 and RS-232 signal DTR (Data Terminal Ready)
         // Bit 1: Carrier control for half-duplex modems.
         //        This signal corresponds to V.24 signal 105 and RS-232 signal RTS (Request to Send)
-        bool const dtr = tu_bit_test(request->wValue, 0);
-        bool const rts = tu_bit_test(request->wValue, 1);
+        bool const dtr = bit_set_test(request->wValue, 0);
+        bool const rts = bit_set_test(request->wValue, 1);
 
         p_cdc->line_state = (uint8_t)request->wValue;
 

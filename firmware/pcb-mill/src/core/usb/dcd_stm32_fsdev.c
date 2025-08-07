@@ -347,7 +347,7 @@ static void handle_ctr_rx(uint32_t ep_id) {
   } else {
     // Set endpoint active again for receiving more data. Note that isochronous endpoints stay active always
     if (!is_iso) {
-      uint16_t const cnt = tu_min16(xfer->total_len - xfer->queued_len, xfer->max_packet_size);
+      uint16_t const cnt = min_u16(xfer->total_len - xfer->queued_len, xfer->max_packet_size);
       btable_set_rx_bufsize(ep_id, BTABLE_BUF_RX, cnt);
     }
     ep_reg &= USB_EPREG_MASK | EP_STAT_MASK(TUSB_DIR_OUT);  // will change RX Status, reserved other toggle bits
@@ -684,7 +684,7 @@ bool dcd_edpt_iso_activate(uint8_t rhport, tusb_desc_endpoint_t const *desc_ep) 
 
 // Currently, single-buffered, and only 64 bytes at a time (max)
 static void dcd_transmit_packet(xfer_ctl_t *xfer, uint16_t ep_ix) {
-  uint16_t len = tu_min16(xfer->total_len - xfer->queued_len, xfer->max_packet_size);
+  uint16_t len = min_u16(xfer->total_len - xfer->queued_len, xfer->max_packet_size);
   uint32_t ep_reg = ep_read(ep_ix) | USB_EP_CTR_TX | USB_EP_CTR_RX;  // reserve CTR
 
   bool const is_iso = ep_is_iso(ep_reg);
@@ -726,7 +726,7 @@ static bool edpt_xfer(uint8_t rhport, uint8_t ep_num, tusb_dir_t dir) {
     uint32_t ep_reg = ep_read(ep_idx) | USB_EP_CTR_TX | USB_EP_CTR_RX;  // reserve CTR
     ep_reg &= USB_EPREG_MASK | EP_STAT_MASK(dir);
 
-    uint16_t cnt = tu_min16(xfer->total_len, xfer->max_packet_size);
+    uint16_t cnt = min_u16(xfer->total_len, xfer->max_packet_size);
 
     if (ep_is_iso(ep_reg)) {
       btable_set_rx_bufsize(ep_idx, 0, cnt);
@@ -815,7 +815,7 @@ static bool dcd_write_packet_memory(uint16_t dst, const void *__restrict src, ui
   const uint8_t *src8 = src;
 
   while (n_write--) {
-    pma_buf->value = fsdevbus_unaligned_read(src8);
+    pma_buf->value = tu_unaligned_read32(src8);
     src8 += FSDEV_BUS_SIZE;
     pma_buf++;
   }
@@ -844,7 +844,7 @@ static bool dcd_read_packet_memory(void *__restrict dst, uint16_t src, uint16_t 
   uint8_t *dst8 = (uint8_t *)dst;
 
   while (n_read--) {
-    fsdevbus_unaligned_write(dst8, (fsdev_bus_t)pma_buf->value);
+    tu_unaligned_write32(dst8, (fsdev_bus_t)pma_buf->value);
     dst8 += FSDEV_BUS_SIZE;
     pma_buf++;
   }
@@ -870,8 +870,8 @@ static bool dcd_write_packet_memory_ff(tu_fifo_t *ff, uint16_t dst, uint16_t wNB
   tu_fifo_buffer_info_t info;
   tu_fifo_get_read_info(ff, &info);
 
-  uint16_t cnt_lin = tu_min16(wNBytes, info.len_lin);
-  uint16_t cnt_wrap = tu_min16(wNBytes - cnt_lin, info.len_wrap);
+  uint16_t cnt_lin = min_u16(wNBytes, info.len_lin);
+  uint16_t cnt_wrap = min_u16(wNBytes - cnt_lin, info.len_wrap);
   uint16_t const cnt_total = cnt_lin + cnt_wrap;
 
   // We want to read from the FIFO and write it into the PMA, if LIN part is ODD and has WRAPPED part,
@@ -920,8 +920,8 @@ static bool dcd_read_packet_memory_ff(tu_fifo_t *ff, uint16_t src, uint16_t wNBy
   tu_fifo_buffer_info_t info;
   tu_fifo_get_write_info(ff, &info);  // We want to read from the FIFO
 
-  uint16_t cnt_lin = tu_min16(wNBytes, info.len_lin);
-  uint16_t cnt_wrap = tu_min16(wNBytes - cnt_lin, info.len_wrap);
+  uint16_t cnt_lin = min_u16(wNBytes, info.len_lin);
+  uint16_t cnt_wrap = min_u16(wNBytes - cnt_lin, info.len_wrap);
   uint16_t cnt_total = cnt_lin + cnt_wrap;
 
   // We want to read from the FIFO and write it into the PMA, if LIN part is ODD and has WRAPPED part,

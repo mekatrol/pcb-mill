@@ -1,7 +1,7 @@
 #ifndef _TUSB_OSAL_H_
 #define _TUSB_OSAL_H_
 
-#include "tusb_common.h"
+#include "usb.h"
 #include "tusb_fifo.h"
 
 typedef void (*osal_task_func_t)(void*);

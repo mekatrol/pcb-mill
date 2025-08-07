@@ -4,7 +4,9 @@
     "tusb.h": "c",
     "tusb_private.h": "c",
     "usb.h": "c",
-    "tusb_compiler.h": "c"
+    "tusb_compiler.h": "c",
+    "usbd.h": "c",
+    "dcd.h": "c"
   },
   "cortex-debug.variableUseNaturalFormat": false
 }

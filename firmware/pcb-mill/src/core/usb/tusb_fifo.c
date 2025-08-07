@@ -146,7 +146,7 @@ static void _ff_pull_n(tu_fifo_t* f, void* app_buf, uint16_t n, uint16_t rd_ptr,
         if (rem > 0) {
           volatile uint32_t* reg_tx = (volatile uint32_t*)app_buf;
 
-          uint8_t remrem = (uint8_t)tu_min16(wrap_bytes, 4 - rem);
+          uint8_t remrem = (uint8_t)min_u16(wrap_bytes, 4 - rem);
           wrap_bytes -= remrem;
 
           uint32_t tmp32 = 0;
@@ -310,7 +310,7 @@ static uint16_t _tu_fifo_write_n(tu_fifo_t* f, const void* data, uint16_t n, tu_
   if (!f->overwritable) {
     // limit up to full
     uint16_t const remain = _ff_remaining(f->depth, wr_idx, rd_idx);
-    n = tu_min16(n, remain);
+    n = min_u16(n, remain);
   } else {
     // In over-writable mode, fifo_write() is allowed even when fifo is full. In such case,
     // oldest data in fifo i.e at read pointer data will be overwritten
@@ -394,7 +394,7 @@ static uint16_t _tu_fifo_read_n(tu_fifo_t* f, void* buffer, uint16_t n, tu_fifo_
  */
 /******************************************************************************/
 uint16_t tu_fifo_count(tu_fifo_t* f) {
-  return tu_min16(_ff_count(f->depth, f->wr_idx, f->rd_idx), f->depth);
+  return min_u16(_ff_count(f->depth, f->wr_idx, f->rd_idx), f->depth);
 }
 
 /******************************************************************************/

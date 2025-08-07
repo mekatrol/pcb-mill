@@ -1,7 +1,7 @@
 #ifndef _TUSB_CDC_H__
 #define _TUSB_CDC_H__
 
-#include "tusb_common.h"
+#include "usb.h"
 
 //--------------------------------------------------------------------+
 // CDC Communication Interface Class

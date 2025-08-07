@@ -28,51 +28,22 @@
 #ifndef TUSB_FSDEV_TYPE_H
 #define TUSB_FSDEV_TYPE_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "stdint.h"
 
-// If sharing with CAN, one can set this to be non-zero to give CAN space where it wants it
-// Both of these MUST be a multiple of 2, and are in byte units.
-#ifndef FSDEV_BTABLE_BASE
 #define FSDEV_BTABLE_BASE 0U
-#endif
-
-_Static_assert(FSDEV_BTABLE_BASE % 8 == 0, "BTABLE base must be aligned to 8 bytes");
 
 // FSDEV_PMA_SIZE is PMA buffer size in bytes.
 // - 512-byte devices, access with a stride of two words (use every other 16-bit address)
 // - 1024-byte devices, access with a stride of one word (use every 16-bit address)
 // - 2048-byte devices, access with 32-bit address
 
-// For purposes of accessing the packet
-#if FSDEV_PMA_SIZE == 512
-// 1x16 bit / word access scheme
-#define FSDEV_PMA_STRIDE 2
-#define pma_access_scheme __attribute__((aligned(4)))
-#elif FSDEV_PMA_SIZE == 1024
-// 2x16 bit / word access scheme
-#define FSDEV_PMA_STRIDE 1
-#define pma_access_scheme
-#elif FSDEV_PMA_SIZE == 2048
 // 32 bit access scheme
 #define FSDEV_BUS_32BIT
 #define FSDEV_PMA_STRIDE 1
 #define pma_access_scheme
-#endif
 
 // The fsdev_bus_t type can be used for both register and PMA access necessities
-#ifdef FSDEV_BUS_32BIT
 typedef uint32_t fsdev_bus_t;
-#define fsdevbus_unaligned_read(_addr) tu_unaligned_read32(_addr)
-#define fsdevbus_unaligned_write(_addr, _value) tu_unaligned_write32(_addr, _value)
-#else
-typedef uint16_t fsdev_bus_t;
-#define fsdevbus_unaligned_read(_addr) tu_unaligned_read16(_addr)
-#define fsdevbus_unaligned_write(_addr, _value) tu_unaligned_write16(_addr, _value)
-#endif
 
 enum {
   FSDEV_BUS_SIZE = sizeof(fsdev_bus_t),
@@ -267,11 +238,11 @@ __attribute__((always_inline)) static inline uint16_t pma_align_buffer_size(uint
   if (size > 62) {
     block_in_bytes = 32;
     *blsize = 1;
-    *num_block = tu_div_ceil(size, 32);
+    *num_block = DIV_CEIL(size, 32);
   } else {
     block_in_bytes = 2;
     *blsize = 0;
-    *num_block = tu_div_ceil(size, 2);
+    *num_block = DIV_CEIL(size, 2);
   }
 
   return (*num_block) * block_in_bytes;
@@ -293,13 +264,7 @@ __attribute__((always_inline)) static inline void btable_set_rx_bufsize(uint32_t
   uint32_t count_addr = FSDEV_BTABLE->ep32[ep_id][buf_id].count_addr;
   count_addr = (bl_nb << 16) | (count_addr & 0x0000FFFFu);
   FSDEV_BTABLE->ep32[ep_id][buf_id].count_addr = count_addr;
-#else
-  FSDEV_BTABLE->ep16[ep_id][buf_id].count = bl_nb;
 #endif
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

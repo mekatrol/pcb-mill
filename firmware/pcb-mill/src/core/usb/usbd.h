@@ -1,7 +1,7 @@
 #ifndef _TUSB_USBD_H_
 #define _TUSB_USBD_H_
 
-#include "tusb_common.h"
+#include "usb.h"
 
 //--------------------------------------------------------------------+
 // Application API
