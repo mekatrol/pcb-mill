@@ -216,11 +216,11 @@ static void usbd_reset() {
   usbd_control_reset();
 }
 
-void tud_task_ext(uint32_t timeout_ms) {
+void tud_task_ext() {
   // Loop until there is no more events in the queue
   while (1) {
     dcd_event_t event;
-    if (!osal_queue_receive(_usbd_q, &event, timeout_ms)) return;
+    if (!osal_queue_receive(_usbd_q, &event)) return;
 
     switch (event.event_id) {
       case DCD_EVENT_BUS_RESET:

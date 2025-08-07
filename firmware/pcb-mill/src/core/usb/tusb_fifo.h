@@ -101,7 +101,7 @@ typedef struct {
 
   struct __attribute__((packed)) {
     uint16_t item_size : 15;  // size of each item
-    bool overwritable : 1;    // ovwerwritable when full
+    bool overwritable : 1;    // overwritable when full
   };
 
   volatile uint16_t wr_idx;  // write index

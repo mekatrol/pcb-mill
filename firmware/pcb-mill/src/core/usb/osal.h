@@ -24,9 +24,7 @@ __attribute__((always_inline)) static inline bool osal_queue_delete(osal_queue_t
   return true;  // nothing to do
 }
 
-__attribute__((always_inline)) static inline bool osal_queue_receive(osal_queue_t qhdl, void* data, uint32_t msec) {
-  (void)msec;  // not used, always behave as msec = 0
-
+__attribute__((always_inline)) static inline bool osal_queue_receive(osal_queue_t qhdl, void* data) {
   qhdl->interrupt_set(false);
   const bool success = tu_fifo_read(&qhdl->ff, data);
   qhdl->interrupt_set(true);

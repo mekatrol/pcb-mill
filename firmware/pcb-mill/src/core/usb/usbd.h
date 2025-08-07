@@ -3,7 +3,7 @@
 
 #include "usb.h"
 
-void tud_task_ext(uint32_t timeout_ms);
+void tud_task_ext();
 
 // Get current bus speed
 tusb_speed_t tud_speed_get(void);

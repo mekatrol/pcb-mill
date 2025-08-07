@@ -22,11 +22,9 @@ typedef struct {
   tu_fifo_t rx_ff;
   tu_fifo_t tx_ff;
 
-  uint8_t rx_ff_buf[CFG_TUD_CDC_RX_BUFSIZE];
-  uint8_t tx_ff_buf[CFG_TUD_CDC_TX_BUFSIZE];
+  uint8_t rx_ff_buf[USB_ENDPOINT_RX_BUFFER_SIZE];
+  uint8_t tx_ff_buf[USB_ENDPOINT_TX_BUFFER_SIZE];
 } cdcd_interface_t;
-
-#define ITF_MEM_RESET_SIZE offsetof(cdcd_interface_t, wanted_char)
 
 typedef struct {
   union {
@@ -157,7 +155,7 @@ uint32_t tud_cdc_n_write(const void* buffer, uint32_t bufsize) {
   uint16_t wr_count = tu_fifo_write_n(&p_cdc->tx_ff, buffer, (uint16_t)MIN(bufsize, UINT16_MAX));
 
   // flush if queue more than packet size
-  if (tu_fifo_count(&p_cdc->tx_ff) >= CFG_TUD_CDC_TX_BUFSIZE) {
+  if (tu_fifo_count(&p_cdc->tx_ff) >= USB_ENDPOINT_TX_BUFFER_SIZE) {
     tud_cdc_n_write_flush();
   }
 
@@ -237,7 +235,7 @@ bool cdcd_deinit(void) {
 void cdcd_reset() {
   cdcd_interface_t* p_cdc = &_cdcd_itf;
 
-  memset(p_cdc, 0, ITF_MEM_RESET_SIZE);
+  memset(p_cdc, 0, offsetof(cdcd_interface_t, wanted_char));
   if (!_cdcd_cfg.rx_persistent) {
     tu_fifo_clear(&p_cdc->rx_ff);
   }
@@ -422,7 +420,7 @@ bool cdcd_xfer_cb(uint8_t ep_addr, xfer_result_t result, uint32_t xferred_bytes)
     if (0 == tud_cdc_n_write_flush()) {
       // If there is no data left, a ZLP should be sent if
       // xferred_bytes is multiple of EP Packet size and not zero
-      if (!tu_fifo_count(&p_cdc->tx_ff) && xferred_bytes && (0 == (xferred_bytes & (CFG_TUD_CDC_TX_BUFSIZE - 1)))) {
+      if (!tu_fifo_count(&p_cdc->tx_ff) && xferred_bytes && (0 == (xferred_bytes & (USB_ENDPOINT_TX_BUFFER_SIZE - 1)))) {
         if (usbd_edpt_claim(p_cdc->ep_in)) {
           if (!usbd_edpt_xfer(p_cdc->ep_in, NULL, 0)) {
             return false;
