@@ -4,7 +4,6 @@
 
 #include "stm32g0xx.h"
 #define FSDEV_PMA_SIZE (2048u)
-#define USB USB_DRD_FS
 
 #define USB_EP_CTR_RX USB_EP_VTRX
 #define USB_EP_CTR_TX USB_EP_VTTX
@@ -28,7 +27,6 @@
 //--------------------------------------------------------------------+
 // Register and PMA Base Address
 //--------------------------------------------------------------------+
-#define FSDEV_REG_BASE USB_BASE
 #define FSDEV_PMA_BASE USB_DRD_PMAADDR
 
 #define USB_ISTR_L1REQ_FORCED (USB_ISTR_L1REQ)
@@ -49,10 +47,6 @@ void dcd_int_disable() {
 
 void dcd_disconnect() {
   USB->BCDR &= ~(USB_BCDR_DPPU);
-}
-
-void dcd_connect() {
-  USB->BCDR |= USB_BCDR_DPPU;
 }
 
 #endif /* TUSB_FSDEV_STM32_H */

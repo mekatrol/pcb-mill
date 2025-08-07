@@ -184,8 +184,8 @@ __attribute__((weak)) void tud_cdc_send_break_cb(uint16_t duration_ms);
 //--------------------------------------------------------------------+
 // INTERNAL USBD-CLASS DRIVER API
 //--------------------------------------------------------------------+
-void cdcd_init(void);
-bool cdcd_deinit(void);
+void cdcd_init();
+bool cdcd_deinit();
 void cdcd_reset();
 uint16_t cdcd_open(tusb_desc_interface_t const* itf_desc, uint16_t max_len);
 bool cdcd_control_xfer_cb(uint8_t stage, tusb_control_request_t const* request);

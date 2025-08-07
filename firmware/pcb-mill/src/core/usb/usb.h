@@ -13,6 +13,8 @@
 #include "tusb_option.h"
 #include "tusb_types.h"
 
+#define USB ((USB_DRD_TypeDef *)USB_BASE)
+
 #define CFG_TUD_ENDPPOINT_MAX 8
 
 #define CFG_TUD_ENDPOINT0_SIZE 64
@@ -67,6 +69,6 @@ __attribute__((always_inline)) static inline uint16_t tu_unaligned_read16(const 
   return ua16->val;
 }
 
-bool tud_rhport_init();
+bool usb_init_driver();
 
 #endif  // __USB_H__

@@ -42,13 +42,6 @@ __attribute__((weak)) void tud_mount_cb(void) {
 __attribute__((weak)) void tud_umount_cb(void) {
 }
 
-__attribute__((weak)) void tud_suspend_cb(bool remote_wakeup_en) {
-  (void)remote_wakeup_en;
-}
-
-__attribute__((weak)) void tud_resume_cb(void) {
-}
-
 __attribute__((weak)) bool tud_vendor_control_xfer_cb(uint8_t stage, tusb_control_request_t const* request) {
   (void)stage;
   (void)request;
@@ -207,7 +200,7 @@ bool tud_connect(void) {
 //--------------------------------------------------------------------+
 // USBD Task
 //--------------------------------------------------------------------+
-bool tud_rhport_init() {
+bool usb_init_driver() {
   memset(&_usbd_dev, 0, sizeof(usbd_device_t));
   _usbd_queued_setup = 0;
 
@@ -271,7 +264,7 @@ void tud_task_ext(uint32_t timeout_ms, bool in_isr) {
 
       case DCD_EVENT_UNPLUGGED:
         usbd_reset();
-        tud_umount_cb();
+        // TODO: USB unplugged
         break;
 
       case DCD_EVENT_SETUP_RECEIVED:
@@ -319,17 +312,14 @@ void tud_task_ext(uint32_t timeout_ms, bool in_isr) {
       }
 
       case DCD_EVENT_SUSPEND:
-        // NOTE: When plugging/unplugging device, the D+/D- state are unstable and
-        // can accidentally meet the SUSPEND condition ( Bus Idle for 3ms ), which result in a series of event
-        // e.g suspend -> resume -> unplug/plug. Skip suspend/resume if not connected
         if (_usbd_dev.connected) {
-          tud_suspend_cb(_usbd_dev.remote_wakeup_en);
+          // TODO: USB suspended
         }
         break;
 
       case DCD_EVENT_RESUME:
         if (_usbd_dev.connected) {
-          tud_resume_cb();
+          // TODO: USB resumed
         }
         break;
 
@@ -475,7 +465,7 @@ static bool process_control_request(tusb_control_request_t const* p_request) {
           // Device status bit mask
           // - Bit 0: Self Powered
           // - Bit 1: Remote Wakeup enabled
-          uint16_t status = (uint16_t)((_usbd_dev.self_powered ? 1u : 0u) | (_usbd_dev.remote_wakeup_en ? 2u : 0u));
+          uint16_t status = (uint16_t)((1u) | (_usbd_dev.remote_wakeup_en ? 2u : 0u));
           tud_control_xfer(p_request, &status, 2);
           break;
         }

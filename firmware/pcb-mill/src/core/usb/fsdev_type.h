@@ -31,8 +31,6 @@ typedef struct {
 
 #define PMA_BUF_AT(_addr) ((fsdev_pma_buf_t*)(FSDEV_PMA_BASE + _addr))
 
-#define FSDEV_REG ((USB_DRD_TypeDef*)FSDEV_REG_BASE)
-
 #define USB_EPTX_STAT 0x0030U
 #define USB_EPTX_STAT_Pos 4u
 #define USB_EP_DTOG_TX_Pos 6u
@@ -55,7 +53,7 @@ typedef enum {
 //--------------------------------------------------------------------+
 
 __attribute__((always_inline)) static inline uint32_t ep_read(uint32_t ep_id) {
-  return FSDEV_REG->chep[ep_id].CHEPnR;
+  return USB->chep[ep_id].CHEPnR;
 }
 
 __attribute__((always_inline)) static inline void ep_write(uint32_t ep_id, uint32_t value, bool need_exclusive) {
@@ -63,7 +61,7 @@ __attribute__((always_inline)) static inline void ep_write(uint32_t ep_id, uint3
     dcd_int_disable(0);
   }
 
-  FSDEV_REG->chep[ep_id].CHEPnR = value;
+  USB->chep[ep_id].CHEPnR = value;
 
   if (need_exclusive) {
     dcd_int_enable(0);
@@ -71,7 +69,7 @@ __attribute__((always_inline)) static inline void ep_write(uint32_t ep_id, uint3
 }
 
 __attribute__((always_inline)) static inline void ep_write_clear_ctr(uint32_t ep_id, tusb_dir_t dir) {
-  uint32_t reg = FSDEV_REG->chep[ep_id].CHEPnR;
+  uint32_t reg = USB->chep[ep_id].CHEPnR;
   reg |= USB_EP_CTR_TX | USB_EP_CTR_RX;
   reg &= USB_EPREG_MASK;
   reg &= ~(1 << (USB_EP_CTR_TX_Pos + (dir == TUSB_DIR_IN ? 0 : 8)));

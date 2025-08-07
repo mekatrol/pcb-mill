@@ -77,7 +77,7 @@ bool dcd_dcache_clean_invalidate(const void* addr, uint32_t data_size);
 //--------------------------------------------------------------------+
 
 // Initialize controller to device mode
-bool dcd_init();
+void dcd_init();
 
 // Deinitialize controller, unset device mode.
 bool dcd_deinit();

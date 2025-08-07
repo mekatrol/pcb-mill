@@ -94,13 +94,6 @@ void tud_mount_cb(void);
 // Invoked when device is unmounted
 void tud_umount_cb(void);
 
-// Invoked when usb bus is suspended
-// Within 7ms, device must draw an average of current less than 2.5 mA from bus
-void tud_suspend_cb(bool remote_wakeup_en);
-
-// Invoked when usb bus is resumed
-void tud_resume_cb(void);
-
 // Invoked when there is a new usb event, which need to be processed by tud_task()/tud_task_ext()
 void tud_event_hook_cb(uint32_t eventid, bool in_isr);
 
