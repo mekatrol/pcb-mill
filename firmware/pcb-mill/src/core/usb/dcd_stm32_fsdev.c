@@ -134,7 +134,7 @@ typedef struct {
 } ep_alloc_t;
 
 static xfer_ctl_t xfer_status[CFG_TUD_ENDPPOINT_MAX][2];
-static ep_alloc_t ep_alloc_status[FSDEV_EP_COUNT];
+static ep_alloc_t ep_alloc_status[CFG_TUD_ENDPPOINT_MAX];
 static uint8_t remoteWakeCountdown;  // When wake is requested
 
 //--------------------------------------------------------------------+
@@ -194,15 +194,10 @@ bool dcd_init(uint8_t rhport, const tusb_rhport_init_t *rh_init) {
   }
   FSDEV_REG->CNTR = 0;  // Enable USB
 
-#if !defined(FSDEV_BUS_32BIT)
-  // BTABLE register does not exist any more on 32-bit bus devices
-  FSDEV_REG->BTABLE = FSDEV_BTABLE_BASE;
-#endif
-
   FSDEV_REG->ISTR = 0;  // Clear pending interrupts
 
   // Reset endpoints to disabled
-  for (uint32_t i = 0; i < FSDEV_EP_COUNT; i++) {
+  for (uint32_t i = 0; i < CFG_TUD_ENDPPOINT_MAX; i++) {
     // This doesn't clear all bits since some bits are "toggle", but does set the type to DISABLED.
     ep_write(i, 0u, false);
   }
@@ -248,7 +243,7 @@ void dcd_remote_wakeup(uint8_t rhport) {
 static void handle_bus_reset(uint8_t rhport) {
   FSDEV_REG->DADDR = 0u;  // disable USB Function
 
-  for (uint32_t i = 0; i < FSDEV_EP_COUNT; i++) {
+  for (uint32_t i = 0; i < CFG_TUD_ENDPPOINT_MAX; i++) {
     // Clear EP allocation status
     ep_alloc_status[i].ep_num = 0xFF;
     ep_alloc_status[i].ep_type = 0xFF;
@@ -256,8 +251,8 @@ static void handle_bus_reset(uint8_t rhport) {
     ep_alloc_status[i].allocated[1] = false;
   }
 
-  // Reset PMA allocation
-  ep_buf_ptr = FSDEV_BTABLE_BASE + 8 * FSDEV_EP_COUNT;
+  // Reset PMA allocation (to end of EP buffer table)
+  ep_buf_ptr = FSDEV_BTABLE_BASE + 8 * CFG_TUD_ENDPPOINT_MAX;
 
   edpt0_open(rhport);  // open control endpoint (both IN & OUT)
 
@@ -411,7 +406,6 @@ void dcd_int_handler(uint8_t rhport) {
     uint32_t const ep_reg = ep_read(ep_id);
 
     if (ep_reg & USB_EP_CTR_RX) {
-#ifdef FSDEV_BUS_32BIT
       /* https://www.st.com/resource/en/errata_sheet/es0561-stm32h503cbebkbrb-device-errata-stmicroelectronics.pdf
        * https://www.st.com/resource/en/errata_sheet/es0587-stm32u535xx-and-stm32u545xx-device-errata-stmicroelectronics.pdf
        * From H503/U535 errata: Buffer description table update completes after CTR interrupt triggers
@@ -431,7 +425,6 @@ void dcd_int_handler(uint8_t rhport) {
       while (cycle_count > 0U) {
         cycle_count--;  // each count take 3 cycles (1 for sub, jump, and compare)
       }
-#endif
 
       if (ep_reg & USB_EP_SETUP) {
         handle_ctr_setup(ep_id);  // CTR will be clear after copied setup packet
@@ -505,7 +498,7 @@ static uint8_t dcd_ep_alloc(uint8_t ep_addr, uint8_t ep_type) {
   uint8_t const epnum = tu_edpt_number(ep_addr);
   uint8_t const dir = tu_edpt_dir(ep_addr);
 
-  for (uint8_t i = 0; i < FSDEV_EP_COUNT; i++) {
+  for (uint8_t i = 0; i < CFG_TUD_ENDPPOINT_MAX; i++) {
     // Check if already allocated
     if (ep_alloc_status[i].allocated[dir] &&
         ep_alloc_status[i].ep_type == ep_type &&
@@ -570,7 +563,7 @@ bool dcd_edpt_open(uint8_t rhport, tusb_desc_endpoint_t const *desc_ep) {
   tusb_dir_t const dir = tu_edpt_dir(ep_addr);
   const uint16_t packet_size = tu_edpt_packet_size(desc_ep);
   uint8_t const ep_idx = dcd_ep_alloc(ep_addr, desc_ep->bmAttributes.xfer);
-  if (ep_idx >= FSDEV_EP_COUNT) {
+  if (ep_idx >= CFG_TUD_ENDPPOINT_MAX) {
     return false;
   }
 
@@ -617,7 +610,7 @@ bool dcd_edpt_open(uint8_t rhport, tusb_desc_endpoint_t const *desc_ep) {
 void dcd_edpt_close_all(uint8_t rhport) {
   dcd_int_disable(rhport);
 
-  for (uint32_t i = 1; i < FSDEV_EP_COUNT; i++) {
+  for (uint32_t i = 1; i < CFG_TUD_ENDPPOINT_MAX; i++) {
     // Reset endpoint
     ep_write(i, 0, false);
     // Clear EP allocation status
@@ -805,23 +798,22 @@ void dcd_edpt_clear_stall(uint8_t rhport, uint8_t ep_addr) {
 //--------------------------------------------------------------------+
 
 // Write to packet memory area (PMA) from user memory
-// - Packet memory must be either strictly 16-bit or 32-bit depending on FSDEV_BUS_32BIT
 // - Uses unaligned for RAM (since M0 cannot access unaligned address)
 static bool dcd_write_packet_memory(uint16_t dst, const void *__restrict src, uint16_t nbytes) {
   if (nbytes == 0) return true;
-  uint32_t n_write = nbytes / FSDEV_BUS_SIZE;
+  uint32_t n_write = nbytes / sizeof(fsdev_bus_t);
 
   fsdev_pma_buf_t *pma_buf = PMA_BUF_AT(dst);
   const uint8_t *src8 = src;
 
   while (n_write--) {
     pma_buf->value = tu_unaligned_read32(src8);
-    src8 += FSDEV_BUS_SIZE;
+    src8 += sizeof(fsdev_bus_t);
     pma_buf++;
   }
 
   // odd bytes e.g 1 for 16-bit or 1-3 for 32-bit
-  uint16_t odd = nbytes & (FSDEV_BUS_SIZE - 1);
+  uint16_t odd = nbytes & (sizeof(fsdev_bus_t) - 1);
   if (odd) {
     fsdev_bus_t temp = 0;
     for (uint16_t i = 0; i < odd; i++) {
@@ -834,23 +826,23 @@ static bool dcd_write_packet_memory(uint16_t dst, const void *__restrict src, ui
 }
 
 // Read from packet memory area (PMA) to user memory.
-// - Packet memory must be either strictly 16-bit or 32-bit depending on FSDEV_BUS_32BIT
+// - Packet memory must be either strictly 32-bit
 // - Uses unaligned for RAM (since M0 cannot access unaligned address)
 static bool dcd_read_packet_memory(void *__restrict dst, uint16_t src, uint16_t nbytes) {
   if (nbytes == 0) return true;
-  uint32_t n_read = nbytes / FSDEV_BUS_SIZE;
+  uint32_t n_read = nbytes / sizeof(fsdev_bus_t);
 
   fsdev_pma_buf_t *pma_buf = PMA_BUF_AT(src);
   uint8_t *dst8 = (uint8_t *)dst;
 
   while (n_read--) {
     tu_unaligned_write32(dst8, (fsdev_bus_t)pma_buf->value);
-    dst8 += FSDEV_BUS_SIZE;
+    dst8 += sizeof(fsdev_bus_t);
     pma_buf++;
   }
 
   // odd bytes e.g 1 for 16-bit or 1-3 for 32-bit
-  uint16_t odd = nbytes & (FSDEV_BUS_SIZE - 1);
+  uint16_t odd = nbytes & (sizeof(fsdev_bus_t) - 1);
   if (odd) {
     fsdev_bus_t temp = pma_buf->value;
     while (odd--) {
@@ -876,8 +868,8 @@ static bool dcd_write_packet_memory_ff(tu_fifo_t *ff, uint16_t dst, uint16_t wNB
 
   // We want to read from the FIFO and write it into the PMA, if LIN part is ODD and has WRAPPED part,
   // last lin byte will be combined with wrapped part To ensure PMA is always access aligned
-  uint16_t lin_even = cnt_lin & ~(FSDEV_BUS_SIZE - 1);
-  uint16_t lin_odd = cnt_lin & (FSDEV_BUS_SIZE - 1);
+  uint16_t lin_even = cnt_lin & ~(sizeof(fsdev_bus_t) - 1);
+  uint16_t lin_odd = cnt_lin & (sizeof(fsdev_bus_t) - 1);
   uint8_t const *src8 = (uint8_t const *)info.ptr_lin;
 
   // write even linear part
@@ -896,12 +888,12 @@ static bool dcd_write_packet_memory_ff(tu_fifo_t *ff, uint16_t dst, uint16_t wNB
     }
 
     src8 = (uint8_t const *)info.ptr_wrap;
-    for (; i < FSDEV_BUS_SIZE && cnt_wrap > 0; i++, cnt_wrap--) {
+    for (; i < sizeof(fsdev_bus_t) && cnt_wrap > 0; i++, cnt_wrap--) {
       temp |= *src8++ << (i * 8);
     }
 
-    dcd_write_packet_memory(dst, &temp, FSDEV_BUS_SIZE);
-    dst += FSDEV_BUS_SIZE;
+    dcd_write_packet_memory(dst, &temp, sizeof(fsdev_bus_t));
+    dst += sizeof(fsdev_bus_t);
   }
 
   // write the rest of the wrapped part
@@ -927,8 +919,8 @@ static bool dcd_read_packet_memory_ff(tu_fifo_t *ff, uint16_t src, uint16_t wNBy
   // We want to read from the FIFO and write it into the PMA, if LIN part is ODD and has WRAPPED part,
   // last lin byte will be combined with wrapped part To ensure PMA is always access aligned
 
-  uint16_t lin_even = cnt_lin & ~(FSDEV_BUS_SIZE - 1);
-  uint16_t lin_odd = cnt_lin & (FSDEV_BUS_SIZE - 1);
+  uint16_t lin_even = cnt_lin & ~(sizeof(fsdev_bus_t) - 1);
+  uint16_t lin_odd = cnt_lin & (sizeof(fsdev_bus_t) - 1);
   uint8_t *dst8 = (uint8_t *)info.ptr_lin;
 
   // read even linear part
@@ -941,8 +933,8 @@ static bool dcd_read_packet_memory_ff(tu_fifo_t *ff, uint16_t src, uint16_t wNBy
   } else {
     // Combine last linear bytes + first wrapped bytes to form fsdev bus width data
     fsdev_bus_t temp;
-    dcd_read_packet_memory(&temp, src, FSDEV_BUS_SIZE);
-    src += FSDEV_BUS_SIZE;
+    dcd_read_packet_memory(&temp, src, sizeof(fsdev_bus_t));
+    src += sizeof(fsdev_bus_t);
 
     uint16_t i;
     for (i = 0; i < lin_odd; i++) {
@@ -951,7 +943,7 @@ static bool dcd_read_packet_memory_ff(tu_fifo_t *ff, uint16_t src, uint16_t wNBy
     }
 
     dst8 = (uint8_t *)info.ptr_wrap;
-    for (; i < FSDEV_BUS_SIZE && cnt_wrap > 0; i++, cnt_wrap--) {
+    for (; i < sizeof(fsdev_bus_t) && cnt_wrap > 0; i++, cnt_wrap--) {
       *dst8++ = (uint8_t)(temp & 0xfful);
       temp >>= 8;
     }

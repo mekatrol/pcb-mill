@@ -33,21 +33,10 @@
 #define FSDEV_BTABLE_BASE 0U
 
 // FSDEV_PMA_SIZE is PMA buffer size in bytes.
-// - 512-byte devices, access with a stride of two words (use every other 16-bit address)
-// - 1024-byte devices, access with a stride of one word (use every 16-bit address)
 // - 2048-byte devices, access with 32-bit address
-
-// 32 bit access scheme
-#define FSDEV_BUS_32BIT
-#define FSDEV_PMA_STRIDE 1
-#define pma_access_scheme
 
 // The fsdev_bus_t type can be used for both register and PMA access necessities
 typedef uint32_t fsdev_bus_t;
-
-enum {
-  FSDEV_BUS_SIZE = sizeof(fsdev_bus_t),
-};
 
 //--------------------------------------------------------------------+
 // BTable Typedef
@@ -57,82 +46,46 @@ enum {
   BTABLE_BUF_RX = 1
 };
 
-// hardware limit endpoint
-#define FSDEV_EP_COUNT 8
-
-// Buffer Table is located in Packet Memory Area (PMA) and therefore its address access is forced to either
-// 16-bit or 32-bit depending on FSDEV_BUS_32BIT.
-// 0: TX (IN), 1: RX (OUT)
-typedef union {
-  // data is strictly 16-bit access (address could be 32-bit aligned)
-  struct {
-    volatile pma_access_scheme uint16_t addr;
-    volatile pma_access_scheme uint16_t count;
-  } ep16[FSDEV_EP_COUNT][2];
-
-  // strictly 32-bit access
+// Buffer Table is located in Packet Memory Area (PMA)
+typedef struct {
   struct {
     volatile uint32_t count_addr;
-  } ep32[FSDEV_EP_COUNT][2];
+  } ep32[CFG_TUD_ENDPPOINT_MAX][2];
 } fsdev_btable_t;
 
-_Static_assert(sizeof(fsdev_btable_t) == FSDEV_EP_COUNT * 8 * FSDEV_PMA_STRIDE, "size is not correct");
-_Static_assert(FSDEV_BTABLE_BASE + FSDEV_EP_COUNT * 8 <= FSDEV_PMA_SIZE, "BTABLE does not fit in PMA RAM");
-
-#define FSDEV_BTABLE ((volatile fsdev_btable_t*)(FSDEV_PMA_BASE + FSDEV_PMA_STRIDE * (FSDEV_BTABLE_BASE)))
+#define FSDEV_BTABLE ((volatile fsdev_btable_t*)(FSDEV_PMA_BASE + FSDEV_BTABLE_BASE))
 
 typedef struct {
-  volatile pma_access_scheme fsdev_bus_t value;
+  volatile fsdev_bus_t value;
 } fsdev_pma_buf_t;
 
-#define PMA_BUF_AT(_addr) ((fsdev_pma_buf_t*)(FSDEV_PMA_BASE + FSDEV_PMA_STRIDE * (_addr)))
+#define PMA_BUF_AT(_addr) ((fsdev_pma_buf_t*)(FSDEV_PMA_BASE + _addr))
 
 //--------------------------------------------------------------------+
 // Registers Typedef
 //--------------------------------------------------------------------+
 
-// volatile 32-bit aligned
-#define _va32 volatile __attribute__((aligned(4)))
-
 typedef struct {
   struct {
-    _va32 fsdev_bus_t reg;
-  } ep[FSDEV_EP_COUNT];
+    volatile __attribute__((aligned(4))) fsdev_bus_t reg;
+  } ep[CFG_TUD_ENDPPOINT_MAX];
 
-  _va32 uint32_t RESERVED7[8];  // Reserved
-  _va32 fsdev_bus_t CNTR;       // 40: Control register
-  _va32 fsdev_bus_t ISTR;       // 44: Interrupt status register
-  _va32 fsdev_bus_t FNR;        // 48: Frame number register
-  _va32 fsdev_bus_t DADDR;      // 4C: Device address register
-  _va32 fsdev_bus_t BTABLE;     // 50: Buffer Table address register (16-bit only)
-  _va32 fsdev_bus_t LPMCSR;     // 54: LPM Control and Status Register (32-bit only)
-  _va32 fsdev_bus_t BCDR;       // 58: Battery Charging Detector Register (32-bit only)
+  volatile __attribute__((aligned(4))) uint32_t RESERVED7[8];  // Offset  0: Reserved
+  volatile __attribute__((aligned(4))) fsdev_bus_t CNTR;       // Offset 40: Control register
+  volatile __attribute__((aligned(4))) fsdev_bus_t ISTR;       // Offset 44: Interrupt status register
+  volatile __attribute__((aligned(4))) fsdev_bus_t FNR;        // Offset 48: Frame number register
+  volatile __attribute__((aligned(4))) fsdev_bus_t DADDR;      // Offset 4C: Device address register
+  volatile __attribute__((aligned(4))) fsdev_bus_t BTABLE;     // Offset 50: Buffer Table address register (16-bit only)
+  volatile __attribute__((aligned(4))) fsdev_bus_t LPMCSR;     // Offset 54: LPM Control and Status Register (32-bit only)
+  volatile __attribute__((aligned(4))) fsdev_bus_t BCDR;       // Offset 58: Battery Charging Detector Register (32-bit only)
 } fsdev_regs_t;
-
-_Static_assert(offsetof(fsdev_regs_t, CNTR) == 0x40, "Wrong offset");
-_Static_assert(sizeof(fsdev_regs_t) == 0x5C, "Size is not correct");
 
 #define FSDEV_REG ((fsdev_regs_t*)FSDEV_REG_BASE)
 
-#ifndef USB_EPTX_STAT
 #define USB_EPTX_STAT 0x0030U
-#endif
-
-#ifndef USB_EPRX_STAT
-#define USB_EPRX_STAT 0x3000U
-#endif
-
-#ifndef USB_EPTX_STAT_Pos
 #define USB_EPTX_STAT_Pos 4u
-#endif
-
-#ifndef USB_EP_DTOG_TX_Pos
 #define USB_EP_DTOG_TX_Pos 6u
-#endif
-
-#ifndef USB_EP_CTR_TX_Pos
 #define USB_EP_CTR_TX_Pos 7u
-#endif
 
 typedef enum {
   EP_STAT_DISABLED = 0,
@@ -191,43 +144,25 @@ __attribute__((always_inline)) static inline bool ep_is_iso(uint32_t reg) {
 //--------------------------------------------------------------------+
 
 __attribute__((always_inline)) static inline uint32_t btable_get_addr(uint32_t ep_id, uint8_t buf_id) {
-#ifdef FSDEV_BUS_32BIT
   return FSDEV_BTABLE->ep32[ep_id][buf_id].count_addr & 0x0000FFFFu;
-#else
-  return FSDEV_BTABLE->ep16[ep_id][buf_id].addr;
-#endif
 }
 
 __attribute__((always_inline)) static inline void btable_set_addr(uint32_t ep_id, uint8_t buf_id, uint16_t addr) {
-#ifdef FSDEV_BUS_32BIT
   uint32_t count_addr = FSDEV_BTABLE->ep32[ep_id][buf_id].count_addr;
   count_addr = (count_addr & 0xFFFF0000u) | (addr & 0x0000FFFCu);
   FSDEV_BTABLE->ep32[ep_id][buf_id].count_addr = count_addr;
-#else
-  FSDEV_BTABLE->ep16[ep_id][buf_id].addr = addr;
-#endif
 }
 
 __attribute__((always_inline)) static inline uint16_t btable_get_count(uint32_t ep_id, uint8_t buf_id) {
   uint16_t count;
-#ifdef FSDEV_BUS_32BIT
   count = (FSDEV_BTABLE->ep32[ep_id][buf_id].count_addr >> 16);
-#else
-  count = FSDEV_BTABLE->ep16[ep_id][buf_id].count;
-#endif
   return count & 0x3FFU;
 }
 
 __attribute__((always_inline)) static inline void btable_set_count(uint32_t ep_id, uint8_t buf_id, uint16_t byte_count) {
-#ifdef FSDEV_BUS_32BIT
   uint32_t count_addr = FSDEV_BTABLE->ep32[ep_id][buf_id].count_addr;
   count_addr = (count_addr & ~0x03FF0000u) | ((byte_count & 0x3FFu) << 16);
   FSDEV_BTABLE->ep32[ep_id][buf_id].count_addr = count_addr;
-#else
-  uint16_t cnt = FSDEV_BTABLE->ep16[ep_id][buf_id].count;
-  cnt = (cnt & ~0x3FFU) | (byte_count & 0x3FFU);
-  FSDEV_BTABLE->ep16[ep_id][buf_id].count = cnt;
-#endif
 }
 
 /* Aligned buffer size according to hardware */
@@ -260,11 +195,9 @@ __attribute__((always_inline)) static inline void btable_set_rx_bufsize(uint32_t
     bl_nb = 1 << 15;
   }
 
-#ifdef FSDEV_BUS_32BIT
   uint32_t count_addr = FSDEV_BTABLE->ep32[ep_id][buf_id].count_addr;
   count_addr = (bl_nb << 16) | (count_addr & 0x0000FFFFu);
   FSDEV_BTABLE->ep32[ep_id][buf_id].count_addr = count_addr;
-#endif
 }
 
 #endif
