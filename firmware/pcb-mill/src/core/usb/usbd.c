@@ -1,29 +1,3 @@
-/*
- * The MIT License (MIT)
- *
- * Copyright (c) 2019 Ha Thach (tinyusb.org)
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *
- * This file is part of the TinyUSB stack.
- */
-
 #include "tusb_option.h"
 
 #include "dcd.h"
@@ -48,10 +22,6 @@ __attribute__((weak)) void tud_event_hook_cb(uint8_t rhport, uint32_t eventid, b
   (void)rhport;
   (void)eventid;
   (void)in_isr;
-}
-
-__attribute__((weak)) void tud_sof_cb(uint32_t frame_count) {
-  (void)frame_count;
 }
 
 __attribute__((weak)) uint8_t const* tud_descriptor_bos_cb(void) {
@@ -245,10 +215,6 @@ bool tud_connect(void) {
   return true;
 }
 
-void tud_sof_cb_enable(bool en) {
-  usbd_sof_enable(_usbd_rhport, SOF_CONSUMER_USER, en);
-}
-
 //--------------------------------------------------------------------+
 // USBD Task
 //--------------------------------------------------------------------+
@@ -256,7 +222,7 @@ bool tud_inited(void) {
   return _usbd_rhport != RHPORT_INVALID;
 }
 
-bool tud_rhport_init(uint8_t rhport, const tusb_rhport_init_t* rh_init) {
+bool tud_rhport_init(uint8_t rhport) {
   if (tud_inited()) {
     return true;  // skip if already initialized
   }
@@ -273,7 +239,7 @@ bool tud_rhport_init(uint8_t rhport, const tusb_rhport_init_t* rh_init) {
   _usbd_rhport = rhport;
 
   // Init device controller driver
-  dcd_init(rhport, rh_init);
+  dcd_init(rhport);
   dcd_int_enable(rhport);
 
   return true;
@@ -405,7 +371,6 @@ void tud_task_ext(uint32_t timeout_ms, bool in_isr) {
 
       case DCD_EVENT_SOF:
         if (bit_set_test(_usbd_dev.sof_consumer, SOF_CONSUMER_USER)) {
-          tud_sof_cb(event.sof.frame_count);
         }
         break;
 
@@ -1086,50 +1051,4 @@ void usbd_edpt_close(uint8_t rhport, uint8_t ep_addr) {
   (void)rhport;
   (void)ep_addr;
   return;
-}
-
-void usbd_sof_enable(uint8_t rhport, sof_consumer_t consumer, bool en) {
-  rhport = _usbd_rhport;
-
-  uint8_t consumer_old = _usbd_dev.sof_consumer;
-  // Keep track how many class instances need the SOF interrupt
-  if (en) {
-    _usbd_dev.sof_consumer |= (uint8_t)(1 << consumer);
-  } else {
-    _usbd_dev.sof_consumer &= (uint8_t)(~(1 << consumer));
-  }
-
-  // Test logically unequal
-  if (!_usbd_dev.sof_consumer != !consumer_old) {
-    dcd_sof_enable(rhport, _usbd_dev.sof_consumer);
-  }
-}
-
-bool usbd_edpt_iso_alloc(uint8_t rhport, uint8_t ep_addr, uint16_t largest_packet_size) {
-  rhport = _usbd_rhport;
-
-  if (tu_edpt_number(ep_addr) >= CFG_TUD_ENDPPOINT_MAX) {
-    return false;
-  }
-  return dcd_edpt_iso_alloc(rhport, ep_addr, largest_packet_size);
-}
-
-bool usbd_edpt_iso_activate(uint8_t rhport, tusb_desc_endpoint_t const* desc_ep) {
-  rhport = _usbd_rhport;
-
-  uint8_t const epnum = tu_edpt_number(desc_ep->bEndpointAddress);
-  uint8_t const dir = tu_edpt_dir(desc_ep->bEndpointAddress);
-
-  if (epnum >= CFG_TUD_ENDPPOINT_MAX) {
-    return false;
-  }
-
-  if (!tu_edpt_validate(desc_ep, (tusb_speed_t)_usbd_dev.speed, false)) {
-    return false;
-  }
-
-  _usbd_dev.ep_status[epnum][dir].stalled = 0;
-  _usbd_dev.ep_status[epnum][dir].busy = 0;
-  _usbd_dev.ep_status[epnum][dir].claimed = 0;
-  return dcd_edpt_iso_activate(rhport, desc_ep);
 }

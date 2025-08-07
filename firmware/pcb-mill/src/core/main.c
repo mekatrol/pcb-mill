@@ -83,7 +83,7 @@ void main() {
 
   // Initialise USB
   usb_init_hal();
-  tud_init(0);
+  tud_rhport_init(0);
 
   uint32_t config_version = config_get_version();
 

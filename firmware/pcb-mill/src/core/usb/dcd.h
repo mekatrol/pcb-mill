@@ -78,7 +78,7 @@ bool dcd_dcache_clean_invalidate(const void* addr, uint32_t data_size);
 //--------------------------------------------------------------------+
 
 // Initialize controller to device mode
-bool dcd_init(uint8_t rhport, const tusb_rhport_init_t* rh_init);
+bool dcd_init(uint8_t rhport);
 
 // Deinitialize controller, unset device mode.
 bool dcd_deinit(uint8_t rhport);
