@@ -8,12 +8,6 @@
 /* CONSTANTS
  *------------------------------------------------------------------*/
 
-typedef enum {
-  TUSB_ROLE_INVALID = 0,
-  TUSB_ROLE_DEVICE = 0x1,
-  TUSB_ROLE_HOST = 0x2,
-} tusb_role_t;
-
 /// defined base on EHCI specs value for Endpoint Speed
 typedef enum {
   TUSB_SPEED_FULL = 0,
@@ -37,25 +31,6 @@ typedef enum {
 
   TUSB_DIR_IN_MASK = 0x80
 } tusb_dir_t;
-
-enum {
-  TUSB_EPSIZE_BULK_FS = 64,
-  TUSB_EPSIZE_BULK_HS = 512,
-
-  TUSB_EPSIZE_ISO_FS_MAX = 1023,
-  TUSB_EPSIZE_ISO_HS_MAX = 1024,
-};
-
-/// Isochronous Endpoint Attributes
-typedef enum {
-  TUSB_ISO_EP_ATT_NO_SYNC = 0x00,
-  TUSB_ISO_EP_ATT_ASYNCHRONOUS = 0x04,
-  TUSB_ISO_EP_ATT_ADAPTIVE = 0x08,
-  TUSB_ISO_EP_ATT_SYNCHRONOUS = 0x0C,
-  TUSB_ISO_EP_ATT_DATA = 0x00,         ///< Data End Point
-  TUSB_ISO_EP_ATT_EXPLICIT_FB = 0x10,  ///< Feedback End Point
-  TUSB_ISO_EP_ATT_IMPLICIT_FB = 0x20,  ///< Data endpoint that also serves as an implicit feedback
-} tusb_iso_ep_attribute_t;
 
 /// USB Descriptor Types
 typedef enum {
@@ -149,19 +124,6 @@ typedef enum {
   TUSB_CLASS_APPLICATION_SPECIFIC = 0xFE,
   TUSB_CLASS_VENDOR_SPECIFIC = 0xFF
 } tusb_class_code_t;
-
-typedef enum {
-  MISC_SUBCLASS_COMMON = 2
-} misc_subclass_type_t;
-
-typedef enum {
-  MISC_PROTOCOL_IAD = 1
-} misc_protocol_type_t;
-
-typedef enum {
-  APP_SUBCLASS_USBTMC = 0x03,
-  APP_SUBCLASS_DFU_RUNTIME = 0x01
-} app_subclass_type_t;
 
 typedef enum {
   DEVICE_CAPABILITY_WIRELESS_USB = 0x01,

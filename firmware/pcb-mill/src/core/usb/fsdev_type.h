@@ -9,11 +9,6 @@ typedef struct {
 
 #define USB_PMA_BUF_AT(addr) ((usb_pma_buf_t*)(USB_DRD_PMAADDR + addr))
 
-#define USB_EPTX_STAT 0x0030U
-#define USB_EPTX_STAT_Pos 4u
-#define USB_EP_DTOG_TX_Pos 6u
-#define USB_EP_VTTX_Pos 7u
-
 typedef enum {
   EP_STAT_DISABLED = 0,
   EP_STAT_STALL = 1,
@@ -21,21 +16,21 @@ typedef enum {
   EP_STAT_VALID = 3
 } ep_stat_t;
 
-#define EP_STAT_MASK(_dir) (3u << (USB_EPTX_STAT_Pos + ((_dir) == TUSB_DIR_IN ? 0 : 8)))
-#define EP_DTOG_MASK(_dir) (1u << (USB_EP_DTOG_TX_Pos + ((_dir) == TUSB_DIR_IN ? 0 : 8)))
+#define EP_STAT_MASK(dir) (3u << (USB_CHEP_TX_STTX_Pos + ((dir) == TUSB_DIR_IN ? 0 : 8)))
+#define EP_DTOG_MASK(dir) (1u << (USB_CHEP_DTOG_TX_Pos + ((dir) == TUSB_DIR_IN ? 0 : 8)))
 
 __attribute__((always_inline)) static inline uint32_t ep_read(uint32_t ep_id) {
   return USB->chep[ep_id].CHEPnR;
 }
 
-__attribute__((always_inline)) static inline void ep_write(uint32_t ep_id, uint32_t value, bool need_exclusive) {
-  if (need_exclusive) {
+__attribute__((always_inline)) static inline void ep_write(uint32_t ep_id, uint32_t value, bool disable_usb_irq) {
+  if (disable_usb_irq) {
     NVIC_DisableIRQ(USB_UCPD1_2_IRQn);
   }
 
   USB->chep[ep_id].CHEPnR = value;
 
-  if (need_exclusive) {
+  if (disable_usb_irq) {
     NVIC_EnableIRQ(USB_UCPD1_2_IRQn);
   }
 }
@@ -44,16 +39,16 @@ __attribute__((always_inline)) static inline void ep_write_clear_ctr(uint32_t ep
   uint32_t reg = USB->chep[ep_id].CHEPnR;
   reg |= USB_EP_VTTX | USB_EP_VTRX;
   reg &= USB_CHEP_REG_MASK;
-  reg &= ~(1 << (USB_EP_VTTX_Pos + (dir == TUSB_DIR_IN ? 0 : 8)));
+  reg &= ~(1 << (USB_CHEP_VTTX_Pos + (dir == TUSB_DIR_IN ? 0 : 8)));
   ep_write(ep_id, reg, false);
 }
 
 __attribute__((always_inline)) static inline void ep_change_status(uint32_t* reg, tusb_dir_t dir, ep_stat_t state) {
-  *reg ^= (state << (USB_EPTX_STAT_Pos + (dir == TUSB_DIR_IN ? 0 : 8)));
+  *reg ^= (state << (USB_CHEP_TX_STTX_Pos + (dir == TUSB_DIR_IN ? 0 : 8)));
 }
 
 __attribute__((always_inline)) static inline void ep_change_dtog(uint32_t* reg, tusb_dir_t dir, uint8_t state) {
-  *reg ^= (state << (USB_EP_DTOG_TX_Pos + (dir == TUSB_DIR_IN ? 0 : 8)));
+  *reg ^= (state << (USB_CHEP_DTOG_TX_Pos + (dir == TUSB_DIR_IN ? 0 : 8)));
 }
 
 __attribute__((always_inline)) static inline bool ep_is_iso(uint32_t reg) {

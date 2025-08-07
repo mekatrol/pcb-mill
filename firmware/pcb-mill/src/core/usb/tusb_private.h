@@ -27,9 +27,6 @@
 #ifndef TUSB_PRIVATE_H_
 #define TUSB_PRIVATE_H_
 
-#define TUP_USBIP_CONTROLLER_NUM 2
-extern tusb_role_t _tusb_rhport_role[TUP_USBIP_CONTROLLER_NUM];
-
 //--------------------------------------------------------------------+
 // Endpoint
 //--------------------------------------------------------------------+

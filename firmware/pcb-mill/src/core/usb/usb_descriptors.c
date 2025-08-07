@@ -10,10 +10,10 @@ tusb_desc_device_t const desc_device = {
     .bDescriptorType = TUSB_DESC_DEVICE,
     .bcdUSB = 0x0200,
 
-    .bDeviceClass = TUSB_CLASS_MISC,
-    .bDeviceSubClass = MISC_SUBCLASS_COMMON,
-    .bDeviceProtocol = MISC_PROTOCOL_IAD,
-    .bMaxPacketSize0 = CFG_TUD_ENDPOINT0_SIZE,
+    .bDeviceClass = 0xEF,                    // Misc USB class
+    .bDeviceSubClass = 2,                    // Common USB subclass
+    .bDeviceProtocol = 1,                    // Priotocol IAD
+    .bMaxPacketSize0 = USB_EP0_BUFFER_SIZE,  // Endpoint buffer size
 
     .idVendor = 0x0483,
     .idProduct = 0x5740,

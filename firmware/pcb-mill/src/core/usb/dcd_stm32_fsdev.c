@@ -383,14 +383,14 @@ void edpt0_open() {
   dcd_ep_alloc(0x0, TUSB_XFER_CONTROL);
   dcd_ep_alloc(0x80, TUSB_XFER_CONTROL);
 
-  xfer_status[0][0].max_packet_size = CFG_TUD_ENDPOINT0_SIZE;
+  xfer_status[0][0].max_packet_size = USB_EP0_BUFFER_SIZE;
   xfer_status[0][0].ep_idx = 0;
 
-  xfer_status[0][1].max_packet_size = CFG_TUD_ENDPOINT0_SIZE;
+  xfer_status[0][1].max_packet_size = USB_EP0_BUFFER_SIZE;
   xfer_status[0][1].ep_idx = 0;
 
-  uint16_t pma_addr0 = dcd_pma_alloc(CFG_TUD_ENDPOINT0_SIZE, false);
-  uint16_t pma_addr1 = dcd_pma_alloc(CFG_TUD_ENDPOINT0_SIZE, false);
+  uint16_t pma_addr0 = dcd_pma_alloc(USB_EP0_BUFFER_SIZE, false);
+  uint16_t pma_addr1 = dcd_pma_alloc(USB_EP0_BUFFER_SIZE, false);
 
   usb_pma_set_addr(0, ENDPOINT_RX_BUFFER, pma_addr0);
   usb_pma_set_addr(0, ENDPOINT_TX_BUFFER, pma_addr1);
@@ -447,7 +447,7 @@ bool dcd_edpt_open(tusb_desc_endpoint_t const *desc_ep) {
   if (dir == TUSB_DIR_IN) {
     ep_reg &= ~(USB_CH_RX_VALID | USB_EP_DTOG_RX);
   } else {
-    ep_reg &= ~(USB_EPTX_STAT | USB_EP_DTOG_TX);
+    ep_reg &= ~(USB_CHEP_TX_STTX_Msk | USB_EP_DTOG_TX);
   }
 
   ep_write(ep_idx, ep_reg, true);
@@ -471,7 +471,7 @@ void dcd_edpt_close_all() {
   NVIC_EnableIRQ(USB_UCPD1_2_IRQn);
 
   // Reset PMA allocation
-  ep_buf_ptr = 8 * USB_ENDPOINT_MAX + 2 * CFG_TUD_ENDPOINT0_SIZE;
+  ep_buf_ptr = 8 * USB_ENDPOINT_MAX + 2 * USB_EP0_BUFFER_SIZE;
 }
 
 bool dcd_edpt_iso_alloc(uint8_t ep_addr, uint16_t largest_packet_size) {

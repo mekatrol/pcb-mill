@@ -3,16 +3,6 @@
 #include "tusb_private.h"
 #include "usbd_pvt.h"
 
-tusb_role_t _tusb_rhport_role[TUP_USBIP_CONTROLLER_NUM] = {TUSB_ROLE_INVALID};
-
-//--------------------------------------------------------------------+
-// Public API
-//--------------------------------------------------------------------+
-
-//--------------------------------------------------------------------+
-// Endpoint Helper for both Host and Device stack
-//--------------------------------------------------------------------+
-
 bool tu_edpt_claim(tu_edpt_state_t* ep_state) {
   // can only claim the endpoint if it is not busy and not claimed yet.
   bool const available = (ep_state->busy == 0) && (ep_state->claimed == 0);

@@ -16,7 +16,7 @@
 #define USB ((USB_DRD_TypeDef *)USB_BASE)
 
 #define USB_ENDPOINT_MAX 8
-#define CFG_TUD_ENDPOINT0_SIZE 64
+#define USB_EP0_BUFFER_SIZE 64
 
 // CDC buffer sizes
 #define USB_ENDPOINT_RX_BUFFER_SIZE 64

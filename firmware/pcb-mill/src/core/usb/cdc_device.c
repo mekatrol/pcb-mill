@@ -29,22 +29,22 @@ typedef struct {
 typedef struct {
   union {
     __attribute__((aligned(4)))
-    uint8_t epout[CFG_TUD_ENDPOINT0_SIZE];
+    uint8_t epout[USB_EP0_BUFFER_SIZE];
 
     __attribute__((aligned(CFG_TUD_MEM_DCACHE_ENABLE_DEFAULT ? CFG_TUSB_MEM_DCACHE_LINE_SIZE : 1)))
-    uint8_t epout_dcache_padding[(CFG_TUD_MEM_DCACHE_ENABLE_DEFAULT ? (DIV_CEIL(CFG_TUD_ENDPOINT0_SIZE, CFG_TUSB_MEM_DCACHE_LINE_SIZE) *
+    uint8_t epout_dcache_padding[(CFG_TUD_MEM_DCACHE_ENABLE_DEFAULT ? (DIV_CEIL(USB_EP0_BUFFER_SIZE, CFG_TUSB_MEM_DCACHE_LINE_SIZE) *
                                                                        CFG_TUSB_MEM_DCACHE_LINE_SIZE)
-                                                                    : CFG_TUD_ENDPOINT0_SIZE)];
+                                                                    : USB_EP0_BUFFER_SIZE)];
   };
 
   union {
     __attribute__((aligned(4)))
-    uint8_t epin[CFG_TUD_ENDPOINT0_SIZE];
+    uint8_t epin[USB_EP0_BUFFER_SIZE];
 
     __attribute__((aligned(CFG_TUD_MEM_DCACHE_ENABLE_DEFAULT ? CFG_TUSB_MEM_DCACHE_LINE_SIZE : 1)))
-    uint8_t epin_dcache_padding[(CFG_TUD_MEM_DCACHE_ENABLE_DEFAULT ? (DIV_CEIL(CFG_TUD_ENDPOINT0_SIZE, CFG_TUSB_MEM_DCACHE_LINE_SIZE) *
+    uint8_t epin_dcache_padding[(CFG_TUD_MEM_DCACHE_ENABLE_DEFAULT ? (DIV_CEIL(USB_EP0_BUFFER_SIZE, CFG_TUSB_MEM_DCACHE_LINE_SIZE) *
                                                                       CFG_TUSB_MEM_DCACHE_LINE_SIZE)
-                                                                   : CFG_TUD_ENDPOINT0_SIZE)];
+                                                                   : USB_EP0_BUFFER_SIZE)];
   };
 } cdcd_epbuf_t;
 //--------------------------------------------------------------------+
@@ -70,7 +70,7 @@ static bool _prep_out_transaction() {
   // TODO Actually we can still carry out the transfer, keeping count of received bytes
   // and slowly move it to the FIFO when read().
   // This pre-check reduces endpoint claiming
-  if (available < CFG_TUD_ENDPOINT0_SIZE) {
+  if (available < USB_EP0_BUFFER_SIZE) {
     return false;
   }
 
@@ -82,8 +82,8 @@ static bool _prep_out_transaction() {
   // fifo can be changed before endpoint is claimed
   available = tu_fifo_remaining(&p_cdc->rx_ff);
 
-  if (available >= CFG_TUD_ENDPOINT0_SIZE) {
-    return usbd_edpt_xfer(p_cdc->ep_out, p_epbuf->epout, CFG_TUD_ENDPOINT0_SIZE);
+  if (available >= USB_EP0_BUFFER_SIZE) {
+    return usbd_edpt_xfer(p_cdc->ep_out, p_epbuf->epout, USB_EP0_BUFFER_SIZE);
   } else {
     // Release endpoint since we don't make any transfer
     usbd_edpt_release(p_cdc->ep_out);
@@ -181,7 +181,7 @@ uint32_t tud_cdc_n_write_flush() {
   }
 
   // Pull data from FIFO
-  const uint16_t count = tu_fifo_read_n(&p_cdc->tx_ff, p_epbuf->epin, CFG_TUD_ENDPOINT0_SIZE);
+  const uint16_t count = tu_fifo_read_n(&p_cdc->tx_ff, p_epbuf->epin, USB_EP0_BUFFER_SIZE);
 
   if (count) {
     if (!usbd_edpt_xfer(p_cdc->ep_in, p_epbuf->epin, count)) {
@@ -247,8 +247,8 @@ void cdcd_reset() {
 
 uint16_t cdcd_open(const tusb_desc_interface_t* itf_desc, uint16_t max_len) {
   // Only support ACM subclass
-  if (TUSB_CLASS_CDC != itf_desc->bInterfaceClass ||
-      CDC_COMM_SUBCLASS_ABSTRACT_CONTROL_MODEL != itf_desc->bInterfaceSubClass) {
+  if (itf_desc->bInterfaceClass != TUSB_CLASS_CDC ||
+      itf_desc->bInterfaceSubClass != CDC_COMM_SUBCLASS_ABSTRACT_CONTROL_MODEL) {
     return 0;
   }
 

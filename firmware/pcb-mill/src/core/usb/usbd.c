@@ -616,14 +616,14 @@ static bool process_get_descriptor(tusb_control_request_t const* p_request) {
 
       // Only response with exactly 1 Packet if: not addressed and host requested more data than device descriptor has.
       // This only happens with the very first get device descriptor and EP0 size = 8 or 16.
-      if ((CFG_TUD_ENDPOINT0_SIZE < sizeof(tusb_desc_device_t)) && !_usbd_dev.addressed &&
+      if ((USB_EP0_BUFFER_SIZE < sizeof(tusb_desc_device_t)) && !_usbd_dev.addressed &&
           ((tusb_control_request_t const*)p_request)->wLength > sizeof(tusb_desc_device_t)) {
         // Hack here: we modify the request length to prevent usbd_control response with zlp
         // since we are responding with 1 packet & less data than wLength.
         tusb_control_request_t mod_request = *p_request;
-        mod_request.wLength = CFG_TUD_ENDPOINT0_SIZE;
+        mod_request.wLength = USB_EP0_BUFFER_SIZE;
 
-        return tud_control_xfer(&mod_request, desc_device, CFG_TUD_ENDPOINT0_SIZE);
+        return tud_control_xfer(&mod_request, desc_device, USB_EP0_BUFFER_SIZE);
       } else {
         return tud_control_xfer(p_request, desc_device, sizeof(tusb_desc_device_t));
       }
