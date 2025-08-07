@@ -1,30 +1,3 @@
-/*
- * The MIT License (MIT)
- *
- * Copyright(c) N Conrad
- * Copyright(c) 2024, hathach (tinyusb.org)
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *
- * This file is part of the TinyUSB stack.
- */
-
 #ifndef TUSB_FSDEV_TYPE_H
 #define TUSB_FSDEV_TYPE_H
 
@@ -34,9 +7,6 @@
 
 // FSDEV_PMA_SIZE is PMA buffer size in bytes.
 // - 2048-byte devices, access with 32-bit address
-
-// The fsdev_bus_t type can be used for both register and PMA access necessities
-typedef uint32_t fsdev_bus_t;
 
 //--------------------------------------------------------------------+
 // BTable Typedef
@@ -56,31 +26,12 @@ typedef struct {
 #define FSDEV_BTABLE ((volatile fsdev_btable_t*)(FSDEV_PMA_BASE + FSDEV_BTABLE_BASE))
 
 typedef struct {
-  volatile fsdev_bus_t value;
+  volatile uint32_t value;
 } fsdev_pma_buf_t;
 
 #define PMA_BUF_AT(_addr) ((fsdev_pma_buf_t*)(FSDEV_PMA_BASE + _addr))
 
-//--------------------------------------------------------------------+
-// Registers Typedef
-//--------------------------------------------------------------------+
-
-typedef struct {
-  struct {
-    volatile __attribute__((aligned(4))) fsdev_bus_t reg;
-  } ep[CFG_TUD_ENDPPOINT_MAX];
-
-  volatile __attribute__((aligned(4))) uint32_t RESERVED7[8];  // Offset  0: Reserved
-  volatile __attribute__((aligned(4))) fsdev_bus_t CNTR;       // Offset 40: Control register
-  volatile __attribute__((aligned(4))) fsdev_bus_t ISTR;       // Offset 44: Interrupt status register
-  volatile __attribute__((aligned(4))) fsdev_bus_t FNR;        // Offset 48: Frame number register
-  volatile __attribute__((aligned(4))) fsdev_bus_t DADDR;      // Offset 4C: Device address register
-  volatile __attribute__((aligned(4))) fsdev_bus_t BTABLE;     // Offset 50: Buffer Table address register (16-bit only)
-  volatile __attribute__((aligned(4))) fsdev_bus_t LPMCSR;     // Offset 54: LPM Control and Status Register (32-bit only)
-  volatile __attribute__((aligned(4))) fsdev_bus_t BCDR;       // Offset 58: Battery Charging Detector Register (32-bit only)
-} fsdev_regs_t;
-
-#define FSDEV_REG ((fsdev_regs_t*)FSDEV_REG_BASE)
+#define FSDEV_REG ((USB_DRD_TypeDef*)FSDEV_REG_BASE)
 
 #define USB_EPTX_STAT 0x0030U
 #define USB_EPTX_STAT_Pos 4u
@@ -104,7 +55,7 @@ typedef enum {
 //--------------------------------------------------------------------+
 
 __attribute__((always_inline)) static inline uint32_t ep_read(uint32_t ep_id) {
-  return FSDEV_REG->ep[ep_id].reg;
+  return FSDEV_REG->chep[ep_id].CHEPnR;
 }
 
 __attribute__((always_inline)) static inline void ep_write(uint32_t ep_id, uint32_t value, bool need_exclusive) {
@@ -112,7 +63,7 @@ __attribute__((always_inline)) static inline void ep_write(uint32_t ep_id, uint3
     dcd_int_disable(0);
   }
 
-  FSDEV_REG->ep[ep_id].reg = (fsdev_bus_t)value;
+  FSDEV_REG->chep[ep_id].CHEPnR = value;
 
   if (need_exclusive) {
     dcd_int_enable(0);
@@ -120,7 +71,7 @@ __attribute__((always_inline)) static inline void ep_write(uint32_t ep_id, uint3
 }
 
 __attribute__((always_inline)) static inline void ep_write_clear_ctr(uint32_t ep_id, tusb_dir_t dir) {
-  uint32_t reg = FSDEV_REG->ep[ep_id].reg;
+  uint32_t reg = FSDEV_REG->chep[ep_id].CHEPnR;
   reg |= USB_EP_CTR_TX | USB_EP_CTR_RX;
   reg &= USB_EPREG_MASK;
   reg &= ~(1 << (USB_EP_CTR_TX_Pos + (dir == TUSB_DIR_IN ? 0 : 8)));

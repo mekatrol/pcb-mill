@@ -356,13 +356,13 @@ void dcd_int_handler(uint8_t rhport) {
 
   /* Put SOF flag at the beginning of ISR in case to get least amount of jitter if it is used for timing purposes */
   if (int_status & USB_ISTR_SOF) {
-    FSDEV_REG->ISTR = (fsdev_bus_t)~USB_ISTR_SOF;
+    FSDEV_REG->ISTR = ~USB_ISTR_SOF;
     dcd_event_sof(0, FSDEV_REG->FNR & USB_FNR_FN, true);
   }
 
   if (int_status & USB_ISTR_RESET) {
     // USBRST is start of reset.
-    FSDEV_REG->ISTR = (fsdev_bus_t)~USB_ISTR_RESET;
+    FSDEV_REG->ISTR = ~USB_ISTR_RESET;
     handle_bus_reset(rhport);
     dcd_event_bus_reset(0, TUSB_SPEED_FULL, true);
     return;  // Don't do the rest of the things here; perhaps they've been cleared?
@@ -372,7 +372,7 @@ void dcd_int_handler(uint8_t rhport) {
     FSDEV_REG->CNTR &= ~USB_CNTR_LPMODE;
     FSDEV_REG->CNTR &= ~USB_CNTR_FSUSP;
 
-    FSDEV_REG->ISTR = (fsdev_bus_t)~USB_ISTR_WKUP;
+    FSDEV_REG->ISTR = ~USB_ISTR_WKUP;
     dcd_event_bus_signal(0, DCD_EVENT_RESUME, true);
   }
 
@@ -385,7 +385,7 @@ void dcd_int_handler(uint8_t rhport) {
     FSDEV_REG->CNTR |= USB_CNTR_LPMODE;
 
     /* clear of the ISTR bit must be done after setting of CNTR_FSUSP */
-    FSDEV_REG->ISTR = (fsdev_bus_t)~USB_ISTR_SUSP;
+    FSDEV_REG->ISTR = ~USB_ISTR_SUSP;
     dcd_event_bus_signal(0, DCD_EVENT_SUSPEND, true);
   }
 
@@ -396,7 +396,7 @@ void dcd_int_handler(uint8_t rhport) {
     if (remoteWakeCountdown > 0u) {
       remoteWakeCountdown--;
     }
-    FSDEV_REG->ISTR = (fsdev_bus_t)~USB_ISTR_ESOF;
+    FSDEV_REG->ISTR = ~USB_ISTR_ESOF;
   }
 
   // loop to handle all pending CTR interrupts
@@ -441,7 +441,7 @@ void dcd_int_handler(uint8_t rhport) {
   }
 
   if (int_status & USB_ISTR_PMAOVR) {
-    FSDEV_REG->ISTR = (fsdev_bus_t)~USB_ISTR_PMAOVR;
+    FSDEV_REG->ISTR = ~USB_ISTR_PMAOVR;
   }
 }
 
@@ -801,21 +801,21 @@ void dcd_edpt_clear_stall(uint8_t rhport, uint8_t ep_addr) {
 // - Uses unaligned for RAM (since M0 cannot access unaligned address)
 static bool dcd_write_packet_memory(uint16_t dst, const void *__restrict src, uint16_t nbytes) {
   if (nbytes == 0) return true;
-  uint32_t n_write = nbytes / sizeof(fsdev_bus_t);
+  uint32_t n_write = nbytes / sizeof(uint32_t);
 
   fsdev_pma_buf_t *pma_buf = PMA_BUF_AT(dst);
   const uint8_t *src8 = src;
 
   while (n_write--) {
     pma_buf->value = tu_unaligned_read32(src8);
-    src8 += sizeof(fsdev_bus_t);
+    src8 += sizeof(uint32_t);
     pma_buf++;
   }
 
   // odd bytes e.g 1 for 16-bit or 1-3 for 32-bit
-  uint16_t odd = nbytes & (sizeof(fsdev_bus_t) - 1);
+  uint16_t odd = nbytes & (sizeof(uint32_t) - 1);
   if (odd) {
-    fsdev_bus_t temp = 0;
+    uint32_t temp = 0;
     for (uint16_t i = 0; i < odd; i++) {
       temp |= *src8++ << (i * 8);
     }
@@ -830,21 +830,21 @@ static bool dcd_write_packet_memory(uint16_t dst, const void *__restrict src, ui
 // - Uses unaligned for RAM (since M0 cannot access unaligned address)
 static bool dcd_read_packet_memory(void *__restrict dst, uint16_t src, uint16_t nbytes) {
   if (nbytes == 0) return true;
-  uint32_t n_read = nbytes / sizeof(fsdev_bus_t);
+  uint32_t n_read = nbytes / sizeof(uint32_t);
 
   fsdev_pma_buf_t *pma_buf = PMA_BUF_AT(src);
   uint8_t *dst8 = (uint8_t *)dst;
 
   while (n_read--) {
-    tu_unaligned_write32(dst8, (fsdev_bus_t)pma_buf->value);
-    dst8 += sizeof(fsdev_bus_t);
+    tu_unaligned_write32(dst8, (uint32_t)pma_buf->value);
+    dst8 += sizeof(uint32_t);
     pma_buf++;
   }
 
   // odd bytes e.g 1 for 16-bit or 1-3 for 32-bit
-  uint16_t odd = nbytes & (sizeof(fsdev_bus_t) - 1);
+  uint16_t odd = nbytes & (sizeof(uint32_t) - 1);
   if (odd) {
-    fsdev_bus_t temp = pma_buf->value;
+    uint32_t temp = pma_buf->value;
     while (odd--) {
       *dst8++ = (uint8_t)(temp & 0xfful);
       temp >>= 8;
@@ -868,8 +868,8 @@ static bool dcd_write_packet_memory_ff(tu_fifo_t *ff, uint16_t dst, uint16_t wNB
 
   // We want to read from the FIFO and write it into the PMA, if LIN part is ODD and has WRAPPED part,
   // last lin byte will be combined with wrapped part To ensure PMA is always access aligned
-  uint16_t lin_even = cnt_lin & ~(sizeof(fsdev_bus_t) - 1);
-  uint16_t lin_odd = cnt_lin & (sizeof(fsdev_bus_t) - 1);
+  uint16_t lin_even = cnt_lin & ~(sizeof(uint32_t) - 1);
+  uint16_t lin_odd = cnt_lin & (sizeof(uint32_t) - 1);
   uint8_t const *src8 = (uint8_t const *)info.ptr_lin;
 
   // write even linear part
@@ -881,19 +881,19 @@ static bool dcd_write_packet_memory_ff(tu_fifo_t *ff, uint16_t dst, uint16_t wNB
     src8 = (uint8_t const *)info.ptr_wrap;
   } else {
     // Combine last linear bytes + first wrapped bytes to form fsdev bus width data
-    fsdev_bus_t temp = 0;
+    uint32_t temp = 0;
     uint16_t i;
     for (i = 0; i < lin_odd; i++) {
       temp |= *src8++ << (i * 8);
     }
 
     src8 = (uint8_t const *)info.ptr_wrap;
-    for (; i < sizeof(fsdev_bus_t) && cnt_wrap > 0; i++, cnt_wrap--) {
+    for (; i < sizeof(uint32_t) && cnt_wrap > 0; i++, cnt_wrap--) {
       temp |= *src8++ << (i * 8);
     }
 
-    dcd_write_packet_memory(dst, &temp, sizeof(fsdev_bus_t));
-    dst += sizeof(fsdev_bus_t);
+    dcd_write_packet_memory(dst, &temp, sizeof(uint32_t));
+    dst += sizeof(uint32_t);
   }
 
   // write the rest of the wrapped part
@@ -919,8 +919,8 @@ static bool dcd_read_packet_memory_ff(tu_fifo_t *ff, uint16_t src, uint16_t wNBy
   // We want to read from the FIFO and write it into the PMA, if LIN part is ODD and has WRAPPED part,
   // last lin byte will be combined with wrapped part To ensure PMA is always access aligned
 
-  uint16_t lin_even = cnt_lin & ~(sizeof(fsdev_bus_t) - 1);
-  uint16_t lin_odd = cnt_lin & (sizeof(fsdev_bus_t) - 1);
+  uint16_t lin_even = cnt_lin & ~(sizeof(uint32_t) - 1);
+  uint16_t lin_odd = cnt_lin & (sizeof(uint32_t) - 1);
   uint8_t *dst8 = (uint8_t *)info.ptr_lin;
 
   // read even linear part
@@ -932,9 +932,9 @@ static bool dcd_read_packet_memory_ff(tu_fifo_t *ff, uint16_t src, uint16_t wNBy
     dst8 = (uint8_t *)info.ptr_wrap;
   } else {
     // Combine last linear bytes + first wrapped bytes to form fsdev bus width data
-    fsdev_bus_t temp;
-    dcd_read_packet_memory(&temp, src, sizeof(fsdev_bus_t));
-    src += sizeof(fsdev_bus_t);
+    uint32_t temp;
+    dcd_read_packet_memory(&temp, src, sizeof(uint32_t));
+    src += sizeof(uint32_t);
 
     uint16_t i;
     for (i = 0; i < lin_odd; i++) {
@@ -943,7 +943,7 @@ static bool dcd_read_packet_memory_ff(tu_fifo_t *ff, uint16_t src, uint16_t wNBy
     }
 
     dst8 = (uint8_t *)info.ptr_wrap;
-    for (; i < sizeof(fsdev_bus_t) && cnt_wrap > 0; i++, cnt_wrap--) {
+    for (; i < sizeof(uint32_t) && cnt_wrap > 0; i++, cnt_wrap--) {
       *dst8++ = (uint8_t)(temp & 0xfful);
       temp >>= 8;
     }

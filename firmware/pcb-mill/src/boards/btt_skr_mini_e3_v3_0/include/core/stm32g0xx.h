@@ -667,14 +667,22 @@ typedef struct
 
 typedef struct
 {
-  __IO uint32_t CHEP0R;       /*!< USB Channel/Endpoint 0 register,      Address offset: 0x00 */
-  __IO uint32_t CHEP1R;       /*!< USB Channel/Endpoint 1 register,      Address offset: 0x04 */
-  __IO uint32_t CHEP2R;       /*!< USB Channel/Endpoint 2 register,      Address offset: 0x08 */
-  __IO uint32_t CHEP3R;       /*!< USB Channel/Endpoint 3 register,      Address offset: 0x0C */
-  __IO uint32_t CHEP4R;       /*!< USB Channel/Endpoint 4 register,      Address offset: 0x10 */
-  __IO uint32_t CHEP5R;       /*!< USB Channel/Endpoint 5 register,      Address offset: 0x14 */
-  __IO uint32_t CHEP6R;       /*!< USB Channel/Endpoint 6 register,      Address offset: 0x18 */
-  __IO uint32_t CHEP7R;       /*!< USB Channel/Endpoint 7 register,      Address offset: 0x1C */
+  union {
+    struct {
+      volatile uint32_t CHEPnR;
+    } chep[8];  // Endpoint/channel registers CHEP0 to CHEP7
+
+    struct {
+      __IO uint32_t CHEP0R;  // Offset 0x00
+      __IO uint32_t CHEP1R;  // Offset 0x04
+      __IO uint32_t CHEP2R;  // Offset 0x08
+      __IO uint32_t CHEP3R;  // Offset 0x0C
+      __IO uint32_t CHEP4R;  // Offset 0x10
+      __IO uint32_t CHEP5R;  // Offset 0x14
+      __IO uint32_t CHEP6R;  // Offset 0x18
+      __IO uint32_t CHEP7R;  // Offset 0x1C
+    };
+  };
   __IO uint32_t RESERVED0[8]; /*!< Reserved,                                                  */
   __IO uint32_t CNTR;         /*!< Control register,                     Address offset: 0x40 */
   __IO uint32_t ISTR;         /*!< Interrupt status register,            Address offset: 0x44 */
