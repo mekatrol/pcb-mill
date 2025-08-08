@@ -236,7 +236,7 @@ void dcd_int_handler() {
     // USBRST is start of reset.
     USB->ISTR = ~USB_ISTR_RESET;
     handle_bus_reset();
-    dcd_event_bus_reset(TUSB_SPEED_FULL, true);
+    dcd_event_bus_reset(true);
 
     return;  // Don't do the rest of the things here; perhaps they've been cleared?
   }

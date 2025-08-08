@@ -28,11 +28,6 @@ typedef struct __attribute__((aligned(4))) {
   uint8_t event_id;
 
   union {
-    // BUS RESET
-    struct {
-      tusb_speed_t speed;
-    } bus_reset;
-
     // SOF
     struct {
       uint32_t frame_count;
@@ -151,10 +146,9 @@ __attribute__((always_inline)) static inline void dcd_event_bus_signal(dcd_event
 }
 
 // helper to send bus reset event
-__attribute__((always_inline)) static inline void dcd_event_bus_reset(tusb_speed_t speed, bool in_isr) {
+__attribute__((always_inline)) static inline void dcd_event_bus_reset(bool in_isr) {
   dcd_event_t event;
   event.event_id = DCD_EVENT_BUS_RESET;
-  event.bus_reset.speed = speed;
   dcd_event_handler(&event, in_isr);
 }
 

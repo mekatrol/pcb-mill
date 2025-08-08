@@ -7,9 +7,6 @@
 
 void tud_task_ext();
 
-// Get current bus speed
-tusb_speed_t tud_speed_get(void);
-
 // Check if device is connected (may not mounted/configured yet)
 // True if just got out of Bus Reset and received the very first data from host
 bool tud_connected(void);

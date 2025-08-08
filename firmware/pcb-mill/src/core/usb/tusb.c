@@ -21,43 +21,54 @@ bool tu_edpt_release(tu_edpt_state_t* ep_state) {
   return ret;
 }
 
-bool tu_edpt_validate(tusb_desc_endpoint_t const* desc_ep, tusb_speed_t speed, bool is_host) {
+bool tu_edpt_validate(tusb_desc_endpoint_t const* desc_ep, bool is_host) {
+  // According to USB 2.0 Specification:
+  //
+  // Full-Speed Bulk Endpoint:
+  //   Allowed max packet sizes: 8, 16, 32, or 64 bytes
+  //   Reference: USB 2.0 Spec, Table 9-13 (p.262), Section 5.6.3 (Full-Speed endpoints)
+  //
+  // High-Speed Bulk Endpoint:
+  //   Must have max packet size exactly 512 bytes
+  //   Reference: USB 2.0 Spec, Table 9-13 (p.262), Section 5.8.3 (Bulk Transfers, p.120)
   uint16_t const max_packet_size = tu_edpt_packet_size(desc_ep);
 
   switch (desc_ep->bmAttributes.xfer) {
     case TUSB_XFER_ISOCHRONOUS: {
-      uint16_t const spec_size = (speed == TUSB_SPEED_HIGH ? 1024 : 1023);
-      if (max_packet_size > spec_size) {
+      // USB 2.0 Spec, Section 5.8.4, Table 5-8
+      // For high-speed isochronous endpoints:
+      //  Maximum packet size per transaction = 1024 bytes
+      // USB 2.0 Spec, Section 5.6.3, Table 5-6
+      // For full-speed isochronous endpoints:
+      //  Maximum packet size per transaction = 1023 bytes
+      //  Frame time budget and bit stuffing rules limit the payload to 1023 bytes (plus overhead).
+      if (max_packet_size > 1023) {
         return false;
       }
       break;
     }
 
     case TUSB_XFER_BULK:
-      if (speed == TUSB_SPEED_HIGH) {
-        // Bulk highspeed must be EXACTLY 512
-        if (max_packet_size != 512) {
-          return false;
-        }
+      // USB 2.0 Spec, Section 5.8.3, Table 9-13
+      // High-speed bulk packet size must be exactly 512 bytes.
+      // This is a hard requirement in the spec — you cannot pick smaller or larger values at high speed.
+      // Full-speed bulk can only be 8, 16, 32, or 64 bytes.
+      // These four values are the only legal options; the choice depends on the endpoint and device capability.
+      if (is_host && max_packet_size == 512) {
+        // HACK: while in host mode, some device incorrectly always report 512 regardless of link speed
+        // overwrite descriptor to force 64
+        tusb_desc_endpoint_t* hacked_ep = (tusb_desc_endpoint_t*)(uintptr_t)desc_ep;
+        hacked_ep->wMaxPacketSize = 64;
       } else {
-        // Bulk fullspeed can only be 8, 16, 32, 64
-        if (is_host && max_packet_size == 512) {
-          // HACK: while in host mode, some device incorrectly always report 512 regardless of link speed
-          // overwrite descriptor to force 64
-          tusb_desc_endpoint_t* hacked_ep = (tusb_desc_endpoint_t*)(uintptr_t)desc_ep;
-          hacked_ep->wMaxPacketSize = 64;
-        } else {
-          if (max_packet_size != 8 && max_packet_size != 16 &&
-              max_packet_size != 32 && max_packet_size != 64) {
-            return false;
-          }
+        if (max_packet_size != 8 && max_packet_size != 16 &&
+            max_packet_size != 32 && max_packet_size != 64) {
+          return false;
         }
       }
       break;
 
     case TUSB_XFER_INTERRUPT: {
-      uint16_t const spec_size = (speed == TUSB_SPEED_HIGH ? 1024 : 64);
-      if (max_packet_size > spec_size) {
+      if (max_packet_size > 64) {
         return false;
       }
       break;

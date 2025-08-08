@@ -80,7 +80,6 @@ typedef struct {
     uint8_t self_powered : 1;           // configuration descriptor's attribute
   };
   volatile uint8_t cfg_num;  // current active configuration (0x00 is not configured)
-  uint8_t speed;
   volatile uint8_t sof_consumer;
 
   uint8_t itf2drv[USB_MAX_INTERFACES];  // map interface number to driver (0xff is invalid)
@@ -151,10 +150,6 @@ bool usbd_control_xfer_cb(uint8_t ep_addr, xfer_result_t event, uint32_t xferred
 //--------------------------------------------------------------------+
 // Application API
 //--------------------------------------------------------------------+
-tusb_speed_t tud_speed_get(void) {
-  return (tusb_speed_t)_usbd_dev.speed;
-}
-
 bool tud_connected(void) {
   return _usbd_dev.connected;
 }
@@ -225,7 +220,6 @@ void tud_task_ext() {
     switch (event.event_id) {
       case DCD_EVENT_BUS_RESET:
         usbd_reset();
-        _usbd_dev.speed = event.bus_reset.speed;
         break;
 
       case DCD_EVENT_UNPLUGGED:
@@ -372,10 +366,7 @@ static bool process_control_request(tusb_control_request_t const* p_request) {
               dcd_edpt_close_all();
 
               // close all drivers and current configured state except bus speed
-              uint8_t const speed = _usbd_dev.speed;
               configuration_reset();
-
-              _usbd_dev.speed = speed;  // restore speed
             }
 
             _usbd_dev.cfg_num = cfg_num;
@@ -833,7 +824,7 @@ bool usbd_edpt_open(tusb_desc_endpoint_t const* desc_ep) {
     return false;
   }
 
-  if (!tu_edpt_validate(desc_ep, (tusb_speed_t)_usbd_dev.speed, false)) {
+  if (!tu_edpt_validate(desc_ep, false)) {
     return false;
   }
 
