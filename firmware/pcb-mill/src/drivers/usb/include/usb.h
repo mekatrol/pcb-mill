@@ -20,11 +20,17 @@
 // The size of endpoint 0 buffer
 #define USB_EP0_BUFFER_SIZE 64
 
-// The size of other endpoint buffers (e.g. CDC)
+// The size of other endpoint buffers (e.g. CDC, MSC)
 #define USB_ENDPOINT_RX_BUFFER_SIZE 64
 #define USB_ENDPOINT_TX_BUFFER_SIZE 64
 
-#define CFG_TUD_INTERFACE_MAX 16
+// The maximum number of USB interfaces across all configurations
+// Each USB interface is as defined in the USB 2.0 spec (see Section 9.6.5 Interface Descriptor).
+// An interface is a logical grouping of endpoints and functions.
+// Two interfaces supported:
+//  * CDC (Communications Device Class ) ACM (Abstract Control Model) [Virtual COM port]
+//  * MSC (Mass Storage Class)  [SD card]
+#define USB_MAX_INTERFACES 2
 
 // Size of array based on total memory size dived by size of single element
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
@@ -64,6 +70,24 @@ typedef struct {
 } usbram_register_map_t;
 
 #define USBRAM_REGSITER ((volatile usbram_register_map_t *)(USB_DRD_PMAADDR))
+
+/// USB Device Descriptor
+typedef struct __attribute__((packed)) {
+  uint8_t bLength;             // Descriptor size in bytes
+  uint8_t bDescriptorType;     // Descriptor type (DEVICE)
+  uint16_t bcdUSB;             // USB specification version in BCD
+  uint8_t bDeviceClass;        // Device class code
+  uint8_t bDeviceSubClass;     // Device subclass code
+  uint8_t bDeviceProtocol;     // Device protocol code
+  uint8_t bMaxPacketSize0;     // Max packet size for endpoint zero
+  uint16_t idVendor;           // Vendor ID (USB-IF assigned)
+  uint16_t idProduct;          // Product ID (manufacturer assigned)
+  uint16_t bcdDevice;          // Device release number in BCD
+  uint8_t iManufacturer;       // Index of manufacturer string descriptor
+  uint8_t iProduct;            // Index of product string descriptor
+  uint8_t iSerialNumber;       // Index of serial number string descriptor
+  uint8_t bNumConfigurations;  // Number of configurations supported
+} usb_device_desc_t;
 
 __attribute__((always_inline)) static inline bool bit_set_test(uint32_t value, uint32_t pos) { return (value & BIT_MASK(pos)) ? true : false; }
 __attribute__((always_inline)) static inline uint16_t min_u16(uint16_t x, uint16_t y) { return (x < y) ? x : y; }

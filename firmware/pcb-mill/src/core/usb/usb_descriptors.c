@@ -4,26 +4,45 @@
 #include "usbd.h"
 #include "cdc_device.h"
 
-// Device descriptor
-tusb_desc_device_t const desc_device = {
-    .bLength = sizeof(tusb_desc_device_t),
-    .bDescriptorType = TUSB_DESC_DEVICE,
-    .bcdUSB = 0x0200,
+// -----------------------------------------------------------------------------
+// USB Device Descriptor (See USB 2.0 Spec, Section 9.6.1)
+// This descriptor tells the host the overall characteristics of the USB device
+// before it requests configuration/interface/endpoint descriptors.
+// -----------------------------------------------------------------------------
+usb_device_desc_t const desc_device = {
+    .bLength = sizeof(usb_device_desc_t),  // Size of this descriptor in bytes (should be 18 for a device descriptor)
+    .bDescriptorType = TUSB_DESC_DEVICE,   // Descriptor Type: DEVICE (0x01)
 
-    .bDeviceClass = 0xEF,                    // Misc USB class
-    .bDeviceSubClass = 2,                    // Common USB subclass
-    .bDeviceProtocol = 1,                    // Priotocol IAD
-    .bMaxPacketSize0 = USB_EP0_BUFFER_SIZE,  // Endpoint buffer size
+    .bcdUSB = 0x0200,  // USB Specification version: 2.00 (BCD format)
 
-    .idVendor = 0x0483,
-    .idProduct = 0x5740,
-    .bcdDevice = 0x0100,
+    // Device class information:
+    //
+    // According to USB-IF assigned numbers:
+    //   bDeviceClass    = 0xEF → Miscellaneous Device Class
+    //   bDeviceSubClass = 0x02 → Common Class
+    //   bDeviceProtocol = 0x01 → Interface Association Descriptor (IAD)
+    //
+    // This 0xEF / 0x02 / 0x01 triple is the standard for composite devices
+    // that group multiple interfaces (e.g., CDC + HID) under a single device.
+    .bDeviceClass = 0xEF,     // Device class code: Miscellaneous
+    .bDeviceSubClass = 0x02,  // Subclass: Common
+    .bDeviceProtocol = 0x01,  // Protocol: IAD
 
-    .iManufacturer = 0x01,
-    .iProduct = 0x02,
-    .iSerialNumber = 0x03,
+    .bMaxPacketSize0 = USB_EP0_BUFFER_SIZE,  // Max packet size for control endpoint 0 (8, 16, 32, or 64 bytes;
+                                             // must be 64 for high-speed devices)
 
-    .bNumConfigurations = 1};
+    // Vendor and product identification:
+    .idVendor = 0x0483,   // Vendor ID (assigned by USB-IF) — 0x0483 = STMicroelectronics
+    .idProduct = 0x5740,  // Product ID (assigned by manufacturer)
+    .bcdDevice = 0x0100,  // Device release number in BCD (e.g., 0x0100 = version 1.00)
+
+    // String descriptor indices (0 means no string):
+    .iManufacturer = 0x01,  // Index of manufacturer string descriptor
+    .iProduct = 0x02,       // Index of product string descriptor
+    .iSerialNumber = 0x03,  // Index of serial number string descriptor
+
+    .bNumConfigurations = 0x01,  // Number of configurations this device supports
+};
 
 uint8_t const* tud_descriptor_device_cb(void) {
   return (uint8_t const*)&desc_device;

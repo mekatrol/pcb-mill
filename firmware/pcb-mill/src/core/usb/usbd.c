@@ -83,8 +83,8 @@ typedef struct {
   uint8_t speed;
   volatile uint8_t sof_consumer;
 
-  uint8_t itf2drv[CFG_TUD_INTERFACE_MAX];  // map interface number to driver (0xff is invalid)
-  uint8_t ep2drv[USB_ENDPOINT_MAX][2];     // map endpoint to driver ( 0xff is invalid ), can use only 4-bit each
+  uint8_t itf2drv[USB_MAX_INTERFACES];  // map interface number to driver (0xff is invalid)
+  uint8_t ep2drv[USB_ENDPOINT_MAX][2];  // map endpoint to driver ( 0xff is invalid ), can use only 4-bit each
 
   tu_edpt_state_t ep_status[USB_ENDPOINT_MAX][2];
 
@@ -616,8 +616,8 @@ static bool process_get_descriptor(tusb_control_request_t const* p_request) {
 
       // Only response with exactly 1 Packet if: not addressed and host requested more data than device descriptor has.
       // This only happens with the very first get device descriptor and EP0 size = 8 or 16.
-      if ((USB_EP0_BUFFER_SIZE < sizeof(tusb_desc_device_t)) && !_usbd_dev.addressed &&
-          ((tusb_control_request_t const*)p_request)->wLength > sizeof(tusb_desc_device_t)) {
+      if ((USB_EP0_BUFFER_SIZE < sizeof(usb_device_desc_t)) && !_usbd_dev.addressed &&
+          ((tusb_control_request_t const*)p_request)->wLength > sizeof(usb_device_desc_t)) {
         // Hack here: we modify the request length to prevent usbd_control response with zlp
         // since we are responding with 1 packet & less data than wLength.
         tusb_control_request_t mod_request = *p_request;
@@ -625,7 +625,7 @@ static bool process_get_descriptor(tusb_control_request_t const* p_request) {
 
         return tud_control_xfer(&mod_request, desc_device, USB_EP0_BUFFER_SIZE);
       } else {
-        return tud_control_xfer(p_request, desc_device, sizeof(tusb_desc_device_t));
+        return tud_control_xfer(p_request, desc_device, sizeof(usb_device_desc_t));
       }
     }
       // break; // unreachable
