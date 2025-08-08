@@ -2,6 +2,8 @@
 #define _TUSB_USBD_H_
 
 #include "usb.h"
+#include "tusb_option.h"
+#include "tusb_types.h"
 
 void tud_task_ext();
 

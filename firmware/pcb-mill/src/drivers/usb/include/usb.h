@@ -10,15 +10,17 @@
 #include <stdio.h>
 
 #include "stm32g0xx.h"
-#include "tusb_option.h"
-#include "tusb_types.h"
 
+// USB registers strong type
 #define USB ((USB_DRD_TypeDef *)USB_BASE)
 
+// The number of endpoints the device supports
 #define USB_ENDPOINT_MAX 8
+
+// The size of endpoint 0 buffer
 #define USB_EP0_BUFFER_SIZE 64
 
-// CDC buffer sizes
+// The size of other endpoint buffers (e.g. CDC)
 #define USB_ENDPOINT_RX_BUFFER_SIZE 64
 #define USB_ENDPOINT_TX_BUFFER_SIZE 64
 

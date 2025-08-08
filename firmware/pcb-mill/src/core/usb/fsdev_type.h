@@ -3,6 +3,9 @@
 
 #include "usb.h"
 
+#include "tusb_option.h"
+#include "tusb_types.h"
+
 typedef struct {
   volatile uint32_t value;
 } usb_pma_buf_t;

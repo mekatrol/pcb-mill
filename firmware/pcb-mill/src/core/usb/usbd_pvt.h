@@ -4,6 +4,8 @@
 #include "osal.h"
 #include "tusb_fifo.h"
 #include "tusb_private.h"
+#include "tusb_option.h"
+#include "tusb_types.h"
 
 //--------------------------------------------------------------------+
 // MACRO CONSTANT TYPEDEF PROTYPES
@@ -75,6 +77,5 @@ __attribute__((always_inline)) static inline bool usbd_edpt_ready(uint8_t ep_add
  *------------------------------------------------------------------*/
 
 bool usbd_open_edpt_pair(uint8_t const* p_desc, uint8_t ep_count, uint8_t xfer_type, uint8_t* ep_out, uint8_t* ep_in);
-void usbd_defer_func(osal_task_func_t func, void* param, bool in_isr);
 
 #endif

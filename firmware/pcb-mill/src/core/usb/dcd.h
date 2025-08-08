@@ -4,6 +4,8 @@
 #include "usb.h"
 #include "osal.h"
 #include "tusb_fifo.h"
+#include "tusb_option.h"
+#include "tusb_types.h"
 
 //--------------------------------------------------------------------+
 // MACRO CONSTANT TYPEDEF PROTYPES

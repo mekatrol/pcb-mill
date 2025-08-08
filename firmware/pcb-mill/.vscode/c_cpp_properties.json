@@ -10,6 +10,8 @@
         "src/core",
         "src/core/include",
         "src/core/usb",
+        "src/drivers/usb",
+        "src/drivers/usb/include",
         "${workspaceFolder}/**"
       ],
       "defines": [],
@@ -27,6 +29,8 @@
           "src/core",
           "src/core/include",
           "src/core/usb",
+          "src/drivers/usb",
+          "src/drivers/usb/include",
           "${workspaceFolder}/**"
         ]
       }

@@ -824,17 +824,6 @@ bool usbd_open_edpt_pair(uint8_t const* p_desc, uint8_t ep_count, uint8_t xfer_t
   return true;
 }
 
-// Helper to defer an isr function
-void usbd_defer_func(osal_task_func_t func, void* param, bool in_isr) {
-  dcd_event_t event = {
-      .event_id = USBD_EVENT_FUNC_CALL,
-  };
-  event.func_call.func = func;
-  event.func_call.param = param;
-
-  queue_event(&event, in_isr);
-}
-
 //--------------------------------------------------------------------+
 // USBD Endpoint API
 //--------------------------------------------------------------------+

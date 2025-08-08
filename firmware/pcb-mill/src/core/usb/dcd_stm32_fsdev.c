@@ -1,7 +1,9 @@
+#include "usb.h"
+#include "tusb_option.h"
+#include "tusb_types.h"
 #include "tusb_option.h"
 #include "dcd.h"
 #include "fsdev_type.h"
-#include "stm32g0xx.h"
 
 //--------------------------------------------------------------------+
 // MACRO CONSTANT TYPEDEF

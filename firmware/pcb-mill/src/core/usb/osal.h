@@ -4,8 +4,6 @@
 #include "usb.h"
 #include "tusb_fifo.h"
 
-typedef void (*osal_task_func_t)(void*);
-
 // Timeout
 typedef struct {
   void (*interrupt_set)(bool);
