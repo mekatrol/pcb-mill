@@ -2,7 +2,10 @@
 #define _TUSB_USBD_H_
 
 #include "usb.h"
+#include "tusb_fifo.h"
 #include "tusb_types.h"
+
+extern tu_fifo_t ff;
 
 void tud_task_ext();
 
@@ -67,10 +70,21 @@ uint8_t const* tud_descriptor_device_qualifier_cb(void);
 // Configuration descriptor in the other speed e.g if high speed then this is for full speed and vice versa
 uint8_t const* tud_descriptor_other_speed_configuration_cb(uint8_t index);
 
-// Invoked when there is a new usb event
-void tud_event_hook_cb(uint32_t eventid, bool in_isr);
-
 // Invoked when received control request with VENDOR TYPE
 bool tud_vendor_control_xfer_cb(uint8_t stage, tusb_control_request_t const* request);
+
+__attribute__((always_inline)) static inline bool queue_send(tu_fifo_t* ff, void const* data, bool in_isr) {
+  if (!in_isr) {
+    usbd_int_set(false);
+  }
+
+  const bool success = tu_fifo_write(ff, data);
+
+  if (!in_isr) {
+    usbd_int_set(true);
+  }
+
+  return success;
+}
 
 #endif /* _TUSB_USBD_H_ */

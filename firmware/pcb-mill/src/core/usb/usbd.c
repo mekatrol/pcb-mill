@@ -87,28 +87,6 @@ tu_fifo_t ff = {
     .overwritable = false,
 };
 
-__attribute__((always_inline)) static inline bool queue_send(tu_fifo_t* ff, void const* data, bool in_isr) {
-  if (!in_isr) {
-    usbd_int_set(false);
-  }
-
-  const bool success = tu_fifo_write(ff, data);
-
-  if (!in_isr) {
-    usbd_int_set(true);
-  }
-
-  return success;
-}
-
-__attribute__((always_inline)) static inline bool queue_event(dcd_event_t const* event, bool in_isr) {
-  if (!queue_send(&ff, event, in_isr)) {
-    return false;
-  }
-  tud_event_hook_cb(event->event_id, in_isr);
-  return true;
-}
-
 //--------------------------------------------------------------------+
 // Prototypes
 //--------------------------------------------------------------------+
@@ -219,18 +197,6 @@ void tud_task_ext() {
         }
         break;
       }
-
-      case USBD_EVENT_FUNC_CALL:
-        if (event.func_call.func) {
-          event.func_call.func(event.func_call.param);
-        }
-        break;
-
-      case DCD_EVENT_SOF:
-        break;
-
-      default:
-        break;
     }
   }
 }
@@ -613,34 +579,6 @@ static bool process_get_descriptor(tusb_control_request_t const* p_request) {
 
     default:
       return false;
-  }
-}
-
-//--------------------------------------------------------------------+
-// DCD Event Handler
-//--------------------------------------------------------------------+
-void dcd_event_handler(dcd_event_t const* event, bool in_isr) {
-  bool send = false;
-  switch (event->event_id) {
-    case DCD_EVENT_SOF:
-      break;
-
-    case DCD_EVENT_SETUP_RECEIVED:
-      send = true;
-      break;
-
-    case DCD_EVENT_XFER_COMPLETE: {
-      send = true;
-      break;
-    }
-
-    default:
-      send = true;
-      break;
-  }
-
-  if (send) {
-    queue_event(event, in_isr);
   }
 }
 

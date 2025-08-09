@@ -4,6 +4,7 @@
 #include "usb.h"
 #include "tusb_fifo.h"
 #include "tusb_types.h"
+#include "usbd.h"
 
 //--------------------------------------------------------------------+
 // MACRO CONSTANT TYPEDEF PROTYPES
@@ -12,10 +13,8 @@
 typedef enum {
   DCD_EVENT_INVALID = 0,     // 0
   DCD_EVENT_BUS_RESET,       // 1
-  DCD_EVENT_SOF,             // 3
   DCD_EVENT_SETUP_RECEIVED,  // 6
   DCD_EVENT_XFER_COMPLETE,   // 7
-  USBD_EVENT_FUNC_CALL,      // 8 Not an DCD event, just a convenient way to defer ISR function
   DCD_EVENT_COUNT
 } dcd_eventid_t;
 
@@ -36,14 +35,19 @@ typedef struct __attribute__((aligned(4))) {
       uint8_t ep_addr;
       uint32_t len;
     } xfer_complete;
-
-    // FUNC_CALL
-    struct {
-      void (*func)(void*);
-      void* param;
-    } func_call;
   };
 } dcd_event_t;
+
+// Invoked when there is a new usb event
+void tud_event_hook_cb(uint32_t eventid, bool in_isr);
+
+__attribute__((always_inline)) static inline bool queue_event(dcd_event_t const* event, bool in_isr) {
+  if (!queue_send(&ff, event, in_isr)) {
+    return false;
+  }
+  tud_event_hook_cb(event->event_id, in_isr);
+  return true;
+}
 
 //--------------------------------------------------------------------+
 // Controller API
@@ -108,21 +112,18 @@ bool dcd_edpt_iso_activate(tusb_desc_endpoint_t const* desc_ep);
 // Event API (implemented by stack)
 //--------------------------------------------------------------------+
 
-// Called by DCD to notify device stack
-extern void dcd_event_handler(dcd_event_t const* event, bool in_isr);
-
 // helper to send bus signal event
 __attribute__((always_inline)) static inline void dcd_event_bus_signal(dcd_eventid_t eid, bool in_isr) {
   dcd_event_t event;
   event.event_id = eid;
-  dcd_event_handler(&event, in_isr);
+  queue_event(&event, in_isr);
 }
 
 // helper to send bus reset event
 __attribute__((always_inline)) static inline void dcd_event_bus_reset(bool in_isr) {
   dcd_event_t event;
   event.event_id = DCD_EVENT_BUS_RESET;
-  dcd_event_handler(&event, in_isr);
+  queue_event(&event, in_isr);
 }
 
 // helper to send setup received
@@ -130,7 +131,7 @@ __attribute__((always_inline)) static inline void dcd_event_setup_received(uint8
   dcd_event_t event;
   event.event_id = DCD_EVENT_SETUP_RECEIVED;
   memcpy(&event.setup_received, setup, sizeof(tusb_control_request_t));
-  dcd_event_handler(&event, in_isr);
+  queue_event(&event, in_isr);
 }
 
 // helper to send transfer complete event
@@ -139,14 +140,7 @@ __attribute__((always_inline)) static inline void dcd_event_xfer_complete(uint8_
   event.event_id = DCD_EVENT_XFER_COMPLETE;
   event.xfer_complete.ep_addr = ep_addr;
   event.xfer_complete.len = xferred_bytes;
-  dcd_event_handler(&event, in_isr);
-}
-
-__attribute__((always_inline)) static inline void dcd_event_sof(uint32_t frame_count, bool in_isr) {
-  dcd_event_t event;
-  event.event_id = DCD_EVENT_SOF;
-  event.sof.frame_count = frame_count;
-  dcd_event_handler(&event, in_isr);
+  queue_event(&event, in_isr);
 }
 
 #endif

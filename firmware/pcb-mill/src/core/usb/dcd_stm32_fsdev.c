@@ -218,10 +218,9 @@ static void handle_ctr_rx(uint32_t ep_id) {
 void dcd_int_handler() {
   uint32_t int_status = USB->ISTR;
 
-  /* Put SOF flag at the beginning of ISR in case to get least amount of jitter if it is used for timing purposes */
   if (int_status & USB_ISTR_SOF) {
     USB->ISTR = ~USB_ISTR_SOF;
-    dcd_event_sof(USB->FNR & USB_FNR_FN, true);
+    // Start of Frame
   }
 
   if (int_status & USB_ISTR_RESET) {
