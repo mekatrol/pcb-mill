@@ -60,10 +60,8 @@ static struct {
     __attribute__((aligned(4)))
     uint8_t buf[USB_EP0_BUFFER_SIZE];
 
-    __attribute__((aligned(CFG_TUD_MEM_DCACHE_ENABLE_DEFAULT ? CFG_TUSB_MEM_DCACHE_LINE_SIZE : 1)))
-    uint8_t buf_dcache_padding[(CFG_TUD_MEM_DCACHE_ENABLE_DEFAULT ? (DIV_CEIL(USB_EP0_BUFFER_SIZE, CFG_TUSB_MEM_DCACHE_LINE_SIZE) *
-                                                                     CFG_TUSB_MEM_DCACHE_LINE_SIZE)
-                                                                  : (USB_EP0_BUFFER_SIZE))];
+    __attribute__((aligned(1)))
+    uint8_t buf_dcache_padding[USB_EP0_BUFFER_SIZE];
   };
 } _ctrl_epbuf;
 
