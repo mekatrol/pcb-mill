@@ -46,65 +46,6 @@ __attribute__((always_inline)) static inline uint32_t tud_cdc_n_write_str(char c
 // Force sending data if possible, return number of forced bytes
 uint32_t tud_cdc_n_write_flush();
 
-// Return the number of bytes (characters) available for writing to TX FIFO buffer in a single n_write operation.
-uint32_t tud_cdc_n_write_available();
-
-//--------------------------------------------------------------------+
-// Application API (Single Port)
-//--------------------------------------------------------------------+
-
-__attribute__((always_inline)) static inline bool tud_cdc_ready(void) {
-  return tud_cdc_n_ready(0);
-}
-
-__attribute__((always_inline)) static inline bool tud_cdc_connected(void) {
-  return tud_cdc_n_connected(0);
-}
-
-__attribute__((always_inline)) static inline uint8_t tud_cdc_get_line_state(void) {
-  return tud_cdc_n_get_line_state(0);
-}
-
-__attribute__((always_inline)) static inline void tud_cdc_get_line_coding(cdc_line_coding_t* coding) {
-  tud_cdc_n_get_line_coding(coding);
-}
-
-__attribute__((always_inline)) static inline void tud_cdc_set_wanted_char(char wanted) {
-  tud_cdc_n_set_wanted_char(wanted);
-}
-
-__attribute__((always_inline)) static inline uint32_t tud_cdc_available(void) {
-  return tud_cdc_n_available();
-}
-
-__attribute__((always_inline)) static inline int32_t tud_cdc_read_char(void) {
-  return tud_cdc_n_read_char();
-}
-
-__attribute__((always_inline)) static inline uint32_t tud_cdc_read(void* buffer, uint32_t bufsize) {
-  return tud_cdc_n_read(buffer, bufsize);
-}
-
-__attribute__((always_inline)) static inline uint32_t tud_cdc_write_char(char ch) {
-  return tud_cdc_n_write_char(ch);
-}
-
-__attribute__((always_inline)) static inline uint32_t tud_cdc_write(void const* buffer, uint32_t bufsize) {
-  return tud_cdc_n_write(buffer, bufsize);
-}
-
-__attribute__((always_inline)) static inline uint32_t tud_cdc_write_str(char const* str) {
-  return tud_cdc_n_write_str(str);
-}
-
-__attribute__((always_inline)) static inline uint32_t tud_cdc_write_flush(void) {
-  return tud_cdc_n_write_flush();
-}
-
-__attribute__((always_inline)) static inline uint32_t tud_cdc_write_available(void) {
-  return tud_cdc_n_write_available(0);
-}
-
 //--------------------------------------------------------------------+
 // Application Callback API
 //--------------------------------------------------------------------+

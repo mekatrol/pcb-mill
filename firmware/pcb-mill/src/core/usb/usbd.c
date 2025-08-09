@@ -159,17 +159,12 @@ bool usb_init_driver() {
   return true;
 }
 
-static void configuration_reset() {
+void configuration_reset() {
   cdcd_reset();
 
   memset(&_usbd_dev, 0, sizeof(usbd_device_t));
   memset(_usbd_dev.itf2drv, 0xFF, sizeof(_usbd_dev.itf2drv));  // invalid mapping
   memset(_usbd_dev.ep2drv, 0xFF, sizeof(_usbd_dev.ep2drv));    // invalid mapping
-}
-
-static void usbd_reset() {
-  configuration_reset();
-  usbd_control_reset();
 }
 
 __attribute__((always_inline)) static inline bool queue_receive(tu_fifo_t* ff, void* data) {
@@ -184,15 +179,13 @@ void tud_task_ext() {
   // Loop until there is no more events in the queue
   while (1) {
     dcd_event_t event;
-    if (!queue_receive(&ff, &event)) return;
+    if (!queue_receive(&ff, &event)) {
+      return;
+    }
 
     switch (event.event_id) {
-      case DCD_EVENT_BUS_RESET:
-        usbd_reset();
-        break;
-
       case DCD_EVENT_UNPLUGGED:
-        usbd_reset();
+        usb_reset();
         // TODO: USB unplugged
         break;
 

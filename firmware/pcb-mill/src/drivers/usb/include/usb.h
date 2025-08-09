@@ -89,8 +89,16 @@ typedef struct __attribute__((packed)) {
   uint8_t bNumConfigurations;  // Number of configurations supported
 } usb_device_desc_t;
 
+void usbd_control_reset();
+void configuration_reset();
+
 __attribute__((always_inline)) static inline bool bit_set_test(uint32_t value, uint32_t pos) { return (value & BIT_MASK(pos)) ? true : false; }
 __attribute__((always_inline)) static inline uint16_t min_u16(uint16_t x, uint16_t y) { return (x < y) ? x : y; }
+
+__attribute__((always_inline)) static inline void usb_reset() {
+  configuration_reset();
+  usbd_control_reset();
+}
 
 // Get high or low byte
 #define U16_HIGH(_u16) ((uint8_t)(((_u16) >> 8) & 0x00ff))

@@ -10,13 +10,13 @@ config_interface_t machine_config = {
 
 void cdc_task(void) {
   // Only check if connected
-  if (tud_cdc_connected()) {
-    if (tud_cdc_available()) {
+  if (tud_cdc_n_connected()) {
+    if (tud_cdc_n_available()) {
       // Echo data
       char buf[64];
-      uint32_t count = tud_cdc_read(buf, sizeof(buf));
-      tud_cdc_write(buf, count);
-      tud_cdc_write_flush();
+      uint32_t count = tud_cdc_n_read(buf, sizeof(buf));
+      tud_cdc_n_write(buf, count);
+      tud_cdc_n_write_flush();
     }
   }
 }
@@ -35,12 +35,12 @@ void tud_cdc_line_state_cb(bool dtr, bool rts) {
 
 // Invoked when CDC interface received data from host
 void tud_cdc_rx_cb() {
-  // while (tud_cdc_available()) {
-  //   char c = tud_cdc_read_char();
+  // while (tud_cdc_n_available()) {
+  //   char c = tud_cdc_n_read_char();
   //   // Process character
   //   // You could echo it back:
-  //   tud_cdc_write_char(c);
-  //   tud_cdc_write_flush();
+  //   tud_cdc_n_write_char(c);
+  //   tud_cdc_n_write_flush();
   // }
 }
 

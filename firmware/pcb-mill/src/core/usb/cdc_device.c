@@ -167,10 +167,6 @@ uint32_t tud_cdc_n_write_flush() {
   }
 }
 
-uint32_t tud_cdc_n_write_available() {
-  return tu_fifo_remaining(&_cdcd_itf.tx_ff);
-}
-
 //--------------------------------------------------------------------+
 // USBD Driver API
 //--------------------------------------------------------------------+
@@ -352,7 +348,7 @@ bool cdcd_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes) {
       tud_cdc_tx_complete_cb();
     }
 
-    if (0 == tud_cdc_n_write_flush()) {
+    if (tud_cdc_n_write_flush() == 0) {
       // If there is no data left, a ZLP should be sent if
       // xferred_bytes is multiple of EP Packet size and not zero
       if (!tu_fifo_count(&_cdcd_itf.tx_ff) && xferred_bytes && (0 == (xferred_bytes & (USB_ENDPOINT_TX_BUFFER_SIZE - 1)))) {

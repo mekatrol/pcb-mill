@@ -101,7 +101,6 @@ bool tud_control_xfer(const tusb_control_request_t* request, void* buffer, uint1
 //--------------------------------------------------------------------+
 // USBD API
 //--------------------------------------------------------------------+
-void usbd_control_reset(void);
 void usbd_control_set_request(const tusb_control_request_t* request);
 void usbd_control_set_complete_callback(usbd_control_xfer_cb_t fp);
 bool usbd_control_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes);
