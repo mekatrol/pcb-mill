@@ -69,7 +69,6 @@ typedef struct {
 } usbd_device_t;
 
 static usbd_device_t _usbd_dev;
-static volatile uint8_t _usbd_queued_setup;
 
 //--------------------------------------------------------------------+
 // Class Driver
@@ -146,8 +145,6 @@ bool tud_connect(void) {
 
 bool usb_init_driver() {
   memset(&_usbd_dev, 0, sizeof(usbd_device_t));
-  _usbd_queued_setup = 0;
-
   // Init device queue & task
   tu_fifo_clear(&ff);
 
@@ -199,14 +196,6 @@ void tud_task_ext() {
         break;
 
       case DCD_EVENT_SETUP_RECEIVED:
-        if (_usbd_queued_setup == 0) {
-          return;
-        }
-        _usbd_queued_setup--;
-        if (_usbd_queued_setup) {
-          break;
-        }
-
         // Mark as connected after receiving 1st setup packet.
         // But it is easier to set it every time instead of wasting time to check then set
         _usbd_dev.connected = 1;
@@ -655,7 +644,6 @@ void dcd_event_handler(dcd_event_t const* event, bool in_isr) {
       break;
 
     case DCD_EVENT_SETUP_RECEIVED:
-      _usbd_queued_setup++;
       send = true;
       break;
 
