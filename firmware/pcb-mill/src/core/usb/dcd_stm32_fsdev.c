@@ -27,7 +27,6 @@ typedef struct {
 
 static xfer_ctl_t xfer_status[USB_ENDPOINT_MAX][2];
 static ep_alloc_t ep_alloc_status[USB_ENDPOINT_MAX];
-static uint8_t remoteWakeCountdown;  // When wake is requested
 
 //--------------------------------------------------------------------+
 // Prototypes
@@ -103,11 +102,6 @@ void dcd_set_address(uint8_t dev_addr) {
 
   // DCD can only set address after status for this request is complete.
   // do it at dcd_edpt0_status_complete()
-}
-
-void dcd_remote_wakeup() {
-  USB->CNTR |= USB_CNTR_L2RES;
-  remoteWakeCountdown = 4u;  // required to be 1 to 15 ms, ESOF should trigger every 1ms.
 }
 
 static void handle_bus_reset() {
@@ -259,12 +253,6 @@ void dcd_int_handler() {
   }
 
   if (int_status & USB_ISTR_ESOF) {
-    if (remoteWakeCountdown == 1u) {
-      USB->CNTR &= ~USB_CNTR_L2RES;
-    }
-    if (remoteWakeCountdown > 0u) {
-      remoteWakeCountdown--;
-    }
     USB->ISTR = ~USB_ISTR_ESOF;
   }
 

@@ -20,9 +20,6 @@ __attribute__((always_inline)) static inline bool tud_ready(void) {
   return tud_mounted();
 }
 
-// Remote wake up host, only if suspended and enabled by host
-bool tud_remote_wakeup(void);
-
 // Enable pull-up resistor on D+ D-
 // Return false on unsupported MCUs
 bool tud_disconnect(void);

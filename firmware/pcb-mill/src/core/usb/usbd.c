@@ -152,15 +152,6 @@ bool tud_mounted(void) {
   return _usbd_dev.cfg_num ? true : false;
 }
 
-bool tud_remote_wakeup(void) {
-  // only wake up host if this feature is supported and enabled and we are suspended
-  if (!_usbd_dev.remote_wakeup_support || !_usbd_dev.remote_wakeup_en) {
-    return false;
-  }
-  dcd_remote_wakeup();
-  return true;
-}
-
 bool tud_disconnect(void) {
   USB->BCDR &= ~(USB_BCDR_DPPU);
   return true;

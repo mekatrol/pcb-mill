@@ -81,9 +81,6 @@ void dcd_int_handler();
 // Receive Set Address request, mcu port must also include status IN response
 void dcd_set_address(uint8_t dev_addr);
 
-// Wake up host
-void dcd_remote_wakeup();
-
 // Connect by enabling internal pull-up resistor on D+/D-
 void dcd_connect();
 
