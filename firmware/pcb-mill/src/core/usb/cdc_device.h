@@ -3,33 +3,6 @@
 
 #include "cdc.h"
 
-//--------------------------------------------------------------------+
-// Class Driver Configuration
-//--------------------------------------------------------------------+
-#define CFG_TUD_CDC_NOTIFY 0
-
-//--------------------------------------------------------------------+
-// Driver Configuration
-//--------------------------------------------------------------------+
-typedef struct __attribute__((packed)) {
-  uint8_t rx_persistent : 1;                    // keep rx fifo data even with bus reset or disconnect
-  uint8_t tx_persistent : 1;                    // keep tx fifo data even with reset or disconnect
-  uint8_t tx_overwritabe_if_not_connected : 1;  // if not connected, tx fifo can be overwritten
-} tud_cdc_configure_t;
-
-#define TUD_CDC_CONFIGURE_DEFAULT() {     \
-    .rx_persistent = 0,                   \
-    .tx_persistent = 0,                   \
-    .tx_overwritabe_if_not_connected = 1, \
-}
-
-// Configure CDC driver behavior
-bool tud_cdc_configure(const tud_cdc_configure_t* driver_cfg);
-
-// Backward compatible
-#define tud_cdc_configure_fifo_t tud_cdc_configure_t
-#define tud_cdc_configure_fifo tud_cdc_configure
-
 // Check if interface is ready
 bool tud_cdc_n_ready();
 
@@ -75,9 +48,6 @@ uint32_t tud_cdc_n_write_flush();
 
 // Return the number of bytes (characters) available for writing to TX FIFO buffer in a single n_write operation.
 uint32_t tud_cdc_n_write_available();
-
-// Clear the transmit FIFO
-bool tud_cdc_n_write_clear();
 
 //--------------------------------------------------------------------+
 // Application API (Single Port)
@@ -133,10 +103,6 @@ __attribute__((always_inline)) static inline uint32_t tud_cdc_write_flush(void) 
 
 __attribute__((always_inline)) static inline uint32_t tud_cdc_write_available(void) {
   return tud_cdc_n_write_available(0);
-}
-
-__attribute__((always_inline)) static inline bool tud_cdc_write_clear(void) {
-  return tud_cdc_n_write_clear(0);
 }
 
 //--------------------------------------------------------------------+

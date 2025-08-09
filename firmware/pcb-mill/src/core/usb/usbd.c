@@ -145,6 +145,7 @@ bool tud_connect(void) {
 
 bool usb_init_driver() {
   memset(&_usbd_dev, 0, sizeof(usbd_device_t));
+
   // Init device queue & task
   tu_fifo_clear(&ff);
 

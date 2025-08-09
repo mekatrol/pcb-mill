@@ -48,8 +48,6 @@ typedef struct {
 static cdcd_interface_t _cdcd_itf;
 static cdcd_epbuf_t _cdcd_epbuf;
 
-static tud_cdc_configure_t _cdcd_cfg = TUD_CDC_CONFIGURE_DEFAULT();
-
 static bool _prep_out_transaction() {
   cdcd_epbuf_t* p_epbuf = &_cdcd_epbuf;
 
@@ -88,14 +86,6 @@ static bool _prep_out_transaction() {
 //--------------------------------------------------------------------+
 // APPLICATION API
 //--------------------------------------------------------------------+
-bool tud_cdc_configure(const tud_cdc_configure_t* driver_cfg) {
-  if (!driver_cfg) {
-    return false;
-  }
-  _cdcd_cfg = *driver_cfg;
-  return true;
-}
-
 bool tud_cdc_n_ready() {
   return tud_ready() && _cdcd_itf.ep_in != 0 && _cdcd_itf.ep_out != 0;
 }
@@ -181,10 +171,6 @@ uint32_t tud_cdc_n_write_available() {
   return tu_fifo_remaining(&_cdcd_itf.tx_ff);
 }
 
-bool tud_cdc_n_write_clear() {
-  return tu_fifo_clear(&_cdcd_itf.tx_ff);
-}
-
 //--------------------------------------------------------------------+
 // USBD Driver API
 //--------------------------------------------------------------------+
@@ -205,7 +191,7 @@ void cdcd_init() {
   // TX fifo can be configured to change to overwritable if not connected (DTR bit not set). Without DTR we do not
   // know if data is actually polled by terminal. This way the most current data is prioritized.
   // Default: is overwritable
-  tu_fifo_config(&_cdcd_itf.tx_ff, _cdcd_itf.tx_ff_buf, ARRAY_SIZE(_cdcd_itf.tx_ff_buf), 1, _cdcd_cfg.tx_overwritabe_if_not_connected);
+  tu_fifo_config(&_cdcd_itf.tx_ff, _cdcd_itf.tx_ff_buf, ARRAY_SIZE(_cdcd_itf.tx_ff_buf), 1, 1);
 }
 
 bool cdcd_deinit(void) {
@@ -214,13 +200,8 @@ bool cdcd_deinit(void) {
 
 void cdcd_reset() {
   memset(&_cdcd_itf, 0, offsetof(cdcd_interface_t, wanted_char));
-  if (!_cdcd_cfg.rx_persistent) {
-    tu_fifo_clear(&_cdcd_itf.rx_ff);
-  }
-  if (!_cdcd_cfg.tx_persistent) {
-    tu_fifo_clear(&_cdcd_itf.tx_ff);
-  }
-  tu_fifo_set_overwritable(&_cdcd_itf.tx_ff, _cdcd_cfg.tx_overwritabe_if_not_connected);
+  tu_fifo_clear(&_cdcd_itf.rx_ff);
+  tu_fifo_clear(&_cdcd_itf.tx_ff);
 }
 
 uint16_t cdcd_open(const tusb_desc_interface_t* itf_desc, uint16_t max_len) {
@@ -314,13 +295,6 @@ bool cdcd_control_xfer_cb(uint8_t stage, const tusb_control_request_t* request) 
         bool const rts = bit_set_test(request->wValue, 1);
 
         _cdcd_itf.line_state = (uint8_t)request->wValue;
-
-        // If enabled: fifo overwriting is disabled if DTR bit is set and vice versa
-        if (_cdcd_cfg.tx_overwritabe_if_not_connected) {
-          tu_fifo_set_overwritable(&_cdcd_itf.tx_ff, !dtr);
-        } else {
-          tu_fifo_set_overwritable(&_cdcd_itf.tx_ff, false);
-        }
 
         // Invoke callback
         if (tud_cdc_line_state_cb) {

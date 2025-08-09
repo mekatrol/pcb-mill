@@ -482,30 +482,9 @@ uint16_t tu_fifo_write_n(tu_fifo_t* f, const void* data, uint16_t n) {
                 Pointer to the FIFO buffer to manipulate
  */
 /******************************************************************************/
-bool tu_fifo_clear(tu_fifo_t* f) {
+void tu_fifo_clear(tu_fifo_t* f) {
   f->rd_idx = 0;
   f->wr_idx = 0;
-  return true;
-}
-
-/******************************************************************************/
-/*!
-    @brief Change the fifo mode to overwritable or not overwritable
-
-    @param[in]  f
-                Pointer to the FIFO buffer to manipulate
-    @param[in]  overwritable
-                Overwritable mode the fifo is set to
- */
-/******************************************************************************/
-bool tu_fifo_set_overwritable(tu_fifo_t* f, bool overwritable) {
-  if (f->overwritable == overwritable) {
-    return true;
-  }
-
-  f->overwritable = overwritable;
-
-  return true;
 }
 
 /******************************************************************************/
