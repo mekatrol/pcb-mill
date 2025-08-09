@@ -346,9 +346,7 @@ bool cdcd_control_xfer_cb(uint8_t stage, const tusb_control_request_t* request) 
   return true;
 }
 
-bool cdcd_xfer_cb(uint8_t ep_addr, xfer_result_t result, uint32_t xferred_bytes) {
-  (void)result;
-
+bool cdcd_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes) {
   // Received new data
   if (ep_addr == _cdcd_itf.ep_out) {
     tu_fifo_write_n(&_cdcd_itf.rx_ff, _cdcd_epbuf.epout, (uint16_t)xferred_bytes);

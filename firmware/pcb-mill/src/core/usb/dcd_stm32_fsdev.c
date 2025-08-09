@@ -145,7 +145,7 @@ static void handle_ctr_tx(uint32_t ep_id) {
   if (xfer->total_len != xfer->queued_len) {
     dcd_transmit_packet(xfer, ep_id);
   } else {
-    dcd_event_xfer_complete(ep_num | TUSB_DIR_IN_MASK, xfer->queued_len, XFER_RESULT_SUCCESS, true);
+    dcd_event_xfer_complete(ep_num | TUSB_DIR_IN_MASK, xfer->queued_len, true);
   }
 }
 
@@ -198,7 +198,7 @@ static void handle_ctr_rx(uint32_t ep_id) {
     // For ch32v203: reset rx bufsize to mps to prevent race condition to cause PMAOVR (occurs with msc write10)
     usb_pma_set_rx_bufsize(ep_id, ENDPOINT_RX_BUFFER, xfer->max_packet_size);
 
-    dcd_event_xfer_complete(ep_num, xfer->queued_len, XFER_RESULT_SUCCESS, true);
+    dcd_event_xfer_complete(ep_num, xfer->queued_len, true);
 
     // ch32 seems to unconditionally accept ZLP on EP0 OUT, which can incorrectly use queued_len of previous
     // transfer. So reset total_len and queued_len to 0.

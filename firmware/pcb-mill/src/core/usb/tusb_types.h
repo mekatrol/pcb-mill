@@ -78,11 +78,6 @@ enum {
   TUSB_DESC_CONFIG_ATT_SELF_POWERED = 1u << 6,
 };
 
-typedef enum {
-  XFER_RESULT_SUCCESS = 0,
-} xfer_result_t;
-#define tusb_xfer_result_t xfer_result_t
-
 // TODO remove
 enum {
   DESC_OFFSET_LEN = 0,

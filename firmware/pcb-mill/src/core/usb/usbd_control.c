@@ -104,7 +104,7 @@ bool tud_control_xfer(const tusb_control_request_t* request, void* buffer, uint1
 void usbd_control_reset(void);
 void usbd_control_set_request(const tusb_control_request_t* request);
 void usbd_control_set_complete_callback(usbd_control_xfer_cb_t fp);
-bool usbd_control_xfer_cb(uint8_t ep_addr, xfer_result_t result, uint32_t xferred_bytes);
+bool usbd_control_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes);
 
 void usbd_control_reset(void) {
   memset(&_ctrl_xfer, 0, sizeof(usbd_control_xfer_t));
@@ -126,9 +126,7 @@ void usbd_control_set_request(const tusb_control_request_t* request) {
 // callback when a transaction complete on
 // - DATA stage of control endpoint or
 // - Status stage
-bool usbd_control_xfer_cb(uint8_t ep_addr, xfer_result_t result, uint32_t xferred_bytes) {
-  (void)result;
-
+bool usbd_control_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes) {
   // Endpoint Address is opposite to direction bit, this is Status Stage complete event
   if (tu_edpt_dir(ep_addr) != _ctrl_xfer.request.bmRequestType_bit.direction) {
     if (xferred_bytes != 0) {

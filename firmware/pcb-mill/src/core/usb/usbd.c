@@ -120,7 +120,7 @@ static bool process_get_descriptor(tusb_control_request_t const* p_request);
 void usbd_control_reset(void);
 void usbd_control_set_request(tusb_control_request_t const* request);
 void usbd_control_set_complete_callback(usbd_control_xfer_cb_t fp);
-bool usbd_control_xfer_cb(uint8_t ep_addr, xfer_result_t event, uint32_t xferred_bytes);
+bool usbd_control_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes);
 
 //--------------------------------------------------------------------+
 // Application API
@@ -224,9 +224,9 @@ void tud_task_ext() {
         _usbd_dev.ep_status[epnum][ep_dir].claimed = 0;
 
         if (epnum == 0) {
-          usbd_control_xfer_cb(ep_addr, (xfer_result_t)event.xfer_complete.result, event.xfer_complete.len);
+          usbd_control_xfer_cb(ep_addr, event.xfer_complete.len);
         } else {
-          cdcd_xfer_cb(ep_addr, (xfer_result_t)event.xfer_complete.result, event.xfer_complete.len);
+          cdcd_xfer_cb(ep_addr, event.xfer_complete.len);
         }
         break;
       }
