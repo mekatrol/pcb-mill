@@ -12,7 +12,6 @@
 typedef enum {
   DCD_EVENT_INVALID = 0,     // 0
   DCD_EVENT_BUS_RESET,       // 1
-  DCD_EVENT_UNPLUGGED,       // 2
   DCD_EVENT_SOF,             // 3
   DCD_EVENT_SETUP_RECEIVED,  // 6
   DCD_EVENT_XFER_COMPLETE,   // 7

@@ -184,11 +184,6 @@ void tud_task_ext() {
     }
 
     switch (event.event_id) {
-      case DCD_EVENT_UNPLUGGED:
-        usb_reset();
-        // TODO: USB unplugged
-        break;
-
       case DCD_EVENT_SETUP_RECEIVED:
         // Mark as connected after receiving 1st setup packet.
         // But it is easier to set it every time instead of wasting time to check then set
@@ -627,13 +622,6 @@ static bool process_get_descriptor(tusb_control_request_t const* p_request) {
 void dcd_event_handler(dcd_event_t const* event, bool in_isr) {
   bool send = false;
   switch (event->event_id) {
-    case DCD_EVENT_UNPLUGGED:
-      _usbd_dev.connected = 0;
-      _usbd_dev.addressed = 0;
-      _usbd_dev.cfg_num = 0;
-      send = true;
-      break;
-
     case DCD_EVENT_SOF:
       break;
 
