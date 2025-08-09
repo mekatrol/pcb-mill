@@ -244,7 +244,6 @@ void dcd_int_handler() {
     USB->CNTR &= ~USB_CNTR_SUSPEN;
 
     USB->ISTR = ~USB_ISTR_WKUP;
-    dcd_event_bus_signal(DCD_EVENT_RESUME, true);
   }
 
   if (int_status & USB_ISTR_SUSP) {
@@ -257,7 +256,6 @@ void dcd_int_handler() {
 
     /* clear of the ISTR bit must be done after setting of CNTR_FSUSP */
     USB->ISTR = ~USB_ISTR_SUSP;
-    dcd_event_bus_signal(DCD_EVENT_SUSPEND, true);
   }
 
   if (int_status & USB_ISTR_ESOF) {

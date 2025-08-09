@@ -72,14 +72,12 @@ typedef struct {
   struct __attribute__((packed)) {
     volatile uint8_t connected : 1;
     volatile uint8_t addressed : 1;
-    volatile uint8_t suspended : 1;
 
     uint8_t remote_wakeup_en : 1;       // enable/disable by host
     uint8_t remote_wakeup_support : 1;  // configuration descriptor's attribute
     uint8_t self_powered : 1;           // configuration descriptor's attribute
   };
   volatile uint8_t cfg_num;  // current active configuration (0x00 is not configured)
-  volatile uint8_t sof_consumer;
 
   uint8_t itf2drv[USB_MAX_INTERFACES];  // map interface number to driver (0xff is invalid)
   uint8_t ep2drv[USB_ENDPOINT_MAX][2];  // map endpoint to driver ( 0xff is invalid ), can use only 4-bit each
@@ -154,13 +152,9 @@ bool tud_mounted(void) {
   return _usbd_dev.cfg_num ? true : false;
 }
 
-bool tud_suspended(void) {
-  return _usbd_dev.suspended;
-}
-
 bool tud_remote_wakeup(void) {
   // only wake up host if this feature is supported and enabled and we are suspended
-  if (!_usbd_dev.suspended || !_usbd_dev.remote_wakeup_support || !_usbd_dev.remote_wakeup_en) {
+  if (!_usbd_dev.remote_wakeup_support || !_usbd_dev.remote_wakeup_en) {
     return false;
   }
   dcd_remote_wakeup();
@@ -275,18 +269,6 @@ void tud_task_ext() {
         break;
       }
 
-      case DCD_EVENT_SUSPEND:
-        if (_usbd_dev.connected) {
-          // TODO: USB suspended
-        }
-        break;
-
-      case DCD_EVENT_RESUME:
-        if (_usbd_dev.connected) {
-          // TODO: USB resumed
-        }
-        break;
-
       case USBD_EVENT_FUNC_CALL:
         if (event.func_call.func) {
           event.func_call.func(event.func_call.param);
@@ -294,8 +276,6 @@ void tud_task_ext() {
         break;
 
       case DCD_EVENT_SOF:
-        if (bit_set_test(_usbd_dev.sof_consumer, SOF_CONSUMER_USER)) {
-        }
         break;
 
       default:
@@ -695,43 +675,10 @@ void dcd_event_handler(dcd_event_t const* event, bool in_isr) {
       _usbd_dev.connected = 0;
       _usbd_dev.addressed = 0;
       _usbd_dev.cfg_num = 0;
-      _usbd_dev.suspended = 0;
       send = true;
       break;
 
-    case DCD_EVENT_SUSPEND:
-      // NOTE: When plugging/unplugging device, the D+/D- state are unstable and
-      // can accidentally meet the SUSPEND condition ( Bus Idle for 3ms ).
-      // In addition, some MCUs such as SAMD or boards that haven no VBUS detection cannot distinguish
-      // suspended vs disconnected. We will skip handling SUSPEND/RESUME event if not currently connected
-      if (_usbd_dev.connected) {
-        _usbd_dev.suspended = 1;
-        send = true;
-      }
-      break;
-
-    case DCD_EVENT_RESUME:
-      // skip event if not connected (especially required for SAMD)
-      if (_usbd_dev.connected) {
-        _usbd_dev.suspended = 0;
-        send = true;
-      }
-      break;
-
     case DCD_EVENT_SOF:
-      // Some MCUs after running dcd_remote_wakeup() does not have way to detect the end of remote wakeup
-      // which last 1-15 ms. DCD can use SOF as a clear indicator that bus is back to operational
-      if (_usbd_dev.suspended) {
-        _usbd_dev.suspended = 0;
-
-        dcd_event_t const event_resume = {.event_id = DCD_EVENT_RESUME};
-        queue_event(&event_resume, in_isr);
-      }
-
-      if (bit_set_test(_usbd_dev.sof_consumer, SOF_CONSUMER_USER)) {
-        dcd_event_t const event_sof = {.event_id = DCD_EVENT_SOF, .sof.frame_count = event->sof.frame_count};
-        queue_event(&event_sof, in_isr);
-      }
       break;
 
     case DCD_EVENT_SETUP_RECEIVED:

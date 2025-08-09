@@ -14,8 +14,6 @@ typedef enum {
   DCD_EVENT_BUS_RESET,       // 1
   DCD_EVENT_UNPLUGGED,       // 2
   DCD_EVENT_SOF,             // 3
-  DCD_EVENT_SUSPEND,         // 4 TODO LPM Sleep L1 support
-  DCD_EVENT_RESUME,          // 5
   DCD_EVENT_SETUP_RECEIVED,  // 6
   DCD_EVENT_XFER_COMPLETE,   // 7
   USBD_EVENT_FUNC_CALL,      // 8 Not an DCD event, just a convenient way to defer ISR function

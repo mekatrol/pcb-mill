@@ -15,12 +15,9 @@ bool tud_connected(void);
 // Check if device is connected and configured
 bool tud_mounted(void);
 
-// Check if device is suspended
-bool tud_suspended(void);
-
 // Check if device is ready to transfer
 __attribute__((always_inline)) static inline bool tud_ready(void) {
-  return tud_mounted() && !tud_suspended();
+  return tud_mounted();
 }
 
 // Remote wake up host, only if suspended and enabled by host
