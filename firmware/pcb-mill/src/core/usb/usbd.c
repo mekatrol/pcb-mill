@@ -97,19 +97,6 @@ static volatile uint8_t _usbd_queued_setup;
 //--------------------------------------------------------------------+
 #define DRIVER_NAME(_name) NULL
 
-// Built-in class drivers
-static usbd_class_driver_t const _usbd_driver = {
-    .name = DRIVER_NAME("CDC"),
-    .init = cdcd_init,
-    .deinit = cdcd_deinit,
-    .reset = cdcd_reset,
-    .open = cdcd_open,
-    .control_xfer_cb = cdcd_control_xfer_cb,
-    .xfer_cb = cdcd_xfer_cb,
-    .xfer_isr = NULL,
-    .sof = NULL,
-};
-
 //--------------------------------------------------------------------+
 // DCD Event
 //--------------------------------------------------------------------+
@@ -189,7 +176,7 @@ bool usb_init_driver() {
   _usbd_q = osal_queue_create(&_usbd_qdef);
 
   // Init class drivers
-  _usbd_driver.init();
+  cdcd_init();
 
   // Init device controller driver
   dcd_init();
@@ -199,7 +186,7 @@ bool usb_init_driver() {
 }
 
 static void configuration_reset() {
-  _usbd_driver.reset();
+  cdcd_reset();
 
   memset(&_usbd_dev, 0, sizeof(usbd_device_t));
   memset(_usbd_dev.itf2drv, 0xFF, sizeof(_usbd_dev.itf2drv));  // invalid mapping
@@ -266,7 +253,7 @@ void tud_task_ext() {
         if (epnum == 0) {
           usbd_control_xfer_cb(ep_addr, (xfer_result_t)event.xfer_complete.result, event.xfer_complete.len);
         } else {
-          _usbd_driver.xfer_cb(ep_addr, (xfer_result_t)event.xfer_complete.result, event.xfer_complete.len);
+          cdcd_xfer_cb(ep_addr, (xfer_result_t)event.xfer_complete.result, event.xfer_complete.len);
         }
         break;
       }
@@ -305,9 +292,9 @@ void tud_task_ext() {
 //--------------------------------------------------------------------+
 
 // Helper to invoke class driver control request handler
-static bool invoke_class_control(usbd_class_driver_t const* driver, tusb_control_request_t const* request) {
-  usbd_control_set_complete_callback(driver->control_xfer_cb);
-  return driver->control_xfer_cb(CONTROL_STAGE_SETUP, request);
+static bool invoke_class_control(tusb_control_request_t const* request) {
+  usbd_control_set_complete_callback(cdcd_control_xfer_cb);
+  return cdcd_control_xfer_cb(CONTROL_STAGE_SETUP, request);
 }
 
 // This handles the actual request and its response.
@@ -329,7 +316,7 @@ static bool process_control_request(tusb_control_request_t const* p_request) {
     case TUSB_REQ_RCPT_DEVICE:
       if (TUSB_REQ_TYPE_CLASS == p_request->bmRequestType_bit.type) {
         // forward to class driver: "non-STD request to Interface"
-        return invoke_class_control(&_usbd_driver, p_request);
+        return invoke_class_control(p_request);
       }
 
       if (TUSB_REQ_TYPE_STANDARD != p_request->bmRequestType_bit.type) {
@@ -438,7 +425,7 @@ static bool process_control_request(tusb_control_request_t const* p_request) {
     case TUSB_REQ_RCPT_INTERFACE: {
       // all requests to Interface (STD or Class) is forwarded to class driver.
       // notable requests are: GET HID REPORT DESCRIPTOR, SET_INTERFACE, GET_INTERFACE
-      if (!invoke_class_control(&_usbd_driver, p_request)) {
+      if (!invoke_class_control(p_request)) {
         // For GET_INTERFACE and SET_INTERFACE, it is mandatory to respond even if the class
         // driver doesn't use alternate settings or implement this
         if (TUSB_REQ_TYPE_STANDARD != p_request->bmRequestType_bit.type) {
@@ -477,7 +464,7 @@ static bool process_control_request(tusb_control_request_t const* p_request) {
 
       if (TUSB_REQ_TYPE_STANDARD != p_request->bmRequestType_bit.type) {
         // Forward class request to its driver
-        return invoke_class_control(&_usbd_driver, p_request);
+        return invoke_class_control(p_request);
       } else {
         // Handle STD request to endpoint
         switch (p_request->bRequest) {
@@ -501,7 +488,7 @@ static bool process_control_request(tusb_control_request_t const* p_request) {
 
             // STD request must always be ACKed regardless of driver returned value
             // Also clear complete callback if driver set since it can also stall the request.
-            (void)invoke_class_control(&_usbd_driver, p_request);
+            invoke_class_control(p_request);
             usbd_control_set_complete_callback(NULL);
 
             // skip ZLP status if driver already did that
@@ -558,15 +545,11 @@ static bool process_set_config(uint8_t cfg_num) {
 
     // Find driver for this interface
     uint16_t const remaining_len = (uint16_t)(desc_end - p_desc);
-    uint16_t const drv_len = _usbd_driver.open(desc_itf, remaining_len);
+    uint16_t const drv_len = cdcd_open(desc_itf, remaining_len);
 
     if ((sizeof(tusb_desc_interface_t) <= drv_len) && (drv_len <= remaining_len)) {
-      // Some drivers use 2 or more interfaces but may not have IAD e.g MIDI (always) or
-      // BTH (even CDC) with class in device descriptor (single interface)
       if (assoc_itf_count == 1) {
-        if (_usbd_driver.open == cdcd_open) {
-          assoc_itf_count = 2;
-        }
+        assoc_itf_count = 2;
       }
 
       // bind (associated) interfaces to found driver
@@ -719,11 +702,6 @@ void dcd_event_handler(dcd_event_t const* event, bool in_isr) {
       break;
 
     case DCD_EVENT_SOF:
-      // SOF driver handler in ISR context
-      if (_usbd_driver.sof) {
-        _usbd_driver.sof(event->sof.frame_count);
-      }
-
       // Some MCUs after running dcd_remote_wakeup() does not have way to detect the end of remote wakeup
       // which last 1-15 ms. DCD can use SOF as a clear indicator that bus is back to operational
       if (_usbd_dev.suspended) {
@@ -745,26 +723,7 @@ void dcd_event_handler(dcd_event_t const* event, bool in_isr) {
       break;
 
     case DCD_EVENT_XFER_COMPLETE: {
-      // Invoke the class callback associated with the endpoint address
-      uint8_t const ep_addr = event->xfer_complete.ep_addr;
-      uint8_t const epnum = tu_edpt_number(ep_addr);
-      uint8_t const ep_dir = tu_edpt_dir(ep_addr);
-
       send = true;
-      if (epnum > 0) {
-        if (_usbd_driver.xfer_isr) {
-          _usbd_dev.ep_status[epnum][ep_dir].busy = 0;
-          _usbd_dev.ep_status[epnum][ep_dir].claimed = 0;
-
-          send = !_usbd_driver.xfer_isr(ep_addr, (xfer_result_t)event->xfer_complete.result, event->xfer_complete.len);
-
-          // xfer_isr() is deferred to xfer_cb(), revert busy/claimed status
-          if (send) {
-            _usbd_dev.ep_status[epnum][ep_dir].busy = 1;
-            _usbd_dev.ep_status[epnum][ep_dir].claimed = 1;
-          }
-        }
-      }
       break;
     }
 
@@ -929,13 +888,4 @@ bool usbd_edpt_stalled(uint8_t ep_addr) {
   uint8_t const dir = tu_edpt_dir(ep_addr);
 
   return _usbd_dev.ep_status[epnum][dir].stalled;
-}
-
-/**
- * usbd_edpt_close will disable an endpoint.
- * In progress transfers on this EP may be delivered after this call.
- */
-void usbd_edpt_close(uint8_t ep_addr) {
-  (void)ep_addr;
-  return;
 }

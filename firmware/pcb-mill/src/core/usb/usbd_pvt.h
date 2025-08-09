@@ -20,27 +20,12 @@ typedef enum {
 // Class Driver API
 //--------------------------------------------------------------------+
 
-typedef struct {
-  char const* name;
-  void (*init)(void);
-  bool (*deinit)(void);
-  void (*reset)();
-  uint16_t (*open)(tusb_desc_interface_t const* desc_intf, uint16_t max_len);
-  bool (*control_xfer_cb)(uint8_t stage, tusb_control_request_t const* request);
-  bool (*xfer_cb)(uint8_t ep_addr, xfer_result_t result, uint32_t xferred_bytes);
-  bool (*xfer_isr)(uint8_t ep_addr, xfer_result_t result, uint32_t xferred_bytes);  // optional, return false to defer to xfer_cb()
-  void (*sof)(uint32_t frame_count);                                                // optional
-} usbd_class_driver_t;
-
 typedef bool (*usbd_control_xfer_cb_t)(uint8_t stage, tusb_control_request_t const* request);
 
 void usbd_int_set(bool enabled);
 
 // Open an endpoint
 bool usbd_edpt_open(tusb_desc_endpoint_t const* desc_ep);
-
-// Close an endpoint
-void usbd_edpt_close(uint8_t ep_addr);
 
 // Submit a usb transfer
 bool usbd_edpt_xfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes);
