@@ -124,12 +124,6 @@ uint16_t tu_fifo_write_n(tu_fifo_t* f, void const* data, uint16_t n);
 
 bool tu_fifo_read(tu_fifo_t* f, void* buffer);
 uint16_t tu_fifo_read_n(tu_fifo_t* f, void* buffer, uint16_t n);
-#ifdef TUP_MEM_CONST_ADDR
-uint16_t tu_fifo_read_n_const_addr_full_words(tu_fifo_t* f, void* buffer, uint16_t n);
-#endif
-
-bool tu_fifo_peek(tu_fifo_t* f, void* p_buffer);
-uint16_t tu_fifo_peek_n(tu_fifo_t* f, void* p_buffer, uint16_t n);
 
 uint16_t tu_fifo_count(tu_fifo_t* f);
 uint16_t tu_fifo_remaining(tu_fifo_t* f);

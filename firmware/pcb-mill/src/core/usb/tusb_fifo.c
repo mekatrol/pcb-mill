@@ -1,45 +1,5 @@
-/*
- * The MIT License (MIT)
- *
- * Copyright (c) 2019 Ha Thach (tinyusb.org)
- * Copyright (c) 2020 Reinhard Panhuber - rework to unmasked pointers
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *
- * This file is part of the TinyUSB stack.
- */
-
 #include "osal.h"
 #include "tusb_fifo.h"
-
-#define TU_FIFO_DBG 0
-
-/** \enum tu_fifo_copy_mode_t
- * \brief Write modes intended to allow special read and write functions to be able to
- *        copy data to and from USB hardware FIFOs as needed for e.g. STM32s and others
- */
-typedef enum {
-  TU_FIFO_COPY_INC,  ///< Copy from/to an increasing source/destination address - default mode
-#ifdef TUP_MEM_CONST_ADDR
-  TU_FIFO_COPY_CST_FULL_WORDS,  ///< Copy from/to a constant source/destination address - required for e.g. STM32 to write into USB hardware FIFO
-#endif
-} tu_fifo_copy_mode_t;
 
 bool tu_fifo_config(tu_fifo_t* f, void* buffer, uint16_t depth, uint16_t item_size, bool overwritable) {
   // Limit index space to 2*depth - this allows for a fast "modulo" calculation
@@ -61,13 +21,8 @@ bool tu_fifo_config(tu_fifo_t* f, void* buffer, uint16_t depth, uint16_t item_si
 // Pull & Push
 //--------------------------------------------------------------------+
 
-// send one item to fifo WITHOUT updating write pointer
-static inline void _ff_push(tu_fifo_t* f, void const* app_buf, uint16_t rel) {
-  memcpy(f->buffer + (rel * f->item_size), app_buf, f->item_size);
-}
-
 // send n items to fifo WITHOUT updating write pointer
-static void _ff_push_n(tu_fifo_t* f, void const* app_buf, uint16_t n, uint16_t wr_ptr, tu_fifo_copy_mode_t copy_mode) {
+static void _ff_push_n(tu_fifo_t* f, void const* app_buf, uint16_t n, uint16_t wr_ptr) {
   uint16_t const lin_count = f->depth - wr_ptr;
   uint16_t const wrap_count = n - lin_count;
 
@@ -77,23 +32,17 @@ static void _ff_push_n(tu_fifo_t* f, void const* app_buf, uint16_t n, uint16_t w
   // current buffer of fifo
   uint8_t* ff_buf = f->buffer + (wr_ptr * f->item_size);
 
-  switch (copy_mode) {
-    case TU_FIFO_COPY_INC:
-      if (n <= lin_count) {
-        // Linear only
-        memcpy(ff_buf, app_buf, n * f->item_size);
-      } else {
-        // Wrap around
+  if (n <= lin_count) {
+    // Linear only
+    memcpy(ff_buf, app_buf, n * f->item_size);
+  } else {
+    // Wrap around
 
-        // Write data to linear part of buffer
-        memcpy(ff_buf, app_buf, lin_bytes);
+    // Write data to linear part of buffer
+    memcpy(ff_buf, app_buf, lin_bytes);
 
-        // Write data wrapped around
-        memcpy(f->buffer, ((uint8_t const*)app_buf) + lin_bytes, wrap_bytes);
-      }
-      break;
-    default:
-      break;
+    // Write data wrapped around
+    memcpy(f->buffer, ((uint8_t const*)app_buf) + lin_bytes, wrap_bytes);
   }
 }
 
@@ -103,7 +52,7 @@ static inline void _ff_pull(tu_fifo_t* f, void* app_buf, uint16_t rel) {
 }
 
 // get n items from fifo WITHOUT updating read pointer
-static void _ff_pull_n(tu_fifo_t* f, void* app_buf, uint16_t n, uint16_t rd_ptr, tu_fifo_copy_mode_t copy_mode) {
+static void _ff_pull_n(tu_fifo_t* f, void* app_buf, uint16_t n, uint16_t rd_ptr) {
   uint16_t const lin_count = f->depth - rd_ptr;
   uint16_t const wrap_count = n - lin_count;  // only used if wrapped
 
@@ -113,64 +62,17 @@ static void _ff_pull_n(tu_fifo_t* f, void* app_buf, uint16_t n, uint16_t rd_ptr,
   // current buffer of fifo
   uint8_t* ff_buf = f->buffer + (rd_ptr * f->item_size);
 
-  switch (copy_mode) {
-    case TU_FIFO_COPY_INC:
-      if (n <= lin_count) {
-        // Linear only
-        memcpy(app_buf, ff_buf, n * f->item_size);
-      } else {
-        // Wrap around
+  if (n <= lin_count) {
+    // Linear only
+    memcpy(app_buf, ff_buf, n * f->item_size);
+  } else {
+    // Wrap around
 
-        // Read data from linear part of buffer
-        memcpy(app_buf, ff_buf, lin_bytes);
+    // Read data from linear part of buffer
+    memcpy(app_buf, ff_buf, lin_bytes);
 
-        // Read data wrapped part
-        memcpy((uint8_t*)app_buf + lin_bytes, f->buffer, wrap_bytes);
-      }
-      break;
-#ifdef TUP_MEM_CONST_ADDR
-    case TU_FIFO_COPY_CST_FULL_WORDS:
-      if (n <= lin_count) {
-        // Linear only
-        _ff_pull_const_addr(app_buf, ff_buf, n * f->item_size);
-      } else {
-        // Wrap around case
-
-        // Read full words from linear part of buffer
-        uint16_t lin_4n_bytes = lin_bytes & 0xFFFC;
-        _ff_pull_const_addr(app_buf, ff_buf, lin_4n_bytes);
-        ff_buf += lin_4n_bytes;
-
-        // There could be odd 1-3 bytes before the wrap-around boundary
-        uint8_t rem = lin_bytes & 0x03;
-        if (rem > 0) {
-          volatile uint32_t* reg_tx = (volatile uint32_t*)app_buf;
-
-          uint8_t remrem = (uint8_t)min_u16(wrap_bytes, 4 - rem);
-          wrap_bytes -= remrem;
-
-          uint32_t tmp32 = 0;
-          uint8_t* dst_u8 = (uint8_t*)&tmp32;
-
-          // Read 1-3 bytes before wrapped boundary
-          while (rem--) *dst_u8++ = *ff_buf++;
-
-          // Read more bytes from beginning to complete a word
-          ff_buf = f->buffer;
-          while (remrem--) *dst_u8++ = *ff_buf++;
-
-          *reg_tx = tmp32;
-        } else {
-          ff_buf = f->buffer;  // wrap around to beginning
-        }
-
-        // Read data wrapped part
-        if (wrap_bytes > 0) _ff_pull_const_addr(app_buf, ff_buf, wrap_bytes);
-      }
-      break;
-#endif
-    default:
-      break;
+    // Read data wrapped part
+    memcpy((uint8_t*)app_buf + lin_bytes, f->buffer, wrap_bytes);
   }
 }
 
@@ -276,7 +178,7 @@ static bool _tu_fifo_peek(tu_fifo_t* f, void* p_buffer, uint16_t wr_idx, uint16_
 }
 
 // Works on local copies of w and r
-static uint16_t _tu_fifo_peek_n(tu_fifo_t* f, void* p_buffer, uint16_t n, uint16_t wr_idx, uint16_t rd_idx, tu_fifo_copy_mode_t copy_mode) {
+static uint16_t _tu_fifo_peek_n(tu_fifo_t* f, void* p_buffer, uint16_t n, uint16_t wr_idx, uint16_t rd_idx) {
   uint16_t cnt = _ff_count(f->depth, wr_idx, rd_idx);
 
   // nothing to peek
@@ -294,12 +196,12 @@ static uint16_t _tu_fifo_peek_n(tu_fifo_t* f, void* p_buffer, uint16_t n, uint16
   uint16_t rd_ptr = idx2ptr(f->depth, rd_idx);
 
   // Peek data
-  _ff_pull_n(f, p_buffer, n, rd_ptr, copy_mode);
+  _ff_pull_n(f, p_buffer, n, rd_ptr);
 
   return n;
 }
 
-static uint16_t _tu_fifo_write_n(tu_fifo_t* f, const void* data, uint16_t n, tu_fifo_copy_mode_t copy_mode) {
+static uint16_t _tu_fifo_write_n(tu_fifo_t* f, const void* data, uint16_t n) {
   if (n == 0) return 0;
 
   uint16_t wr_idx = f->wr_idx;
@@ -318,13 +220,7 @@ static uint16_t _tu_fifo_write_n(tu_fifo_t* f, const void* data, uint16_t n, tu_
     // Since it would end up in a race condition with read functions!
     if (n >= f->depth) {
       // Only copy last part
-      if (copy_mode == TU_FIFO_COPY_INC) {
-        buf8 += (n - f->depth) * f->item_size;
-      } else {
-        // TODO should read from hw fifo to discard data, however reading an odd number could
-        // accidentally discard data.
-      }
-
+      buf8 += (n - f->depth) * f->item_size;
       n = f->depth;
 
       // We start writing at the read pointer's position since we fill the whole buffer
@@ -354,7 +250,7 @@ static uint16_t _tu_fifo_write_n(tu_fifo_t* f, const void* data, uint16_t n, tu_
     uint16_t wr_ptr = idx2ptr(f->depth, wr_idx);
 
     // Write data
-    _ff_push_n(f, buf8, n, wr_ptr, copy_mode);
+    _ff_push_n(f, buf8, n, wr_ptr);
 
     // Advance index
     f->wr_idx = advance_index(f->depth, wr_idx, n);
@@ -363,10 +259,10 @@ static uint16_t _tu_fifo_write_n(tu_fifo_t* f, const void* data, uint16_t n, tu_
   return n;
 }
 
-static uint16_t _tu_fifo_read_n(tu_fifo_t* f, void* buffer, uint16_t n, tu_fifo_copy_mode_t copy_mode) {
+static uint16_t _tu_fifo_read_n(tu_fifo_t* f, void* buffer, uint16_t n) {
   // Peek the data
   // f->rd_idx might get modified in case of an overflow so we can not use a local variable
-  n = _tu_fifo_peek_n(f, buffer, n, f->wr_idx, f->rd_idx, copy_mode);
+  n = _tu_fifo_peek_n(f, buffer, n, f->wr_idx, f->rd_idx);
 
   // Advance read pointer
   f->rd_idx = advance_index(f->depth, f->rd_idx, n);
@@ -521,68 +417,7 @@ bool tu_fifo_read(tu_fifo_t* f, void* buffer) {
  */
 /******************************************************************************/
 uint16_t tu_fifo_read_n(tu_fifo_t* f, void* buffer, uint16_t n) {
-  return _tu_fifo_read_n(f, buffer, n, TU_FIFO_COPY_INC);
-}
-
-#ifdef TUP_MEM_CONST_ADDR
-/******************************************************************************/
-/*!
-    @brief This function will read n elements from the array index specified by
-    the read pointer and increment the read index.
-    This function checks for an overflow and corrects read pointer if required.
-    The dest address will not be incremented which is useful for writing to registers.
-
-    @param[in]  f
-                Pointer to the FIFO buffer to manipulate
-    @param[in]  buffer
-                The pointer to data location
-    @param[in]  n
-                Number of element that buffer can afford
-
-    @returns number of items read from the FIFO
- */
-/******************************************************************************/
-uint16_t tu_fifo_read_n_const_addr_full_words(tu_fifo_t* f, void* buffer, uint16_t n) {
-  return _tu_fifo_read_n(f, buffer, n, TU_FIFO_COPY_CST_FULL_WORDS);
-}
-#endif
-
-/******************************************************************************/
-/*!
-    @brief Read one item without removing it from the FIFO.
-    This function checks for an overflow and corrects read pointer if required.
-
-    @param[in]  f
-                Pointer to the FIFO buffer to manipulate
-    @param[in]  p_buffer
-                Pointer to the place holder for data read from the buffer
-
-    @returns TRUE if the queue is not empty
- */
-/******************************************************************************/
-bool tu_fifo_peek(tu_fifo_t* f, void* p_buffer) {
-  bool ret = _tu_fifo_peek(f, p_buffer, f->wr_idx, f->rd_idx);
-  return ret;
-}
-
-/******************************************************************************/
-/*!
-    @brief Read n items without removing it from the FIFO
-    This function checks for an overflow and corrects read pointer if required.
-
-    @param[in]  f
-                Pointer to the FIFO buffer to manipulate
-    @param[in]  p_buffer
-                Pointer to the place holder for data read from the buffer
-    @param[in]  n
-                Number of items to peek
-
-    @returns Number of bytes written to p_buffer
- */
-/******************************************************************************/
-uint16_t tu_fifo_peek_n(tu_fifo_t* f, void* p_buffer, uint16_t n) {
-  uint16_t ret = _tu_fifo_peek_n(f, p_buffer, n, f->wr_idx, f->rd_idx, TU_FIFO_COPY_INC);
-  return ret;
+  return _tu_fifo_read_n(f, buffer, n);
 }
 
 /******************************************************************************/
@@ -611,7 +446,7 @@ bool tu_fifo_write(tu_fifo_t* f, const void* data) {
     uint16_t wr_ptr = idx2ptr(f->depth, wr_idx);
 
     // Write data
-    _ff_push(f, data, wr_ptr);
+    memcpy(f->buffer + (wr_ptr * f->item_size), data, f->item_size);
 
     // Advance pointer
     f->wr_idx = advance_index(f->depth, wr_idx, 1);
@@ -637,29 +472,8 @@ bool tu_fifo_write(tu_fifo_t* f, const void* data) {
  */
 /******************************************************************************/
 uint16_t tu_fifo_write_n(tu_fifo_t* f, const void* data, uint16_t n) {
-  return _tu_fifo_write_n(f, data, n, TU_FIFO_COPY_INC);
+  return _tu_fifo_write_n(f, data, n);
 }
-
-#ifdef TUP_MEM_CONST_ADDR
-/******************************************************************************/
-/*!
-    @brief This function will write n elements into the array index specified by
-    the write pointer and increment the write index. The source address will
-    not be incremented which is useful for reading from registers.
-
-    @param[in]  f
-                Pointer to the FIFO buffer to manipulate
-    @param[in]  data
-                The pointer to data to add to the FIFO
-    @param[in]  count
-                Number of element
-    @return Number of written elements
- */
-/******************************************************************************/
-uint16_t tu_fifo_write_n_const_addr_full_words(tu_fifo_t* f, const void* data, uint16_t n) {
-  return _tu_fifo_write_n(f, data, n, TU_FIFO_COPY_CST_FULL_WORDS);
-}
-#endif
 
 /******************************************************************************/
 /*!

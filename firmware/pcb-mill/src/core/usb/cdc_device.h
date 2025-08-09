@@ -57,12 +57,6 @@ __attribute__((always_inline)) static inline int32_t tud_cdc_n_read_char() {
   return tud_cdc_n_read(&ch, 1) ? (int32_t)ch : -1;
 }
 
-// Clear the received FIFO
-void tud_cdc_n_read_flush();
-
-// Get a byte from FIFO without removing it
-bool tud_cdc_n_peek(uint8_t* ui8);
-
 // Write bytes to TX FIFO, data may remain in the FIFO for a while
 uint32_t tud_cdc_n_write(void const* buffer, uint32_t bufsize);
 
@@ -119,14 +113,6 @@ __attribute__((always_inline)) static inline int32_t tud_cdc_read_char(void) {
 
 __attribute__((always_inline)) static inline uint32_t tud_cdc_read(void* buffer, uint32_t bufsize) {
   return tud_cdc_n_read(buffer, bufsize);
-}
-
-__attribute__((always_inline)) static inline void tud_cdc_read_flush(void) {
-  tud_cdc_n_read_flush(0);
-}
-
-__attribute__((always_inline)) static inline bool tud_cdc_peek(uint8_t* ui8) {
-  return tud_cdc_n_peek(ui8);
 }
 
 __attribute__((always_inline)) static inline uint32_t tud_cdc_write_char(char ch) {

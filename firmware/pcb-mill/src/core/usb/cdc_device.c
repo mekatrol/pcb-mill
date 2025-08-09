@@ -137,16 +137,6 @@ uint32_t tud_cdc_n_read(void* buffer, uint32_t bufsize) {
   return num_read;
 }
 
-bool tud_cdc_n_peek(uint8_t* chr) {
-  return tu_fifo_peek(&_cdcd_itf.rx_ff, chr);
-}
-
-void tud_cdc_n_read_flush() {
-  cdcd_interface_t* p_cdc = &_cdcd_itf;
-  tu_fifo_clear(&p_cdc->rx_ff);
-  _prep_out_transaction();
-}
-
 //--------------------------------------------------------------------+
 // WRITE API
 //--------------------------------------------------------------------+
