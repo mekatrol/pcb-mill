@@ -46,24 +46,6 @@ __attribute__((weak)) bool dcd_deinit() {
 __attribute__((weak)) void dcd_connect() {
 }
 
-__attribute__((weak)) bool dcd_dcache_clean(const void* addr, uint32_t data_size) {
-  (void)addr;
-  (void)data_size;
-  return true;
-}
-
-__attribute__((weak)) bool dcd_dcache_invalidate(const void* addr, uint32_t data_size) {
-  (void)addr;
-  (void)data_size;
-  return true;
-}
-
-__attribute__((weak)) bool dcd_dcache_clean_invalidate(const void* addr, uint32_t data_size) {
-  (void)addr;
-  (void)data_size;
-  return true;
-}
-
 //--------------------------------------------------------------------+
 // Device Data
 //--------------------------------------------------------------------+
