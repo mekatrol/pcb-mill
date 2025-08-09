@@ -2,10 +2,11 @@
 #define _TUSB_USBD_H_
 
 #include "usb.h"
-#include "tusb_option.h"
 #include "tusb_types.h"
 
 void tud_task_ext();
+
+void usbd_int_set(bool enabled);
 
 // Check if device is connected (may not mounted/configured yet)
 // True if just got out of Bus Reset and received the very first data from host

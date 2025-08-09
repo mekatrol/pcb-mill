@@ -3,7 +3,13 @@
     "stm32g0xx.h": "c",
     "system_stm32g0xx.h": "c",
     "usb.h": "c",
-    "fsdev_type.h": "c"
+    "fsdev_type.h": "c",
+    "usbd_pvt.h": "c",
+    "tusb_private.h": "c",
+    "dcd.h": "c",
+    "osal.h": "c",
+    "tusb_fifo.h": "c",
+    "usbd.h": "c"
   },
   "cortex-debug.variableUseNaturalFormat": false
 }

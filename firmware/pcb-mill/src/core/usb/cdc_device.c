@@ -1,5 +1,3 @@
-#include "tusb_option.h"
-
 #include "usbd.h"
 #include "usbd_pvt.h"
 

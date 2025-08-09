@@ -1,7 +1,6 @@
 #ifndef TUSB_PRIVATE_H_
 #define TUSB_PRIVATE_H_
 
-#include "tusb_option.h"
 #include "tusb_types.h"
 
 //--------------------------------------------------------------------+

@@ -2,9 +2,7 @@
 #define TUSB_DCD_H_
 
 #include "usb.h"
-#include "osal.h"
 #include "tusb_fifo.h"
-#include "tusb_option.h"
 #include "tusb_types.h"
 
 //--------------------------------------------------------------------+

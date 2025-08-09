@@ -1,7 +1,5 @@
 #include "usb.h"
-#include "tusb_option.h"
 #include "tusb_types.h"
-#include "tusb_option.h"
 #include "dcd.h"
 #include "fsdev_type.h"
 

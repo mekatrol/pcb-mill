@@ -1,6 +1,5 @@
 #include "hal.h"
 
-#include "osal.h"
 #include "usbd.h"
 #include "cdc_device.h"
 

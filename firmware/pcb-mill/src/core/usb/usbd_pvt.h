@@ -1,10 +1,8 @@
 #ifndef TUSB_USBD_PVT_H_
 #define TUSB_USBD_PVT_H_
 
-#include "osal.h"
 #include "tusb_fifo.h"
 #include "tusb_private.h"
-#include "tusb_option.h"
 #include "tusb_types.h"
 
 //--------------------------------------------------------------------+
@@ -21,8 +19,6 @@ typedef enum {
 //--------------------------------------------------------------------+
 
 typedef bool (*usbd_control_xfer_cb_t)(uint8_t stage, tusb_control_request_t const* request);
-
-void usbd_int_set(bool enabled);
 
 // Open an endpoint
 bool usbd_edpt_open(tusb_desc_endpoint_t const* desc_ep);
@@ -51,15 +47,6 @@ void usbd_edpt_clear_stall(uint8_t ep_addr);
 
 // Check if endpoint is stalled
 bool usbd_edpt_stalled(uint8_t ep_addr);
-
-// Check if endpoint is ready (not busy and not stalled)
-__attribute__((always_inline)) static inline bool usbd_edpt_ready(uint8_t ep_addr) {
-  return !usbd_edpt_busy(ep_addr) && !usbd_edpt_stalled(ep_addr);
-}
-
-/*------------------------------------------------------------------*/
-/* Helper
- *------------------------------------------------------------------*/
 
 bool usbd_open_edpt_pair(uint8_t const* p_desc, uint8_t ep_count, uint8_t xfer_type, uint8_t* ep_out, uint8_t* ep_in);
 

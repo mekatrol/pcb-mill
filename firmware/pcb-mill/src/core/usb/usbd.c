@@ -1,4 +1,3 @@
-#include "tusb_option.h"
 #include "dcd.h"
 #include "cdc_device.h"
 #include "tusb_private.h"
@@ -102,19 +101,29 @@ static volatile uint8_t _usbd_queued_setup;
 //--------------------------------------------------------------------+
 uint8_t _usbd_qdef_buf[CFG_TUD_TASK_QUEUE_SZ * sizeof(dcd_event_t)];
 
-osal_queue_def_t _usbd_qdef = {
-    .interrupt_set = usbd_int_set,
-    .ff = {
-        .buffer = _usbd_qdef_buf,
-        .depth = CFG_TUD_TASK_QUEUE_SZ,
-        .item_size = sizeof(dcd_event_t),
-        .overwritable = false,
-    }};
+tu_fifo_t ff = {
+    .buffer = _usbd_qdef_buf,
+    .depth = CFG_TUD_TASK_QUEUE_SZ,
+    .item_size = sizeof(dcd_event_t),
+    .overwritable = false,
+};
 
-static osal_queue_t _usbd_q;
+__attribute__((always_inline)) static inline bool queue_send(tu_fifo_t* ff, void const* data, bool in_isr) {
+  if (!in_isr) {
+    usbd_int_set(false);
+  }
+
+  const bool success = tu_fifo_write(ff, data);
+
+  if (!in_isr) {
+    usbd_int_set(true);
+  }
+
+  return success;
+}
 
 __attribute__((always_inline)) static inline bool queue_event(dcd_event_t const* event, bool in_isr) {
-  if (!osal_queue_send(_usbd_q, event, in_isr)) {
+  if (!queue_send(&ff, event, in_isr)) {
     return false;
   }
   tud_event_hook_cb(event->event_id, in_isr);
@@ -173,7 +182,7 @@ bool usb_init_driver() {
   _usbd_queued_setup = 0;
 
   // Init device queue & task
-  _usbd_q = osal_queue_create(&_usbd_qdef);
+  tu_fifo_clear(&ff);
 
   // Init class drivers
   cdcd_init();
@@ -198,11 +207,19 @@ static void usbd_reset() {
   usbd_control_reset();
 }
 
+__attribute__((always_inline)) static inline bool queue_receive(tu_fifo_t* ff, void* data) {
+  usbd_int_set(false);
+  const bool success = tu_fifo_read(ff, data);
+  usbd_int_set(true);
+
+  return success;
+}
+
 void tud_task_ext() {
   // Loop until there is no more events in the queue
   while (1) {
     dcd_event_t event;
-    if (!osal_queue_receive(_usbd_q, &event)) return;
+    if (!queue_receive(&ff, &event)) return;
 
     switch (event.event_id) {
       case DCD_EVENT_BUS_RESET:
