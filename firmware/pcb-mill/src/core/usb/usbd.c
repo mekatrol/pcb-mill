@@ -100,14 +100,6 @@ void configuration_reset() {
   memset(_usbd_dev.ep2drv, 0xFF, sizeof(_usbd_dev.ep2drv));    // invalid mapping
 }
 
-__attribute__((always_inline)) static inline bool queue_receive(tu_fifo_t* ff, void* data) {
-  usbd_int_set(false);
-  const bool success = tu_fifo_read(ff, data);
-  usbd_int_set(true);
-
-  return success;
-}
-
 //--------------------------------------------------------------------+
 // Control Request Parser & Handling
 //--------------------------------------------------------------------+
