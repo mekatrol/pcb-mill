@@ -590,14 +590,10 @@ bool usbd_edpt_xfer_fifo(uint8_t ep_addr, tu_fifo_t* ff, uint16_t total_bytes) {
   // and usbd task can preempt and clear the busy
   _usbd_dev.ep_status[epnum][dir].busy = 1;
 
-  if (dcd_edpt_xfer_fifo(ep_addr, ff, total_bytes)) {
-    return true;
-  } else {
-    // DCD error, mark endpoint as ready to allow next transfer
-    _usbd_dev.ep_status[epnum][dir].busy = 0;
-    _usbd_dev.ep_status[epnum][dir].claimed = 0;
-    return false;
-  }
+  // DCD error, mark endpoint as ready to allow next transfer
+  _usbd_dev.ep_status[epnum][dir].busy = 0;
+  _usbd_dev.ep_status[epnum][dir].claimed = 0;
+  return false;
 }
 
 bool usbd_edpt_busy(uint8_t ep_addr) {
