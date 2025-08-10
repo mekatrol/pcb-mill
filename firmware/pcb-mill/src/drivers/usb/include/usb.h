@@ -44,8 +44,6 @@
 // Bit mask based on bit position
 #define BIT_MASK(n) (1UL << (n))
 
-#define MIN(_x, _y) (((_x) < (_y)) ? (_x) : (_y))
-
 enum {
   ENDPOINT_TX_BUFFER = 0,
   ENDPOINT_RX_BUFFER = 1

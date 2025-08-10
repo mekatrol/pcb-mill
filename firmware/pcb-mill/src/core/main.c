@@ -13,7 +13,7 @@ void cdc_task(void) {
   if (tud_cdc_n_connected()) {
     if (tud_cdc_n_available()) {
       // Echo data
-      char buf[64];
+      uint8_t buf[64];
       uint32_t count = tud_cdc_n_read(buf, sizeof(buf));
       tud_cdc_n_write(buf, count);
       tud_cdc_n_write_flush();

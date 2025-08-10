@@ -31,16 +31,16 @@ __attribute__((always_inline)) static inline int32_t tud_cdc_n_read_char() {
 }
 
 // Write bytes to TX FIFO, data may remain in the FIFO for a while
-uint32_t tud_cdc_n_write(void const* buffer, uint32_t bufsize);
+uint32_t tud_cdc_n_write(const uint8_t* buffer, uint32_t bufsize);
 
 // Write a byte
-__attribute__((always_inline)) static inline uint32_t tud_cdc_n_write_char(char ch) {
+__attribute__((always_inline)) static inline uint32_t tud_cdc_n_write_char(uint8_t ch) {
   return tud_cdc_n_write(&ch, 1);
 }
 
 // Write a null-terminated string
-__attribute__((always_inline)) static inline uint32_t tud_cdc_n_write_str(char const* str) {
-  return tud_cdc_n_write(str, strlen(str));
+__attribute__((always_inline)) static inline uint32_t tud_cdc_n_write_str(uint8_t const* str) {
+  return tud_cdc_n_write(str, strlen((char*)str));
 }
 
 // Force sending data if possible, return number of forced bytes

@@ -1,7 +1,6 @@
 #ifndef TUSB_USBD_PVT_H_
 #define TUSB_USBD_PVT_H_
 
-#include "tusb_fifo.h"
 #include "tusb_private.h"
 #include "tusb_types.h"
 
