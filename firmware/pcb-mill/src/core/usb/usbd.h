@@ -2,7 +2,6 @@
 #define _TUSB_USBD_H_
 
 #include "usb.h"
-#include "tusb_fifo.h"
 #include "tusb_types.h"
 
 typedef struct __attribute__((packed)) {
@@ -98,19 +97,5 @@ uint8_t const* tud_descriptor_other_speed_configuration_cb(uint8_t index);
 
 // Invoked when received control request with VENDOR TYPE
 bool tud_vendor_control_xfer_cb(uint8_t stage, tusb_control_request_t const* request);
-
-__attribute__((always_inline)) static inline bool queue_send(tu_fifo_t* ff, void const* data, bool in_isr) {
-  if (!in_isr) {
-    usbd_int_set(false);
-  }
-
-  const bool success = tu_fifo_write(ff, data);
-
-  if (!in_isr) {
-    usbd_int_set(true);
-  }
-
-  return success;
-}
 
 #endif /* _TUSB_USBD_H_ */
