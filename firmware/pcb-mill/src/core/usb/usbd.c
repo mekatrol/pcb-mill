@@ -74,7 +74,6 @@ static bool process_get_descriptor(tusb_control_request_t const* p_request);
 void usbd_control_reset(void);
 void usbd_control_set_request(tusb_control_request_t const* request);
 void usbd_control_set_complete_callback(usbd_control_xfer_cb_t fp);
-bool usbd_control_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes);
 
 //--------------------------------------------------------------------+
 // Application API
@@ -135,25 +134,6 @@ void tud_task_ext() {
     dcd_event_t event;
     if (!queue_receive(&ff, &event)) {
       return;
-    }
-
-    switch (event.event_id) {
-      case DCD_EVENT_XFER_COMPLETE: {
-        // Invoke the class callback associated with the endpoint address
-        uint8_t const ep_addr = event.xfer_complete.ep_addr;
-        uint8_t const epnum = tu_edpt_number(ep_addr);
-        uint8_t const ep_dir = tu_edpt_dir(ep_addr);
-
-        _usbd_dev.ep_status[epnum][ep_dir].busy = 0;
-        _usbd_dev.ep_status[epnum][ep_dir].claimed = 0;
-
-        if (epnum == 0) {
-          usbd_control_xfer_cb(ep_addr, event.xfer_complete.len);
-        } else {
-          cdcd_xfer_cb(ep_addr, event.xfer_complete.len);
-        }
-        break;
-      }
     }
   }
 }

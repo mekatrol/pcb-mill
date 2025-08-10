@@ -123,6 +123,24 @@ static void handle_bus_reset() {
   USB->DADDR = USB_DADDR_EF;  // Enable USB Function
 }
 
+bool usbd_control_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes);
+bool cdcd_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes);
+
+static void transfer_complete(uint8_t ep_addr, uint32_t xferred_bytes) {
+  // Invoke the class callback associated with the endpoint address
+  uint8_t const epnum = tu_edpt_number(ep_addr);
+  uint8_t const ep_dir = tu_edpt_dir(ep_addr);
+
+  _usbd_dev.ep_status[epnum][ep_dir].busy = 0;
+  _usbd_dev.ep_status[epnum][ep_dir].claimed = 0;
+
+  if (epnum == 0) {
+    usbd_control_xfer_cb(ep_addr, xferred_bytes);
+  } else {
+    cdcd_xfer_cb(ep_addr, xferred_bytes);
+  }
+}
+
 // Handle CTR interrupt for the TX/IN direction
 static void handle_ctr_tx(uint32_t ep_id) {
   uint32_t ep_reg = ep_read(ep_id) | USB_EP_VTTX | USB_EP_VTRX;
@@ -145,7 +163,7 @@ static void handle_ctr_tx(uint32_t ep_id) {
   if (xfer->total_len != xfer->queued_len) {
     dcd_transmit_packet(xfer, ep_id);
   } else {
-    dcd_event_xfer_complete(ep_num | TUSB_DIR_IN_MASK, xfer->queued_len, true);
+    transfer_complete(ep_num | TUSB_DIR_IN_MASK, xfer->queued_len);
   }
 }
 
@@ -217,7 +235,7 @@ static void handle_ctr_rx(uint32_t ep_id) {
     // For ch32v203: reset rx bufsize to mps to prevent race condition to cause PMAOVR (occurs with msc write10)
     usb_pma_set_rx_bufsize(ep_id, ENDPOINT_RX_BUFFER, xfer->max_packet_size);
 
-    dcd_event_xfer_complete(ep_num, xfer->queued_len, true);
+    transfer_complete(ep_num, xfer->queued_len);
 
     // ch32 seems to unconditionally accept ZLP on EP0 OUT, which can incorrectly use queued_len of previous
     // transfer. So reset total_len and queued_len to 0.

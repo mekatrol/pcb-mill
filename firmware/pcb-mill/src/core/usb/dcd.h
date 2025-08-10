@@ -11,9 +11,8 @@
 //--------------------------------------------------------------------+
 
 typedef enum {
-  DCD_EVENT_INVALID = 0,    // 0
-  DCD_EVENT_BUS_RESET,      // 1
-  DCD_EVENT_XFER_COMPLETE,  // 7
+  DCD_EVENT_INVALID = 0,  // 0
+  DCD_EVENT_BUS_RESET,    // 1
   DCD_EVENT_COUNT
 } dcd_eventid_t;
 
@@ -82,10 +81,10 @@ bool dcd_edpt_open(tusb_desc_endpoint_t const* desc_ep);
 // required for multiple configuration support.
 void dcd_edpt_close_all();
 
-// Submit a transfer, When complete dcd_event_xfer_complete() is invoked to notify the stack
+// Submit a transfer
 bool dcd_edpt_xfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes);
 
-// Submit an transfer using fifo, When complete dcd_event_xfer_complete() is invoked to notify the stack
+// Submit an transfer using fifo
 // This API is optional, may be useful for register-based for transferring data.
 bool dcd_edpt_xfer_fifo(uint8_t ep_addr, tu_fifo_t* ff, uint16_t total_bytes) __attribute__((weak));
 
@@ -118,15 +117,6 @@ __attribute__((always_inline)) static inline void dcd_event_bus_signal(dcd_event
 __attribute__((always_inline)) static inline void dcd_event_bus_reset(bool in_isr) {
   dcd_event_t event;
   event.event_id = DCD_EVENT_BUS_RESET;
-  queue_event(&event, in_isr);
-}
-
-// helper to send transfer complete event
-__attribute__((always_inline)) static inline void dcd_event_xfer_complete(uint8_t ep_addr, uint32_t xferred_bytes, bool in_isr) {
-  dcd_event_t event;
-  event.event_id = DCD_EVENT_XFER_COMPLETE;
-  event.xfer_complete.ep_addr = ep_addr;
-  event.xfer_complete.len = xferred_bytes;
   queue_event(&event, in_isr);
 }
 
