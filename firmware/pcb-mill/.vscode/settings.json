@@ -10,7 +10,9 @@
     "osal.h": "c",
     "tusb_fifo.h": "c",
     "usbd.h": "c",
-    "circular_buffer.h": "c"
+    "cb.h": "c",
+    "circular_buffer.h": "c",
+    "cdc_device.h": "c"
   },
   "cortex-debug.variableUseNaturalFormat": false
 }

@@ -1,67 +1,60 @@
 #include "circular_buffer.h"
+#include <string.h>  // for memcpy
 
-void circular_buffer_init(circular_buffer_t* circular_buffer, uint8_t* data_buffer, uint32_t size) {
-  circular_buffer->buffer = data_buffer;
-  circular_buffer->size = size;
-  circular_buffer->head = 0;
-  circular_buffer->tail = 0;
-  circular_buffer->count = 0;
-  circular_buffer->overrun = false;
+void circular_buffer_init(circular_buffer_t* cb, uint8_t* data_buffer, uint32_t size) {
+  cb->buffer = data_buffer;
+  cb->size = size;
+  cb->head = 0;
+  cb->tail = 0;
 }
 
-void circular_buffer_reset(circular_buffer_t* circular_buffer) {
-  circular_buffer->head = 0;
-  circular_buffer->tail = 0;
-  circular_buffer->count = 0;
-  circular_buffer->overrun = false;
+void circular_buffer_reset(circular_buffer_t* cb) {
+  cb->head = 0;
+  cb->tail = 0;
 }
 
-uint32_t circular_buffer_available_capacity(circular_buffer_t* circular_buffer) {
-  return circular_buffer->size - circular_buffer->count;
-}
+uint32_t circular_buffer_read(circular_buffer_t* cb, uint8_t* data_buffer, uint32_t max_len) {
+  uint32_t available;
+  if (cb->head >= cb->tail) {
+    available = cb->head - cb->tail;
+  } else {
+    available = cb->size - cb->tail + cb->head;
+  }
+  if (max_len > available) max_len = available;
 
-uint32_t circular_buffer_read(circular_buffer_t* circular_buffer, uint8_t* data_buffer, uint32_t max_len) {
-  uint32_t i = 0;
-  while (circular_buffer->tail != circular_buffer->head && i < max_len) {
-    // Copy byte from circular buffer to data buffer
-    data_buffer[i++] = circular_buffer->buffer[circular_buffer->tail++];
+  uint32_t first_part = cb->size - cb->tail;
+  if (first_part > max_len) first_part = max_len;
 
-    // Reduce count
-    circular_buffer->count--;
+  memcpy(data_buffer, (const void*)(cb->buffer + cb->tail), first_part);
 
-    // Wrap tail if past buffer size
-    if (circular_buffer->tail >= circular_buffer->size) {
-      circular_buffer->tail = 0;
-    }
+  uint32_t second_part = max_len - first_part;
+  if (second_part > 0) {
+    memcpy(data_buffer + first_part, (const void*)(cb->buffer), second_part);
   }
 
-  return i;
+  cb->tail = (cb->tail + max_len) % cb->size;
+  return max_len;
 }
 
-bool circular_buffer_write(circular_buffer_t* circular_buffer, const uint8_t* data_buffer, uint32_t write_len) {
-  uint32_t i = 0;
-  bool overrun = false;
+bool circular_buffer_write(circular_buffer_t* cb, const uint8_t* data_buffer, uint32_t write_len) {
+  uint32_t capacity;
+  if (cb->head >= cb->tail) {
+    capacity = cb->size - cb->head + cb->tail;
+  } else {
+    capacity = cb->tail - cb->head;
+  }
+  if (write_len > capacity) write_len = capacity;
 
-  while (write_len > 0) {
-    // If the head is already at tail and there is a buffered byte then we are going to overrun the buffer
-    if (circular_buffer->head == circular_buffer->tail && circular_buffer->count > 0) {
-      circular_buffer->overrun = true;
-    }
+  uint32_t first_part = cb->size - cb->head;
+  if (first_part > write_len) first_part = write_len;
 
-    // Write to curcular buffer
-    circular_buffer->buffer[circular_buffer->head++] = data_buffer[i++];
+  memcpy((void*)(cb->buffer + cb->head), data_buffer, first_part);
 
-    // Increment buffered count
-    circular_buffer->count++;
-
-    // Decrease write length remaining
-    write_len--;
-
-    // Wrap head if past buffer size
-    if (circular_buffer->head >= circular_buffer->size) {
-      circular_buffer->head = 0;
-    }
+  uint32_t second_part = write_len - first_part;
+  if (second_part > 0) {
+    memcpy((void*)(cb->buffer), data_buffer + first_part, second_part);
   }
 
-  return overrun;
+  cb->head = (cb->head + write_len) % cb->size;
+  return write_len > 0;
 }
