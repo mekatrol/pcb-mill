@@ -491,13 +491,8 @@ bool dcd_edpt_iso_alloc(uint8_t ep_addr, uint16_t largest_packet_size) {
 
   /* Create a packet memory buffer area. Enable double buffering for devices with 2048 bytes PMA,
      for smaller devices double buffering occupy too much space. */
-#if USB_DRD_PMA_SIZE > 1024u
   uint32_t pma_addr = dcd_pma_alloc(largest_packet_size, true);
   uint16_t pma_addr2 = pma_addr >> 16;
-#else
-  uint32_t pma_addr = dcd_pma_alloc(largest_packet_size, false);
-  uint16_t pma_addr2 = pma_addr;
-#endif
 
   usb_pma_set_addr(ep_idx, 0, pma_addr);
   usb_pma_set_addr(ep_idx, 1, pma_addr2);
