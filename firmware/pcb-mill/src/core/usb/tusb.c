@@ -33,20 +33,6 @@ bool tu_edpt_validate(tusb_desc_endpoint_t const* desc_ep, bool is_host) {
   uint16_t const max_packet_size = tu_edpt_packet_size(desc_ep);
 
   switch (desc_ep->bmAttributes.xfer) {
-    case TUSB_XFER_ISOCHRONOUS: {
-      // USB 2.0 Spec, Section 5.8.4, Table 5-8
-      // For high-speed isochronous endpoints:
-      //  Maximum packet size per transaction = 1024 bytes
-      // USB 2.0 Spec, Section 5.6.3, Table 5-6
-      // For full-speed isochronous endpoints:
-      //  Maximum packet size per transaction = 1023 bytes
-      //  Frame time budget and bit stuffing rules limit the payload to 1023 bytes (plus overhead).
-      if (max_packet_size > 1023) {
-        return false;
-      }
-      break;
-    }
-
     case TUSB_XFER_BULK:
       // USB 2.0 Spec, Section 5.8.3, Table 9-13
       // High-speed bulk packet size must be exactly 512 bytes.

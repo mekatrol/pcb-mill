@@ -53,10 +53,6 @@ __attribute__((always_inline)) static inline void ep_change_dtog(uint32_t* reg, 
   *reg ^= (state << (USB_CHEP_DTOG_TX_Pos + (dir == TUSB_DIR_IN ? 0 : 8)));
 }
 
-__attribute__((always_inline)) static inline bool ep_is_iso(uint32_t reg) {
-  return (reg & USB_EP_TYPE_MASK) == USB_EP_ISOCHRONOUS;
-}
-
 __attribute__((always_inline)) static inline uint32_t usb_pma_get_addr(uint32_t ep_id, uint8_t buf_id) {
   return USBRAM_REGSITER->endpoint[ep_id].buffer[buf_id].count_addr & 0x0000FFFFu;
 }

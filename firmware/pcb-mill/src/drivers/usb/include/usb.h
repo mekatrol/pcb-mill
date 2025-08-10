@@ -14,8 +14,11 @@
 // USB registers strong type
 #define USB ((USB_DRD_TypeDef *)USB_BASE)
 
-// The number of endpoints the device supports
-#define USB_ENDPOINT_MAX 8
+// The number of endpoints to define, this should be limited to the
+// number of physical endpoints available for the device, however it can
+// be less if not all endpoints are needed. Reducing this value saves memory
+// by not allocating unused endpoint memory.
+#define USB_ENDPOINT_MAX 3
 
 // The size of endpoint 0 buffer
 #define USB_EP0_BUFFER_SIZE 64
@@ -44,10 +47,8 @@
 // Bit mask based on bit position
 #define BIT_MASK(n) (1UL << (n))
 
-enum {
-  ENDPOINT_TX_BUFFER = 0,
-  ENDPOINT_RX_BUFFER = 1
-};
+#define ENDPOINT_TX_BUFFER 0
+#define ENDPOINT_RX_BUFFER 1
 
 // This is the same as USB_DRD_PMABuffDescTypeDef
 typedef struct

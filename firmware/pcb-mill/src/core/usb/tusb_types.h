@@ -167,7 +167,7 @@ typedef struct __attribute__((packed)) {
   uint8_t bEndpointAddress;  // The address of the endpoint
 
   struct __attribute__((packed)) {
-    uint8_t xfer : 2;   // Control, ISO, Bulk, Interrupt
+    uint8_t xfer : 2;   // Control, Bulk, Interrupt
     uint8_t sync : 2;   // None, Asynchronous, Adaptive, Synchronous
     uint8_t usage : 2;  // Data, Feedback, Implicit feedback
     uint8_t : 2;
