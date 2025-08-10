@@ -5,7 +5,34 @@
 #include "tusb_fifo.h"
 #include "tusb_types.h"
 
+typedef struct __attribute__((packed)) {
+  volatile uint8_t busy : 1;
+  volatile uint8_t stalled : 1;
+  volatile uint8_t claimed : 1;
+} tu_edpt_state_t;
+
+typedef struct {
+  struct __attribute__((packed)) {
+    volatile uint8_t connected : 1;
+    volatile uint8_t addressed : 1;
+
+    uint8_t remote_wakeup_en : 1;       // enable/disable by host
+    uint8_t remote_wakeup_support : 1;  // configuration descriptor's attribute
+    uint8_t self_powered : 1;           // configuration descriptor's attribute
+  };
+  volatile uint8_t cfg_num;  // current active configuration (0x00 is not configured)
+
+  uint8_t itf2drv[USB_MAX_INTERFACES];  // map interface number to driver (0xff is invalid)
+  uint8_t ep2drv[USB_ENDPOINT_MAX][2];  // map endpoint to driver ( 0xff is invalid ), can use only 4-bit each
+
+  tu_edpt_state_t ep_status[USB_ENDPOINT_MAX][2];
+
+} usbd_device_t;
+
 extern tu_fifo_t ff;
+extern usbd_device_t _usbd_dev;
+
+bool process_control_request(tusb_control_request_t const* p_request);
 
 void tud_task_ext();
 

@@ -149,6 +149,25 @@ static void handle_ctr_tx(uint32_t ep_id) {
   }
 }
 
+static void setup_received(tusb_control_request_t *setup_received) {
+  // Mark as connected after receiving 1st setup packet.
+  // But it is easier to set it every time instead of wasting time to check then set
+  _usbd_dev.connected = 1;
+
+  // mark both in & out control as free
+  _usbd_dev.ep_status[0][TUSB_DIR_OUT].busy = 0;
+  _usbd_dev.ep_status[0][TUSB_DIR_OUT].claimed = 0;
+  _usbd_dev.ep_status[0][TUSB_DIR_IN].busy = 0;
+  _usbd_dev.ep_status[0][TUSB_DIR_IN].claimed = 0;
+
+  // Process control request
+  if (!process_control_request(setup_received)) {
+    // Failed -> stall both control endpoint IN and OUT
+    dcd_edpt_stall(0);
+    dcd_edpt_stall(0 | TUSB_DIR_IN_MASK);
+  }
+}
+
 static void handle_ctr_setup(uint32_t ep_id) {
   uint16_t rx_count = usb_pma_get_count(ep_id, ENDPOINT_RX_BUFFER);
   uint16_t rx_addr = usb_pma_get_addr(ep_id, ENDPOINT_RX_BUFFER);
@@ -161,7 +180,7 @@ static void handle_ctr_setup(uint32_t ep_id) {
 
   // Setup packet should always be 8 bytes. If not, we probably missed the packet
   if (rx_count == 8) {
-    dcd_event_setup_received((uint8_t *)setup_packet, true);
+    setup_received((tusb_control_request_t *)setup_packet);
     // Hardware should reset EP0 RX/TX to NAK and both toggle to 1
   } else {
     // Missed setup packet !!!

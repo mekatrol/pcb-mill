@@ -11,10 +11,9 @@
 //--------------------------------------------------------------------+
 
 typedef enum {
-  DCD_EVENT_INVALID = 0,     // 0
-  DCD_EVENT_BUS_RESET,       // 1
-  DCD_EVENT_SETUP_RECEIVED,  // 6
-  DCD_EVENT_XFER_COMPLETE,   // 7
+  DCD_EVENT_INVALID = 0,    // 0
+  DCD_EVENT_BUS_RESET,      // 1
+  DCD_EVENT_XFER_COMPLETE,  // 7
   DCD_EVENT_COUNT
 } dcd_eventid_t;
 
@@ -38,14 +37,10 @@ typedef struct __attribute__((aligned(4))) {
   };
 } dcd_event_t;
 
-// Invoked when there is a new usb event
-void tud_event_hook_cb(uint32_t eventid, bool in_isr);
-
 __attribute__((always_inline)) static inline bool queue_event(dcd_event_t const* event, bool in_isr) {
   if (!queue_send(&ff, event, in_isr)) {
     return false;
   }
-  tud_event_hook_cb(event->event_id, in_isr);
   return true;
 }
 
@@ -123,14 +118,6 @@ __attribute__((always_inline)) static inline void dcd_event_bus_signal(dcd_event
 __attribute__((always_inline)) static inline void dcd_event_bus_reset(bool in_isr) {
   dcd_event_t event;
   event.event_id = DCD_EVENT_BUS_RESET;
-  queue_event(&event, in_isr);
-}
-
-// helper to send setup received
-__attribute__((always_inline)) static inline void dcd_event_setup_received(uint8_t const* setup, bool in_isr) {
-  dcd_event_t event;
-  event.event_id = DCD_EVENT_SETUP_RECEIVED;
-  memcpy(&event.setup_received, setup, sizeof(tusb_control_request_t));
   queue_event(&event, in_isr);
 }
 

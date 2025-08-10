@@ -15,11 +15,6 @@
 //--------------------------------------------------------------------+
 // Weak stubs: invoked if no strong implementation is available
 //--------------------------------------------------------------------+
-__attribute__((weak)) void tud_event_hook_cb(uint32_t eventid, bool in_isr) {
-  (void)eventid;
-  (void)in_isr;
-}
-
 __attribute__((weak)) uint8_t const* tud_descriptor_bos_cb(void) {
   return NULL;
 }
@@ -50,25 +45,7 @@ __attribute__((weak)) void dcd_connect() {
 // Device Data
 //--------------------------------------------------------------------+
 
-typedef struct {
-  struct __attribute__((packed)) {
-    volatile uint8_t connected : 1;
-    volatile uint8_t addressed : 1;
-
-    uint8_t remote_wakeup_en : 1;       // enable/disable by host
-    uint8_t remote_wakeup_support : 1;  // configuration descriptor's attribute
-    uint8_t self_powered : 1;           // configuration descriptor's attribute
-  };
-  volatile uint8_t cfg_num;  // current active configuration (0x00 is not configured)
-
-  uint8_t itf2drv[USB_MAX_INTERFACES];  // map interface number to driver (0xff is invalid)
-  uint8_t ep2drv[USB_ENDPOINT_MAX][2];  // map endpoint to driver ( 0xff is invalid ), can use only 4-bit each
-
-  tu_edpt_state_t ep_status[USB_ENDPOINT_MAX][2];
-
-} usbd_device_t;
-
-static usbd_device_t _usbd_dev;
+usbd_device_t _usbd_dev;
 
 //--------------------------------------------------------------------+
 // Class Driver
@@ -90,7 +67,6 @@ tu_fifo_t ff = {
 //--------------------------------------------------------------------+
 // Prototypes
 //--------------------------------------------------------------------+
-static bool process_control_request(tusb_control_request_t const* p_request);
 static bool process_set_config(uint8_t cfg_num);
 static bool process_get_descriptor(tusb_control_request_t const* p_request);
 
@@ -162,25 +138,6 @@ void tud_task_ext() {
     }
 
     switch (event.event_id) {
-      case DCD_EVENT_SETUP_RECEIVED:
-        // Mark as connected after receiving 1st setup packet.
-        // But it is easier to set it every time instead of wasting time to check then set
-        _usbd_dev.connected = 1;
-
-        // mark both in & out control as free
-        _usbd_dev.ep_status[0][TUSB_DIR_OUT].busy = 0;
-        _usbd_dev.ep_status[0][TUSB_DIR_OUT].claimed = 0;
-        _usbd_dev.ep_status[0][TUSB_DIR_IN].busy = 0;
-        _usbd_dev.ep_status[0][TUSB_DIR_IN].claimed = 0;
-
-        // Process control request
-        if (!process_control_request(&event.setup_received)) {
-          // Failed -> stall both control endpoint IN and OUT
-          dcd_edpt_stall(0);
-          dcd_edpt_stall(0 | TUSB_DIR_IN_MASK);
-        }
-        break;
-
       case DCD_EVENT_XFER_COMPLETE: {
         // Invoke the class callback associated with the endpoint address
         uint8_t const ep_addr = event.xfer_complete.ep_addr;
@@ -213,7 +170,7 @@ static bool invoke_class_control(tusb_control_request_t const* request) {
 
 // This handles the actual request and its response.
 // Returns false if unable to complete the request, causing caller to stall control endpoints.
-static bool process_control_request(tusb_control_request_t const* p_request) {
+bool process_control_request(tusb_control_request_t const* p_request) {
   usbd_control_set_complete_callback(NULL);
   if (p_request->bmRequestType_bit.type >= TUSB_REQ_TYPE_INVALID) {
     return false;
