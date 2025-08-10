@@ -343,8 +343,7 @@ static uint8_t dcd_ep_alloc(uint8_t ep_addr, uint8_t ep_type) {
     }
 
     // If EP of current direction is not allocated
-    if (!ep_alloc_status[i].allocated[dir] &&
-        (ep_type != TUSB_XFER_ISOCHRONOUS || !ep_alloc_status[i].allocated[dir ^ 1])) {
+    if (!ep_alloc_status[i].allocated[dir]) {
       // Check if EP number is the same
       if (ep_alloc_status[i].ep_num == 0xFF || ep_alloc_status[i].ep_num == epnum) {
         // One EP pair has to be the same type

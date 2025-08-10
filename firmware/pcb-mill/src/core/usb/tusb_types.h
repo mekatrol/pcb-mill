@@ -11,7 +11,6 @@
 /// defined base on USB Specs Endpoint's bmAttributes
 typedef enum {
   TUSB_XFER_CONTROL = 0,
-  TUSB_XFER_ISOCHRONOUS = 1,
   TUSB_XFER_BULK = 2,
   TUSB_XFER_INTERRUPT = 3
 } tusb_xfer_type_t;
