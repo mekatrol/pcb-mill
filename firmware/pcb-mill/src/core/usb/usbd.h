@@ -29,7 +29,6 @@ typedef struct {
 
 } usbd_device_t;
 
-extern tu_fifo_t ff;
 extern usbd_device_t _usbd_dev;
 
 bool process_control_request(tusb_control_request_t const* p_request);

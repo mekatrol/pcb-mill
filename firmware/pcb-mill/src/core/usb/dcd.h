@@ -10,39 +10,6 @@
 // MACRO CONSTANT TYPEDEF PROTYPES
 //--------------------------------------------------------------------+
 
-typedef enum {
-  DCD_EVENT_INVALID = 0,  // 0
-  DCD_EVENT_BUS_RESET,    // 1
-  DCD_EVENT_COUNT
-} dcd_eventid_t;
-
-typedef struct __attribute__((aligned(4))) {
-  uint8_t event_id;
-
-  union {
-    // SOF
-    struct {
-      uint32_t frame_count;
-    } sof;
-
-    // SETUP_RECEIVED
-    tusb_control_request_t setup_received;
-
-    // XFER_COMPLETE
-    struct {
-      uint8_t ep_addr;
-      uint32_t len;
-    } xfer_complete;
-  };
-} dcd_event_t;
-
-__attribute__((always_inline)) static inline bool queue_event(dcd_event_t const* event, bool in_isr) {
-  if (!queue_send(&ff, event, in_isr)) {
-    return false;
-  }
-  return true;
-}
-
 //--------------------------------------------------------------------+
 // Controller API
 //--------------------------------------------------------------------+
@@ -101,23 +68,5 @@ bool dcd_edpt_iso_alloc(uint8_t ep_addr, uint16_t largest_packet_size);
 
 // Configure and enable an ISO endpoint according to descriptor
 bool dcd_edpt_iso_activate(tusb_desc_endpoint_t const* desc_ep);
-
-//--------------------------------------------------------------------+
-// Event API (implemented by stack)
-//--------------------------------------------------------------------+
-
-// helper to send bus signal event
-__attribute__((always_inline)) static inline void dcd_event_bus_signal(dcd_eventid_t eid, bool in_isr) {
-  dcd_event_t event;
-  event.event_id = eid;
-  queue_event(&event, in_isr);
-}
-
-// helper to send bus reset event
-__attribute__((always_inline)) static inline void dcd_event_bus_reset(bool in_isr) {
-  dcd_event_t event;
-  event.event_id = DCD_EVENT_BUS_RESET;
-  queue_event(&event, in_isr);
-}
 
 #endif

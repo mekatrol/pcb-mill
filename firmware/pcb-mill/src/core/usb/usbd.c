@@ -48,23 +48,6 @@ __attribute__((weak)) void dcd_connect() {
 usbd_device_t _usbd_dev;
 
 //--------------------------------------------------------------------+
-// Class Driver
-//--------------------------------------------------------------------+
-#define DRIVER_NAME(_name) NULL
-
-//--------------------------------------------------------------------+
-// DCD Event
-//--------------------------------------------------------------------+
-uint8_t _usbd_qdef_buf[CFG_TUD_TASK_QUEUE_SZ * sizeof(dcd_event_t)];
-
-tu_fifo_t ff = {
-    .buffer = _usbd_qdef_buf,
-    .depth = CFG_TUD_TASK_QUEUE_SZ,
-    .item_size = sizeof(dcd_event_t),
-    .overwritable = false,
-};
-
-//--------------------------------------------------------------------+
 // Prototypes
 //--------------------------------------------------------------------+
 static bool process_set_config(uint8_t cfg_num);
@@ -99,9 +82,6 @@ bool tud_connect(void) {
 bool usb_init_driver() {
   memset(&_usbd_dev, 0, sizeof(usbd_device_t));
 
-  // Init device queue & task
-  tu_fifo_clear(&ff);
-
   // Init class drivers
   cdcd_init();
 
@@ -126,16 +106,6 @@ __attribute__((always_inline)) static inline bool queue_receive(tu_fifo_t* ff, v
   usbd_int_set(true);
 
   return success;
-}
-
-void tud_task_ext() {
-  // Loop until there is no more events in the queue
-  while (1) {
-    dcd_event_t event;
-    if (!queue_receive(&ff, &event)) {
-      return;
-    }
-  }
 }
 
 //--------------------------------------------------------------------+

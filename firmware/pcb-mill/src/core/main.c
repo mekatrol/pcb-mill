@@ -75,7 +75,6 @@ void main() {
 
   // Loop forever
   while (true) {
-    tud_task_ext();
     cdc_task();
   }
 }
