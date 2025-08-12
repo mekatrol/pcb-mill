@@ -37,7 +37,7 @@ void dcd_sof_enable(bool en);
 void dcd_edpt0_status_complete(tusb_control_request_t const* request);
 
 // Configure endpoint's registers according to descriptor
-bool usb_endpoint_open(tusb_desc_endpoint_t const* desc_ep);
+bool usb_endpoint_open(usb_endpoint_descriptor_t const* desc_ep);
 
 // Close all non-control endpoints, cancel all pending transfers if any.
 // Invoked when switching from a non-zero Configuration by SET_CONFIGURE therefore
@@ -48,7 +48,7 @@ void dcd_edpt_close_all();
 bool dcd_edpt_xfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes);
 
 // Stall endpoint, any queuing transfer should be removed from endpoint
-void dcd_edpt_stall(uint8_t ep_addr);
+void usb_endpoint_stall(uint8_t ep_addr);
 
 // clear stall, data toggle is also reset to DATA0
 // This API never calls with control endpoints, since it is auto cleared when receiving setup packet

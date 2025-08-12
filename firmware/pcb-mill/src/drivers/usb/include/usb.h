@@ -23,13 +23,17 @@
 // The size of endpoint 0 buffer
 #define USB_EP0_BUFFER_SIZE 64
 
+// The size of endpoint 0 address
+#define USB_EP0_ADDR 0
+
 // The size of other endpoint buffers (e.g. CDC, MSC)
 #define USB_ENDPOINT_RX_BUFFER_SIZE 64
 #define USB_ENDPOINT_TX_BUFFER_SIZE 64
 
+// See: Bit 4 DIR: Direction of transaction USB interrupt status register (USB_ISTR) in RM0444
 typedef enum {
-  USB_ENDPOINT_DIRECTION_OUT = 0,
-  USB_ENDPOINT_DIRECTION_IN = 1,
+  USB_ENDPOINT_DIRECTION_OUT = 0,  // VTTX bit is set in the USB_CHEPnR register
+  USB_ENDPOINT_DIRECTION_IN = 1,   // VTRX bit or both VTTX/VTRX are set in the USB_CHEPnR
 
   USB_ENDPOINT_DIRECTION_IN_MASK = 0x80
 } usb_endpoint_direction_t;
@@ -41,6 +45,18 @@ typedef enum {
   USB_ENDPOINT_STATE_NAK = 0b10,
   USB_ENDPOINT_STATE_VALID = 0b11
 } usb_endpoint_state_t;
+
+// The interrupt USB endpoint type is one of the four transfer types defined by the USB 2.0 specification:
+//   USB Transfer Type	Typical Use	                          Key Properties
+//   Control	          Device setup, configuration	          Guaranteed delivery, ordered
+//   Isochronous	      Streaming audio/video	                Guaranteed timing, no retries
+//   Bulk	              Large, non-time-critical data	        Best-effort delivery
+//   Interrupt	        Small, time-sensitive updates	        Guaranteed max latency
+typedef enum {
+  USB_ENDPOINT_TYPE_CONTROL = 0,
+  USB_ENDPOINT_TYPE_BULK = 2,
+  USB_ENDPOINT_TYPE_INTERRUPT = 3
+} usb_endpoint_type_t;
 
 #define USB_ENDPOINT_STATUS_MASK(dir) (3u << (USB_CHEP_TX_STTX_Pos + ((dir) == USB_ENDPOINT_DIRECTION_IN ? 0 : 8)))
 #define USB_ENDPOINT_DATA_TOGGLE_MASK(dir) (1u << (USB_CHEP_DTOG_TX_Pos + ((dir) == USB_ENDPOINT_DIRECTION_IN ? 0 : 8)))
@@ -79,14 +95,16 @@ typedef struct
     volatile uint32_t TXBD;
     volatile uint32_t RXBD;
   };
-} usbram_register_t;
+} usb_buffer_description_table_t;
 
 // Buffer Table is located in Packet Memory Area (PMA)
 typedef struct {
-  usbram_register_t endpoint[USB_ENDPOINT_MAX];
-} usbram_register_map_t;
+  usb_buffer_description_table_t endpoint[USB_ENDPOINT_MAX];
+} usb_buffer_description_table_map_t;
 
-#define USBRAM_REGSITER ((volatile usbram_register_map_t *)(USB_DRD_PMAADDR))
+// Buffers can be placed anywhere inside the packet memory because their location and size is specified in a buffer description table,
+// which is also located in the packet memory
+#define USB_BUFFER_DESC_TABLE ((volatile usb_buffer_description_table_map_t *)(USB_DRD_PMAADDR))
 
 /// USB Device Descriptor
 typedef struct __attribute__((packed)) {
@@ -109,9 +127,9 @@ typedef struct __attribute__((packed)) {
 void usbd_control_reset();
 void usb_configuration_reset();
 void handle_bus_reset();
-void handle_ctr_rx(uint32_t endpoint_id);
-void handle_ctr_tx(uint32_t endpoint_id);
-void handle_ctr_setup(uint32_t endpoint_id);
+void handle_ctr_rx(uint32_t endpoint_idn);
+void handle_ctr_tx(uint32_t endpoint_idn);
+void handle_ctr_setup(uint32_t endpoint_idn);
 
 __attribute__((always_inline)) static inline bool bit_set_test(uint32_t value, uint32_t pos) { return (value & BIT_MASK(pos)) ? true : false; }
 __attribute__((always_inline)) static inline uint16_t min_u16(uint16_t x, uint16_t y) { return (x < y) ? x : y; }

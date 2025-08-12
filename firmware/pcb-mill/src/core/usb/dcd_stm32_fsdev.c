@@ -1,7 +1,7 @@
 #include "usb.h"
+#include "usb_hal.h"
 #include "tusb_types.h"
 #include "dcd.h"
-#include "fsdev_type.h"
 
 // One of these for every EP IN & OUT, uses a bit of RAM....
 typedef struct {
@@ -64,7 +64,7 @@ void dcd_init() {
   // Reset endpoints to disabled
   for (uint32_t i = 0; i < USB_ENDPOINT_MAX; i++) {
     // This doesn't clear all bits since some bits are "toggle", but does set the type to DISABLED.
-    usb_endpoint_write(i, 0u, false);
+    usb_endpoint_reg_set(i, 0u, false);
   }
 
   USB->CNTR |= USB_CNTR_RESETM | USB_CNTR_ESOFM | USB_CNTR_CTRM |
@@ -118,7 +118,7 @@ bool cdcd_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes);
 
 static void transfer_complete(uint8_t ep_addr, uint32_t xferred_bytes) {
   // Invoke the class callback associated with the endpoint address
-  uint8_t const epnum = tu_edpt_number(ep_addr);
+  uint8_t const epnum = usb_endpoint_number(ep_addr);
   uint8_t const ep_dir = usb_endpoint_direction(ep_addr);
 
   _usbd_dev.ep_status[epnum][ep_dir].busy = 0;
@@ -131,17 +131,13 @@ static void transfer_complete(uint8_t ep_addr, uint32_t xferred_bytes) {
   }
 }
 
-__attribute__((always_inline)) static inline uint32_t usb_endpoint_read(uint32_t endpoint_id) {
-  return USB->chep[endpoint_id].CHEPnR;
-}
-
 // Handle CTR interrupt for the TX/IN direction
-void handle_ctr_tx(uint32_t endpoint_id) {
-  uint32_t endpoint_addr = usb_endpoint_read(endpoint_id) & USB_CHEP_ADDR;
+void handle_ctr_tx(uint32_t endpoint_idn) {
+  uint32_t endpoint_addr = usb_endpoint_reg_get(endpoint_idn) & USB_CHEP_ADDR;
   xfer_ctl_t *xfer = xfer_ctl_ptr(endpoint_addr, USB_ENDPOINT_DIRECTION_IN);
 
   if (xfer->total_len != xfer->queued_len) {
-    dcd_transmit_packet(xfer, endpoint_id);
+    dcd_transmit_packet(xfer, endpoint_idn);
   } else {
     transfer_complete(endpoint_addr | USB_ENDPOINT_DIRECTION_IN_MASK, xfer->queued_len);
   }
@@ -153,28 +149,28 @@ static void setup_received(tusb_control_request_t *setup_received) {
   _usbd_dev.connected = 1;
 
   // mark both in & out control as free
-  _usbd_dev.ep_status[0][USB_ENDPOINT_DIRECTION_OUT].busy = 0;
-  _usbd_dev.ep_status[0][USB_ENDPOINT_DIRECTION_OUT].claimed = 0;
-  _usbd_dev.ep_status[0][USB_ENDPOINT_DIRECTION_IN].busy = 0;
-  _usbd_dev.ep_status[0][USB_ENDPOINT_DIRECTION_IN].claimed = 0;
+  _usbd_dev.ep_status[USB_EP0_ADDR][USB_ENDPOINT_DIRECTION_OUT].busy = 0;
+  _usbd_dev.ep_status[USB_EP0_ADDR][USB_ENDPOINT_DIRECTION_OUT].claimed = 0;
+  _usbd_dev.ep_status[USB_EP0_ADDR][USB_ENDPOINT_DIRECTION_IN].busy = 0;
+  _usbd_dev.ep_status[USB_EP0_ADDR][USB_ENDPOINT_DIRECTION_IN].claimed = 0;
 
   // Process control request
   if (!process_control_request(setup_received)) {
     // Failed -> stall both control endpoint IN and OUT
-    dcd_edpt_stall(0);
-    dcd_edpt_stall(0 | USB_ENDPOINT_DIRECTION_IN_MASK);
+    usb_endpoint_stall(USB_EP0_ADDR);
+    usb_endpoint_stall(USB_EP0_ADDR | USB_ENDPOINT_DIRECTION_IN_MASK);
   }
 }
 
-void handle_ctr_setup(uint32_t endpoint_id) {
-  uint16_t rx_count = usb_pma_get_count(endpoint_id, ENDPOINT_RX_BUFFER);
-  uint16_t rx_addr = usb_pma_get_addr(endpoint_id, ENDPOINT_RX_BUFFER);
+void handle_ctr_setup(uint32_t endpoint_idn) {
+  uint16_t rx_count = usb_pma_get_count(endpoint_idn, ENDPOINT_RX_BUFFER);
+  uint16_t rx_addr = usb_pma_get_addr(endpoint_idn, ENDPOINT_RX_BUFFER);
   uint8_t setup_packet[8] __attribute__((aligned(4)));
 
   dcd_read_packet_memory(setup_packet, rx_addr, rx_count);
 
   // Clear CTR RX if another setup packet arrived before this, it will be discarded
-  usb_endpoint_write_clear_ctr(endpoint_id, USB_ENDPOINT_DIRECTION_OUT);
+  usb_endpoint_reg_set_clear_ctr(endpoint_idn, USB_ENDPOINT_DIRECTION_OUT);
 
   // Setup packet should always be 8 bytes. If not, we probably missed the packet
   if (rx_count == 8) {
@@ -187,13 +183,13 @@ void handle_ctr_setup(uint32_t endpoint_id) {
 }
 
 // Handle CTR interrupt for the RX/OUT direction
-void handle_ctr_rx(uint32_t endpoint_id) {
-  uint32_t endpoint_reg = usb_endpoint_read(endpoint_id) | USB_EP_VTTX | USB_EP_VTRX;
+void handle_ctr_rx(uint32_t endpoint_idn) {
+  uint32_t endpoint_reg = usb_endpoint_reg_get(endpoint_idn) | USB_EP_VTTX | USB_EP_VTRX;
   uint8_t const ep_num = endpoint_reg & USB_CHEP_ADDR;
   xfer_ctl_t *xfer = xfer_ctl_ptr(ep_num, USB_ENDPOINT_DIRECTION_OUT);
 
-  uint16_t const rx_count = usb_pma_get_count(endpoint_id, ENDPOINT_RX_BUFFER);
-  uint16_t pma_addr = (uint16_t)usb_pma_get_addr(endpoint_id, ENDPOINT_RX_BUFFER);
+  uint16_t const rx_count = usb_pma_get_count(endpoint_idn, ENDPOINT_RX_BUFFER);
+  uint16_t pma_addr = (uint16_t)usb_pma_get_addr(endpoint_idn, ENDPOINT_RX_BUFFER);
 
   dcd_read_packet_memory(xfer->buffer + xfer->queued_len, pma_addr, rx_count);
   xfer->queued_len += rx_count;
@@ -202,7 +198,7 @@ void handle_ctr_rx(uint32_t endpoint_id) {
     // all bytes received or short packet
 
     // For ch32v203: reset rx bufsize to mps to prevent race condition to cause PMAOVR (occurs with msc write10)
-    usb_pma_set_rx_bufsize(endpoint_id, ENDPOINT_RX_BUFFER, xfer->max_packet_size);
+    usb_pma_set_rx_bufsize(endpoint_idn, ENDPOINT_RX_BUFFER, xfer->max_packet_size);
 
     transfer_complete(ep_num, xfer->queued_len);
 
@@ -212,7 +208,7 @@ void handle_ctr_rx(uint32_t endpoint_id) {
   } else {
     endpoint_reg &= USB_CHEP_REG_MASK | USB_ENDPOINT_STATUS_MASK(USB_ENDPOINT_DIRECTION_OUT);  // will change RX Status, reserved other toggle bits
     usb_endpoint_status(&endpoint_reg, USB_ENDPOINT_DIRECTION_OUT, USB_ENDPOINT_STATE_VALID);
-    usb_endpoint_write(endpoint_id, endpoint_reg, false);
+    usb_endpoint_reg_set(endpoint_idn, endpoint_reg, false);
   }
 }
 
@@ -261,7 +257,7 @@ static uint32_t dcd_pma_alloc(uint16_t len, bool dbuf) {
 }
 
 static uint8_t usb_endpoint_allocate(uint8_t endpoint_addr, uint8_t endpoint_type) {
-  uint8_t const epnum = tu_edpt_number(endpoint_addr);
+  uint8_t const epnum = usb_endpoint_number(endpoint_addr);
   uint8_t const dir = usb_endpoint_direction(endpoint_addr);
 
   for (uint8_t i = 0; i < USB_ENDPOINT_MAX; i++) {
@@ -293,8 +289,8 @@ static uint8_t usb_endpoint_allocate(uint8_t endpoint_addr, uint8_t endpoint_typ
 }
 
 void usb_endpoint0_init() {
-  usb_endpoint_allocate(0x0, TUSB_XFER_CONTROL);
-  usb_endpoint_allocate(0x80, TUSB_XFER_CONTROL);
+  usb_endpoint_allocate(0x0, USB_ENDPOINT_TYPE_CONTROL);
+  usb_endpoint_allocate(0x80, USB_ENDPOINT_TYPE_CONTROL);
 
   xfer_status[0][0].max_packet_size = USB_EP0_BUFFER_SIZE;
   xfer_status[0][0].ep_idx = 0;
@@ -308,49 +304,51 @@ void usb_endpoint0_init() {
   usb_pma_set_addr(0, ENDPOINT_RX_BUFFER, pma_addr0);
   usb_pma_set_addr(0, ENDPOINT_TX_BUFFER, pma_addr1);
 
-  uint32_t endpoint_reg = usb_endpoint_read(0) & ~USB_CHEP_REG_MASK;  // only get toggle bits
+  uint32_t endpoint_reg = usb_endpoint_reg_get(0) & ~USB_CHEP_REG_MASK;  // only get toggle bits
   endpoint_reg |= USB_EP_CONTROL;
   usb_endpoint_status(&endpoint_reg, USB_ENDPOINT_DIRECTION_IN, USB_ENDPOINT_STATE_NAK);
   usb_endpoint_status(&endpoint_reg, USB_ENDPOINT_DIRECTION_OUT, USB_ENDPOINT_STATE_NAK);
 
   edpt0_prepare_setup();  // prepare for setup packet
-  usb_endpoint_write(0, endpoint_reg, false);
+  usb_endpoint_reg_set(0, endpoint_reg, false);
 }
 
-bool usb_endpoint_open(tusb_desc_endpoint_t const *desc_ep) {
+bool usb_endpoint_open(usb_endpoint_descriptor_t const *desc_ep) {
   uint8_t const ep_addr = desc_ep->bEndpointAddress;
-  uint8_t const ep_num = tu_edpt_number(ep_addr);
+  uint8_t const ep_num = usb_endpoint_number(ep_addr);
   usb_endpoint_direction_t const dir = usb_endpoint_direction(ep_addr);
-  const uint16_t packet_size = tu_edpt_packet_size(desc_ep);
-  uint8_t const ep_idx = usb_endpoint_allocate(ep_addr, desc_ep->bmAttributes.xfer);
+  const uint16_t packet_size = usb_endpoint_packet_size(desc_ep);
+  uint8_t const endpoint_idn = usb_endpoint_allocate(ep_addr, desc_ep->bmAttributes.type);
 
-  if (ep_idx >= USB_ENDPOINT_MAX) {
+  if (endpoint_idn >= USB_ENDPOINT_MAX) {
     return false;
   }
 
-  uint32_t endpoint_reg = usb_endpoint_read(ep_idx) & ~USB_CHEP_REG_MASK;
-  endpoint_reg |= tu_edpt_number(ep_addr) | USB_EP_VTTX | USB_EP_VTRX;
+  uint32_t endpoint_reg = usb_endpoint_reg_get(endpoint_idn) & ~USB_CHEP_REG_MASK;
+  endpoint_reg |= usb_endpoint_number(ep_addr) | USB_EP_VTTX | USB_EP_VTRX;
 
-  // Set type
-  switch (desc_ep->bmAttributes.xfer) {
-    case TUSB_XFER_BULK:
+  // Supported endpoint types
+  switch (desc_ep->bmAttributes.type) {
+    case USB_ENDPOINT_TYPE_BULK:
       endpoint_reg |= USB_EP_BULK;
       break;
-    case TUSB_XFER_INTERRUPT:
+
+    case USB_ENDPOINT_TYPE_INTERRUPT:
       endpoint_reg |= USB_EP_INTERRUPT;
       break;
 
     default:
+      // End type is not supported
       return false;
   }
 
   /* Create a packet memory buffer area. */
   uint16_t pma_addr = dcd_pma_alloc(packet_size, false);
-  usb_pma_set_addr(ep_idx, dir == USB_ENDPOINT_DIRECTION_IN ? ENDPOINT_TX_BUFFER : ENDPOINT_RX_BUFFER, pma_addr);
+  usb_pma_set_addr(endpoint_idn, dir == USB_ENDPOINT_DIRECTION_IN ? ENDPOINT_TX_BUFFER : ENDPOINT_RX_BUFFER, pma_addr);
 
   xfer_ctl_t *xfer = xfer_ctl_ptr(ep_num, dir);
   xfer->max_packet_size = packet_size;
-  xfer->ep_idx = ep_idx;
+  xfer->ep_idx = endpoint_idn;
 
   usb_endpoint_status(&endpoint_reg, dir, USB_ENDPOINT_STATE_NAK);
   usb_endpoint_data_toggle(&endpoint_reg, dir, 0);
@@ -362,7 +360,7 @@ bool usb_endpoint_open(tusb_desc_endpoint_t const *desc_ep) {
     endpoint_reg &= ~(USB_CHEP_TX_STTX_Msk | USB_EP_DTOG_TX);
   }
 
-  usb_endpoint_write(ep_idx, endpoint_reg, true);
+  usb_endpoint_reg_set(endpoint_idn, endpoint_reg, true);
 
   return true;
 }
@@ -372,7 +370,7 @@ void dcd_edpt_close_all() {
 
   for (uint32_t i = 1; i < USB_ENDPOINT_MAX; i++) {
     // Reset endpoint
-    usb_endpoint_write(i, 0, false);
+    usb_endpoint_reg_set(i, 0, false);
     // Clear EP allocation status
     ep_alloc_status[i].ep_num = 0xFF;
     ep_alloc_status[i].ep_type = 0xFF;
@@ -389,7 +387,7 @@ void dcd_edpt_close_all() {
 // Currently, single-buffered, and only 64 bytes at a time (max)
 static void dcd_transmit_packet(xfer_ctl_t *xfer, uint16_t ep_ix) {
   uint16_t len = min_u16(xfer->total_len - xfer->queued_len, xfer->max_packet_size);
-  uint32_t endpoint_reg = usb_endpoint_read(ep_ix) | USB_EP_VTTX | USB_EP_VTRX;  // reserve CTR
+  uint32_t endpoint_reg = usb_endpoint_reg_get(ep_ix) | USB_EP_VTTX | USB_EP_VTRX;  // reserve CTR
 
   uint16_t addr_ptr = (uint16_t)usb_pma_get_addr(ep_ix, ENDPOINT_TX_BUFFER);
 
@@ -400,7 +398,7 @@ static void dcd_transmit_packet(xfer_ctl_t *xfer, uint16_t ep_ix) {
   usb_endpoint_status(&endpoint_reg, USB_ENDPOINT_DIRECTION_IN, USB_ENDPOINT_STATE_VALID);
 
   endpoint_reg &= USB_CHEP_REG_MASK | USB_ENDPOINT_STATUS_MASK(USB_ENDPOINT_DIRECTION_IN);  // only change TX Status, reserve other toggle bits
-  usb_endpoint_write(ep_ix, endpoint_reg, true);
+  usb_endpoint_reg_set(ep_ix, endpoint_reg, true);
 }
 
 static bool edpt_xfer(uint8_t ep_num, usb_endpoint_direction_t dir) {
@@ -410,7 +408,7 @@ static bool edpt_xfer(uint8_t ep_num, usb_endpoint_direction_t dir) {
   if (dir == USB_ENDPOINT_DIRECTION_IN) {
     dcd_transmit_packet(xfer, ep_idx);
   } else {
-    uint32_t endpoint_reg = usb_endpoint_read(ep_idx) | USB_EP_VTTX | USB_EP_VTRX;  // reserve CTR
+    uint32_t endpoint_reg = usb_endpoint_reg_get(ep_idx) | USB_EP_VTTX | USB_EP_VTRX;  // reserve CTR
     endpoint_reg &= USB_CHEP_REG_MASK | USB_ENDPOINT_STATUS_MASK(dir);
 
     uint16_t cnt = min_u16(xfer->total_len, xfer->max_packet_size);
@@ -418,14 +416,14 @@ static bool edpt_xfer(uint8_t ep_num, usb_endpoint_direction_t dir) {
     usb_pma_set_rx_bufsize(ep_idx, ENDPOINT_RX_BUFFER, cnt);
 
     usb_endpoint_status(&endpoint_reg, dir, USB_ENDPOINT_STATE_VALID);
-    usb_endpoint_write(ep_idx, endpoint_reg, true);
+    usb_endpoint_reg_set(ep_idx, endpoint_reg, true);
   }
 
   return true;
 }
 
 bool dcd_edpt_xfer(uint8_t ep_addr, uint8_t *buffer, uint16_t total_bytes) {
-  uint8_t const ep_num = tu_edpt_number(ep_addr);
+  uint8_t const ep_num = usb_endpoint_number(ep_addr);
   usb_endpoint_direction_t const dir = usb_endpoint_direction(ep_addr);
   xfer_ctl_t *xfer = xfer_ctl_ptr(ep_num, dir);
 
@@ -436,30 +434,30 @@ bool dcd_edpt_xfer(uint8_t ep_addr, uint8_t *buffer, uint16_t total_bytes) {
   return edpt_xfer(ep_num, dir);
 }
 
-void dcd_edpt_stall(uint8_t ep_addr) {
-  uint8_t const ep_num = tu_edpt_number(ep_addr);
+void usb_endpoint_stall(uint8_t ep_addr) {
+  uint8_t const ep_num = usb_endpoint_number(ep_addr);
   usb_endpoint_direction_t const dir = usb_endpoint_direction(ep_addr);
   xfer_ctl_t *xfer = xfer_ctl_ptr(ep_num, dir);
   uint8_t const ep_idx = xfer->ep_idx;
 
-  uint32_t endpoint_reg = usb_endpoint_read(ep_idx) | USB_EP_VTTX | USB_EP_VTRX;  // reserve CTR bits
+  uint32_t endpoint_reg = usb_endpoint_reg_get(ep_idx) | USB_EP_VTTX | USB_EP_VTRX;  // reserve CTR bits
   endpoint_reg &= USB_CHEP_REG_MASK | USB_ENDPOINT_STATUS_MASK(dir);
   usb_endpoint_status(&endpoint_reg, dir, USB_ENDPOINT_STATE_STALL);
 
-  usb_endpoint_write(ep_idx, endpoint_reg, true);
+  usb_endpoint_reg_set(ep_idx, endpoint_reg, true);
 }
 
 void dcd_edpt_clear_stall(uint8_t ep_addr) {
-  uint8_t const ep_num = tu_edpt_number(ep_addr);
+  uint8_t const ep_num = usb_endpoint_number(ep_addr);
   usb_endpoint_direction_t const dir = usb_endpoint_direction(ep_addr);
   xfer_ctl_t *xfer = xfer_ctl_ptr(ep_num, dir);
   uint8_t const ep_idx = xfer->ep_idx;
 
-  uint32_t endpoint_reg = usb_endpoint_read(ep_idx) | USB_EP_VTTX | USB_EP_VTRX;  // reserve CTR bits
+  uint32_t endpoint_reg = usb_endpoint_reg_get(ep_idx) | USB_EP_VTTX | USB_EP_VTRX;  // reserve CTR bits
   endpoint_reg &= USB_CHEP_REG_MASK | USB_ENDPOINT_STATUS_MASK(dir) | USB_ENDPOINT_DATA_TOGGLE_MASK(dir);
 
   usb_endpoint_data_toggle(&endpoint_reg, dir, 0);  // Reset to DATA0
-  usb_endpoint_write(ep_idx, endpoint_reg, true);
+  usb_endpoint_reg_set(ep_idx, endpoint_reg, true);
 }
 
 //--------------------------------------------------------------------+

@@ -8,7 +8,7 @@ typedef struct __attribute__((packed)) {
   volatile uint8_t busy : 1;
   volatile uint8_t stalled : 1;
   volatile uint8_t claimed : 1;
-} tu_edpt_state_t;
+} endpoint_state_t;
 
 typedef struct {
   struct __attribute__((packed)) {
@@ -24,17 +24,13 @@ typedef struct {
   uint8_t itf2drv[USB_MAX_INTERFACES];  // map interface number to driver (0xff is invalid)
   uint8_t ep2drv[USB_ENDPOINT_MAX][2];  // map endpoint to driver ( 0xff is invalid ), can use only 4-bit each
 
-  tu_edpt_state_t ep_status[USB_ENDPOINT_MAX][2];
+  endpoint_state_t ep_status[USB_ENDPOINT_MAX][2];
 
 } usbd_device_t;
 
 extern usbd_device_t _usbd_dev;
 
 bool process_control_request(tusb_control_request_t const* p_request);
-
-void tud_task_ext();
-
-void usbd_int_set(bool enabled);
 
 // Check if device is connected (may not mounted/configured yet)
 // True if just got out of Bus Reset and received the very first data from host

@@ -11,7 +11,7 @@
 typedef bool (*usbd_control_xfer_cb_t)(uint8_t stage, tusb_control_request_t const* request);
 
 // Open an endpoint
-bool usbd_edpt_open(tusb_desc_endpoint_t const* desc_ep);
+bool usbd_edpt_open(usb_endpoint_descriptor_t const* desc_ep);
 
 // Submit a usb transfer
 bool usbd_edpt_xfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes);
@@ -35,6 +35,6 @@ void usbd_edpt_clear_stall(uint8_t ep_addr);
 // Check if endpoint is stalled
 bool usbd_edpt_stalled(uint8_t ep_addr);
 
-bool usbd_open_edpt_pair(uint8_t const* p_desc, uint8_t ep_count, uint8_t xfer_type, uint8_t* ep_out, uint8_t* ep_in);
+bool usb_endpoint_open_set(uint8_t const* p_desc, uint8_t ep_count, uint8_t xfer_type, uint8_t* ep_out, uint8_t* ep_in);
 
 #endif

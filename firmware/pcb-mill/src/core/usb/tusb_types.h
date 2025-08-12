@@ -8,13 +8,6 @@
 /* CONSTANTS
  *------------------------------------------------------------------*/
 
-/// defined base on USB Specs Endpoint's bmAttributes
-typedef enum {
-  TUSB_XFER_CONTROL = 0,
-  TUSB_XFER_BULK = 2,
-  TUSB_XFER_INTERRUPT = 3
-} tusb_xfer_type_t;
-
 /// USB Descriptor Types
 typedef enum {
   TUSB_DESC_DEVICE = 0x01,
@@ -159,7 +152,7 @@ typedef struct __attribute__((packed)) {
   uint8_t bEndpointAddress;  // The address of the endpoint
 
   struct __attribute__((packed)) {
-    uint8_t xfer : 2;   // Control, Bulk, Interrupt
+    uint8_t type : 2;   // Control, Bulk, Interrupt
     uint8_t sync : 2;   // None, Asynchronous, Adaptive, Synchronous
     uint8_t usage : 2;  // Data, Feedback, Implicit feedback
     uint8_t : 2;
@@ -167,9 +160,9 @@ typedef struct __attribute__((packed)) {
 
   uint16_t wMaxPacketSize;  // Bit 10..0 : max packet size, bit 12..11 additional transaction per highspeed micro-frame
   uint8_t bInterval;        // Polling interval, in frames or microframes depending on the operating speed
-} tusb_desc_endpoint_t;
+} usb_endpoint_descriptor_t;
 
-_Static_assert(sizeof(tusb_desc_endpoint_t) == 7, "size is not correct");
+_Static_assert(sizeof(usb_endpoint_descriptor_t) == 7, "size is not correct");
 
 /// USB Other Speed Configuration Descriptor
 typedef struct __attribute__((packed)) {
@@ -298,7 +291,7 @@ __attribute__((always_inline)) static inline usb_endpoint_direction_t usb_endpoi
 }
 
 // Get Endpoint number from address
-__attribute__((always_inline)) static inline uint8_t tu_edpt_number(uint8_t addr) {
+__attribute__((always_inline)) static inline uint8_t usb_endpoint_number(uint8_t addr) {
   return (uint8_t)(addr & (~USB_ENDPOINT_DIRECTION_IN_MASK));
 }
 
@@ -306,7 +299,7 @@ __attribute__((always_inline)) static inline uint8_t tu_edpt_addr(uint8_t num, u
   return (uint8_t)(num | (dir ? USB_ENDPOINT_DIRECTION_IN_MASK : 0));
 }
 
-__attribute__((always_inline)) static inline uint16_t tu_edpt_packet_size(tusb_desc_endpoint_t const* desc_ep) {
+__attribute__((always_inline)) static inline uint16_t usb_endpoint_packet_size(usb_endpoint_descriptor_t const* desc_ep) {
   return desc_ep->wMaxPacketSize & 0x7FF;
 }
 

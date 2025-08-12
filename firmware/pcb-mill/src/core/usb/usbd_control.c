@@ -172,8 +172,8 @@ bool usbd_control_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes) {
       }
     } else {
       // Stall both IN and OUT control endpoint
-      dcd_edpt_stall(EDPT_CTRL_OUT);
-      dcd_edpt_stall(EDPT_CTRL_IN);
+      usb_endpoint_stall(EDPT_CTRL_OUT);
+      usb_endpoint_stall(EDPT_CTRL_IN);
     }
   } else {
     // More data to transfer

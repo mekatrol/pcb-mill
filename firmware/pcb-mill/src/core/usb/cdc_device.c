@@ -215,7 +215,7 @@ uint16_t cdcd_open(const tusb_desc_interface_t* itf_desc, uint16_t max_len) {
 
   if (TUSB_DESC_ENDPOINT == tu_desc_type(p_desc)) {
     // notification endpoint
-    const tusb_desc_endpoint_t* desc_ep = (const tusb_desc_endpoint_t*)p_desc;
+    const usb_endpoint_descriptor_t* desc_ep = (const usb_endpoint_descriptor_t*)p_desc;
     if (!usbd_edpt_open(desc_ep)) {
       return 0;
     }
@@ -233,11 +233,11 @@ uint16_t cdcd_open(const tusb_desc_interface_t* itf_desc, uint16_t max_len) {
     p_desc = tu_desc_next(p_desc);
 
     // Open endpoint pair
-    if (!usbd_open_edpt_pair(p_desc, 2, TUSB_XFER_BULK, &_cdcd_itf.ep_out, &_cdcd_itf.ep_in)) {
+    if (!usb_endpoint_open_set(p_desc, 2, USB_ENDPOINT_TYPE_BULK, &_cdcd_itf.ep_out, &_cdcd_itf.ep_in)) {
       return 0;
     }
 
-    drv_len += 2 * sizeof(tusb_desc_endpoint_t);
+    drv_len += 2 * sizeof(usb_endpoint_descriptor_t);
   }
 
   // Prepare for incoming data

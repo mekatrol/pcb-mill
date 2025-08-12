@@ -2,7 +2,7 @@
 #include "tusb_private.h"
 #include "usbd_pvt.h"
 
-bool tu_edpt_claim(tu_edpt_state_t* ep_state) {
+bool tu_edpt_claim(endpoint_state_t* ep_state) {
   // can only claim the endpoint if it is not busy and not claimed yet.
   bool const available = (ep_state->busy == 0) && (ep_state->claimed == 0);
   if (available) {
@@ -11,7 +11,7 @@ bool tu_edpt_claim(tu_edpt_state_t* ep_state) {
   return available;
 }
 
-bool tu_edpt_release(tu_edpt_state_t* ep_state) {
+bool tu_edpt_release(endpoint_state_t* ep_state) {
   // can only release the endpoint if it is claimed and not busy
   bool const ret = (ep_state->claimed == 1) && (ep_state->busy == 0);
   if (ret) {
@@ -20,7 +20,7 @@ bool tu_edpt_release(tu_edpt_state_t* ep_state) {
   return ret;
 }
 
-bool tu_edpt_validate(tusb_desc_endpoint_t const* desc_ep, bool is_host) {
+bool tu_edpt_validate(usb_endpoint_descriptor_t const* desc_ep, bool is_host) {
   // According to USB 2.0 Specification:
   //
   // Full-Speed Bulk Endpoint:
@@ -30,10 +30,10 @@ bool tu_edpt_validate(tusb_desc_endpoint_t const* desc_ep, bool is_host) {
   // High-Speed Bulk Endpoint:
   //   Must have max packet size exactly 512 bytes
   //   Reference: USB 2.0 Spec, Table 9-13 (p.262), Section 5.8.3 (Bulk Transfers, p.120)
-  uint16_t const max_packet_size = tu_edpt_packet_size(desc_ep);
+  uint16_t const max_packet_size = usb_endpoint_packet_size(desc_ep);
 
-  switch (desc_ep->bmAttributes.xfer) {
-    case TUSB_XFER_BULK:
+  switch (desc_ep->bmAttributes.type) {
+    case USB_ENDPOINT_TYPE_BULK:
       // USB 2.0 Spec, Section 5.8.3, Table 9-13
       // High-speed bulk packet size must be exactly 512 bytes.
       // This is a hard requirement in the spec — you cannot pick smaller or larger values at high speed.
@@ -42,7 +42,7 @@ bool tu_edpt_validate(tusb_desc_endpoint_t const* desc_ep, bool is_host) {
       if (is_host && max_packet_size == 512) {
         // HACK: while in host mode, some device incorrectly always report 512 regardless of link speed
         // overwrite descriptor to force 64
-        tusb_desc_endpoint_t* hacked_ep = (tusb_desc_endpoint_t*)(uintptr_t)desc_ep;
+        usb_endpoint_descriptor_t* hacked_ep = (usb_endpoint_descriptor_t*)(uintptr_t)desc_ep;
         hacked_ep->wMaxPacketSize = 64;
       } else {
         if (max_packet_size != 8 && max_packet_size != 16 &&
@@ -52,7 +52,7 @@ bool tu_edpt_validate(tusb_desc_endpoint_t const* desc_ep, bool is_host) {
       }
       break;
 
-    case TUSB_XFER_INTERRUPT: {
+    case USB_ENDPOINT_TYPE_INTERRUPT: {
       if (max_packet_size > 64) {
         return false;
       }
@@ -72,8 +72,8 @@ void tu_edpt_bind_driver(uint8_t ep2drv[][2], tusb_desc_interface_t const* desc_
 
   while (p_desc < desc_end) {
     if (TUSB_DESC_ENDPOINT == tu_desc_type(p_desc)) {
-      uint8_t const ep_addr = ((tusb_desc_endpoint_t const*)p_desc)->bEndpointAddress;
-      ep2drv[tu_edpt_number(ep_addr)][usb_endpoint_direction(ep_addr)] = 0;
+      uint8_t const ep_addr = ((usb_endpoint_descriptor_t const*)p_desc)->bEndpointAddress;
+      ep2drv[usb_endpoint_number(ep_addr)][usb_endpoint_direction(ep_addr)] = 0;
     }
     p_desc = tu_desc_next(p_desc);
   }

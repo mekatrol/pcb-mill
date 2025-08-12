@@ -1,8 +1,7 @@
 #include "board_hal.h"
+#include "usb.h"
+#include "usb_hal.h"
 #include "dcd.h"
-
-// TODO: remove
-#include "fsdev_type.h"
 
 #define RCC_CRRCR_HSI48ON (1 << 0)
 #define RCC_CRRCR_HSI48RDY (1 << 1)
@@ -35,10 +34,6 @@ void usb_init_hal() {
 
   // Enable USB IRQ
   NVIC_EnableIRQ(USB_UCPD1_2_IRQn);
-}
-
-__attribute__((always_inline)) static inline uint32_t usb_endpoint_read(uint32_t endpoint_id) {
-  return USB->chep[endpoint_id].CHEPnR;
 }
 
 void USB_UCPD1_2_IRQHandler() {
@@ -85,21 +80,22 @@ void USB_UCPD1_2_IRQHandler() {
 
   // loop to handle all pending CTR interrupts
   while (USB->ISTR & USB_ISTR_CTR) {
-    uint32_t const endpoint_id = USB->ISTR & USB_ISTR_IDN;
-    uint32_t const endpoint_reg = usb_endpoint_read(endpoint_id);
+    // These bits are written by the hardware according to the host channel or device endpoint number
+    uint32_t const endpoint_idn = USB->ISTR & USB_ISTR_IDN;
+    uint32_t const endpoint_reg = usb_endpoint_reg_get(endpoint_idn);
 
     if (endpoint_reg & USB_EP_VTRX) {
       if (endpoint_reg & USB_EP_SETUP) {
-        handle_ctr_setup(endpoint_id);  // CTR will be clear after copied setup packet
+        handle_ctr_setup(endpoint_idn);  // CTR will be clear after copied setup packet
       } else {
-        usb_endpoint_write_clear_ctr(endpoint_id, USB_ENDPOINT_DIRECTION_OUT);
-        handle_ctr_rx(endpoint_id);
+        usb_endpoint_reg_set_clear_ctr(endpoint_idn, USB_ENDPOINT_DIRECTION_OUT);
+        handle_ctr_rx(endpoint_idn);
       }
     }
 
     if (endpoint_reg & USB_EP_VTTX) {
-      usb_endpoint_write_clear_ctr(endpoint_id, USB_ENDPOINT_DIRECTION_IN);
-      handle_ctr_tx(endpoint_id);
+      usb_endpoint_reg_set_clear_ctr(endpoint_idn, USB_ENDPOINT_DIRECTION_IN);
+      handle_ctr_tx(endpoint_idn);
     }
   }
 
