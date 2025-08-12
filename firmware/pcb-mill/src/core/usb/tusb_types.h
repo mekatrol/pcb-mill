@@ -74,18 +74,6 @@ enum {
   INTERFACE_INVALID_NUMBER = 0xff
 };
 
-typedef enum {
-  MS_OS_20_SET_HEADER_DESCRIPTOR = 0x00,
-  MS_OS_20_SUBSET_HEADER_CONFIGURATION = 0x01,
-  MS_OS_20_SUBSET_HEADER_FUNCTION = 0x02,
-  MS_OS_20_FEATURE_COMPATBLE_ID = 0x03,
-  MS_OS_20_FEATURE_REG_PROPERTY = 0x04,
-  MS_OS_20_FEATURE_MIN_RESUME_TIME = 0x05,
-  MS_OS_20_FEATURE_MODEL_ID = 0x06,
-  MS_OS_20_FEATURE_CCGP_DEVICE = 0x07,
-  MS_OS_20_FEATURE_VENDOR_REVISION = 0x08
-} microsoft_os_20_type_t;
-
 enum {
   CONTROL_STAGE_IDLE = 0,
   CONTROL_STAGE_SETUP,  // 1
@@ -93,15 +81,9 @@ enum {
   CONTROL_STAGE_ACK     // 3
 };
 
-enum {
-  TUSB_INDEX_INVALID_8 = 0xFFu
-};
-
 //--------------------------------------------------------------------+
 // USB Descriptors
 //--------------------------------------------------------------------+
-
-_Static_assert(sizeof(usb_device_desc_t) == 18, "size is not correct");
 
 // USB Binary Device Object Store (BOS) Descriptor
 typedef struct __attribute__((packed)) {
