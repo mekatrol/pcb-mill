@@ -305,7 +305,7 @@ bool process_control_request(tusb_control_request_t const* p_request) {
             usbd_control_set_complete_callback(NULL);
 
             // skip ZLP status if driver already did that
-            if (!_usbd_dev.ep_status[0][TUSB_DIR_IN].busy) tud_control_status(p_request);
+            if (!_usbd_dev.ep_status[0][USB_ENDPOINT_DIRECTION_IN].busy) tud_control_status(p_request);
           } break;
 
           // Unknown/Unsupported request
@@ -506,7 +506,7 @@ bool usbd_open_edpt_pair(uint8_t const* p_desc, uint8_t ep_count, uint8_t xfer_t
       return false;
     }
 
-    if (tu_edpt_dir(desc_ep->bEndpointAddress) == TUSB_DIR_IN) {
+    if (usb_endpoint_direction(desc_ep->bEndpointAddress) == USB_ENDPOINT_DIRECTION_IN) {
       (*ep_in) = desc_ep->bEndpointAddress;
     } else {
       (*ep_out) = desc_ep->bEndpointAddress;
@@ -531,12 +531,12 @@ bool usbd_edpt_open(tusb_desc_endpoint_t const* desc_ep) {
     return false;
   }
 
-  return dcd_edpt_open(desc_ep);
+  return usb_endpoint_open(desc_ep);
 }
 
 bool usbd_edpt_claim(uint8_t ep_addr) {
   uint8_t const epnum = tu_edpt_number(ep_addr);
-  uint8_t const dir = tu_edpt_dir(ep_addr);
+  uint8_t const dir = usb_endpoint_direction(ep_addr);
   tu_edpt_state_t* ep_state = &_usbd_dev.ep_status[epnum][dir];
 
   return tu_edpt_claim(ep_state);
@@ -544,7 +544,7 @@ bool usbd_edpt_claim(uint8_t ep_addr) {
 
 bool usbd_edpt_release(uint8_t ep_addr) {
   uint8_t const epnum = tu_edpt_number(ep_addr);
-  uint8_t const dir = tu_edpt_dir(ep_addr);
+  uint8_t const dir = usb_endpoint_direction(ep_addr);
   tu_edpt_state_t* ep_state = &_usbd_dev.ep_status[epnum][dir];
 
   return tu_edpt_release(ep_state);
@@ -552,7 +552,7 @@ bool usbd_edpt_release(uint8_t ep_addr) {
 
 bool usbd_edpt_xfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes) {
   uint8_t const epnum = tu_edpt_number(ep_addr);
-  uint8_t const dir = tu_edpt_dir(ep_addr);
+  uint8_t const dir = usb_endpoint_direction(ep_addr);
 
   // Attempt to transfer on a busy endpoint, sound like an race condition !
   if (_usbd_dev.ep_status[epnum][dir].busy != 0) {
@@ -575,14 +575,14 @@ bool usbd_edpt_xfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes) {
 
 bool usbd_edpt_busy(uint8_t ep_addr) {
   uint8_t const epnum = tu_edpt_number(ep_addr);
-  uint8_t const dir = tu_edpt_dir(ep_addr);
+  uint8_t const dir = usb_endpoint_direction(ep_addr);
 
   return _usbd_dev.ep_status[epnum][dir].busy;
 }
 
 void usbd_edpt_stall(uint8_t ep_addr) {
   uint8_t const epnum = tu_edpt_number(ep_addr);
-  uint8_t const dir = tu_edpt_dir(ep_addr);
+  uint8_t const dir = usb_endpoint_direction(ep_addr);
 
   // only stalled if currently cleared
   dcd_edpt_stall(ep_addr);
@@ -592,7 +592,7 @@ void usbd_edpt_stall(uint8_t ep_addr) {
 
 void usbd_edpt_clear_stall(uint8_t ep_addr) {
   uint8_t const epnum = tu_edpt_number(ep_addr);
-  uint8_t const dir = tu_edpt_dir(ep_addr);
+  uint8_t const dir = usb_endpoint_direction(ep_addr);
 
   // only clear if currently stalled
   dcd_edpt_clear_stall(ep_addr);
@@ -602,7 +602,7 @@ void usbd_edpt_clear_stall(uint8_t ep_addr) {
 
 bool usbd_edpt_stalled(uint8_t ep_addr) {
   uint8_t const epnum = tu_edpt_number(ep_addr);
-  uint8_t const dir = tu_edpt_dir(ep_addr);
+  uint8_t const dir = usb_endpoint_direction(ep_addr);
 
   return _usbd_dev.ep_status[epnum][dir].stalled;
 }

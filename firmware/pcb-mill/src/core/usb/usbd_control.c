@@ -58,7 +58,7 @@ static bool data_stage_xact() {
   const uint16_t xact_len = min_u16(_ctrl_xfer.data_len - _ctrl_xfer.total_xferred, USB_EP0_BUFFER_SIZE);
   uint8_t ep_addr = EDPT_CTRL_OUT;
 
-  if (_ctrl_xfer.request.bmRequestType_bit.direction == TUSB_DIR_IN) {
+  if (_ctrl_xfer.request.bmRequestType_bit.direction == USB_ENDPOINT_DIRECTION_IN) {
     ep_addr = EDPT_CTRL_IN;
     if (xact_len) {
       if (xact_len > USB_EP0_BUFFER_SIZE) {
@@ -127,7 +127,7 @@ void usbd_control_set_request(const tusb_control_request_t* request) {
 // - Status stage
 bool usbd_control_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes) {
   // Endpoint Address is opposite to direction bit, this is Status Stage complete event
-  if (tu_edpt_dir(ep_addr) != _ctrl_xfer.request.bmRequestType_bit.direction) {
+  if (usb_endpoint_direction(ep_addr) != _ctrl_xfer.request.bmRequestType_bit.direction) {
     if (xferred_bytes != 0) {
       return false;
     }
@@ -143,7 +143,7 @@ bool usbd_control_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes) {
     return true;
   }
 
-  if (_ctrl_xfer.request.bmRequestType_bit.direction == TUSB_DIR_OUT) {
+  if (_ctrl_xfer.request.bmRequestType_bit.direction == USB_ENDPOINT_DIRECTION_OUT) {
     if (!_ctrl_xfer.buffer) {
       return false;
     }

@@ -27,6 +27,24 @@
 #define USB_ENDPOINT_RX_BUFFER_SIZE 64
 #define USB_ENDPOINT_TX_BUFFER_SIZE 64
 
+typedef enum {
+  USB_ENDPOINT_DIRECTION_OUT = 0,
+  USB_ENDPOINT_DIRECTION_IN = 1,
+
+  USB_ENDPOINT_DIRECTION_IN_MASK = 0x80
+} usb_endpoint_direction_t;
+
+// See Table 237. Transmission status encoding in RM0444
+typedef enum {
+  USB_ENDPOINT_STATE_DISABLED = 0b00,
+  USB_ENDPOINT_STATE_STALL = 0b01,
+  USB_ENDPOINT_STATE_NAK = 0b10,
+  USB_ENDPOINT_STATE_VALID = 0b11
+} usb_endpoint_state_t;
+
+#define USB_ENDPOINT_STATUS_MASK(dir) (3u << (USB_CHEP_TX_STTX_Pos + ((dir) == USB_ENDPOINT_DIRECTION_IN ? 0 : 8)))
+#define USB_ENDPOINT_DATA_TOGGLE_MASK(dir) (1u << (USB_CHEP_DTOG_TX_Pos + ((dir) == USB_ENDPOINT_DIRECTION_IN ? 0 : 8)))
+
 // The maximum number of USB interfaces across all configurations
 // Each USB interface is as defined in the USB 2.0 spec (see Section 9.6.5 Interface Descriptor).
 // An interface is a logical grouping of endpoints and functions.

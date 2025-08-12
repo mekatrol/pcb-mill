@@ -37,6 +37,10 @@ void usb_init_hal() {
   NVIC_EnableIRQ(USB_UCPD1_2_IRQn);
 }
 
+__attribute__((always_inline)) static inline uint32_t usb_endpoint_read(uint32_t endpoint_id) {
+  return USB->chep[endpoint_id].CHEPnR;
+}
+
 void USB_UCPD1_2_IRQHandler() {
   uint32_t int_status = USB->ISTR;
 
@@ -82,19 +86,19 @@ void USB_UCPD1_2_IRQHandler() {
   // loop to handle all pending CTR interrupts
   while (USB->ISTR & USB_ISTR_CTR) {
     uint32_t const endpoint_id = USB->ISTR & USB_ISTR_IDN;
-    uint32_t const endpoint_reg = USB->chep[endpoint_id].CHEPnR;
+    uint32_t const endpoint_reg = usb_endpoint_read(endpoint_id);
 
     if (endpoint_reg & USB_EP_VTRX) {
       if (endpoint_reg & USB_EP_SETUP) {
         handle_ctr_setup(endpoint_id);  // CTR will be clear after copied setup packet
       } else {
-        usb_endpoint_write_clear_ctr(endpoint_id, TUSB_DIR_OUT);
+        usb_endpoint_write_clear_ctr(endpoint_id, USB_ENDPOINT_DIRECTION_OUT);
         handle_ctr_rx(endpoint_id);
       }
     }
 
     if (endpoint_reg & USB_EP_VTTX) {
-      usb_endpoint_write_clear_ctr(endpoint_id, TUSB_DIR_IN);
+      usb_endpoint_write_clear_ctr(endpoint_id, USB_ENDPOINT_DIRECTION_IN);
       handle_ctr_tx(endpoint_id);
     }
   }

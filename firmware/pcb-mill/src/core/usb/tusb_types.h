@@ -15,13 +15,6 @@ typedef enum {
   TUSB_XFER_INTERRUPT = 3
 } tusb_xfer_type_t;
 
-typedef enum {
-  TUSB_DIR_OUT = 0,
-  TUSB_DIR_IN = 1,
-
-  TUSB_DIR_IN_MASK = 0x80
-} tusb_dir_t;
-
 /// USB Descriptor Types
 typedef enum {
   TUSB_DESC_DEVICE = 0x01,
@@ -281,7 +274,7 @@ typedef struct __attribute__((packed)) {
     struct __attribute__((packed)) {
       uint8_t recipient : 5;  ///< Recipient type tusb_request_recipient_t.
       uint8_t type : 2;       ///< Request type tusb_request_type_t.
-      uint8_t direction : 1;  ///< Direction type. tusb_dir_t
+      uint8_t direction : 1;  ///< Direction type. usb_endpoint_direction_t
     } bmRequestType_bit;
 
     uint8_t bmRequestType;
@@ -300,18 +293,17 @@ _Static_assert(sizeof(tusb_control_request_t) == 8, "size is not correct");
 //--------------------------------------------------------------------+
 
 // Get direction from Endpoint address
-__attribute__((always_inline)) static inline tusb_dir_t
-tu_edpt_dir(uint8_t addr) {
-  return (addr & TUSB_DIR_IN_MASK) ? TUSB_DIR_IN : TUSB_DIR_OUT;
+__attribute__((always_inline)) static inline usb_endpoint_direction_t usb_endpoint_direction(uint8_t addr) {
+  return (addr & USB_ENDPOINT_DIRECTION_IN_MASK) ? USB_ENDPOINT_DIRECTION_IN : USB_ENDPOINT_DIRECTION_OUT;
 }
 
 // Get Endpoint number from address
 __attribute__((always_inline)) static inline uint8_t tu_edpt_number(uint8_t addr) {
-  return (uint8_t)(addr & (~TUSB_DIR_IN_MASK));
+  return (uint8_t)(addr & (~USB_ENDPOINT_DIRECTION_IN_MASK));
 }
 
 __attribute__((always_inline)) static inline uint8_t tu_edpt_addr(uint8_t num, uint8_t dir) {
-  return (uint8_t)(num | (dir ? TUSB_DIR_IN_MASK : 0));
+  return (uint8_t)(num | (dir ? USB_ENDPOINT_DIRECTION_IN_MASK : 0));
 }
 
 __attribute__((always_inline)) static inline uint16_t tu_edpt_packet_size(tusb_desc_endpoint_t const* desc_ep) {

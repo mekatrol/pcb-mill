@@ -2,7 +2,7 @@
 MCU = cortex-m0plus
 CHIP = STM32G0B1
 BOARD_NAME := btt_skr_mini_e3_v3_0
-DRIVER_NAMES := usb
+DRIVER_NAMES := usb usb_cdc
 
 # OS-specific commands and separator
 ifeq ($(OS),Windows_NT)

@@ -73,7 +73,7 @@ void tu_edpt_bind_driver(uint8_t ep2drv[][2], tusb_desc_interface_t const* desc_
   while (p_desc < desc_end) {
     if (TUSB_DESC_ENDPOINT == tu_desc_type(p_desc)) {
       uint8_t const ep_addr = ((tusb_desc_endpoint_t const*)p_desc)->bEndpointAddress;
-      ep2drv[tu_edpt_number(ep_addr)][tu_edpt_dir(ep_addr)] = 0;
+      ep2drv[tu_edpt_number(ep_addr)][usb_endpoint_direction(ep_addr)] = 0;
     }
     p_desc = tu_desc_next(p_desc);
   }

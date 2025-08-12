@@ -2,7 +2,7 @@
 #define TUSB_FSDEV_TYPE_H
 
 #include "usb.h"
-
+#include "usb_hal.h"
 #include "tusb_types.h"
 
 typedef struct {
@@ -10,20 +10,6 @@ typedef struct {
 } usb_pma_buf_t;
 
 #define USB_PMA_BUF_AT(addr) ((usb_pma_buf_t*)(USB_DRD_PMAADDR + addr))
-
-typedef enum {
-  EP_STAT_DISABLED = 0,
-  EP_STAT_STALL = 1,
-  EP_STAT_NAK = 2,
-  EP_STAT_VALID = 3
-} ep_stat_t;
-
-#define EP_STAT_MASK(dir) (3u << (USB_CHEP_TX_STTX_Pos + ((dir) == TUSB_DIR_IN ? 0 : 8)))
-#define EP_DTOG_MASK(dir) (1u << (USB_CHEP_DTOG_TX_Pos + ((dir) == TUSB_DIR_IN ? 0 : 8)))
-
-__attribute__((always_inline)) static inline uint32_t usb_endpoint_read(uint32_t endpoint_id) {
-  return USB->chep[endpoint_id].CHEPnR;
-}
 
 __attribute__((always_inline)) static inline void usb_endpoint_write(uint32_t endpoint_id, uint32_t value, bool disable_usb_irq) {
   if (disable_usb_irq) {
@@ -37,20 +23,12 @@ __attribute__((always_inline)) static inline void usb_endpoint_write(uint32_t en
   }
 }
 
-__attribute__((always_inline)) static inline void usb_endpoint_write_clear_ctr(uint32_t endpoint_id, tusb_dir_t dir) {
+__attribute__((always_inline)) static inline void usb_endpoint_write_clear_ctr(uint32_t endpoint_id, usb_endpoint_direction_t dir) {
   uint32_t reg = USB->chep[endpoint_id].CHEPnR;
   reg |= USB_EP_VTTX | USB_EP_VTRX;
   reg &= USB_CHEP_REG_MASK;
-  reg &= ~(1 << (USB_CHEP_VTTX_Pos + (dir == TUSB_DIR_IN ? 0 : 8)));
+  reg &= ~(1 << (USB_CHEP_VTTX_Pos + (dir == USB_ENDPOINT_DIRECTION_IN ? 0 : 8)));
   usb_endpoint_write(endpoint_id, reg, false);
-}
-
-__attribute__((always_inline)) static inline void usb_endpoint_change_status(uint32_t* reg, tusb_dir_t dir, ep_stat_t state) {
-  *reg ^= (state << (USB_CHEP_TX_STTX_Pos + (dir == TUSB_DIR_IN ? 0 : 8)));
-}
-
-__attribute__((always_inline)) static inline void usb_endpoint_change_dtog(uint32_t* reg, tusb_dir_t dir, uint8_t state) {
-  *reg ^= (state << (USB_CHEP_DTOG_TX_Pos + (dir == TUSB_DIR_IN ? 0 : 8)));
 }
 
 __attribute__((always_inline)) static inline uint32_t usb_pma_get_addr(uint32_t endpoint_id, uint8_t buf_id) {

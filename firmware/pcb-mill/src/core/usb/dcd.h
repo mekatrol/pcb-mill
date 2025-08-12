@@ -37,7 +37,7 @@ void dcd_sof_enable(bool en);
 void dcd_edpt0_status_complete(tusb_control_request_t const* request);
 
 // Configure endpoint's registers according to descriptor
-bool dcd_edpt_open(tusb_desc_endpoint_t const* desc_ep);
+bool usb_endpoint_open(tusb_desc_endpoint_t const* desc_ep);
 
 // Close all non-control endpoints, cancel all pending transfers if any.
 // Invoked when switching from a non-zero Configuration by SET_CONFIGURE therefore
