@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 // IMPORTANT: header include order matters
+#include "stm32g0xx.h"
 #include "stm32g0b1xx.h"
 #include "core_cm0plus.h"
 

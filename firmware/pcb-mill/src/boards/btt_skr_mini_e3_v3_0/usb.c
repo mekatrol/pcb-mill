@@ -1,6 +1,9 @@
 #include "board_hal.h"
 #include "dcd.h"
 
+// TODO: remove
+#include "fsdev_type.h"
+
 #define RCC_CRRCR_HSI48ON (1 << 0)
 #define RCC_CRRCR_HSI48RDY (1 << 1)
 
@@ -35,5 +38,70 @@ void usb_init_hal() {
 }
 
 void USB_UCPD1_2_IRQHandler() {
-  dcd_int_handler();
+  uint32_t int_status = USB->ISTR;
+
+  if (int_status & USB_ISTR_SOF) {
+    USB->ISTR = ~USB_ISTR_SOF;
+    // Start of Frame
+  }
+
+  if (int_status & USB_ISTR_RESET) {
+    // Clear reset flag
+    USB->ISTR = ~USB_ISTR_RESET;
+
+    // Call driver reset
+    usb_reset();
+
+    // Return after resetting USB as all should be clear
+    return;
+  }
+
+  if (int_status & USB_ISTR_WKUP) {
+    USB->CNTR &= ~USB_CNTR_SUSPRDY;
+    USB->CNTR &= ~USB_CNTR_SUSPEN;
+
+    USB->ISTR = ~USB_ISTR_WKUP;
+  }
+
+  if (int_status & USB_ISTR_SUSP) {
+    /* Suspend is asserted for both suspend and unplug events. without Vbus monitoring,
+     * these events cannot be differentiated, so we only trigger suspend. */
+
+    /* Force low-power mode in the macrocell */
+    USB->CNTR |= USB_CNTR_SUSPEN;
+    USB->CNTR |= USB_CNTR_SUSPRDY;
+
+    /* clear of the ISTR bit must be done after setting of CNTR_FSUSP */
+    USB->ISTR = ~USB_ISTR_SUSP;
+  }
+
+  if (int_status & USB_ISTR_ESOF) {
+    USB->ISTR = ~USB_ISTR_ESOF;
+  }
+
+  // loop to handle all pending CTR interrupts
+  while (USB->ISTR & USB_ISTR_CTR) {
+    uint32_t const endpoint_id = USB->ISTR & USB_ISTR_IDN;
+    uint32_t const endpoint_reg = USB->chep[endpoint_id].CHEPnR;
+
+    if (endpoint_reg & USB_EP_VTRX) {
+      if (endpoint_reg & USB_EP_SETUP) {
+        handle_ctr_setup(endpoint_id);  // CTR will be clear after copied setup packet
+      } else {
+        usb_endpoint_write_clear_ctr(endpoint_id, TUSB_DIR_OUT);
+        handle_ctr_rx(endpoint_id);
+      }
+    }
+
+    if (endpoint_reg & USB_EP_VTTX) {
+      usb_endpoint_write_clear_ctr(endpoint_id, TUSB_DIR_IN);
+      handle_ctr_tx(endpoint_id);
+    }
+  }
+
+  if (int_status & USB_ISTR_PMAOVR) {
+    USB->ISTR = ~USB_ISTR_PMAOVR;
+
+    // TODO: overrun/underrun
+  }
 }

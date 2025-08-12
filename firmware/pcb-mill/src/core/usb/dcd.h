@@ -19,9 +19,6 @@ void dcd_init();
 // Deinitialize controller, unset device mode.
 bool dcd_deinit();
 
-// Interrupt Handler
-void dcd_int_handler();
-
 // Receive Set Address request, mcu port must also include status IN response
 void dcd_set_address(uint8_t dev_addr);
 

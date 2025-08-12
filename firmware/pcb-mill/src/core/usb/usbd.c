@@ -92,7 +92,7 @@ bool usb_init_driver() {
   return true;
 }
 
-void configuration_reset() {
+void usb_configuration_reset() {
   cdcd_reset();
 
   memset(&_usbd_dev, 0, sizeof(usbd_device_t));
@@ -166,7 +166,7 @@ bool process_control_request(tusb_control_request_t const* p_request) {
               dcd_edpt_close_all();
 
               // close all drivers and current configured state except bus speed
-              configuration_reset();
+              usb_configuration_reset();
             }
 
             _usbd_dev.cfg_num = cfg_num;

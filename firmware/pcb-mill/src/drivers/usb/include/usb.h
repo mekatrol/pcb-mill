@@ -89,13 +89,18 @@ typedef struct __attribute__((packed)) {
 } usb_device_desc_t;
 
 void usbd_control_reset();
-void configuration_reset();
+void usb_configuration_reset();
+void handle_bus_reset();
+void handle_ctr_rx(uint32_t endpoint_id);
+void handle_ctr_tx(uint32_t endpoint_id);
+void handle_ctr_setup(uint32_t endpoint_id);
 
 __attribute__((always_inline)) static inline bool bit_set_test(uint32_t value, uint32_t pos) { return (value & BIT_MASK(pos)) ? true : false; }
 __attribute__((always_inline)) static inline uint16_t min_u16(uint16_t x, uint16_t y) { return (x < y) ? x : y; }
 
 __attribute__((always_inline)) static inline void usb_reset() {
-  configuration_reset();
+  handle_bus_reset();
+  usb_configuration_reset();
   usbd_control_reset();
 }
 

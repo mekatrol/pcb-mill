@@ -21,58 +21,58 @@ typedef enum {
 #define EP_STAT_MASK(dir) (3u << (USB_CHEP_TX_STTX_Pos + ((dir) == TUSB_DIR_IN ? 0 : 8)))
 #define EP_DTOG_MASK(dir) (1u << (USB_CHEP_DTOG_TX_Pos + ((dir) == TUSB_DIR_IN ? 0 : 8)))
 
-__attribute__((always_inline)) static inline uint32_t ep_read(uint32_t ep_id) {
-  return USB->chep[ep_id].CHEPnR;
+__attribute__((always_inline)) static inline uint32_t usb_endpoint_read(uint32_t endpoint_id) {
+  return USB->chep[endpoint_id].CHEPnR;
 }
 
-__attribute__((always_inline)) static inline void ep_write(uint32_t ep_id, uint32_t value, bool disable_usb_irq) {
+__attribute__((always_inline)) static inline void usb_endpoint_write(uint32_t endpoint_id, uint32_t value, bool disable_usb_irq) {
   if (disable_usb_irq) {
     NVIC_DisableIRQ(USB_UCPD1_2_IRQn);
   }
 
-  USB->chep[ep_id].CHEPnR = value;
+  USB->chep[endpoint_id].CHEPnR = value;
 
   if (disable_usb_irq) {
     NVIC_EnableIRQ(USB_UCPD1_2_IRQn);
   }
 }
 
-__attribute__((always_inline)) static inline void ep_write_clear_ctr(uint32_t ep_id, tusb_dir_t dir) {
-  uint32_t reg = USB->chep[ep_id].CHEPnR;
+__attribute__((always_inline)) static inline void usb_endpoint_write_clear_ctr(uint32_t endpoint_id, tusb_dir_t dir) {
+  uint32_t reg = USB->chep[endpoint_id].CHEPnR;
   reg |= USB_EP_VTTX | USB_EP_VTRX;
   reg &= USB_CHEP_REG_MASK;
   reg &= ~(1 << (USB_CHEP_VTTX_Pos + (dir == TUSB_DIR_IN ? 0 : 8)));
-  ep_write(ep_id, reg, false);
+  usb_endpoint_write(endpoint_id, reg, false);
 }
 
-__attribute__((always_inline)) static inline void ep_change_status(uint32_t* reg, tusb_dir_t dir, ep_stat_t state) {
+__attribute__((always_inline)) static inline void usb_endpoint_change_status(uint32_t* reg, tusb_dir_t dir, ep_stat_t state) {
   *reg ^= (state << (USB_CHEP_TX_STTX_Pos + (dir == TUSB_DIR_IN ? 0 : 8)));
 }
 
-__attribute__((always_inline)) static inline void ep_change_dtog(uint32_t* reg, tusb_dir_t dir, uint8_t state) {
+__attribute__((always_inline)) static inline void usb_endpoint_change_dtog(uint32_t* reg, tusb_dir_t dir, uint8_t state) {
   *reg ^= (state << (USB_CHEP_DTOG_TX_Pos + (dir == TUSB_DIR_IN ? 0 : 8)));
 }
 
-__attribute__((always_inline)) static inline uint32_t usb_pma_get_addr(uint32_t ep_id, uint8_t buf_id) {
-  return USBRAM_REGSITER->endpoint[ep_id].buffer[buf_id].count_addr & 0x0000FFFFu;
+__attribute__((always_inline)) static inline uint32_t usb_pma_get_addr(uint32_t endpoint_id, uint8_t buf_id) {
+  return USBRAM_REGSITER->endpoint[endpoint_id].buffer[buf_id].count_addr & 0x0000FFFFu;
 }
 
-__attribute__((always_inline)) static inline void usb_pma_set_addr(uint32_t ep_id, uint8_t buf_id, uint16_t addr) {
-  uint32_t count_addr = USBRAM_REGSITER->endpoint[ep_id].buffer[buf_id].count_addr;
+__attribute__((always_inline)) static inline void usb_pma_set_addr(uint32_t endpoint_id, uint8_t buf_id, uint16_t addr) {
+  uint32_t count_addr = USBRAM_REGSITER->endpoint[endpoint_id].buffer[buf_id].count_addr;
   count_addr = (count_addr & 0xFFFF0000u) | (addr & 0x0000FFFCu);
-  USBRAM_REGSITER->endpoint[ep_id].buffer[buf_id].count_addr = count_addr;
+  USBRAM_REGSITER->endpoint[endpoint_id].buffer[buf_id].count_addr = count_addr;
 }
 
-__attribute__((always_inline)) static inline uint16_t usb_pma_get_count(uint32_t ep_id, uint8_t buf_id) {
+__attribute__((always_inline)) static inline uint16_t usb_pma_get_count(uint32_t endpoint_id, uint8_t buf_id) {
   uint16_t count;
-  count = (USBRAM_REGSITER->endpoint[ep_id].buffer[buf_id].count_addr >> 16);
+  count = (USBRAM_REGSITER->endpoint[endpoint_id].buffer[buf_id].count_addr >> 16);
   return count & 0x3FFU;
 }
 
-__attribute__((always_inline)) static inline void usb_pma_set_count(uint32_t ep_id, uint8_t buf_id, uint16_t byte_count) {
-  uint32_t count_addr = USBRAM_REGSITER->endpoint[ep_id].buffer[buf_id].count_addr;
+__attribute__((always_inline)) static inline void usb_pma_set_count(uint32_t endpoint_id, uint8_t buf_id, uint16_t byte_count) {
+  uint32_t count_addr = USBRAM_REGSITER->endpoint[endpoint_id].buffer[buf_id].count_addr;
   count_addr = (count_addr & ~0x03FF0000u) | ((byte_count & 0x3FFu) << 16);
-  USBRAM_REGSITER->endpoint[ep_id].buffer[buf_id].count_addr = count_addr;
+  USBRAM_REGSITER->endpoint[endpoint_id].buffer[buf_id].count_addr = count_addr;
 }
 
 /* Aligned buffer size according to hardware */
@@ -93,7 +93,7 @@ __attribute__((always_inline)) static inline uint16_t pma_align_buffer_size(uint
   return (*num_block) * block_in_bytes;
 }
 
-__attribute__((always_inline)) static inline void usb_pma_set_rx_bufsize(uint32_t ep_id, uint8_t buf_id, uint16_t wCount) {
+__attribute__((always_inline)) static inline void usb_pma_set_rx_bufsize(uint32_t endpoint_id, uint8_t buf_id, uint16_t wCount) {
   uint8_t blsize, num_block;
   (void)pma_align_buffer_size(wCount, &blsize, &num_block);
 
@@ -105,9 +105,9 @@ __attribute__((always_inline)) static inline void usb_pma_set_rx_bufsize(uint32_
     bl_nb = 1 << 15;
   }
 
-  uint32_t count_addr = USBRAM_REGSITER->endpoint[ep_id].buffer[buf_id].count_addr;
+  uint32_t count_addr = USBRAM_REGSITER->endpoint[endpoint_id].buffer[buf_id].count_addr;
   count_addr = (bl_nb << 16) | (count_addr & 0x0000FFFFu);
-  USBRAM_REGSITER->endpoint[ep_id].buffer[buf_id].count_addr = count_addr;
+  USBRAM_REGSITER->endpoint[endpoint_id].buffer[buf_id].count_addr = count_addr;
 }
 
 #endif
