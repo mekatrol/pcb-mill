@@ -72,12 +72,6 @@ typedef enum {
 // Size of array based on total memory size dived by size of single element
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
 
-// Ceiling division
-//  DIV_CEIL(5, 2) => ((5 + 2 - 1) / 2) => (6 / 2) => 3
-//  DIV_CEIL(9, 4) => ((9 + 4 - 1) / 4) => (12 / 4) => 3
-//  DIV_CEIL(8, 4) => ((8 + 4 - 1) / 4) => (11 / 4) => 2
-#define DIV_CEIL(n, d) (((n) + (d) - 1) / (d))
-
 // Bit mask based on bit position
 #define BIT_MASK(n) (1UL << (n))
 

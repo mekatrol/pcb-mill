@@ -3,18 +3,10 @@
     "stm32g0xx.h": "c",
     "system_stm32g0xx.h": "c",
     "usb.h": "c",
-    "fsdev_type.h": "c",
-    "usbd_pvt.h": "c",
-    "tusb_private.h": "c",
-    "dcd.h": "c",
-    "osal.h": "c",
-    "tusb_fifo.h": "c",
-    "usbd.h": "c",
-    "cb.h": "c",
     "circular_buffer.h": "c",
-    "cdc_device.h": "c",
     "board_hal.h": "c",
-    "usb_hal.h": "c"
+    "usb_hal.h": "c",
+    "stm32g0b1xx.h": "c"
   },
-  "cortex-debug.variableUseNaturalFormat": false
+  "cortex-debug.variableUseNaturalFormat": true
 }

@@ -67,39 +67,49 @@ __attribute__((always_inline)) static inline void usb_pma_set_count(uint32_t end
   USB_BUFFER_DESC_TABLE->endpoint[endpoint_idn].buffer[buf_id].count_addr = count_addr;
 }
 
-/* Aligned buffer size according to hardware */
-__attribute__((always_inline)) static inline uint16_t pma_align_buffer_size(uint16_t size, uint8_t* blsize, uint8_t* num_block) {
-  /* The STM32 full speed USB peripheral supports only a limited set of
-   * buffer sizes given by the RX buffer entry format in the USB_BUFFER_DESC_TABLE. */
-  uint16_t block_in_bytes;
-  if (size > 62) {
-    block_in_bytes = 32;
+// Bit 31 BLSIZE: Block size
+// This bit selects the size of memory block used to define the allocated buffer area.
+//
+// – If BLSIZE = 0, the memory block is 2-byte large, which is the minimum block
+//   allowed in a half-word wide memory. With this block size the allocated buffer size
+//   ranges from 2 to 62 bytes.
+//
+// – If BLSIZE = 1, the memory block is 32-byte large, which permits to reach the
+//   maximum packet length defined by USB specifications. With this block size the
+//   allocated buffer size theoretically ranges from 32 to 1024 bytes, which is the longest
+//   packet size allowed by USB standard specifications. However, the applicable size is
+//   limited by the available buffer memory
+//
+// Bits 30:26 NUM_BLOCK[4:0]: Number of blocks
+// These bits define the number of memory blocks allocated to this packet buffer. The actual
+// amount of allocated memory depends on the BLSIZE value as illustrated in RM0444 Table 239.
+__attribute__((always_inline)) static inline uint32_t usb_endpoint_calc_rx_buffer_block_size(uint16_t buffer_size, uint32_t* blsize, uint32_t* num_block) {
+  uint32_t block_size_log2;  // log2(block_size)
+
+  if (buffer_size > 62) {
+    block_size_log2 = 5;  // 32 bytes
     *blsize = 1;
-    *num_block = DIV_CEIL(size, 32);
   } else {
-    block_in_bytes = 2;
+    block_size_log2 = 1;  // 2 bytes
     *blsize = 0;
-    *num_block = DIV_CEIL(size, 2);
   }
 
-  return (*num_block) * block_in_bytes;
+  // Same as:
+  // block_count = (buffer_size + (32 - 1)) / 32 --> buffer_size  > 62
+  // block_count = (buffer_size + ( 2 - 1)) /  2 --> buffer_size <= 62
+  uint8_t block_count = (buffer_size + ((1 << block_size_log2) - 1)) >> block_size_log2;
+
+  // if BLSIZE == 1 then we need to subtract 1 from num_block
+  // See: RM0444 Table 239. Definition of allocated buffer memory
+  // Easiest way is to just subtract BLSIZE from NUM_BLOCK
+  *num_block = block_count - *blsize;
+
+  // Same as:
+  // block_count * 32 --> buffer_size  > 62
+  // block_count *  2 --> buffer_size <= 62
+  return block_count << block_size_log2;
 }
 
-__attribute__((always_inline)) static inline void usb_pma_set_rx_bufsize(uint32_t endpoint_idn, uint8_t buf_id, uint16_t wCount) {
-  uint8_t blsize, num_block;
-  (void)pma_align_buffer_size(wCount, &blsize, &num_block);
-
-  /* Encode into register. When BLSIZE==1, we need to subtract 1 block count */
-  uint16_t bl_nb = (blsize << 15) | ((num_block - blsize) << 10);
-  if (bl_nb == 0) {
-    // zlp but 0 is invalid value, set blsize to 1 (32 bytes)
-    // Note: lower value can cause PMAOVR on setup with ch32v203
-    bl_nb = 1 << 15;
-  }
-
-  uint32_t count_addr = USB_BUFFER_DESC_TABLE->endpoint[endpoint_idn].buffer[buf_id].count_addr;
-  count_addr = (bl_nb << 16) | (count_addr & 0x0000FFFFu);
-  USB_BUFFER_DESC_TABLE->endpoint[endpoint_idn].buffer[buf_id].count_addr = count_addr;
-}
+void usb_endpoint_set_rx_buffer_block_size(uint32_t endpoint_idn, uint32_t size);
 
 #endif

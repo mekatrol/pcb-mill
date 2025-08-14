@@ -40,7 +40,7 @@ static bool dcd_read_packet_memory(void *__restrict dst, uint16_t src, uint16_t 
 static void usb_endpoint0_init();
 
 __attribute__((always_inline)) static inline void edpt0_prepare_setup(void) {
-  usb_pma_set_rx_bufsize(0, ENDPOINT_RX_BUFFER, 8);
+  usb_endpoint_set_rx_buffer_block_size(0, 8UL);
 }
 
 //--------------------------------------------------------------------+
@@ -198,7 +198,7 @@ void handle_ctr_rx(uint32_t endpoint_idn) {
     // all bytes received or short packet
 
     // For ch32v203: reset rx bufsize to mps to prevent race condition to cause PMAOVR (occurs with msc write10)
-    usb_pma_set_rx_bufsize(endpoint_idn, ENDPOINT_RX_BUFFER, xfer->max_packet_size);
+    usb_endpoint_set_rx_buffer_block_size(endpoint_idn, (uint32_t)xfer->max_packet_size);
 
     transfer_complete(ep_num, xfer->queued_len);
 
@@ -235,8 +235,8 @@ void dcd_edpt0_status_complete(tusb_control_request_t const *request) {
  * During failure, 0xFFFF is returned. If this happens, rework/reallocate memory manually.
  */
 static uint32_t dcd_pma_alloc(uint16_t len, bool dbuf) {
-  uint8_t blsize, num_block;
-  uint16_t aligned_len = pma_align_buffer_size(len, &blsize, &num_block);
+  uint32_t blsize, num_block;
+  uint16_t aligned_len = usb_endpoint_calc_rx_buffer_block_size(len, &blsize, &num_block);
   (void)blsize;
   (void)num_block;
 
@@ -413,7 +413,7 @@ static bool edpt_xfer(uint8_t ep_num, usb_endpoint_direction_t dir) {
 
     uint16_t cnt = min_u16(xfer->total_len, xfer->max_packet_size);
 
-    usb_pma_set_rx_bufsize(ep_idx, ENDPOINT_RX_BUFFER, cnt);
+    usb_endpoint_set_rx_buffer_block_size(ep_idx, (uint32_t)cnt);
 
     usb_endpoint_status(&endpoint_reg, dir, USB_ENDPOINT_STATE_VALID);
     usb_endpoint_reg_set(ep_idx, endpoint_reg, true);
