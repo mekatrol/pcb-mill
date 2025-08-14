@@ -8,9 +8,11 @@
 //--------------------------------------------------------------------+
 // USBD Configuration
 //--------------------------------------------------------------------+
-#ifndef CFG_TUD_TASK_QUEUE_SZ
 #define CFG_TUD_TASK_QUEUE_SZ 16
-#endif
+
+// Get high or low byte
+#define U16_HIGH(_u16) ((uint8_t)(((_u16) >> 8) & 0x00ff))
+#define U16_LOW(_u16) ((uint8_t)((_u16) & 0x00ff))
 
 //--------------------------------------------------------------------+
 // Weak stubs: invoked if no strong implementation is available
@@ -387,6 +389,15 @@ static bool process_set_config(uint8_t cfg_num) {
   }
 
   return true;
+}
+
+typedef struct {
+  uint16_t val;
+} __attribute__((packed)) tu_unaligned_uint16_t;
+
+__attribute__((always_inline)) static inline uint16_t tu_unaligned_read16(const void* mem) {
+  tu_unaligned_uint16_t const* ua16 = (tu_unaligned_uint16_t const*)mem;
+  return ua16->val;
 }
 
 // return descriptor's buffer and update desc_len

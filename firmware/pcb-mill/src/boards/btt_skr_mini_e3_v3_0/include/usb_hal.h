@@ -39,12 +39,6 @@ __attribute__((always_inline)) static inline void usb_endpoint_data_toggle(uint3
   *endpoint_reg ^= (state << (USB_CHEP_DTOG_TX_Pos + (dir == USB_ENDPOINT_DIRECTION_IN ? 0 : 8)));
 }
 
-typedef struct {
-  volatile uint32_t value;
-} usb_pma_buf_t;
-
-#define USB_PMA_BUF_AT(addr) ((usb_pma_buf_t*)(USB_DRD_PMAADDR + addr))
-
 __attribute__((always_inline)) static inline uint32_t usb_pma_get_addr(uint32_t endpoint_idn, uint8_t buf_id) {
   return USB_BUFFER_DESC_TABLE->endpoint[endpoint_idn].buffer[buf_id].count_addr & 0x0000FFFFu;
 }

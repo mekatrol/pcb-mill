@@ -134,33 +134,6 @@ __attribute__((always_inline)) static inline void usb_reset() {
   usbd_control_reset();
 }
 
-// Get high or low byte
-#define U16_HIGH(_u16) ((uint8_t)(((_u16) >> 8) & 0x00ff))
-#define U16_LOW(_u16) ((uint8_t)((_u16) & 0x00ff))
-
-typedef struct {
-  uint16_t val;
-} __attribute__((packed)) tu_unaligned_uint16_t;
-
-typedef struct {
-  uint32_t val;
-} __attribute__((packed)) tu_unaligned_uint32_t;
-
-__attribute__((always_inline)) static inline uint32_t tu_unaligned_read32(const void *mem) {
-  tu_unaligned_uint32_t const *ua32 = (tu_unaligned_uint32_t const *)mem;
-  return ua32->val;
-}
-
-__attribute__((always_inline)) static inline void tu_unaligned_write32(void *mem, uint32_t value) {
-  tu_unaligned_uint32_t *ua32 = (tu_unaligned_uint32_t *)mem;
-  ua32->val = value;
-}
-
-__attribute__((always_inline)) static inline uint16_t tu_unaligned_read16(const void *mem) {
-  tu_unaligned_uint16_t const *ua16 = (tu_unaligned_uint16_t const *)mem;
-  return ua16->val;
-}
-
 bool usb_init_driver();
 
 #endif  // __USB_H__
