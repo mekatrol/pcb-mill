@@ -143,50 +143,71 @@ typedef struct {
 static xfer_ctl_t xfer_status[USB_ENDPOINT_MAX][2];
 static ep_alloc_t ep_alloc_status[USB_ENDPOINT_MAX];
 
-// into the stack.
-static void dcd_transmit_packet(xfer_ctl_t *xfer, uint16_t ep_ix);
-static bool edpt_xfer(uint8_t ep_num, usb_endpoint_direction_t dir);
-
 // PMA allocation/access
 static uint16_t ep_buf_ptr;  ///< Points to first free memory location
-static uint32_t dcd_pma_alloc(uint16_t len, bool dbuf);
-static uint8_t usb_endpoint_allocate(uint8_t ep_addr, uint8_t ep_type);
 
-//--------------------------------------------------------------------+
-// PMA read/write
-//--------------------------------------------------------------------+
-
-typedef struct {
-  uint32_t val;
-} __attribute__((packed)) tu_unaligned_uint32_t;
-
-__attribute__((always_inline)) static inline uint32_t tu_unaligned_read32(const void *mem) {
-  tu_unaligned_uint32_t const *ua32 = (tu_unaligned_uint32_t const *)mem;
-  return ua32->val;
+__attribute__((always_inline)) static inline uint32_t unaligned_read32(const uint8_t *p) {
+  return (uint32_t)p[0] | ((uint32_t)p[1] << 8) | ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
 }
 
-__attribute__((always_inline)) static inline void tu_unaligned_write32(void *mem, uint32_t value) {
-  tu_unaligned_uint32_t *ua32 = (tu_unaligned_uint32_t *)mem;
-  ua32->val = value;
+__attribute__((always_inline)) static inline void unaligned_write32(uint8_t *p, uint32_t value) {
+  p[0] = (uint8_t)(value);
+  p[1] = (uint8_t)(value >> 8);
+  p[2] = (uint8_t)(value >> 16);
+  p[3] = (uint8_t)(value >> 24);
 }
 
-// Write to packet memory area (PMA) from user memory
-// - Uses unaligned for RAM (since M0 cannot access unaligned address)
-static bool dcd_write_packet_memory(uint16_t dst, const void *__restrict src, uint16_t nbytes) {
-  if (nbytes == 0) return true;
-  uint32_t n_write = nbytes / sizeof(uint32_t);
+static bool usb_read_packet_data(void *__restrict dst, uint16_t src, uint16_t byte_count) {
+  if (byte_count == 0) {
+    // Not count then nothing to read
+    return true;
+  }
+
+  // We are readng 32 bit values from unaligned byte locations
+  uint32_t read_count = byte_count / sizeof(uint32_t);
+
+  volatile uint32_t *pma_buf = (volatile uint32_t *)(USB_DRD_PMAADDR + src);
+  uint8_t *dst8 = (uint8_t *)dst;
+
+  while (read_count--) {
+    unaligned_write32(dst8, (uint32_t)(*pma_buf));
+    dst8 += sizeof(uint32_t);
+    pma_buf++;
+  }
+
+  // odd bytes e.g 1 for 16-bit or 1-3 for 32-bit
+  uint16_t odd = byte_count & (sizeof(uint32_t) - 1);
+  if (odd) {
+    uint32_t temp = *pma_buf;
+    while (odd--) {
+      *dst8++ = (uint8_t)(temp & 0xfful);
+      temp >>= 8;
+    }
+  }
+
+  return true;
+}
+
+static bool usb_write_packet_data(uint16_t dst, const void *__restrict src, uint16_t byte_count) {
+  if (byte_count == 0) {
+    // Not count then nothing to write
+    return true;
+  }
+
+  // We are writing 32 bit values from unaligned byte locations
+  uint32_t write_count = byte_count / sizeof(uint32_t);
 
   volatile uint32_t *pma_buf = (volatile uint32_t *)(USB_DRD_PMAADDR + dst);
   const uint8_t *src8 = src;
 
-  while (n_write--) {
-    *pma_buf = tu_unaligned_read32(src8);
+  while (write_count--) {
+    *pma_buf = unaligned_read32(src8);
     src8 += sizeof(uint32_t);
     pma_buf++;
   }
 
   // odd bytes e.g 1 for 16-bit or 1-3 for 32-bit
-  uint16_t odd = nbytes & (sizeof(uint32_t) - 1);
+  uint16_t odd = byte_count & (sizeof(uint32_t) - 1);
   if (odd) {
     uint32_t temp = 0;
     for (uint16_t i = 0; i < odd; i++) {
@@ -198,33 +219,42 @@ static bool dcd_write_packet_memory(uint16_t dst, const void *__restrict src, ui
   return true;
 }
 
-// Read from packet memory area (PMA) to user memory.
-// - Packet memory must be either strictly 32-bit
-// - Uses unaligned for RAM (since M0 cannot access unaligned address)
-static bool dcd_read_packet_memory(void *__restrict dst, uint16_t src, uint16_t nbytes) {
-  if (nbytes == 0) return true;
-  uint32_t n_read = nbytes / sizeof(uint32_t);
+static uint32_t usb_pma_alloc(uint16_t len, bool dbuf) {
+  uint32_t blsize, num_block;
+  uint16_t aligned_len = usb_endpoint_calc_rx_buffer_block_size(len, &blsize, &num_block);
+  (void)blsize;
+  (void)num_block;
 
-  volatile uint32_t *pma_buf = (volatile uint32_t *)(USB_DRD_PMAADDR + src);
-  uint8_t *dst8 = (uint8_t *)dst;
+  uint32_t addr = ep_buf_ptr;
+  ep_buf_ptr = (uint16_t)(ep_buf_ptr + aligned_len);  // increment buffer pointer
 
-  while (n_read--) {
-    tu_unaligned_write32(dst8, (uint32_t)(*pma_buf));
-    dst8 += sizeof(uint32_t);
-    pma_buf++;
+  if (dbuf) {
+    addr |= ((uint32_t)ep_buf_ptr) << 16;
+    ep_buf_ptr = (uint16_t)(ep_buf_ptr + aligned_len);  // increment buffer pointer
   }
 
-  // odd bytes e.g 1 for 16-bit or 1-3 for 32-bit
-  uint16_t odd = nbytes & (sizeof(uint32_t) - 1);
-  if (odd) {
-    uint32_t temp = *pma_buf;
-    while (odd--) {
-      *dst8++ = (uint8_t)(temp & 0xfful);
-      temp >>= 8;
-    }
+  // Verify packet buffer is not overflowed
+  if (ep_buf_ptr > USB_DRD_PMA_SIZE) {
+    return 0xFFFF;
   }
 
-  return true;
+  return addr;
+}
+
+static void usb_transmit_packet(xfer_ctl_t *xfer, uint16_t ep_ix) {
+  uint32_t len = min_u16(xfer->total_len - xfer->queued_len, xfer->max_packet_size);
+  uint32_t endpoint_reg = usb_endpoint_reg_get(ep_ix) | USB_EP_VTTX | USB_EP_VTRX;  // reserve CTR
+
+  uint16_t addr_ptr = (uint16_t)usb_pma_get_addr(ep_ix, ENDPOINT_TX_BUFFER);
+
+  usb_write_packet_data(addr_ptr, &(xfer->buffer[xfer->queued_len]), len);
+  xfer->queued_len += len;
+
+  usb_pma_set_count(ep_ix, ENDPOINT_TX_BUFFER, len);
+  usb_endpoint_status(&endpoint_reg, USB_ENDPOINT_DIRECTION_IN, USB_ENDPOINT_STATE_VALID);
+
+  endpoint_reg &= USB_CHEP_REG_MASK | USB_ENDPOINT_STATUS_MASK(USB_ENDPOINT_DIRECTION_IN);  // only change TX Status, reserve other toggle bits
+  usb_endpoint_reg_set(ep_ix, endpoint_reg, true);
 }
 
 static void usb_endpoint0_init();
@@ -327,7 +357,7 @@ void handle_ctr_tx(uint32_t endpoint_idn) {
   xfer_ctl_t *xfer = xfer_ctl_ptr(endpoint_addr, USB_ENDPOINT_DIRECTION_IN);
 
   if (xfer->total_len != xfer->queued_len) {
-    dcd_transmit_packet(xfer, endpoint_idn);
+    usb_transmit_packet(xfer, endpoint_idn);
   } else {
     transfer_complete(endpoint_addr | USB_ENDPOINT_DIRECTION_IN_MASK, xfer->queued_len);
   }
@@ -357,7 +387,7 @@ void handle_ctr_setup(uint32_t endpoint_idn) {
   uint16_t rx_addr = usb_pma_get_addr(endpoint_idn, ENDPOINT_RX_BUFFER);
   uint8_t setup_packet[8] __attribute__((aligned(4)));
 
-  dcd_read_packet_memory(setup_packet, rx_addr, rx_count);
+  usb_read_packet_data(setup_packet, rx_addr, rx_count);
 
   // Clear CTR RX if another setup packet arrived before this, it will be discarded
   usb_endpoint_reg_set_clear_ctr(endpoint_idn, USB_ENDPOINT_DIRECTION_OUT);
@@ -381,7 +411,7 @@ void handle_ctr_rx(uint32_t endpoint_idn) {
   uint16_t const rx_count = usb_pma_get_count(endpoint_idn, ENDPOINT_RX_BUFFER);
   uint16_t pma_addr = (uint16_t)usb_pma_get_addr(endpoint_idn, ENDPOINT_RX_BUFFER);
 
-  dcd_read_packet_memory(xfer->buffer + xfer->queued_len, pma_addr, rx_count);
+  usb_read_packet_data(xfer->buffer + xfer->queued_len, pma_addr, rx_count);
   xfer->queued_len += rx_count;
 
   if ((rx_count < xfer->max_packet_size) || (xfer->queued_len >= xfer->total_len)) {
@@ -417,33 +447,6 @@ void dcd_edpt0_status_complete(tusb_control_request_t const *request) {
   }
 
   edpt0_prepare_setup();
-}
-
-/***
- * Allocate a section of PMA
- * In case of double buffering, high 16bit is the address of 2nd buffer
- * During failure, 0xFFFF is returned. If this happens, rework/reallocate memory manually.
- */
-static uint32_t dcd_pma_alloc(uint16_t len, bool dbuf) {
-  uint32_t blsize, num_block;
-  uint16_t aligned_len = usb_endpoint_calc_rx_buffer_block_size(len, &blsize, &num_block);
-  (void)blsize;
-  (void)num_block;
-
-  uint32_t addr = ep_buf_ptr;
-  ep_buf_ptr = (uint16_t)(ep_buf_ptr + aligned_len);  // increment buffer pointer
-
-  if (dbuf) {
-    addr |= ((uint32_t)ep_buf_ptr) << 16;
-    ep_buf_ptr = (uint16_t)(ep_buf_ptr + aligned_len);  // increment buffer pointer
-  }
-
-  // Verify packet buffer is not overflowed
-  if (ep_buf_ptr > USB_DRD_PMA_SIZE) {
-    return 0xFFFF;
-  }
-
-  return addr;
 }
 
 static uint8_t usb_endpoint_allocate(uint8_t endpoint_addr, uint8_t endpoint_type) {
@@ -488,8 +491,8 @@ void usb_endpoint0_init() {
   xfer_status[0][1].max_packet_size = USB_EP0_BUFFER_SIZE;
   xfer_status[0][1].ep_idx = 0;
 
-  uint16_t pma_addr0 = dcd_pma_alloc(USB_EP0_BUFFER_SIZE, false);
-  uint16_t pma_addr1 = dcd_pma_alloc(USB_EP0_BUFFER_SIZE, false);
+  uint16_t pma_addr0 = usb_pma_alloc(USB_EP0_BUFFER_SIZE, false);
+  uint16_t pma_addr1 = usb_pma_alloc(USB_EP0_BUFFER_SIZE, false);
 
   usb_pma_set_addr(0, ENDPOINT_RX_BUFFER, pma_addr0);
   usb_pma_set_addr(0, ENDPOINT_TX_BUFFER, pma_addr1);
@@ -533,7 +536,7 @@ bool usb_endpoint_open(usb_endpoint_descriptor_t const *desc_ep) {
   }
 
   /* Create a packet memory buffer area. */
-  uint16_t pma_addr = dcd_pma_alloc(packet_size, false);
+  uint16_t pma_addr = usb_pma_alloc(packet_size, false);
   usb_pma_set_addr(endpoint_idn, dir == USB_ENDPOINT_DIRECTION_IN ? ENDPOINT_TX_BUFFER : ENDPOINT_RX_BUFFER, pma_addr);
 
   xfer_ctl_t *xfer = xfer_ctl_ptr(ep_num, dir);
@@ -574,29 +577,12 @@ void dcd_edpt_close_all() {
   ep_buf_ptr = 8 * USB_ENDPOINT_MAX + 2 * USB_EP0_BUFFER_SIZE;
 }
 
-// Currently, single-buffered, and only 64 bytes at a time (max)
-static void dcd_transmit_packet(xfer_ctl_t *xfer, uint16_t ep_ix) {
-  uint16_t len = min_u16(xfer->total_len - xfer->queued_len, xfer->max_packet_size);
-  uint32_t endpoint_reg = usb_endpoint_reg_get(ep_ix) | USB_EP_VTTX | USB_EP_VTRX;  // reserve CTR
-
-  uint16_t addr_ptr = (uint16_t)usb_pma_get_addr(ep_ix, ENDPOINT_TX_BUFFER);
-
-  dcd_write_packet_memory(addr_ptr, &(xfer->buffer[xfer->queued_len]), len);
-  xfer->queued_len += len;
-
-  usb_pma_set_count(ep_ix, ENDPOINT_TX_BUFFER, len);
-  usb_endpoint_status(&endpoint_reg, USB_ENDPOINT_DIRECTION_IN, USB_ENDPOINT_STATE_VALID);
-
-  endpoint_reg &= USB_CHEP_REG_MASK | USB_ENDPOINT_STATUS_MASK(USB_ENDPOINT_DIRECTION_IN);  // only change TX Status, reserve other toggle bits
-  usb_endpoint_reg_set(ep_ix, endpoint_reg, true);
-}
-
 static bool edpt_xfer(uint8_t ep_num, usb_endpoint_direction_t dir) {
   xfer_ctl_t *xfer = xfer_ctl_ptr(ep_num, dir);
   uint8_t const ep_idx = xfer->ep_idx;
 
   if (dir == USB_ENDPOINT_DIRECTION_IN) {
-    dcd_transmit_packet(xfer, ep_idx);
+    usb_transmit_packet(xfer, ep_idx);
   } else {
     uint32_t endpoint_reg = usb_endpoint_reg_get(ep_idx) | USB_EP_VTTX | USB_EP_VTRX;  // reserve CTR
     endpoint_reg &= USB_CHEP_REG_MASK | USB_ENDPOINT_STATUS_MASK(dir);
