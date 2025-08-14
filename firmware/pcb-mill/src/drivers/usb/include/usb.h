@@ -58,9 +58,6 @@ typedef enum {
   USB_ENDPOINT_TYPE_INTERRUPT = 3
 } usb_endpoint_type_t;
 
-#define USB_ENDPOINT_STATUS_MASK(dir) (3u << (USB_CHEP_TX_STTX_Pos + ((dir) == USB_ENDPOINT_DIRECTION_IN ? 0 : 8)))
-#define USB_ENDPOINT_DATA_TOGGLE_MASK(dir) (1u << (USB_CHEP_DTOG_TX_Pos + ((dir) == USB_ENDPOINT_DIRECTION_IN ? 0 : 8)))
-
 // The maximum number of USB interfaces across all configurations
 // Each USB interface is as defined in the USB 2.0 spec (see Section 9.6.5 Interface Descriptor).
 // An interface is a logical grouping of endpoints and functions.
@@ -71,12 +68,6 @@ typedef enum {
 
 // Size of array based on total memory size dived by size of single element
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
-
-// Bit mask based on bit position
-#define BIT_MASK(n) (1UL << (n))
-
-#define ENDPOINT_TX_BUFFER 0
-#define ENDPOINT_RX_BUFFER 1
 
 // This is the same as USB_DRD_PMABuffDescTypeDef
 typedef struct
@@ -121,11 +112,11 @@ typedef struct __attribute__((packed)) {
 void usbd_control_reset();
 void usb_configuration_reset();
 void handle_bus_reset();
-void handle_ctr_rx(uint32_t endpoint_idn);
-void handle_ctr_tx(uint32_t endpoint_idn);
-void handle_ctr_setup(uint32_t endpoint_idn);
 
-__attribute__((always_inline)) static inline bool bit_set_test(uint32_t value, uint32_t pos) { return (value & BIT_MASK(pos)) ? true : false; }
+// Initialize USN in device mode
+void usb_device_init();
+
+__attribute__((always_inline)) static inline bool bit_set_test(uint32_t value, uint32_t pos) { return (value & (1 << pos)) ? true : false; }
 __attribute__((always_inline)) static inline uint16_t min_u16(uint16_t x, uint16_t y) { return (x < y) ? x : y; }
 
 __attribute__((always_inline)) static inline void usb_reset() {

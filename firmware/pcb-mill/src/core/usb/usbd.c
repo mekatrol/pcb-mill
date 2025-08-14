@@ -36,13 +36,6 @@ __attribute__((weak)) bool tud_vendor_control_xfer_cb(uint8_t stage, tusb_contro
   return false;
 }
 
-__attribute__((weak)) bool dcd_deinit() {
-  return false;
-}
-
-__attribute__((weak)) void dcd_connect() {
-}
-
 //--------------------------------------------------------------------+
 // Device Data
 //--------------------------------------------------------------------+
@@ -76,11 +69,6 @@ bool tud_disconnect(void) {
   return true;
 }
 
-bool tud_connect(void) {
-  dcd_connect();
-  return true;
-}
-
 bool usb_init_driver() {
   memset(&_usbd_dev, 0, sizeof(usbd_device_t));
 
@@ -88,7 +76,7 @@ bool usb_init_driver() {
   cdcd_init();
 
   // Init device controller driver
-  dcd_init();
+  usb_device_init();
   NVIC_EnableIRQ(USB_UCPD1_2_IRQn);
 
   return true;
@@ -146,6 +134,7 @@ bool process_control_request(tusb_control_request_t const* p_request) {
           // Therefore DCD must take full responsibility to response and include zlp status packet if needed.
           usbd_control_set_request(p_request);  // set request since DCD has no access to tud_control_status() API
           dcd_set_address((uint8_t)p_request->wValue);
+
           // skip tud_control_status()
           _usbd_dev.addressed = 1;
           break;

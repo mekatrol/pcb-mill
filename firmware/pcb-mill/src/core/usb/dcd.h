@@ -13,17 +13,8 @@
 // Controller API
 //--------------------------------------------------------------------+
 
-// Initialize controller to device mode
-void dcd_init();
-
-// Deinitialize controller, unset device mode.
-bool dcd_deinit();
-
 // Receive Set Address request, mcu port must also include status IN response
 void dcd_set_address(uint8_t dev_addr);
-
-// Connect by enabling internal pull-up resistor on D+/D-
-void dcd_connect();
 
 // Enable/Disable Start-of-frame interrupt. Default is disabled
 void dcd_sof_enable(bool en);
