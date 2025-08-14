@@ -170,23 +170,17 @@ __attribute__((always_inline)) static inline void tu_unaligned_write32(void *mem
   ua32->val = value;
 }
 
-typedef struct {
-  volatile uint32_t value;
-} usb_pma_buf_t;
-
-#define USB_PMA_BUF_AT(addr) ((usb_pma_buf_t *)(USB_DRD_PMAADDR + addr))
-
 // Write to packet memory area (PMA) from user memory
 // - Uses unaligned for RAM (since M0 cannot access unaligned address)
 static bool dcd_write_packet_memory(uint16_t dst, const void *__restrict src, uint16_t nbytes) {
   if (nbytes == 0) return true;
   uint32_t n_write = nbytes / sizeof(uint32_t);
 
-  usb_pma_buf_t *pma_buf = USB_PMA_BUF_AT(dst);
+  volatile uint32_t *pma_buf = (volatile uint32_t *)(USB_DRD_PMAADDR + dst);
   const uint8_t *src8 = src;
 
   while (n_write--) {
-    pma_buf->value = tu_unaligned_read32(src8);
+    *pma_buf = tu_unaligned_read32(src8);
     src8 += sizeof(uint32_t);
     pma_buf++;
   }
@@ -198,7 +192,7 @@ static bool dcd_write_packet_memory(uint16_t dst, const void *__restrict src, ui
     for (uint16_t i = 0; i < odd; i++) {
       temp |= *src8++ << (i * 8);
     }
-    pma_buf->value = temp;
+    *pma_buf = temp;
   }
 
   return true;
@@ -211,11 +205,11 @@ static bool dcd_read_packet_memory(void *__restrict dst, uint16_t src, uint16_t 
   if (nbytes == 0) return true;
   uint32_t n_read = nbytes / sizeof(uint32_t);
 
-  usb_pma_buf_t *pma_buf = USB_PMA_BUF_AT(src);
+  volatile uint32_t *pma_buf = (volatile uint32_t *)(USB_DRD_PMAADDR + src);
   uint8_t *dst8 = (uint8_t *)dst;
 
   while (n_read--) {
-    tu_unaligned_write32(dst8, (uint32_t)pma_buf->value);
+    tu_unaligned_write32(dst8, (uint32_t)(*pma_buf));
     dst8 += sizeof(uint32_t);
     pma_buf++;
   }
@@ -223,7 +217,7 @@ static bool dcd_read_packet_memory(void *__restrict dst, uint16_t src, uint16_t 
   // odd bytes e.g 1 for 16-bit or 1-3 for 32-bit
   uint16_t odd = nbytes & (sizeof(uint32_t) - 1);
   if (odd) {
-    uint32_t temp = pma_buf->value;
+    uint32_t temp = *pma_buf;
     while (odd--) {
       *dst8++ = (uint8_t)(temp & 0xfful);
       temp >>= 8;
