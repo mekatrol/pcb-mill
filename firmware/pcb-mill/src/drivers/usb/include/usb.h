@@ -21,14 +21,14 @@
 #define USB_ENDPOINT_MAX 3
 
 // The size of endpoint 0 buffer
-#define USB_EP0_BUFFER_SIZE 64
+#define USB_EP0_BUFFER_SIZE 64UL
 
 // The size of endpoint 0 address
 #define USB_EP0_ADDR 0
 
 // The size of other endpoint buffers (e.g. CDC, MSC)
-#define USB_ENDPOINT_RX_BUFFER_SIZE 64
-#define USB_ENDPOINT_TX_BUFFER_SIZE 64
+#define USB_ENDPOINT_RX_BUFFER_SIZE 64UL
+#define USB_ENDPOINT_TX_BUFFER_SIZE 64UL
 
 // See: Bit 4 DIR: Direction of transaction USB interrupt status register (USB_ISTR) in RM0444
 typedef enum {

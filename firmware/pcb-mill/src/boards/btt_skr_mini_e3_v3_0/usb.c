@@ -143,8 +143,8 @@ typedef struct {
 static xfer_ctl_t xfer_status[USB_ENDPOINT_MAX][2];
 static ep_alloc_t ep_alloc_status[USB_ENDPOINT_MAX];
 
-// PMA allocation/access
-static uint16_t ep_buf_ptr;  ///< Points to first free memory location
+// Next available USB PMA buffer pointer location
+static uint16_t usb_pma_next_available;
 
 __attribute__((always_inline)) static inline uint32_t unaligned_read32(const uint8_t *p) {
   return (uint32_t)p[0] | ((uint32_t)p[1] << 8) | ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
@@ -219,26 +219,14 @@ static bool usb_write_packet_data(uint16_t dst, const void *__restrict src, uint
   return true;
 }
 
-static uint32_t usb_pma_alloc(uint16_t len, bool dbuf) {
-  uint32_t blsize, num_block;
-  uint16_t aligned_len = usb_endpoint_calc_rx_buffer_block_size(len, &blsize, &num_block);
-  (void)blsize;
-  (void)num_block;
+static uint32_t usb_pma_alloc(uint32_t size) {
+  // Get next available Packet Memory Area location
+  uint32_t usb_pma_next_addr = usb_pma_next_available;
 
-  uint32_t addr = ep_buf_ptr;
-  ep_buf_ptr = (uint16_t)(ep_buf_ptr + aligned_len);  // increment buffer pointer
+  // Update next available by adding size (size is assumed to be 32 bit aligned)
+  usb_pma_next_available = (usb_pma_next_available + size);
 
-  if (dbuf) {
-    addr |= ((uint32_t)ep_buf_ptr) << 16;
-    ep_buf_ptr = (uint16_t)(ep_buf_ptr + aligned_len);  // increment buffer pointer
-  }
-
-  // Verify packet buffer is not overflowed
-  if (ep_buf_ptr > USB_DRD_PMA_SIZE) {
-    return 0xFFFF;
-  }
-
-  return addr;
+  return usb_pma_next_addr;
 }
 
 static void usb_transmit_packet(xfer_ctl_t *xfer, uint16_t ep_ix) {
@@ -325,10 +313,11 @@ void handle_bus_reset() {
     ep_alloc_status[i].allocated[1] = false;
   }
 
-  // Reset PMA allocation (to end of EP buffer table)
-  ep_buf_ptr = 8 * USB_ENDPOINT_MAX;
+  // Reset PMA allocation (to end of EP buffer descriptor table)
+  usb_pma_next_available = 8 * USB_ENDPOINT_MAX;
 
-  usb_endpoint0_init();  // open control endpoint (both IN & OUT)
+  // EP0 must exist
+  usb_endpoint0_init();
 
   USB->DADDR = USB_DADDR_EF;  // Enable USB Function
 }
@@ -491,8 +480,8 @@ void usb_endpoint0_init() {
   xfer_status[0][1].max_packet_size = USB_EP0_BUFFER_SIZE;
   xfer_status[0][1].ep_idx = 0;
 
-  uint16_t pma_addr0 = usb_pma_alloc(USB_EP0_BUFFER_SIZE, false);
-  uint16_t pma_addr1 = usb_pma_alloc(USB_EP0_BUFFER_SIZE, false);
+  uint16_t pma_addr0 = usb_pma_alloc(USB_EP0_BUFFER_SIZE);
+  uint16_t pma_addr1 = usb_pma_alloc(USB_EP0_BUFFER_SIZE);
 
   usb_pma_set_addr(0, ENDPOINT_RX_BUFFER, pma_addr0);
   usb_pma_set_addr(0, ENDPOINT_TX_BUFFER, pma_addr1);
@@ -510,7 +499,7 @@ bool usb_endpoint_open(usb_endpoint_descriptor_t const *desc_ep) {
   uint8_t const ep_addr = desc_ep->bEndpointAddress;
   uint8_t const ep_num = usb_endpoint_number(ep_addr);
   usb_endpoint_direction_t const dir = usb_endpoint_direction(ep_addr);
-  const uint16_t packet_size = usb_endpoint_packet_size(desc_ep);
+  const uint32_t packet_size = usb_endpoint_packet_size(desc_ep);
   uint8_t const endpoint_idn = usb_endpoint_allocate(ep_addr, desc_ep->bmAttributes.type);
 
   if (endpoint_idn >= USB_ENDPOINT_MAX) {
@@ -536,7 +525,7 @@ bool usb_endpoint_open(usb_endpoint_descriptor_t const *desc_ep) {
   }
 
   /* Create a packet memory buffer area. */
-  uint16_t pma_addr = usb_pma_alloc(packet_size, false);
+  uint16_t pma_addr = usb_pma_alloc(packet_size);
   usb_pma_set_addr(endpoint_idn, dir == USB_ENDPOINT_DIRECTION_IN ? ENDPOINT_TX_BUFFER : ENDPOINT_RX_BUFFER, pma_addr);
 
   xfer_ctl_t *xfer = xfer_ctl_ptr(ep_num, dir);
@@ -574,7 +563,7 @@ void dcd_edpt_close_all() {
   NVIC_EnableIRQ(USB_UCPD1_2_IRQn);
 
   // Reset PMA allocation
-  ep_buf_ptr = 8 * USB_ENDPOINT_MAX + 2 * USB_EP0_BUFFER_SIZE;
+  usb_pma_next_available = 8 * USB_ENDPOINT_MAX + 2 * USB_EP0_BUFFER_SIZE;
 }
 
 static bool edpt_xfer(uint8_t ep_num, usb_endpoint_direction_t dir) {

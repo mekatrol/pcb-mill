@@ -281,8 +281,8 @@ __attribute__((always_inline)) static inline uint8_t tu_edpt_addr(uint8_t num, u
   return (uint8_t)(num | (dir ? USB_ENDPOINT_DIRECTION_IN_MASK : 0));
 }
 
-__attribute__((always_inline)) static inline uint16_t usb_endpoint_packet_size(usb_endpoint_descriptor_t const* desc_ep) {
-  return desc_ep->wMaxPacketSize & 0x7FF;
+__attribute__((always_inline)) static inline uint32_t usb_endpoint_packet_size(usb_endpoint_descriptor_t const* desc_ep) {
+  return (uint32_t)desc_ep->wMaxPacketSize & 0x7FF;
 }
 
 //--------------------------------------------------------------------+

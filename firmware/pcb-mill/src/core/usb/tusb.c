@@ -30,7 +30,7 @@ bool tu_edpt_validate(usb_endpoint_descriptor_t const* desc_ep, bool is_host) {
   // High-Speed Bulk Endpoint:
   //   Must have max packet size exactly 512 bytes
   //   Reference: USB 2.0 Spec, Table 9-13 (p.262), Section 5.8.3 (Bulk Transfers, p.120)
-  uint16_t const max_packet_size = usb_endpoint_packet_size(desc_ep);
+  uint32_t const max_packet_size = usb_endpoint_packet_size(desc_ep);
 
   switch (desc_ep->bmAttributes.type) {
     case USB_ENDPOINT_TYPE_BULK:
