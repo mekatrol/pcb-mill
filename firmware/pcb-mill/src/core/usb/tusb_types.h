@@ -195,12 +195,12 @@ __attribute__((always_inline)) static inline uint8_t usb_endpoint_number(uint8_t
   return (uint8_t)(addr & (~USB_ENDPOINT_DIRECTION_IN_MASK));
 }
 
-__attribute__((always_inline)) static inline uint8_t tu_edpt_addr(uint8_t num, uint8_t dir) {
+__attribute__((always_inline)) static inline uint8_t usb_endpoint_addr(uint8_t num, uint8_t dir) {
   return (uint8_t)(num | (dir ? USB_ENDPOINT_DIRECTION_IN_MASK : 0));
 }
 
-__attribute__((always_inline)) static inline uint32_t usb_endpoint_packet_size(usb_endpoint_descriptor_t const* desc_ep) {
-  return (uint32_t)desc_ep->wMaxPacketSize & 0x7FF;
+__attribute__((always_inline)) static inline uint32_t usb_endpoint_packet_size(usb_endpoint_descriptor_t const* endpoint_descriptor) {
+  return (uint32_t)endpoint_descriptor->wMaxPacketSize & 0x7FF;
 }
 
 //--------------------------------------------------------------------+

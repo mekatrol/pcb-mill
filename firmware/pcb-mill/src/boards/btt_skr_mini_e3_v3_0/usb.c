@@ -583,12 +583,12 @@ void usb_endpoint0_init() {
   usb_endpoint_reg_set(0, endpoint_reg, false);
 }
 
-bool usb_endpoint_open(usb_endpoint_descriptor_t const *desc_ep) {
-  uint8_t const ep_addr = desc_ep->bEndpointAddress;
+bool usb_endpoint_open(usb_endpoint_descriptor_t const *endpoint_descriptor) {
+  uint8_t const ep_addr = endpoint_descriptor->bEndpointAddress;
   uint8_t const ep_num = usb_endpoint_number(ep_addr);
   usb_endpoint_direction_t const dir = usb_endpoint_direction(ep_addr);
-  const uint32_t packet_size = usb_endpoint_packet_size(desc_ep);
-  uint8_t const endpoint_idn = usb_endpoint_allocate(ep_addr, desc_ep->bmAttributes.type);
+  const uint32_t packet_size = usb_endpoint_packet_size(endpoint_descriptor);
+  uint8_t const endpoint_idn = usb_endpoint_allocate(ep_addr, endpoint_descriptor->bmAttributes.type);
 
   if (endpoint_idn >= USB_ENDPOINT_MAX) {
     return false;
@@ -598,7 +598,7 @@ bool usb_endpoint_open(usb_endpoint_descriptor_t const *desc_ep) {
   endpoint_reg |= usb_endpoint_number(ep_addr) | USB_EP_VTTX | USB_EP_VTRX;
 
   // Supported endpoint types
-  switch (desc_ep->bmAttributes.type) {
+  switch (endpoint_descriptor->bmAttributes.type) {
     case USB_ENDPOINT_TYPE_BULK:
       endpoint_reg |= USB_EP_BULK;
       break;

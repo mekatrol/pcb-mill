@@ -85,7 +85,7 @@ __attribute__((always_inline)) static inline const usb_interface_association_des
 //       }
 
 //       // bind all endpoints to found driver
-//       tu_edpt_bind_driver(usb_device.ep2drv, control_interface_descriptor, drv_len);
+//       usb_endpoint_bind_driver(usb_device.ep2drv, control_interface_descriptor, drv_len);
 
 //       // next Interface
 //       interface_association_descriptor += drv_len;

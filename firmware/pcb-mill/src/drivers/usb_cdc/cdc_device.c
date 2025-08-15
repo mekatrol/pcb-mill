@@ -50,27 +50,23 @@ typedef struct {
   };
 } usb_cdc_epbuf_t;
 
-//--------------------------------------------------------------------+
-// INTERNAL OBJECT & FUNCTION DECLARATION
-//--------------------------------------------------------------------+
 static usb_cdc_interface_t usb_cdc_interface;
 static usb_cdc_epbuf_t usb_cdc_epbuf;
 
 static bool _prep_out_transaction() {
-  usb_cdc_epbuf_t* p_epbuf = &usb_cdc_epbuf;
-
   // Skip if usb is not ready yet
   if (!(tud_ready() && usb_cdc_interface.ep_out)) {
     return false;
   }
 
-  uint16_t available = circular_buffer_space(&usb_cdc_interface.rx_buffer);
+  // Get rx data available count
+  uint16_t available_count = circular_buffer_space(&usb_cdc_interface.rx_buffer);
 
   // Prepare for incoming data but only allow what we can store in the ring buffer.
   // TODO Actually we can still carry out the transfer, keeping count of received bytes
   // and slowly move it to the FIFO when read().
   // This pre-check reduces endpoint claiming
-  if (available < USB_EP0_BUFFER_SIZE) {
+  if (available_count < USB_EP0_BUFFER_SIZE) {
     return false;
   }
 
@@ -79,11 +75,11 @@ static bool _prep_out_transaction() {
     return false;
   }
 
-  // fifo can be changed before endpoint is claimed
-  available = circular_buffer_space(&usb_cdc_interface.rx_buffer);
+  // Update available count
+  available_count = circular_buffer_space(&usb_cdc_interface.rx_buffer);
 
-  if (available >= USB_EP0_BUFFER_SIZE) {
-    return usbd_edpt_xfer(usb_cdc_interface.ep_out, p_epbuf->epout, USB_EP0_BUFFER_SIZE);
+  if (available_count >= USB_EP0_BUFFER_SIZE) {
+    return usbd_edpt_xfer(usb_cdc_interface.ep_out, usb_cdc_epbuf.epout, USB_EP0_BUFFER_SIZE);
   } else {
     // Release endpoint since we don't make any transfer
     usbd_edpt_release(usb_cdc_interface.ep_out);
@@ -202,8 +198,8 @@ uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* descriptor, uint
 
   if (USB_DESC_ENDPOINT == tu_desc_type(p_desc)) {
     // notification endpoint
-    const usb_endpoint_descriptor_t* desc_ep = (const usb_endpoint_descriptor_t*)p_desc;
-    if (!usbd_edpt_open(desc_ep)) {
+    const usb_endpoint_descriptor_t* endpoint_descriptor = (const usb_endpoint_descriptor_t*)p_desc;
+    if (!usbd_edpt_open(endpoint_descriptor)) {
       return 0;
     }
 

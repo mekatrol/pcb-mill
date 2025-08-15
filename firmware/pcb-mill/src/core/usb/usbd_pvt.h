@@ -11,7 +11,7 @@
 typedef bool (*usbd_control_xfer_cb_t)(uint8_t stage, usb_control_request_t const* request);
 
 // Open an endpoint
-bool usbd_edpt_open(usb_endpoint_descriptor_t const* desc_ep);
+bool usbd_edpt_open(usb_endpoint_descriptor_t const* endpoint_descriptor);
 
 // Submit a usb transfer
 bool usbd_edpt_xfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes);

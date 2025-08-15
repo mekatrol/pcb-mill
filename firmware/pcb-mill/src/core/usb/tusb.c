@@ -4,11 +4,13 @@
 
 bool tu_edpt_claim(endpoint_state_t* ep_state) {
   // can only claim the endpoint if it is not busy and not claimed yet.
-  bool const available = (ep_state->busy == 0) && (ep_state->claimed == 0);
-  if (available) {
+  const bool ep_available = (ep_state->busy == 0) && (ep_state->claimed == 0);
+
+  if (ep_available) {
     ep_state->claimed = 1;
   }
-  return available;
+
+  return ep_available;
 }
 
 bool tu_edpt_release(endpoint_state_t* ep_state) {
@@ -20,7 +22,7 @@ bool tu_edpt_release(endpoint_state_t* ep_state) {
   return ret;
 }
 
-bool tu_edpt_validate(usb_endpoint_descriptor_t const* desc_ep, bool is_host) {
+bool tu_edpt_validate(usb_endpoint_descriptor_t const* endpoint_descriptor, bool is_host) {
   // According to USB 2.0 Specification:
   //
   // Full-Speed Bulk Endpoint:
@@ -30,36 +32,35 @@ bool tu_edpt_validate(usb_endpoint_descriptor_t const* desc_ep, bool is_host) {
   // High-Speed Bulk Endpoint:
   //   Must have max packet size exactly 512 bytes
   //   Reference: USB 2.0 Spec, Table 9-13 (p.262), Section 5.8.3 (Bulk Transfers, p.120)
-  uint32_t const max_packet_size = usb_endpoint_packet_size(desc_ep);
+  const uint32_t max_packet_size = usb_endpoint_packet_size(endpoint_descriptor);
 
-  switch (desc_ep->bmAttributes.type) {
+  switch (endpoint_descriptor->bmAttributes.type) {
     case USB_ENDPOINT_TYPE_BULK:
-      // USB 2.0 Spec, Section 5.8.3, Table 9-13
-      // High-speed bulk packet size must be exactly 512 bytes.
-      // This is a hard requirement in the spec — you cannot pick smaller or larger values at high speed.
-      // Full-speed bulk can only be 8, 16, 32, or 64 bytes.
-      // These four values are the only legal options; the choice depends on the endpoint and device capability.
-      if (is_host && max_packet_size == 512) {
-        // HACK: while in host mode, some device incorrectly always report 512 regardless of link speed
-        // overwrite descriptor to force 64
-        usb_endpoint_descriptor_t* hacked_ep = (usb_endpoint_descriptor_t*)(uintptr_t)desc_ep;
-        hacked_ep->wMaxPacketSize = 64;
-      } else {
-        if (max_packet_size != 8 && max_packet_size != 16 &&
-            max_packet_size != 32 && max_packet_size != 64) {
-          return false;
-        }
+      // USB 2.0 Spec, §5.8.3 & Table 9-13:
+      // - High-speed bulk endpoints: wMaxPacketSize MUST be exactly 512 bytes.
+      //   No other sizes are permitted at high speed.
+      // - Full-speed bulk endpoints: wMaxPacketSize MUST be one of {8, 16, 32, 64}.
+      //   These are the only legal values; choice depends on endpoint/device design.
+      if (max_packet_size != 8 &&
+          max_packet_size != 16 &&
+          max_packet_size != 32 &&
+          max_packet_size != 64) {
+        return false;
       }
       break;
 
-    case USB_ENDPOINT_TYPE_INTERRUPT: {
+    case USB_ENDPOINT_TYPE_INTERRUPT:
+      // USB 2.0 Spec, §5.7.3 & Table 9-13:
+      // - Full-speed interrupt endpoints: wMaxPacketSize range is 1–64 bytes.
+      //   This code enforces only the upper bound (64).
+      // - High-speed interrupt endpoints: can be up to 1024 bytes (not handled here).
       if (max_packet_size > 64) {
         return false;
       }
       break;
-    }
 
     default:
+      // Unsupported or invalid endpoint type
       return false;
   }
 

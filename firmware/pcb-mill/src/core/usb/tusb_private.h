@@ -12,7 +12,7 @@
 //--------------------------------------------------------------------+
 
 // Check if endpoint descriptor is valid per USB specs
-bool tu_edpt_validate(usb_endpoint_descriptor_t const* desc_ep, bool is_host);
+bool tu_edpt_validate(usb_endpoint_descriptor_t const* endpoint_descriptor, bool is_host);
 
 // Bind all endpoint of a interface descriptor to class driver
 void tu_edpt_bind_driver(uint8_t ep2drv[][2], usb_control_interface_descriptor_t const* p_desc, uint16_t desc_len);
