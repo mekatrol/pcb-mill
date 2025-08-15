@@ -75,13 +75,13 @@ __attribute__((always_inline)) static inline const usb_interface_association_des
 
 //       // bind (associated) interfaces to found driver
 //       for (uint8_t i = 0; i < interface_count; i++) {
-//         uint8_t const itf_num = control_interface_descriptor->bInterfaceNumber + i;
+//         uint8_t const interface_num = control_interface_descriptor->bInterfaceNumber + i;
 
 //         // Interface number must not be used already
-//         if (usb_device.itf2drv[itf_num] != 0xFF) {
+//         if (usb_device.itf2drv[interface_num] != 0xFF) {
 //           return false;
 //         }
-//         usb_device.itf2drv[itf_num] = 0;
+//         usb_device.itf2drv[interface_num] = 0;
 //       }
 
 //       // bind all endpoints to found driver

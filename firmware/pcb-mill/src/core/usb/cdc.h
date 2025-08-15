@@ -14,19 +14,7 @@ typedef enum {
 
 // USB CDC Communication Interface Class Subclass Codes (CDC Spec 1.2 Table 4)
 typedef enum {
-  CDC_COMM_SUBCLASS_DIRECT_LINE_CONTROL_MODEL = 0x01,       // Direct Line Control Model          [USB PSTN 1.2]
-  CDC_COMM_SUBCLASS_ABSTRACT_CONTROL_MODEL = 0x02,          // Abstract Control Model             [USB PSTN 1.2]
-  CDC_COMM_SUBCLASS_TELEPHONE_CONTROL_MODEL = 0x03,         // Telephone Control Model            [USB PSTN 1.2]
-  CDC_COMM_SUBCLASS_MULTICHANNEL_CONTROL_MODEL = 0x04,      // Multi-Channel Control Model        [USB ISDN 1.2]
-  CDC_COMM_SUBCLASS_CAPI_CONTROL_MODEL = 0x05,              // CAPI Control Model                 [USB ISDN 1.2]
-  CDC_COMM_SUBCLASS_ETHERNET_CONTROL_MODEL = 0x06,          // Ethernet Networking Control Model  [USB ECM 1.2]
-  CDC_COMM_SUBCLASS_ATM_NETWORKING_CONTROL_MODEL = 0x07,    // ATM Networking Control Model       [USB ATM 1.2]
-  CDC_COMM_SUBCLASS_WIRELESS_HANDSET_CONTROL_MODEL = 0x08,  // Wireless Handset Control Model     [USB WMC 1.1]
-  CDC_COMM_SUBCLASS_DEVICE_MANAGEMENT = 0x09,               // Device Management                  [USB WMC 1.1]
-  CDC_COMM_SUBCLASS_MOBILE_DIRECT_LINE_MODEL = 0x0A,        // Mobile Direct Line Model           [USB WMC 1.1]
-  CDC_COMM_SUBCLASS_OBEX = 0x0B,                            // OBEX                               [USB OBEX 1.1]
-  CDC_COMM_SUBCLASS_ETHERNET_EMULATION_MODEL = 0x0C,        // Ethernet Emulation Model           [USB EEM 1.0]
-  CDC_COMM_SUBCLASS_NETWORK_CONTROL_MODEL = 0x0D            // Network Control Model              [USB NCM 1.0]
+  CDC_COMM_SUBCLASS_ABSTRACT_CONTROL_MODEL = 0x02  // Abstract Control Model             [USB PSTN 1.2]
 } cdc_comm_subclass_type_t;
 
 // For a USB CDC Virtual COM Port, this struct represents the Line Coding object defined in USB CDC Specification 1.2, Section 6.2.13.

@@ -40,8 +40,8 @@ static void usb_transmit_packet(xfer_ctl_t *xfer, uint16_t ep_ix);
 bool usbd_control_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes);
 bool usb_cdc_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes);
 
-__attribute__((always_inline)) static inline xfer_ctl_t *xfer_ctl_ptr(uint8_t epnum, uint8_t dir) {
-  return &xfer_status[epnum][dir];
+__attribute__((always_inline)) static inline xfer_ctl_t *xfer_ctl_ptr(uint8_t ep_num, uint8_t dir) {
+  return &xfer_status[ep_num][dir];
 }
 
 static void usb_endpoint_set_rx_buffer_block_size(uint32_t endpoint_idn, uint32_t size);
@@ -527,24 +527,24 @@ void dcd_edpt0_status_complete(usb_control_request_t const *request) {
 }
 
 static uint8_t usb_endpoint_allocate(uint8_t endpoint_addr, uint8_t endpoint_type) {
-  uint8_t const epnum = usb_endpoint_number(endpoint_addr);
+  uint8_t const ep_num = usb_endpoint_number(endpoint_addr);
   uint8_t const dir = usb_endpoint_direction(endpoint_addr);
 
   for (uint8_t i = 0; i < USB_ENDPOINT_MAX; i++) {
     // Check if already allocated
     if (ep_alloc_status[i].allocated[dir] &&
         ep_alloc_status[i].ep_type == endpoint_type &&
-        ep_alloc_status[i].ep_num == epnum) {
+        ep_alloc_status[i].ep_num == ep_num) {
       return i;
     }
 
     // If EP of current direction is not allocated
     if (!ep_alloc_status[i].allocated[dir]) {
       // Check if EP number is the same
-      if (ep_alloc_status[i].ep_num == 0xFF || ep_alloc_status[i].ep_num == epnum) {
+      if (ep_alloc_status[i].ep_num == 0xFF || ep_alloc_status[i].ep_num == ep_num) {
         // One EP pair has to be the same type
         if (ep_alloc_status[i].ep_type == 0xFF || ep_alloc_status[i].ep_type == endpoint_type) {
-          ep_alloc_status[i].ep_num = epnum;
+          ep_alloc_status[i].ep_num = ep_num;
           ep_alloc_status[i].ep_type = endpoint_type;
           ep_alloc_status[i].allocated[dir] = true;
 

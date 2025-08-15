@@ -2,6 +2,7 @@
 #include "usbd_pvt.h"
 #include "circular_buffer.h"
 #include "cdc_device.h"
+#include "dcd.h"
 
 typedef enum {
   // wValue bits for CDC_REQUEST_SET_CONTROL_LINE_STATE (CDC Spec §6.2.14)
@@ -10,7 +11,7 @@ typedef enum {
 } handshake_state_t;
 
 typedef struct {
-  uint8_t itf_num;
+  uint8_t interface_num;
   uint8_t ep_in;
   uint8_t ep_out;
 
@@ -180,31 +181,30 @@ void usb_cdc_reset() {
 uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* descriptor, uint16_t max_len) {
   // Only support ACM subclass
   if (descriptor->bInterfaceClass != TUSB_CLASS_CDC ||
-      descriptor->bInterfaceSubClass != CDC_COMM_SUBCLASS_ABSTRACT_CONTROL_MODEL /* CDC_COMM_SUBCLASS_ABSTRACT_CONTROL_MODEL */) {
+      descriptor->bInterfaceSubClass != CDC_COMM_SUBCLASS_ABSTRACT_CONTROL_MODEL) {
     return 0;
   }
 
-  //------------- Control Interface -------------//
-  usb_cdc_interface.itf_num = descriptor->bInterfaceNumber;
+  usb_cdc_interface.interface_num = descriptor->bInterfaceNumber;
 
   uint16_t drv_len = sizeof(usb_control_interface_descriptor_t);
-  const uint8_t* p_desc = tu_desc_next(descriptor);
+  const usb_endpoint_descriptor_t* p_desc = (const usb_endpoint_descriptor_t*)tu_desc_next(descriptor);
 
   // Communication Functional Descriptors
   while (USB_DESC_CS_INTERFACE == tu_desc_type(p_desc) && drv_len <= max_len) {
     drv_len += tu_desc_len(p_desc);
-    p_desc = tu_desc_next(p_desc);
+    p_desc = (const usb_endpoint_descriptor_t*)tu_desc_next(p_desc);
   }
 
   if (USB_DESC_ENDPOINT == tu_desc_type(p_desc)) {
     // notification endpoint
     const usb_endpoint_descriptor_t* endpoint_descriptor = (const usb_endpoint_descriptor_t*)p_desc;
-    if (!usbd_edpt_open(endpoint_descriptor)) {
+    if (!usb_endpoint_open(endpoint_descriptor)) {
       return 0;
     }
 
     drv_len += tu_desc_len(p_desc);
-    p_desc = tu_desc_next(p_desc);
+    p_desc = (const usb_endpoint_descriptor_t*)tu_desc_next(p_desc);
   }
 
   //------------- Data Interface (if any) -------------//
@@ -212,10 +212,10 @@ uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* descriptor, uint
       (TUSB_CLASS_CDC_DATA == ((const usb_control_interface_descriptor_t*)p_desc)->bInterfaceClass)) {
     // next to endpoint descriptor
     drv_len += tu_desc_len(p_desc);
-    p_desc = tu_desc_next(p_desc);
+    p_desc = (const usb_endpoint_descriptor_t*)tu_desc_next(p_desc);
 
     // Open endpoint pair
-    if (!usb_endpoint_open_set(p_desc, 2, USB_ENDPOINT_TYPE_BULK, &usb_cdc_interface.ep_out, &usb_cdc_interface.ep_in)) {
+    if (!usb_endpoint_open_set((const usb_endpoint_descriptor_t*)p_desc, USB_ENDPOINT_TYPE_BULK, &usb_cdc_interface.ep_out, &usb_cdc_interface.ep_in)) {
       return 0;
     }
 

@@ -14,12 +14,11 @@ bool tu_edpt_claim(endpoint_state_t* ep_state) {
 }
 
 bool tu_edpt_release(endpoint_state_t* ep_state) {
-  // can only release the endpoint if it is claimed and not busy
-  bool const ret = (ep_state->claimed == 1) && (ep_state->busy == 0);
-  if (ret) {
+  const bool released = (ep_state->claimed == 1) && (ep_state->busy == 0);
+  if (released) {
     ep_state->claimed = 0;
   }
-  return ret;
+  return released;
 }
 
 bool tu_edpt_validate(usb_endpoint_descriptor_t const* endpoint_descriptor, bool is_host) {
