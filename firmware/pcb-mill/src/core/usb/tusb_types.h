@@ -18,18 +18,6 @@ typedef enum {
 } usb_desc_type_t;
 
 typedef enum {
-  TUSB_REQ_GET_STATUS = 0,
-  TUSB_REQ_CLEAR_FEATURE = 1,
-  TUSB_REQ_SET_FEATURE = 3,
-  TUSB_REQ_SET_ADDRESS = 5,
-  TUSB_REQ_GET_DESCRIPTOR = 6,
-  TUSB_REQ_GET_CONFIGURATION = 8,
-  TUSB_REQ_SET_CONFIGURATION = 9,
-  TUSB_REQ_GET_INTERFACE = 10,
-  TUSB_REQ_SET_INTERFACE = 11
-} tusb_request_code_t;
-
-typedef enum {
   // ----- USB 2.0 Standard Requests (bRequest only) -----
   USB_STD_GET_STATUS = 0x00,
   USB_STD_CLEAR_FEATURE = 0x01,
@@ -61,19 +49,6 @@ typedef enum {
   TUSB_REQ_FEATURE_EDPT_HALT = 0,
   TUSB_REQ_FEATURE_REMOTE_WAKEUP = 1
 } tusb_request_feature_selector_t;
-
-typedef enum {
-  USB_REQUEST_TYPE_STANDARD = 0,  // 00
-  USB_REQUEST_TYPE_CLASS = 1,     // 01
-  USB_REQUEST_TYPE_VENDOR = 2,    // 10
-  USB_REQUEST_TYPE_RESERVED = 3   // 11 -> reserved in spec
-} usb_request_type_t;
-
-typedef enum {
-  USB_REQUEST_RECIPIENT_DEVICE = 0,
-  USB_REQUEST_RECIPIENT_INTERFACE,
-  USB_REQUEST_RECIPIENT_ENDPOINT
-} usb_request_recipient_t;
 
 // https://www.usb.org/defined-class-codes
 typedef enum {
@@ -263,38 +238,6 @@ typedef struct __attribute__((packed)) {
   uint16_t bcdDFUVersion;
 } tusb_desc_dfu_functional_t;
 
-//--------------------------------------------------------------------+
-//
-//--------------------------------------------------------------------+
-
-typedef struct __attribute__((packed)) {
-  union {
-    struct __attribute__((packed)) {
-      uint8_t recipient : 5;  ///< Recipient type usb_request_recipient_t.
-      uint8_t type : 2;       ///< Request type usb_request_type_t.
-      uint8_t direction : 1;  ///< Direction type. usb_endpoint_direction_t
-    } bmRequestType_bit;
-
-    uint8_t bmRequestType;
-  };
-
-  uint8_t bRequest;
-  uint16_t wValue;
-  uint16_t wIndex;
-  uint16_t wLength;
-} tusb_control_request_t;
-
-_Static_assert(sizeof(tusb_control_request_t) == 8, "size is not correct");
-
-//--------------------------------------------------------------------+
-// Endpoint helper
-//--------------------------------------------------------------------+
-
-// Get direction from Endpoint address
-__attribute__((always_inline)) static inline usb_endpoint_direction_t usb_endpoint_direction(uint8_t addr) {
-  return (addr & USB_ENDPOINT_DIRECTION_IN_MASK) ? USB_ENDPOINT_DIRECTION_IN : USB_ENDPOINT_DIRECTION_OUT;
-}
-
 // Get Endpoint number from address
 __attribute__((always_inline)) static inline uint8_t usb_endpoint_number(uint8_t addr) {
   return (uint8_t)(addr & (~USB_ENDPOINT_DIRECTION_IN_MASK));
@@ -338,12 +281,12 @@ __attribute__((always_inline)) static inline uint8_t tu_desc_is_valid(void const
   return (desc8 < desc_end) && (tu_desc_next(desc) <= desc_end);
 }
 
-__attribute__((always_inline)) static inline uint16_t usb_get_request_type_code(const tusb_control_request_t* request) {
+__attribute__((always_inline)) static inline uint16_t usb_get_request_type_code(const usb_control_request_t* request) {
   uint16_t req_code = ((request->bmRequestType & 0x60) << 3) | request->bRequest;
   return req_code;
 }
 
-__attribute__((always_inline)) static inline const char* get_usb_request_code_name(const tusb_control_request_t* request) {
+__attribute__((always_inline)) static inline const char* get_usb_request_code_name(const usb_control_request_t* request) {
   uint8_t type = request->bmRequestType & 0x60;  // 0x00=Standard, 0x20=Class, 0x40=Vendor
   uint8_t bRequest = (uint16_t)request->bRequest;
 

@@ -249,9 +249,11 @@ uint16_t cdcd_open(const tusb_desc_interface_t* itf_desc, uint16_t max_len) {
 // Invoked when a control transfer occurred on an interface of this class
 // Driver response accordingly to the request and the transfer stage (setup/data/ack)
 // return false to stall control endpoint (e.g unsupported request)
-bool cdcd_control_xfer_cb(uint8_t stage, const tusb_control_request_t* request) {
+bool cdcd_control_xfer_cb(uint8_t stage, const usb_control_request_t* request) {
+  const usb_request_type_t request_type = usb_request_type(request->bmRequestType);
+
   // Handle class request only
-  if (request->bmRequestType_bit.type != USB_REQUEST_TYPE_CLASS) {
+  if (request_type != USB_REQUEST_TYPE_CLASS) {
     return false;
   }
 

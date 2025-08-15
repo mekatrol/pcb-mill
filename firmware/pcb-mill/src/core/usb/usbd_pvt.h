@@ -8,7 +8,7 @@
 // Class Driver API
 //--------------------------------------------------------------------+
 
-typedef bool (*usbd_control_xfer_cb_t)(uint8_t stage, tusb_control_request_t const* request);
+typedef bool (*usbd_control_xfer_cb_t)(uint8_t stage, usb_control_request_t const* request);
 
 // Open an endpoint
 bool usbd_edpt_open(usb_endpoint_descriptor_t const* desc_ep);

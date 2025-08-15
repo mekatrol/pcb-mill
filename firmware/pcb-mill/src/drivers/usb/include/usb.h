@@ -30,14 +30,6 @@
 #define USB_ENDPOINT_RX_BUFFER_SIZE 64UL
 #define USB_ENDPOINT_TX_BUFFER_SIZE 64UL
 
-// See: Bit 4 DIR: Direction of transaction USB interrupt status register (USB_ISTR) in RM0444
-typedef enum {
-  USB_ENDPOINT_DIRECTION_OUT = 0,  // VTTX bit is set in the USB_CHEPnR register
-  USB_ENDPOINT_DIRECTION_IN = 1,   // VTRX bit or both VTTX/VTRX are set in the USB_CHEPnR
-
-  USB_ENDPOINT_DIRECTION_IN_MASK = 0x80
-} usb_endpoint_direction_t;
-
 // See Table 237. Transmission status encoding in RM0444
 typedef enum {
   USB_ENDPOINT_STATE_DISABLED = 0b00,
@@ -126,5 +118,46 @@ __attribute__((always_inline)) static inline void usb_reset() {
 }
 
 bool usb_init_driver();
+
+typedef enum {
+  USB_REQUEST_RECIPIENT_DEVICE = 0,
+  USB_REQUEST_RECIPIENT_INTERFACE,
+  USB_REQUEST_RECIPIENT_ENDPOINT,
+
+  USB_REQUEST_RECIPIENT_MASK = 0x1F
+} usb_request_recipient_t;
+
+typedef enum {
+  USB_REQUEST_TYPE_STANDARD = 0,  // 00
+  USB_REQUEST_TYPE_CLASS = 1,     // 01
+  USB_REQUEST_TYPE_VENDOR = 2,    // 10
+  USB_REQUEST_TYPE_RESERVED = 3,  // 11 -> reserved in spec
+
+  USB_REQUEST_TYPE_MASK = 0x60
+} usb_request_type_t;
+
+// See: Bit 4 DIR: Direction of transaction USB interrupt status register (USB_ISTR) in RM0444
+typedef enum {
+  USB_ENDPOINT_DIRECTION_OUT = 0,  // VTTX bit is set in the USB_CHEPnR register
+  USB_ENDPOINT_DIRECTION_IN = 1,   // VTRX bit or both VTTX/VTRX are set in the USB_CHEPnR
+
+  USB_ENDPOINT_DIRECTION_IN_MASK = 0x80
+} usb_endpoint_direction_t;
+
+typedef struct __attribute__((packed)) {
+  uint8_t bmRequestType;
+  uint8_t bRequest;
+  uint16_t wValue;
+  uint16_t wIndex;
+  uint16_t wLength;
+} usb_control_request_t;
+
+// Control request must be 8 bytes long, this validates compller honours the 'packed' attribute
+_Static_assert(sizeof(usb_control_request_t) == 8, "sizeof(usb_control_request_t) is not correct");
+
+__attribute__((always_inline)) static inline usb_request_recipient_t usb_request_recipient(uint8_t bm) { return bm & USB_REQUEST_RECIPIENT_MASK; }
+__attribute__((always_inline)) static inline usb_request_type_t usb_request_type(uint8_t bm) { return (bm & USB_REQUEST_TYPE_MASK) >> 5; }
+__attribute__((always_inline)) static inline usb_endpoint_direction_t usb_request_direction(uint8_t bm) { return (bm & USB_ENDPOINT_DIRECTION_IN_MASK) >> 7; }
+__attribute__((always_inline)) static inline usb_endpoint_direction_t usb_endpoint_direction(uint8_t addr) { return (addr & USB_ENDPOINT_DIRECTION_IN_MASK) >> 7; }
 
 #endif  // __USB_H__

@@ -30,7 +30,7 @@ typedef struct {
 
 extern usbd_device_t _usbd_dev;
 
-bool process_control_request(tusb_control_request_t const* p_request);
+bool process_control_request(usb_control_request_t const* request);
 
 // Check if device is connected (may not mounted/configured yet)
 // True if just got out of Bus Reset and received the very first data from host
@@ -55,10 +55,10 @@ bool tud_connect(void);
 // Carry out Data and Status stage of control transfer
 // - If len = 0, it is equivalent to sending status only
 // - If len > wLength : it will be truncated
-bool tud_control_xfer(tusb_control_request_t const* request, void* buffer, uint16_t len);
+bool tud_control_xfer(usb_control_request_t const* request, void* buffer, uint16_t len);
 
 // Send STATUS (zero length) packet
-bool tud_control_status(tusb_control_request_t const* request);
+bool tud_control_status(usb_control_request_t const* request);
 
 //--------------------------------------------------------------------+
 // Application Callbacks
@@ -90,8 +90,5 @@ uint8_t const* tud_descriptor_device_qualifier_cb(void);
 // Application return pointer to descriptor, whose contents must exist long enough for transfer to complete
 // Configuration descriptor in the other speed e.g if high speed then this is for full speed and vice versa
 uint8_t const* tud_descriptor_other_speed_configuration_cb(uint8_t index);
-
-// Invoked when received control request with VENDOR TYPE
-bool tud_vendor_control_xfer_cb(uint8_t stage, tusb_control_request_t const* request);
 
 #endif /* _TUSB_USBD_H_ */

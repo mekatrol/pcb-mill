@@ -162,13 +162,13 @@ __attribute__((always_inline)) static inline uint32_t usb_endpoint_calc_rx_buffe
 
 static void transfer_complete(uint8_t ep_addr, uint32_t xferred_bytes) {
   // Invoke the class callback associated with the endpoint address
-  uint8_t const epnum = usb_endpoint_number(ep_addr);
-  uint8_t const ep_dir = usb_endpoint_direction(ep_addr);
+  const uint8_t ep_num = usb_endpoint_number(ep_addr);
+  const uint8_t ep_dir = usb_endpoint_direction(ep_addr);
 
-  _usbd_dev.ep_status[epnum][ep_dir].busy = 0;
-  _usbd_dev.ep_status[epnum][ep_dir].claimed = 0;
+  _usbd_dev.ep_status[ep_num][ep_dir].busy = 0;
+  _usbd_dev.ep_status[ep_num][ep_dir].claimed = 0;
 
-  if (epnum == 0) {
+  if (ep_num == 0) {
     usbd_control_xfer_cb(ep_addr, xferred_bytes);
   } else {
     cdcd_xfer_cb(ep_addr, xferred_bytes);
@@ -216,7 +216,7 @@ void handle_ctr_tx(uint32_t endpoint_idn) {
   }
 }
 
-static void setup_received(tusb_control_request_t *setup_received) {
+static void setup_received(usb_control_request_t *setup_received) {
   // Mark as connected after receiving 1st setup packet.
   // But it is easier to set it every time instead of wasting time to check then set
   _usbd_dev.connected = 1;
@@ -277,7 +277,7 @@ void handle_ctr_setup(uint32_t endpoint_idn) {
 
   // Setup packet should always be 8 bytes. If not, we probably missed the packet
   if (rx_count == 8) {
-    setup_received((tusb_control_request_t *)setup_packet);
+    setup_received((usb_control_request_t *)setup_packet);
     // Hardware should reset EP0 RX/TX to NAK and both toggle to 1
   } else {
     // Missed setup packet !!!
@@ -512,10 +512,13 @@ void handle_bus_reset() {
 
 // Invoked when a control transfer's status stage is complete.
 // May help DCD to prepare for next control transfer, this API is optional.
-void dcd_edpt0_status_complete(tusb_control_request_t const *request) {
-  if (request->bmRequestType_bit.recipient == USB_REQUEST_RECIPIENT_DEVICE &&
-      request->bmRequestType_bit.type == USB_REQUEST_TYPE_STANDARD &&
-      request->bRequest == TUSB_REQ_SET_ADDRESS) {
+void dcd_edpt0_status_complete(usb_control_request_t const *request) {
+  const usb_request_type_t request_type = usb_request_type(request->bmRequestType);
+  const usb_request_recipient_t request_recipient = usb_request_recipient(request->bmRequestType);
+
+  if (request_recipient == USB_REQUEST_RECIPIENT_DEVICE &&
+      request_type == USB_REQUEST_TYPE_STANDARD &&
+      request->bRequest == USB_STD_SET_ADDRESS) {
     uint8_t const dev_addr = (uint8_t)request->wValue;
     USB->DADDR = (USB_DADDR_EF | dev_addr);
   }

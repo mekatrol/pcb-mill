@@ -25,7 +25,7 @@ void dcd_sof_enable(bool en);
 
 // Invoked when a control transfer's status stage is complete.
 // May help DCD to prepare for next control transfer, this API is optional.
-void dcd_edpt0_status_complete(tusb_control_request_t const* request);
+void dcd_edpt0_status_complete(usb_control_request_t const* request);
 
 // Configure endpoint's registers according to descriptor
 bool usb_endpoint_open(usb_endpoint_descriptor_t const* desc_ep);

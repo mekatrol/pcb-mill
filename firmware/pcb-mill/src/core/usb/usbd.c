@@ -30,12 +30,6 @@ __attribute__((weak)) uint8_t const* tud_descriptor_other_speed_configuration_cb
   return NULL;
 }
 
-__attribute__((weak)) bool tud_vendor_control_xfer_cb(uint8_t stage, tusb_control_request_t const* request) {
-  (void)stage;
-  (void)request;
-  return false;
-}
-
 //--------------------------------------------------------------------+
 // Device Data
 //--------------------------------------------------------------------+
@@ -46,11 +40,11 @@ usbd_device_t _usbd_dev;
 // Prototypes
 //--------------------------------------------------------------------+
 static bool process_set_config(uint8_t cfg_num);
-static bool process_get_descriptor(tusb_control_request_t const* p_request);
+static bool process_get_descriptor(usb_control_request_t const* request);
 
 // from usbd_control.c
 void usbd_control_reset(void);
-void usbd_control_set_request(tusb_control_request_t const* request);
+void usbd_control_set_request(usb_control_request_t const* request);
 void usbd_control_set_complete_callback(usbd_control_xfer_cb_t fp);
 
 //--------------------------------------------------------------------+
@@ -95,57 +89,62 @@ void usb_configuration_reset() {
 //--------------------------------------------------------------------+
 
 // Helper to invoke class driver control request handler
-static bool invoke_class_control(tusb_control_request_t const* request) {
+static bool invoke_class_control(usb_control_request_t const* request) {
   usbd_control_set_complete_callback(cdcd_control_xfer_cb);
   return cdcd_control_xfer_cb(CONTROL_STAGE_SETUP, request);
 }
 
 // This handles the actual request and its response.
 // Returns false if unable to complete the request, causing caller to stall control endpoints.
-bool process_control_request(tusb_control_request_t const* p_request) {
+bool process_control_request(usb_control_request_t const* request) {
   usbd_control_set_complete_callback(NULL);
-  if (p_request->bmRequestType_bit.type >= USB_REQUEST_TYPE_RESERVED) {
+
+  const usb_request_type_t request_type = usb_request_type(request->bmRequestType);
+
+  // Evertything >= USB_REQUEST_TYPE_RESERVED is reserved in spac and should not be used
+  if (request_type >= USB_REQUEST_TYPE_RESERVED) {
     return false;
   }
 
   // Vendor request
-  if (p_request->bmRequestType_bit.type == USB_REQUEST_TYPE_VENDOR) {
-    usbd_control_set_complete_callback(tud_vendor_control_xfer_cb);
-    return tud_vendor_control_xfer_cb(CONTROL_STAGE_SETUP, p_request);
+  if (request_type == USB_REQUEST_TYPE_VENDOR) {
+    usbd_control_set_complete_callback(NULL);
+    return false;
   }
 
-  switch (p_request->bmRequestType_bit.recipient) {
+  const usb_request_recipient_t request_recipient = usb_request_recipient(request->bmRequestType);
+  switch (request_recipient) {
     //------------- Device Requests e.g in enumeration -------------//
     case USB_REQUEST_RECIPIENT_DEVICE:
-      if (USB_REQUEST_TYPE_CLASS == p_request->bmRequestType_bit.type) {
+      if (USB_REQUEST_TYPE_CLASS == request_type) {
         // forward to class driver: "non-STD request to Interface"
-        return invoke_class_control(p_request);
+        return invoke_class_control(request);
       }
 
-      if (USB_REQUEST_TYPE_STANDARD != p_request->bmRequestType_bit.type) {
+      if (USB_REQUEST_TYPE_STANDARD != request_type) {
         // Non-standard request is not supported
         return false;
       }
 
-      switch (p_request->bRequest) {
-        case TUSB_REQ_SET_ADDRESS:
+      switch (request->bRequest) {
+        case USB_STD_SET_ADDRESS:
           // Depending on mcu, status phase could be sent either before or after changing device address,
           // or even require stack to not response with status at all
           // Therefore DCD must take full responsibility to response and include zlp status packet if needed.
-          usbd_control_set_request(p_request);  // set request since DCD has no access to tud_control_status() API
-          dcd_set_address((uint8_t)p_request->wValue);
+          usbd_control_set_request(request);  // set request since DCD has no access to tud_control_status() API
+          dcd_set_address((uint8_t)request->wValue);
 
           // skip tud_control_status()
           _usbd_dev.addressed = 1;
           break;
 
-        case TUSB_REQ_GET_CONFIGURATION: {
+        case USB_STD_GET_CONFIGURATION: {
           uint8_t cfg_num = _usbd_dev.cfg_num;
-          tud_control_xfer(p_request, &cfg_num, 1);
+          tud_control_xfer(request, &cfg_num, 1);
         } break;
 
-        case TUSB_REQ_SET_CONFIGURATION: {
-          uint8_t const cfg_num = (uint8_t)p_request->wValue;
+        case USB_STD_SET_CONFIGURATION: {
+          uint8_t const cfg_num = (uint8_t)request->wValue;
 
           // Only process if new configure is different
           if (_usbd_dev.cfg_num != cfg_num) {
@@ -176,21 +175,21 @@ bool process_control_request(tusb_control_request_t const* p_request) {
             }
           }
 
-          tud_control_status(p_request);
+          tud_control_status(request);
         } break;
 
-        case TUSB_REQ_GET_DESCRIPTOR:
-          if (!process_get_descriptor(p_request)) {
+        case USB_STD_GET_DESCRIPTOR:
+          if (!process_get_descriptor(request)) {
             return false;
           }
           break;
 
-        case TUSB_REQ_SET_FEATURE:
-          switch (p_request->wValue) {
+        case USB_STD_SET_FEATURE:
+          switch (request->wValue) {
             case TUSB_REQ_FEATURE_REMOTE_WAKEUP:
               // Host may enable remote wake up before suspending especially HID device
               _usbd_dev.remote_wakeup_en = true;
-              tud_control_status(p_request);
+              tud_control_status(request);
               break;
 
             // Stall unsupported feature selector
@@ -199,23 +198,23 @@ bool process_control_request(tusb_control_request_t const* p_request) {
           }
           break;
 
-        case TUSB_REQ_CLEAR_FEATURE:
+        case USB_STD_CLEAR_FEATURE:
           // Only support remote wakeup for device feature
-          if (p_request->wValue != TUSB_REQ_FEATURE_REMOTE_WAKEUP) {
+          if (request->wValue != TUSB_REQ_FEATURE_REMOTE_WAKEUP) {
             return false;
           }
 
           // Host may disable remote wake up after resuming
           _usbd_dev.remote_wakeup_en = false;
-          tud_control_status(p_request);
+          tud_control_status(request);
           break;
 
-        case TUSB_REQ_GET_STATUS: {
+        case USB_STD_GET_STATUS: {
           // Device status bit mask
           // - Bit 0: Self Powered
           // - Bit 1: Remote Wakeup enabled
           uint16_t status = (uint16_t)((1u) | (_usbd_dev.remote_wakeup_en ? 2u : 0u));
-          tud_control_xfer(p_request, &status, 2);
+          tud_control_xfer(request, &status, 2);
           break;
         }
 
@@ -229,24 +228,24 @@ bool process_control_request(tusb_control_request_t const* p_request) {
     case USB_REQUEST_RECIPIENT_INTERFACE: {
       // all requests to Interface (STD or Class) is forwarded to class driver.
       // notable requests are: GET HID REPORT DESCRIPTOR, SET_INTERFACE, GET_INTERFACE
-      if (!invoke_class_control(p_request)) {
+      if (!invoke_class_control(request)) {
         // For GET_INTERFACE and SET_INTERFACE, it is mandatory to respond even if the class
         // driver doesn't use alternate settings or implement this
-        if (USB_REQUEST_TYPE_STANDARD != p_request->bmRequestType_bit.type) {
+        if (USB_REQUEST_TYPE_STANDARD != request_type) {
           return false;
         }
 
-        switch (p_request->bRequest) {
-          case TUSB_REQ_GET_INTERFACE:
-          case TUSB_REQ_SET_INTERFACE:
+        switch (request->bRequest) {
+          case USB_STD_GET_INTERFACE:
+          case USB_STD_SET_INTERFACE:
             // Clear complete callback if driver set since it can also stall the request.
             usbd_control_set_complete_callback(NULL);
 
-            if (TUSB_REQ_GET_INTERFACE == p_request->bRequest) {
+            if (USB_STD_GET_INTERFACE == request->bRequest) {
               uint8_t alternate = 0;
-              tud_control_xfer(p_request, &alternate, 1);
+              tud_control_xfer(request, &alternate, 1);
             } else {
-              tud_control_status(p_request);
+              tud_control_status(request);
             }
             break;
 
@@ -259,28 +258,28 @@ bool process_control_request(tusb_control_request_t const* p_request) {
 
     //------------- Endpoint Request -------------//
     case USB_REQUEST_RECIPIENT_ENDPOINT: {
-      uint8_t const ep_addr = U16_LOW(p_request->wIndex);
+      uint8_t const ep_addr = U16_LOW(request->wIndex);
       uint8_t const ep_num = usb_endpoint_number(ep_addr);
 
       if (ep_num >= ARRAY_SIZE(_usbd_dev.ep2drv)) {
         return false;
       }
 
-      if (USB_REQUEST_TYPE_STANDARD != p_request->bmRequestType_bit.type) {
+      if (USB_REQUEST_TYPE_STANDARD != request_type) {
         // Forward class request to its driver
-        return invoke_class_control(p_request);
+        return invoke_class_control(request);
       } else {
         // Handle STD request to endpoint
-        switch (p_request->bRequest) {
-          case TUSB_REQ_GET_STATUS: {
+        switch (request->bRequest) {
+          case USB_STD_GET_STATUS: {
             uint16_t status = usbd_edpt_stalled(ep_addr) ? 0x0001 : 0x0000;
-            tud_control_xfer(p_request, &status, 2);
+            tud_control_xfer(request, &status, 2);
           } break;
 
-          case TUSB_REQ_CLEAR_FEATURE:
-          case TUSB_REQ_SET_FEATURE: {
-            if (TUSB_REQ_FEATURE_EDPT_HALT == p_request->wValue) {
-              if (TUSB_REQ_CLEAR_FEATURE == p_request->bRequest) {
+          case USB_STD_CLEAR_FEATURE:
+          case USB_STD_SET_FEATURE: {
+            if (TUSB_REQ_FEATURE_EDPT_HALT == request->wValue) {
+              if (USB_STD_CLEAR_FEATURE == request->bRequest) {
                 usbd_edpt_clear_stall(ep_addr);
               } else {
                 usbd_edpt_stall(ep_addr);
@@ -292,11 +291,11 @@ bool process_control_request(tusb_control_request_t const* p_request) {
 
             // STD request must always be ACKed regardless of driver returned value
             // Also clear complete callback if driver set since it can also stall the request.
-            invoke_class_control(p_request);
+            invoke_class_control(request);
             usbd_control_set_complete_callback(NULL);
 
             // skip ZLP status if driver already did that
-            if (!_usbd_dev.ep_status[0][USB_ENDPOINT_DIRECTION_IN].busy) tud_control_status(p_request);
+            if (!_usbd_dev.ep_status[0][USB_ENDPOINT_DIRECTION_IN].busy) tud_control_status(request);
           } break;
 
           // Unknown/Unsupported request
@@ -390,9 +389,9 @@ __attribute__((always_inline)) static inline uint16_t tu_unaligned_read16(const 
 }
 
 // return descriptor's buffer and update desc_len
-static bool process_get_descriptor(tusb_control_request_t const* p_request) {
-  usb_desc_type_t const desc_type = (usb_desc_type_t)U16_HIGH(p_request->wValue);
-  uint8_t const desc_index = U16_LOW(p_request->wValue);
+static bool process_get_descriptor(usb_control_request_t const* request) {
+  usb_desc_type_t const desc_type = (usb_desc_type_t)U16_HIGH(request->wValue);
+  uint8_t const desc_index = U16_LOW(request->wValue);
 
   switch (desc_type) {
     case USB_DESC_DEVICE: {
@@ -404,15 +403,15 @@ static bool process_get_descriptor(tusb_control_request_t const* p_request) {
       // Only response with exactly 1 Packet if: not addressed and host requested more data than device descriptor has.
       // This only happens with the very first get device descriptor and EP0 size = 8 or 16.
       if ((USB_EP0_BUFFER_SIZE < sizeof(usb_device_desc_t)) && !_usbd_dev.addressed &&
-          ((tusb_control_request_t const*)p_request)->wLength > sizeof(usb_device_desc_t)) {
+          ((usb_control_request_t const*)request)->wLength > sizeof(usb_device_desc_t)) {
         // Hack here: we modify the request length to prevent usbd_control response with zlp
         // since we are responding with 1 packet & less data than wLength.
-        tusb_control_request_t mod_request = *p_request;
+        usb_control_request_t mod_request = *request;
         mod_request.wLength = USB_EP0_BUFFER_SIZE;
 
         return tud_control_xfer(&mod_request, desc_device, USB_EP0_BUFFER_SIZE);
       } else {
-        return tud_control_xfer(p_request, desc_device, sizeof(usb_device_desc_t));
+        return tud_control_xfer(request, desc_device, sizeof(usb_device_desc_t));
       }
     }
       // break; // unreachable
@@ -427,7 +426,7 @@ static bool process_get_descriptor(tusb_control_request_t const* p_request) {
       // Use offsetof to avoid pointer to the odd/misaligned address
       uint16_t const total_len = tu_unaligned_read16((const void*)(desc_bos + offsetof(tusb_desc_bos_t, wTotalLength)));
 
-      return tud_control_xfer(p_request, (void*)desc_bos, total_len);
+      return tud_control_xfer(request, (void*)desc_bos, total_len);
     }
       // break; // unreachable
 
@@ -451,19 +450,19 @@ static bool process_get_descriptor(tusb_control_request_t const* p_request) {
       // Use offsetof to avoid pointer to the odd/misaligned address
       uint16_t const total_len = tu_unaligned_read16((const void*)(desc_config + offsetof(tusb_desc_configuration_t, wTotalLength)));
 
-      return tud_control_xfer(p_request, (void*)desc_config, total_len);
+      return tud_control_xfer(request, (void*)desc_config, total_len);
     }
       // break; // unreachable
 
     case USB_DESC_STRING: {
       // String Descriptor always uses the desc set from user
-      uint8_t const* desc_str = (uint8_t const*)tud_descriptor_string_cb(desc_index, p_request->wIndex);
+      uint8_t const* desc_str = (uint8_t const*)tud_descriptor_string_cb(desc_index, request->wIndex);
       if (!desc_str) {
         return false;
       }
 
       // first byte of descriptor is its size
-      return tud_control_xfer(p_request, (void*)(uintptr_t)desc_str, tu_desc_len(desc_str));
+      return tud_control_xfer(request, (void*)(uintptr_t)desc_str, tu_desc_len(desc_str));
     }
       // break; // unreachable
 
@@ -472,7 +471,7 @@ static bool process_get_descriptor(tusb_control_request_t const* p_request) {
       if (!desc_qualifier) {
         return false;
       }
-      return tud_control_xfer(p_request, (void*)(uintptr_t)desc_qualifier, tu_desc_len(desc_qualifier));
+      return tud_control_xfer(request, (void*)(uintptr_t)desc_qualifier, tu_desc_len(desc_qualifier));
     }
       // break; // unreachable
 

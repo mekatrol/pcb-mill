@@ -11,7 +11,7 @@ enum {
 };
 
 typedef struct {
-  tusb_control_request_t request;
+  usb_control_request_t request;
   uint8_t* buffer;
   uint16_t data_len;
   uint16_t total_xferred;
@@ -35,14 +35,15 @@ static struct {
 //--------------------------------------------------------------------+
 
 // Queue ZLP status transaction
-static inline bool status_stage_xact(const tusb_control_request_t* request) {
+static inline bool status_stage_xact(const usb_control_request_t* request) {
   // Opposite to endpoint in Data Phase
-  const uint8_t ep_addr = request->bmRequestType_bit.direction ? EDPT_CTRL_OUT : EDPT_CTRL_IN;
+  const usb_endpoint_direction_t request_direction = usb_request_direction(request->bmRequestType);
+  const uint8_t ep_addr = request_direction ? EDPT_CTRL_OUT : EDPT_CTRL_IN;
   return usbd_edpt_xfer(ep_addr, NULL, 0);
 }
 
 // Status phase
-bool tud_control_status(const tusb_control_request_t* request) {
+bool tud_control_status(const usb_control_request_t* request) {
   _ctrl_xfer.request = (*request);
   _ctrl_xfer.buffer = NULL;
   _ctrl_xfer.total_xferred = 0;
@@ -58,7 +59,8 @@ static bool data_stage_xact() {
   const uint16_t xact_len = min_u16(_ctrl_xfer.data_len - _ctrl_xfer.total_xferred, USB_EP0_BUFFER_SIZE);
   uint8_t ep_addr = EDPT_CTRL_OUT;
 
-  if (_ctrl_xfer.request.bmRequestType_bit.direction == USB_ENDPOINT_DIRECTION_IN) {
+  const usb_endpoint_direction_t request_direction = usb_request_direction(_ctrl_xfer.request.bmRequestType);
+  if (request_direction == USB_ENDPOINT_DIRECTION_IN) {
     ep_addr = EDPT_CTRL_IN;
     if (xact_len) {
       if (xact_len > USB_EP0_BUFFER_SIZE) {
@@ -74,7 +76,7 @@ static bool data_stage_xact() {
 
 // Transmit data to/from the control endpoint.
 // If the request's wLength is zero, a status packet is sent instead.
-bool tud_control_xfer(const tusb_control_request_t* request, void* buffer, uint16_t len) {
+bool tud_control_xfer(const usb_control_request_t* request, void* buffer, uint16_t len) {
   _ctrl_xfer.request = (*request);
   _ctrl_xfer.buffer = (uint8_t*)buffer;
   _ctrl_xfer.total_xferred = 0U;
@@ -101,7 +103,7 @@ bool tud_control_xfer(const tusb_control_request_t* request, void* buffer, uint1
 //--------------------------------------------------------------------+
 // USBD API
 //--------------------------------------------------------------------+
-void usbd_control_set_request(const tusb_control_request_t* request);
+void usbd_control_set_request(const usb_control_request_t* request);
 void usbd_control_set_complete_callback(usbd_control_xfer_cb_t fp);
 bool usbd_control_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes);
 
@@ -115,7 +117,7 @@ void usbd_control_set_complete_callback(usbd_control_xfer_cb_t fp) {
 }
 
 // for dcd_set_address where DCD is responsible for status response
-void usbd_control_set_request(const tusb_control_request_t* request) {
+void usbd_control_set_request(const usb_control_request_t* request) {
   _ctrl_xfer.request = (*request);
   _ctrl_xfer.buffer = NULL;
   _ctrl_xfer.total_xferred = 0;
@@ -126,8 +128,10 @@ void usbd_control_set_request(const tusb_control_request_t* request) {
 // - DATA stage of control endpoint or
 // - Status stage
 bool usbd_control_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes) {
+  const usb_endpoint_direction_t request_direction = usb_request_direction(_ctrl_xfer.request.bmRequestType);
+
   // Endpoint Address is opposite to direction bit, this is Status Stage complete event
-  if (usb_endpoint_direction(ep_addr) != _ctrl_xfer.request.bmRequestType_bit.direction) {
+  if (usb_endpoint_direction(ep_addr) != request_direction) {
     if (xferred_bytes != 0) {
       return false;
     }
@@ -143,7 +147,7 @@ bool usbd_control_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes) {
     return true;
   }
 
-  if (_ctrl_xfer.request.bmRequestType_bit.direction == USB_ENDPOINT_DIRECTION_OUT) {
+  if (request_direction == USB_ENDPOINT_DIRECTION_OUT) {
     if (!_ctrl_xfer.buffer) {
       return false;
     }

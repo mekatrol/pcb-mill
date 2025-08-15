@@ -403,7 +403,7 @@ typedef struct __attribute__((packed)) {
 } cdc_notify_conn_speed_change_t;
 
 typedef struct __attribute__((packed)) {
-  tusb_control_request_t request;
+  usb_control_request_t request;
   union {
     cdc_notify_uart_state_t serial_state;
     cdc_notify_conn_speed_change_t conn_speed_change;
