@@ -21,9 +21,9 @@ typedef struct {
   };
   volatile uint8_t cfg_num;  // current active configuration (0x00 is not configured)
 
-  uint8_t ep2drv[USB_ENDPOINT_MAX][2];  // map endpoint to driver ( 0xff is invalid ), can use only 4-bit each
+  uint8_t ep2drv[USB_EP_MAX][2];  // map endpoint to driver ( 0xff is invalid ), can use only 4-bit each
 
-  endpoint_state_t ep_status[USB_ENDPOINT_MAX][2];
+  endpoint_state_t ep_status[USB_EP_MAX][2];
 
 } usbd_device_t;
 

@@ -34,7 +34,7 @@ bool tu_edpt_validate(usb_endpoint_descriptor_t const* endpoint_descriptor, bool
   const uint32_t max_packet_size = USB_EP_PACKET_SIZE(endpoint_descriptor->wMaxPacketSize);
 
   switch (endpoint_descriptor->bmAttributes.type) {
-    case USB_ENDPOINT_TYPE_BULK:
+    case USB_EP_TYPE_BULK:
       // USB 2.0 Spec, §5.8.3 & Table 9-13:
       // - High-speed bulk endpoints: wMaxPacketSize MUST be exactly 512 bytes.
       //   No other sizes are permitted at high speed.
@@ -48,7 +48,7 @@ bool tu_edpt_validate(usb_endpoint_descriptor_t const* endpoint_descriptor, bool
       }
       break;
 
-    case USB_ENDPOINT_TYPE_INTERRUPT:
+    case USB_EP_TYPE_INTERRUPT:
       // USB 2.0 Spec, §5.7.3 & Table 9-13:
       // - Full-speed interrupt endpoints: wMaxPacketSize range is 1–64 bytes.
       //   This code enforces only the upper bound (64).

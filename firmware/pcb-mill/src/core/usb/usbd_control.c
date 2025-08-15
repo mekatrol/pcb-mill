@@ -15,7 +15,7 @@ static __attribute__((aligned(4))) uint8_t ep0_control_buffer[USB_EP0_BUFFER_SIZ
 
 static inline bool status_stage_xact(const usb_control_request_t* request) {
   // Opposite to endpoint in Data Phase
-  const usb_endpoint_direction_t request_direction = usb_request_direction(request->bmRequestType);
+  const usb_endpoint_direction_index_t request_direction = usb_request_direction(request->bmRequestType);
   const uint8_t ep_addr = request_direction ? USB_DIR_OUT : USB_DIR_IN;
   return usb_endpoint_transfer(ep_addr, NULL, 0);
 }
@@ -37,8 +37,8 @@ static bool data_stage_xact() {
   const uint16_t xact_len = min_u16(_ctrl_xfer.data_len - _ctrl_xfer.total_xferred, USB_EP0_BUFFER_SIZE);
   uint8_t ep_addr = USB_DIR_OUT;
 
-  const usb_endpoint_direction_t request_direction = usb_request_direction(_ctrl_xfer.request.bmRequestType);
-  if (request_direction == USB_ENDPOINT_DIRECTION_IN) {
+  const usb_endpoint_direction_index_t request_direction = usb_request_direction(_ctrl_xfer.request.bmRequestType);
+  if (request_direction == USB_EP_DIRECTION_IN_IDX) {
     ep_addr = USB_DIR_IN;
     if (xact_len) {
       if (xact_len > USB_EP0_BUFFER_SIZE) {

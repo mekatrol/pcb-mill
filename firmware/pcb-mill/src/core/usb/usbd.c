@@ -280,7 +280,7 @@ bool process_control_request(usb_control_request_t const* request) {
             usbd_control_set_complete_callback(NULL);
 
             // skip ZLP status if driver already did that
-            if (!usb_device.ep_status[0][USB_ENDPOINT_DIRECTION_IN].busy) {
+            if (!usb_device.ep_status[0][USB_EP_DIRECTION_IN_IDX].busy) {
               tud_control_status(request);
             }
           } break;

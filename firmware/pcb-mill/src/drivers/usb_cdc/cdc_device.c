@@ -28,8 +28,8 @@ typedef struct {
   circular_buffer_t tx_buffer;
 
   // TX and RX circulars buffer data
-  uint8_t rx_buffer_data[USB_ENDPOINT_RX_BUFFER_SIZE];
-  uint8_t tx_buffer_data[USB_ENDPOINT_TX_BUFFER_SIZE];
+  uint8_t rx_buffer_data[USB_EP_RX_BUFFER_SIZE];
+  uint8_t tx_buffer_data[USB_EP_TX_BUFFER_SIZE];
 } usb_cdc_interface_t;
 
 typedef struct {
@@ -105,7 +105,7 @@ uint32_t usb_cdc_write(const uint8_t* buffer, uint32_t bufsize) {
   uint16_t wr_count = circular_buffer_write(&usb_cdc_interface.tx_buffer, buffer, bufsize);
 
   // flush if queue more than packet size
-  if (circular_buffer_count(&usb_cdc_interface.tx_buffer) >= USB_ENDPOINT_TX_BUFFER_SIZE) {
+  if (circular_buffer_count(&usb_cdc_interface.tx_buffer) >= USB_EP_TX_BUFFER_SIZE) {
     usb_cdc_write_flush();
   }
 
@@ -198,7 +198,7 @@ uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* descriptor, uint
     p_desc = (const usb_endpoint_descriptor_t*)tu_desc_next(p_desc);
 
     // Open endpoint pair
-    if (!usb_endpoint_open_set((const usb_endpoint_descriptor_t*)p_desc, USB_ENDPOINT_TYPE_BULK, &usb_cdc_interface.ep_out, &usb_cdc_interface.ep_in)) {
+    if (!usb_endpoint_open_set((const usb_endpoint_descriptor_t*)p_desc, USB_EP_TYPE_BULK, &usb_cdc_interface.ep_out, &usb_cdc_interface.ep_in)) {
       return 0;
     }
 
@@ -298,7 +298,7 @@ bool usb_cdc_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes) {
     if (usb_cdc_write_flush() == 0) {
       // If there is no data left, a ZLP should be sent if
       // xferred_bytes is multiple of EP Packet size and not zero
-      if (circular_buffer_count(&usb_cdc_interface.tx_buffer) == 0 && xferred_bytes && (0 == (xferred_bytes & (USB_ENDPOINT_TX_BUFFER_SIZE - 1)))) {
+      if (circular_buffer_count(&usb_cdc_interface.tx_buffer) == 0 && xferred_bytes && (0 == (xferred_bytes & (USB_EP_TX_BUFFER_SIZE - 1)))) {
         if (usbd_edpt_claim(usb_cdc_interface.ep_in)) {
           if (!usb_endpoint_transfer(usb_cdc_interface.ep_in, NULL, 0)) {
             return false;

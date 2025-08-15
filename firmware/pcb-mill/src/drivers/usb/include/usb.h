@@ -22,7 +22,7 @@
 //   - ep0 - control endpoint (mandatory)
 //   - ep1 - bulk (CDC virtual com)
 //   - ep2 - interrupt
-#define USB_ENDPOINT_MAX 3
+#define USB_EP_MAX 3
 
 // The size of endpoint 0 buffer
 #define USB_EP0_BUFFER_SIZE 64UL
@@ -31,10 +31,10 @@
 #define USB_EP0_ADDR 0
 
 // The size of other endpoint buffers (e.g. CDC, MSC)
-#define USB_ENDPOINT_RX_BUFFER_SIZE 64UL
-#define USB_ENDPOINT_TX_BUFFER_SIZE 64UL
+#define USB_EP_RX_BUFFER_SIZE 64UL
+#define USB_EP_TX_BUFFER_SIZE 64UL
 
-// Direction bit
+// Direction bit (from host perspective)
 #define USB_DIR_OUT 0x00  // Host-to-device
 #define USB_DIR_IN 0x80   // Device-to-host
 
@@ -60,10 +60,10 @@
 
 // See Table 237. Transmission status encoding in RM0444
 typedef enum {
-  USB_ENDPOINT_STATE_DISABLED = 0b00,
-  USB_ENDPOINT_STATE_STALL = 0b01,
-  USB_ENDPOINT_STATE_NAK = 0b10,
-  USB_ENDPOINT_STATE_VALID = 0b11
+  USB_EP_STATE_DISABLED = 0b00,
+  USB_EP_STATE_STALL = 0b01,
+  USB_EP_STATE_NAK = 0b10,
+  USB_EP_STATE_VALID = 0b11
 } usb_endpoint_state_t;
 
 // The interrupt USB endpoint type is one of the four transfer types defined by the USB 2.0 specification:
@@ -73,19 +73,11 @@ typedef enum {
 //   Bulk	              Large, non-time-critical data	        Best-effort delivery
 //   Interrupt	        Small, time-sensitive updates	        Guaranteed max latency
 typedef enum {
-  USB_ENDPOINT_TYPE_CONTROL = 0,
-  USB_ENDPOINT_TYPE_ISOCHRONOUS = 1,
-  USB_ENDPOINT_TYPE_BULK = 2,
-  USB_ENDPOINT_TYPE_INTERRUPT = 3
+  USB_EP_TYPE_CONTROL = 0,
+  USB_EP_TYPE_ISOCHRONOUS = 1,
+  USB_EP_TYPE_BULK = 2,
+  USB_EP_TYPE_INTERRUPT = 3
 } usb_endpoint_type_t;
-
-// The maximum number of USB interfaces across all configurations
-// Each USB interface is as defined in the USB 2.0 spec (see Section 9.6.5 Interface Descriptor).
-// An interface is a logical grouping of endpoints and functions.
-// Two interfaces supported:
-//  * CDC (Communications Device Class ) ACM (Abstract Control Model) [Virtual COM port]
-//  * MSC (Mass Storage Class)  [SD card]
-#define USB_MAX_INTERFACES 1
 
 // This is the same as USB_DRD_PMABuffDescTypeDef
 typedef struct
@@ -102,7 +94,7 @@ typedef struct
 
 // Buffer Table is located in Packet Memory Area (PMA)
 typedef struct {
-  usb_buffer_description_table_t endpoint[USB_ENDPOINT_MAX];
+  usb_buffer_description_table_t endpoint[USB_EP_MAX];
 } usb_buffer_description_table_map_t;
 
 // Buffers can be placed anywhere inside the packet memory because their location and size is specified in a buffer description table,
@@ -151,11 +143,10 @@ typedef enum {
   USB_REQUEST_TYPE_MASK = 0x60
 } usb_request_type_t;
 
-// See: Bit 4 DIR: Direction of transaction USB interrupt status register (USB_ISTR) in RM0444
 typedef enum {
-  USB_ENDPOINT_DIRECTION_OUT = 0,  // VTTX bit is set in the USB_CHEPnR register
-  USB_ENDPOINT_DIRECTION_IN = 1,   // VTRX bit or both VTTX/VTRX are set in the USB_CHEPnR
-} usb_endpoint_direction_t;
+  USB_EP_DIRECTION_OUT_IDX = 0,
+  USB_EP_DIRECTION_IN_IDX = 1,
+} usb_endpoint_direction_index_t;
 
 /// Standard USB control request (USB 2.0 Spec, Table 9-2)
 typedef struct __attribute__((packed)) {
@@ -170,7 +161,7 @@ _Static_assert(sizeof(usb_control_request_t) == 8, "sizeof(usb_control_request_t
 
 __attribute__((always_inline)) static inline usb_request_recipient_t usb_request_recipient(uint8_t bm) { return (bm)&USB_REQUEST_RECIPIENT_MASK; }
 __attribute__((always_inline)) static inline usb_request_type_t usb_request_type(uint8_t bm) { return ((bm)&USB_REQUEST_TYPE_MASK) >> 5; }
-__attribute__((always_inline)) static inline usb_endpoint_direction_t usb_request_direction(uint8_t bm) { return USB_EP_DIR((bm)) >> 7; }
+__attribute__((always_inline)) static inline usb_endpoint_direction_index_t usb_request_direction(uint8_t bm) { return USB_EP_DIR((bm)) >> 7; }
 
 // USB Device Descriptor
 typedef struct __attribute__((packed)) {
