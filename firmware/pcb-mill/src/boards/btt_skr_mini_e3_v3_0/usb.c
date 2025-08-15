@@ -513,8 +513,8 @@ void handle_bus_reset() {
 // Invoked when a control transfer's status stage is complete.
 // May help DCD to prepare for next control transfer, this API is optional.
 void dcd_edpt0_status_complete(tusb_control_request_t const *request) {
-  if (request->bmRequestType_bit.recipient == TUSB_REQ_RCPT_DEVICE &&
-      request->bmRequestType_bit.type == TUSB_REQ_TYPE_STANDARD &&
+  if (request->bmRequestType_bit.recipient == USB_REQUEST_RECIPIENT_DEVICE &&
+      request->bmRequestType_bit.type == USB_REQUEST_TYPE_STANDARD &&
       request->bRequest == TUSB_REQ_SET_ADDRESS) {
     uint8_t const dev_addr = (uint8_t)request->wValue;
     USB->DADDR = (USB_DADDR_EF | dev_addr);

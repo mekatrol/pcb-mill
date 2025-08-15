@@ -4,23 +4,18 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-/*------------------------------------------------------------------*/
-/* CONSTANTS
- *------------------------------------------------------------------*/
-
-/// USB Descriptor Types
 typedef enum {
-  TUSB_DESC_DEVICE = 0x01,
-  TUSB_DESC_CONFIGURATION = 0x02,
-  TUSB_DESC_STRING = 0x03,
-  TUSB_DESC_INTERFACE = 0x04,
-  TUSB_DESC_ENDPOINT = 0x05,
-  TUSB_DESC_DEVICE_QUALIFIER = 0x06,
-  TUSB_DESC_OTHER_SPEED_CONFIG = 0x07,
-  TUSB_DESC_INTERFACE_ASSOCIATION = 0x0B,
-  TUSB_DESC_BOS = 0x0F,
-  TUSB_DESC_CS_INTERFACE = 0x24
-} tusb_desc_type_t;
+  USB_DESC_DEVICE = 0x01,
+  USB_DESC_CONFIGURATION = 0x02,
+  USB_DESC_STRING = 0x03,
+  USB_DESC_INTERFACE = 0x04,
+  USB_DESC_ENDPOINT = 0x05,
+  USB_DESC_DEVICE_QUALIFIER = 0x06,
+  USB_DESC_OTHER_SPEED_CONFIG = 0x07,
+  USB_DESC_INTERFACE_ASSOCIATION = 0x0B,
+  USB_DESC_BOS = 0x0F,
+  USB_DESC_CS_INTERFACE = 0x24
+} usb_desc_type_t;
 
 typedef enum {
   TUSB_REQ_GET_STATUS = 0,
@@ -35,32 +30,60 @@ typedef enum {
 } tusb_request_code_t;
 
 typedef enum {
+  // ----- USB 2.0 Standard Requests (bRequest only) -----
+  USB_STD_GET_STATUS = 0x00,
+  USB_STD_CLEAR_FEATURE = 0x01,
+  USB_STD_RESERVED_2 = 0x02,
+  USB_STD_SET_FEATURE = 0x03,
+  USB_STD_RESERVED_4 = 0x04,
+  USB_STD_SET_ADDRESS = 0x05,
+  USB_STD_GET_DESCRIPTOR = 0x06,
+  USB_STD_SET_DESCRIPTOR = 0x07,
+  USB_STD_GET_CONFIGURATION = 0x08,
+  USB_STD_SET_CONFIGURATION = 0x09,
+  USB_STD_GET_INTERFACE = 0x0A,
+  USB_STD_SET_INTERFACE = 0x0B,
+  USB_STD_SYNCH_FRAME = 0x0C,
+
+  // ----- USB CDC Class-Specific Requests (bRequest only) -----
+  CDC_CLASS_SEND_ENCAPSULATED_COMMAND = 0x00,  // bmRequestType will differ
+  CDC_CLASS_GET_ENCAPSULATED_RESPONSE = 0x01,
+  CDC_CLASS_SET_COMM_FEATURE = 0x02,
+  CDC_CLASS_GET_COMM_FEATURE = 0x03,
+  CDC_CLASS_CLEAR_COMM_FEATURE = 0x04,
+  CDC_CLASS_SET_LINE_CODING = 0x20,         // 32
+  CDC_CLASS_GET_LINE_CODING = 0x21,         // 33
+  CDC_CLASS_SET_CONTROL_LINE_STATE = 0x22,  // 34
+  CDC_CLASS_SEND_BREAK = 0x23               // 35
+} usb_request_code_t;
+
+typedef enum {
   TUSB_REQ_FEATURE_EDPT_HALT = 0,
   TUSB_REQ_FEATURE_REMOTE_WAKEUP = 1
 } tusb_request_feature_selector_t;
 
 typedef enum {
-  TUSB_REQ_TYPE_STANDARD = 0,
-  TUSB_REQ_TYPE_CLASS,
-  TUSB_REQ_TYPE_VENDOR,
-  TUSB_REQ_TYPE_INVALID
-} tusb_request_type_t;
+  USB_REQUEST_TYPE_STANDARD = 0,  // 00
+  USB_REQUEST_TYPE_CLASS = 1,     // 01
+  USB_REQUEST_TYPE_VENDOR = 2,    // 10
+  USB_REQUEST_TYPE_RESERVED = 3   // 11 -> reserved in spec
+} usb_request_type_t;
 
 typedef enum {
-  TUSB_REQ_RCPT_DEVICE = 0,
-  TUSB_REQ_RCPT_INTERFACE,
-  TUSB_REQ_RCPT_ENDPOINT
-} tusb_request_recipient_t;
+  USB_REQUEST_RECIPIENT_DEVICE = 0,
+  USB_REQUEST_RECIPIENT_INTERFACE,
+  USB_REQUEST_RECIPIENT_ENDPOINT
+} usb_request_recipient_t;
 
 // https://www.usb.org/defined-class-codes
 typedef enum {
   TUSB_CLASS_CDC = 2,
   TUSB_CLASS_CDC_DATA = 10
-} tusb_class_code_t;
+} usb_class_code_t;
 
 enum {
-  TUSB_DESC_CONFIG_ATT_REMOTE_WAKEUP = 1u << 5,
-  TUSB_DESC_CONFIG_ATT_SELF_POWERED = 1u << 6,
+  USB_DESC_CONFIG_ATT_REMOTE_WAKEUP = 1u << 5,
+  USB_DESC_CONFIG_ATT_SELF_POWERED = 1u << 6,
 };
 
 // TODO remove
@@ -247,8 +270,8 @@ typedef struct __attribute__((packed)) {
 typedef struct __attribute__((packed)) {
   union {
     struct __attribute__((packed)) {
-      uint8_t recipient : 5;  ///< Recipient type tusb_request_recipient_t.
-      uint8_t type : 2;       ///< Request type tusb_request_type_t.
+      uint8_t recipient : 5;  ///< Recipient type usb_request_recipient_t.
+      uint8_t type : 2;       ///< Request type usb_request_type_t.
       uint8_t direction : 1;  ///< Direction type. usb_endpoint_direction_t
     } bmRequestType_bit;
 
@@ -313,6 +336,81 @@ __attribute__((always_inline)) static inline uint8_t tu_desc_subtype(void const*
 __attribute__((always_inline)) static inline uint8_t tu_desc_is_valid(void const* desc, uint8_t const* desc_end) {
   const uint8_t* desc8 = (uint8_t const*)desc;
   return (desc8 < desc_end) && (tu_desc_next(desc) <= desc_end);
+}
+
+__attribute__((always_inline)) static inline uint16_t usb_get_request_type_code(const tusb_control_request_t* request) {
+  uint16_t req_code = ((request->bmRequestType & 0x60) << 3) | request->bRequest;
+  return req_code;
+}
+
+__attribute__((always_inline)) static inline const char* get_usb_request_code_name(const tusb_control_request_t* request) {
+  uint8_t type = request->bmRequestType & 0x60;  // 0x00=Standard, 0x20=Class, 0x40=Vendor
+  uint8_t bRequest = (uint16_t)request->bRequest;
+
+  switch (type) {
+    case 0x00:  // ----- Standard -----
+      switch (bRequest) {
+        case USB_STD_GET_STATUS:
+          return "USB_STD_GET_STATUS";
+        case USB_STD_CLEAR_FEATURE:
+          return "USB_STD_CLEAR_FEATURE";
+        case USB_STD_RESERVED_2:
+          return "USB_STD_RESERVED_2";
+        case USB_STD_SET_FEATURE:
+          return "USB_STD_SET_FEATURE";
+        case USB_STD_RESERVED_4:
+          return "USB_STD_RESERVED_4";
+        case USB_STD_SET_ADDRESS:
+          return "USB_STD_SET_ADDRESS";
+        case USB_STD_GET_DESCRIPTOR:
+          return "USB_STD_GET_DESCRIPTOR";
+        case USB_STD_SET_DESCRIPTOR:
+          return "USB_STD_SET_DESCRIPTOR";
+        case USB_STD_GET_CONFIGURATION:
+          return "USB_STD_GET_CONFIGURATION";
+        case USB_STD_SET_CONFIGURATION:
+          return "USB_STD_SET_CONFIGURATION";
+        case USB_STD_GET_INTERFACE:
+          return "USB_STD_GET_INTERFACE";
+        case USB_STD_SET_INTERFACE:
+          return "USB_STD_SET_INTERFACE";
+        case USB_STD_SYNCH_FRAME:
+          return "USB_STD_SYNCH_FRAME";
+        default:
+          return "UNKNOWN_STD_REQUEST";
+      }
+
+    case 0x20:  // ----- Class -----
+      switch (bRequest) {
+        case CDC_CLASS_SEND_ENCAPSULATED_COMMAND:
+          return "CDC_CLASS_SEND_ENCAPSULATED_COMMAND";
+        case CDC_CLASS_GET_ENCAPSULATED_RESPONSE:
+          return "CDC_CLASS_GET_ENCAPSULATED_RESPONSE";
+        case CDC_CLASS_SET_COMM_FEATURE:
+          return "CDC_CLASS_SET_COMM_FEATURE";
+        case CDC_CLASS_GET_COMM_FEATURE:
+          return "CDC_CLASS_GET_COMM_FEATURE";
+        case CDC_CLASS_CLEAR_COMM_FEATURE:
+          return "CDC_CLASS_CLEAR_COMM_FEATURE";
+        case CDC_CLASS_SET_LINE_CODING:
+          return "CDC_CLASS_SET_LINE_CODING";
+        case CDC_CLASS_GET_LINE_CODING:
+          return "CDC_CLASS_GET_LINE_CODING";
+        case CDC_CLASS_SET_CONTROL_LINE_STATE:
+          return "CDC_CLASS_SET_CONTROL_LINE_STATE";
+        case CDC_CLASS_SEND_BREAK:
+          return "CDC_CLASS_SEND_BREAK";
+        default:
+          return "UNKNOWN_CLASS_REQUEST";
+      }
+
+    case 0x40:  // ----- Vendor -----
+      // Add your vendor-specific requests here
+      return "VENDOR_SPECIFIC_REQUEST";
+
+    default:
+      return "UNKNOWN_USB_REQUEST_TYPE";
+  }
 }
 
 #endif  // TUSB_TYPES_H_

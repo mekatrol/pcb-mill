@@ -6,11 +6,11 @@
 #define USART2_BAUD_RATE 115200
 
 // USART2 RX buffer
-#define USART2_RX_BUFFER_SIZE 128
+#define USART2_RX_BUFFER_SIZE 2048
 static uint8_t usart2_rx_buffer[USART2_RX_BUFFER_SIZE];
 
 // USART2 TX buffer
-#define USART2_TX_BUFFER_SIZE 128
+#define USART2_TX_BUFFER_SIZE 2048
 static uint8_t usart2_tx_buffer[USART2_TX_BUFFER_SIZE];
 
 static usart_instance_t usart2_instance = {

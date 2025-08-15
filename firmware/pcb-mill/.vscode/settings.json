@@ -6,7 +6,10 @@
     "circular_buffer.h": "c",
     "board_hal.h": "c",
     "usb_hal.h": "c",
-    "stm32g0b1xx.h": "c"
+    "stm32g0b1xx.h": "c",
+    "diagnostics.h": "c",
+    "build_config.h": "c",
+    "hal.h": "c"
   },
   "cortex-debug.variableUseNaturalFormat": true
 }

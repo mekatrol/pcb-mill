@@ -11,7 +11,7 @@
 // -----------------------------------------------------------------------------
 usb_device_desc_t const desc_device = {
     .bLength = sizeof(usb_device_desc_t),  // Size of this descriptor in bytes (should be 18 for a device descriptor)
-    .bDescriptorType = TUSB_DESC_DEVICE,   // Descriptor Type: DEVICE (0x01)
+    .bDescriptorType = USB_DESC_DEVICE,    // Descriptor Type: DEVICE (0x01)
 
     .bcdUSB = 0x0200,  // USB Specification version: 2.00 (BCD format)
 
@@ -111,7 +111,7 @@ uint16_t const* tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
   (void)langid;
 
   if (index == 0) {
-    _desc_str[0] = (2 << 8) | TUSB_DESC_STRING;
+    _desc_str[0] = (2 << 8) | USB_DESC_STRING;
     _desc_str[1] = 0x0409;
     return _desc_str;
   }
@@ -122,7 +122,7 @@ uint16_t const* tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
   size_t len = strlen(str);
 
   if (len > 31) len = 31;
-  _desc_str[0] = (TUSB_DESC_STRING << 8) | (2 * len + 2);
+  _desc_str[0] = (USB_DESC_STRING << 8) | (2 * len + 2);
   for (size_t i = 0; i < len; ++i) {
     _desc_str[1 + i] = str[i];
   }

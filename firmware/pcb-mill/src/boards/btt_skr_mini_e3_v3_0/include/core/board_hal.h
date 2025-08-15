@@ -8,6 +8,8 @@
 #include "stm32g0b1xx.h"
 #include "core_cm0plus.h"
 
+#include "diagnostics.h"
+
 #define BIT_00_POS 0
 #define BIT_00 (1U << BIT_00_POS)
 #define BIT_01_POS 1

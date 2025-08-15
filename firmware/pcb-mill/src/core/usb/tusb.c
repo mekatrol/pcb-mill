@@ -71,7 +71,7 @@ void tu_edpt_bind_driver(uint8_t ep2drv[][2], tusb_desc_interface_t const* desc_
   uint8_t const* desc_end = p_desc + desc_len;
 
   while (p_desc < desc_end) {
-    if (TUSB_DESC_ENDPOINT == tu_desc_type(p_desc)) {
+    if (USB_DESC_ENDPOINT == tu_desc_type(p_desc)) {
       uint8_t const ep_addr = ((usb_endpoint_descriptor_t const*)p_desc)->bEndpointAddress;
       ep2drv[usb_endpoint_number(ep_addr)][usb_endpoint_direction(ep_addr)] = 0;
     }
@@ -94,10 +94,10 @@ uint16_t tu_desc_get_interface_total_len(tusb_desc_interface_t const* desc_itf, 
         break;
       }
       // return on IAD regardless of itf count
-      if (tu_desc_type(p_desc) == TUSB_DESC_INTERFACE_ASSOCIATION) {
+      if (tu_desc_type(p_desc) == USB_DESC_INTERFACE_ASSOCIATION) {
         return len;
       }
-      if ((tu_desc_type(p_desc) == TUSB_DESC_INTERFACE) &&
+      if ((tu_desc_type(p_desc) == USB_DESC_INTERFACE) &&
           ((tusb_desc_interface_t const*)p_desc)->bAlternateSetting == 0) {
         break;
       }

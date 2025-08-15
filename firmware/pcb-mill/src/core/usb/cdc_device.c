@@ -208,12 +208,12 @@ uint16_t cdcd_open(const tusb_desc_interface_t* itf_desc, uint16_t max_len) {
   const uint8_t* p_desc = tu_desc_next(itf_desc);
 
   // Communication Functional Descriptors
-  while (TUSB_DESC_CS_INTERFACE == tu_desc_type(p_desc) && drv_len <= max_len) {
+  while (USB_DESC_CS_INTERFACE == tu_desc_type(p_desc) && drv_len <= max_len) {
     drv_len += tu_desc_len(p_desc);
     p_desc = tu_desc_next(p_desc);
   }
 
-  if (TUSB_DESC_ENDPOINT == tu_desc_type(p_desc)) {
+  if (USB_DESC_ENDPOINT == tu_desc_type(p_desc)) {
     // notification endpoint
     const usb_endpoint_descriptor_t* desc_ep = (const usb_endpoint_descriptor_t*)p_desc;
     if (!usbd_edpt_open(desc_ep)) {
@@ -226,7 +226,7 @@ uint16_t cdcd_open(const tusb_desc_interface_t* itf_desc, uint16_t max_len) {
   }
 
   //------------- Data Interface (if any) -------------//
-  if ((TUSB_DESC_INTERFACE == tu_desc_type(p_desc)) &&
+  if ((USB_DESC_INTERFACE == tu_desc_type(p_desc)) &&
       (TUSB_CLASS_CDC_DATA == ((const tusb_desc_interface_t*)p_desc)->bInterfaceClass)) {
     // next to endpoint descriptor
     drv_len += tu_desc_len(p_desc);
@@ -251,7 +251,7 @@ uint16_t cdcd_open(const tusb_desc_interface_t* itf_desc, uint16_t max_len) {
 // return false to stall control endpoint (e.g unsupported request)
 bool cdcd_control_xfer_cb(uint8_t stage, const tusb_control_request_t* request) {
   // Handle class request only
-  if (request->bmRequestType_bit.type != TUSB_REQ_TYPE_CLASS) {
+  if (request->bmRequestType_bit.type != USB_REQUEST_TYPE_CLASS) {
     return false;
   }
 

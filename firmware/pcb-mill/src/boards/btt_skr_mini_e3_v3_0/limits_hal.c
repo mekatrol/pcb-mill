@@ -1,7 +1,7 @@
 #include <stdint.h>
-
 #include "board_hal.h"
 #include "hal.h"
+#include "diagnostics.h"
 
 void limits_init_hal() {
   // Enable SYSCFG clock

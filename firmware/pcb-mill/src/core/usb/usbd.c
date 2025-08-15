@@ -104,25 +104,25 @@ static bool invoke_class_control(tusb_control_request_t const* request) {
 // Returns false if unable to complete the request, causing caller to stall control endpoints.
 bool process_control_request(tusb_control_request_t const* p_request) {
   usbd_control_set_complete_callback(NULL);
-  if (p_request->bmRequestType_bit.type >= TUSB_REQ_TYPE_INVALID) {
+  if (p_request->bmRequestType_bit.type >= USB_REQUEST_TYPE_RESERVED) {
     return false;
   }
 
   // Vendor request
-  if (p_request->bmRequestType_bit.type == TUSB_REQ_TYPE_VENDOR) {
+  if (p_request->bmRequestType_bit.type == USB_REQUEST_TYPE_VENDOR) {
     usbd_control_set_complete_callback(tud_vendor_control_xfer_cb);
     return tud_vendor_control_xfer_cb(CONTROL_STAGE_SETUP, p_request);
   }
 
   switch (p_request->bmRequestType_bit.recipient) {
     //------------- Device Requests e.g in enumeration -------------//
-    case TUSB_REQ_RCPT_DEVICE:
-      if (TUSB_REQ_TYPE_CLASS == p_request->bmRequestType_bit.type) {
+    case USB_REQUEST_RECIPIENT_DEVICE:
+      if (USB_REQUEST_TYPE_CLASS == p_request->bmRequestType_bit.type) {
         // forward to class driver: "non-STD request to Interface"
         return invoke_class_control(p_request);
       }
 
-      if (TUSB_REQ_TYPE_STANDARD != p_request->bmRequestType_bit.type) {
+      if (USB_REQUEST_TYPE_STANDARD != p_request->bmRequestType_bit.type) {
         // Non-standard request is not supported
         return false;
       }
@@ -226,13 +226,13 @@ bool process_control_request(tusb_control_request_t const* p_request) {
       break;
 
     //------------- Class/Interface Specific Request -------------//
-    case TUSB_REQ_RCPT_INTERFACE: {
+    case USB_REQUEST_RECIPIENT_INTERFACE: {
       // all requests to Interface (STD or Class) is forwarded to class driver.
       // notable requests are: GET HID REPORT DESCRIPTOR, SET_INTERFACE, GET_INTERFACE
       if (!invoke_class_control(p_request)) {
         // For GET_INTERFACE and SET_INTERFACE, it is mandatory to respond even if the class
         // driver doesn't use alternate settings or implement this
-        if (TUSB_REQ_TYPE_STANDARD != p_request->bmRequestType_bit.type) {
+        if (USB_REQUEST_TYPE_STANDARD != p_request->bmRequestType_bit.type) {
           return false;
         }
 
@@ -258,7 +258,7 @@ bool process_control_request(tusb_control_request_t const* p_request) {
     }
 
     //------------- Endpoint Request -------------//
-    case TUSB_REQ_RCPT_ENDPOINT: {
+    case USB_REQUEST_RECIPIENT_ENDPOINT: {
       uint8_t const ep_addr = U16_LOW(p_request->wIndex);
       uint8_t const ep_num = usb_endpoint_number(ep_addr);
 
@@ -266,7 +266,7 @@ bool process_control_request(tusb_control_request_t const* p_request) {
         return false;
       }
 
-      if (TUSB_REQ_TYPE_STANDARD != p_request->bmRequestType_bit.type) {
+      if (USB_REQUEST_TYPE_STANDARD != p_request->bmRequestType_bit.type) {
         // Forward class request to its driver
         return invoke_class_control(p_request);
       } else {
@@ -319,13 +319,13 @@ bool process_control_request(tusb_control_request_t const* p_request) {
 static bool process_set_config(uint8_t cfg_num) {
   // index is cfg_num-1
   tusb_desc_configuration_t const* desc_cfg = (tusb_desc_configuration_t const*)tud_descriptor_configuration_cb(cfg_num - 1);
-  if (desc_cfg == NULL || desc_cfg->bDescriptorType != TUSB_DESC_CONFIGURATION) {
+  if (desc_cfg == NULL || desc_cfg->bDescriptorType != USB_DESC_CONFIGURATION) {
     return false;
   }
 
   // Parse configuration descriptor
-  _usbd_dev.remote_wakeup_support = (desc_cfg->bmAttributes & TUSB_DESC_CONFIG_ATT_REMOTE_WAKEUP) ? 1u : 0u;
-  _usbd_dev.self_powered = (desc_cfg->bmAttributes & TUSB_DESC_CONFIG_ATT_SELF_POWERED) ? 1u : 0u;
+  _usbd_dev.remote_wakeup_support = (desc_cfg->bmAttributes & USB_DESC_CONFIG_ATT_REMOTE_WAKEUP) ? 1u : 0u;
+  _usbd_dev.self_powered = (desc_cfg->bmAttributes & USB_DESC_CONFIG_ATT_SELF_POWERED) ? 1u : 0u;
 
   // Parse interface descriptor
   uint8_t const* p_desc = ((uint8_t const*)desc_cfg) + sizeof(tusb_desc_configuration_t);
@@ -335,14 +335,14 @@ static bool process_set_config(uint8_t cfg_num) {
     uint8_t assoc_itf_count = 1;
 
     // Class will always starts with Interface Association (if any) and then Interface descriptor
-    if (TUSB_DESC_INTERFACE_ASSOCIATION == tu_desc_type(p_desc)) {
+    if (USB_DESC_INTERFACE_ASSOCIATION == tu_desc_type(p_desc)) {
       tusb_desc_interface_assoc_t const* desc_iad = (tusb_desc_interface_assoc_t const*)p_desc;
       assoc_itf_count = desc_iad->bInterfaceCount;
 
       p_desc = tu_desc_next(p_desc);  // next to Interface
     }
 
-    if (TUSB_DESC_INTERFACE != tu_desc_type(p_desc)) {
+    if (USB_DESC_INTERFACE != tu_desc_type(p_desc)) {
       return false;
     }
     tusb_desc_interface_t const* desc_itf = (tusb_desc_interface_t const*)p_desc;
@@ -391,11 +391,11 @@ __attribute__((always_inline)) static inline uint16_t tu_unaligned_read16(const 
 
 // return descriptor's buffer and update desc_len
 static bool process_get_descriptor(tusb_control_request_t const* p_request) {
-  tusb_desc_type_t const desc_type = (tusb_desc_type_t)U16_HIGH(p_request->wValue);
+  usb_desc_type_t const desc_type = (usb_desc_type_t)U16_HIGH(p_request->wValue);
   uint8_t const desc_index = U16_LOW(p_request->wValue);
 
   switch (desc_type) {
-    case TUSB_DESC_DEVICE: {
+    case USB_DESC_DEVICE: {
       void* desc_device = (void*)(uintptr_t)tud_descriptor_device_cb();
       if (!desc_device) {
         return false;
@@ -417,7 +417,7 @@ static bool process_get_descriptor(tusb_control_request_t const* p_request) {
     }
       // break; // unreachable
 
-    case TUSB_DESC_BOS: {
+    case USB_DESC_BOS: {
       // requested by host if USB > 2.0 ( i.e 2.1 or 3.x )
       uintptr_t desc_bos = (uintptr_t)tud_descriptor_bos_cb();
       if (!desc_bos) {
@@ -431,11 +431,11 @@ static bool process_get_descriptor(tusb_control_request_t const* p_request) {
     }
       // break; // unreachable
 
-    case TUSB_DESC_CONFIGURATION:
-    case TUSB_DESC_OTHER_SPEED_CONFIG: {
+    case USB_DESC_CONFIGURATION:
+    case USB_DESC_OTHER_SPEED_CONFIG: {
       uintptr_t desc_config;
 
-      if (desc_type == TUSB_DESC_CONFIGURATION) {
+      if (desc_type == USB_DESC_CONFIGURATION) {
         desc_config = (uintptr_t)tud_descriptor_configuration_cb(desc_index);
         if (!desc_config) {
           return false;
@@ -455,7 +455,7 @@ static bool process_get_descriptor(tusb_control_request_t const* p_request) {
     }
       // break; // unreachable
 
-    case TUSB_DESC_STRING: {
+    case USB_DESC_STRING: {
       // String Descriptor always uses the desc set from user
       uint8_t const* desc_str = (uint8_t const*)tud_descriptor_string_cb(desc_index, p_request->wIndex);
       if (!desc_str) {
@@ -467,7 +467,7 @@ static bool process_get_descriptor(tusb_control_request_t const* p_request) {
     }
       // break; // unreachable
 
-    case TUSB_DESC_DEVICE_QUALIFIER: {
+    case USB_DESC_DEVICE_QUALIFIER: {
       uint8_t const* desc_qualifier = tud_descriptor_device_qualifier_cb();
       if (!desc_qualifier) {
         return false;
@@ -490,7 +490,7 @@ bool usb_endpoint_open_set(uint8_t const* p_desc, uint8_t ep_count, uint8_t xfer
   for (int i = 0; i < ep_count; i++) {
     usb_endpoint_descriptor_t const* desc_ep = (usb_endpoint_descriptor_t const*)p_desc;
 
-    if (desc_ep->bDescriptorType != TUSB_DESC_ENDPOINT || desc_ep->bmAttributes.type != xfer_type) {
+    if (desc_ep->bDescriptorType != USB_DESC_ENDPOINT || desc_ep->bmAttributes.type != xfer_type) {
       return false;
     }
 
