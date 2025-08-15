@@ -58,9 +58,6 @@ typedef enum {
 //  * MSC (Mass Storage Class)  [SD card]
 #define USB_MAX_INTERFACES 2
 
-// Size of array based on total memory size dived by size of single element
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
-
 // This is the same as USB_DRD_PMABuffDescTypeDef
 typedef struct
 {
@@ -134,12 +131,13 @@ typedef enum {
   USB_ENDPOINT_DIRECTION_IN_MASK = 0x80
 } usb_endpoint_direction_t;
 
+/// Standard USB control request (USB 2.0 Spec, Table 9-2)
 typedef struct __attribute__((packed)) {
-  uint8_t bmRequestType;
-  uint8_t bRequest;
-  uint16_t wValue;
-  uint16_t wIndex;
-  uint16_t wLength;
+  uint8_t bmRequestType;  // Request characteristics: direction, type, and recipient (see USB 2.0 §9.3, Table 9-2)
+  uint8_t bRequest;       // Specific request code (standard, class, or vendor-specific)
+  uint16_t wValue;        // Request-specific parameter (meaning depends on bRequest)
+  uint16_t wIndex;        // Typically an index or offset; often used for interface or endpoint number
+  uint16_t wLength;       // Number of bytes to transfer in the data stage (host → device or device → host)
 } usb_control_request_t;
 
 _Static_assert(sizeof(usb_control_request_t) == 8, "sizeof(usb_control_request_t) must be 8");

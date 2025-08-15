@@ -38,7 +38,7 @@ static bool usb_read_packet_data(void *__restrict dst, uint16_t src, uint16_t by
 static void usb_transmit_packet(xfer_ctl_t *xfer, uint16_t ep_ix);
 
 bool usbd_control_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes);
-bool cdcd_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes);
+bool usb_cdc_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes);
 
 __attribute__((always_inline)) static inline xfer_ctl_t *xfer_ctl_ptr(uint8_t epnum, uint8_t dir) {
   return &xfer_status[epnum][dir];
@@ -171,7 +171,7 @@ static void transfer_complete(uint8_t ep_addr, uint32_t xferred_bytes) {
   if (ep_num == 0) {
     usbd_control_xfer_cb(ep_addr, xferred_bytes);
   } else {
-    cdcd_xfer_cb(ep_addr, xferred_bytes);
+    usb_cdc_xfer_cb(ep_addr, xferred_bytes);
   }
 }
 

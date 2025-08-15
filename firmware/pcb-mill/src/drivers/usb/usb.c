@@ -66,7 +66,7 @@ __attribute__((always_inline)) static inline const usb_interface_association_des
 
 //     // Find driver for this interface
 //     uint16_t const remaining_len = (uint16_t)(descriptors_end - interface_association_descriptor);
-//     uint16_t const drv_len = cdcd_open(control_interface_descriptor, remaining_len);
+//     uint16_t const drv_len = usb_cdc_open(control_interface_descriptor, remaining_len);
 
 //     if ((sizeof(usb_control_interface_descriptor_t) <= drv_len) && (drv_len <= remaining_len)) {
 //       if (interface_count == 1) {

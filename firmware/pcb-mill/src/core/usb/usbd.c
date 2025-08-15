@@ -67,7 +67,7 @@ bool usb_init_driver() {
   memset(&usb_device, 0, sizeof(usbd_device_t));
 
   // Init class drivers
-  cdcd_init();
+  usb_cdc_init();
 
   // Init device controller driver
   usb_device_init();
@@ -77,7 +77,7 @@ bool usb_init_driver() {
 }
 
 void usb_configuration_reset() {
-  cdcd_reset();
+  usb_cdc_reset();
 
   memset(&usb_device, 0, sizeof(usbd_device_t));
   memset(usb_device.itf2drv, 0xFF, sizeof(usb_device.itf2drv));  // invalid mapping
@@ -90,8 +90,8 @@ void usb_configuration_reset() {
 
 // Helper to invoke class driver control request handler
 static bool invoke_class_control(usb_control_request_t const* request) {
-  usbd_control_set_complete_callback(cdcd_control_xfer_cb);
-  return cdcd_control_xfer_cb(CONTROL_STAGE_SETUP, request);
+  usbd_control_set_complete_callback(usb_cdc_control_xfer_cb);
+  return usb_cdc_control_xfer_cb(CONTROL_STAGE_SETUP, request);
 }
 
 // This handles the actual request and its response.
@@ -261,7 +261,7 @@ bool process_control_request(usb_control_request_t const* request) {
       uint8_t const ep_addr = U16_LOW(request->wIndex);
       uint8_t const ep_num = usb_endpoint_number(ep_addr);
 
-      if (ep_num >= ARRAY_SIZE(usb_device.ep2drv)) {
+      if (ep_num >= sizeof(usb_device.ep2drv) / sizeof(usb_device.ep2drv[0])) {
         return false;
       }
 
@@ -347,7 +347,7 @@ static bool usb_set_configuration() {
 
     // Find driver for this interface
     uint16_t const remaining_len = (uint16_t)(desc_end - p_desc);
-    uint16_t const drv_len = cdcd_open(desc_itf, remaining_len);
+    uint16_t const drv_len = usb_cdc_open(desc_itf, remaining_len);
 
     if ((sizeof(usb_control_interface_descriptor_t) <= drv_len) && (drv_len <= remaining_len)) {
       if (assoc_itf_count == 1) {
