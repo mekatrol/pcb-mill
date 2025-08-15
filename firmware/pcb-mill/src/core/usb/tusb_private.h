@@ -15,10 +15,10 @@
 bool tu_edpt_validate(usb_endpoint_descriptor_t const* desc_ep, bool is_host);
 
 // Bind all endpoint of a interface descriptor to class driver
-void tu_edpt_bind_driver(uint8_t ep2drv[][2], tusb_desc_interface_t const* p_desc, uint16_t desc_len);
+void tu_edpt_bind_driver(uint8_t ep2drv[][2], usb_control_interface_descriptor_t const* p_desc, uint16_t desc_len);
 
 // Calculate total length of n interfaces (depending on IAD)
-uint16_t tu_desc_get_interface_total_len(tusb_desc_interface_t const* desc_itf, uint8_t itf_count, uint16_t max_len);
+uint16_t tu_desc_get_interface_total_len(usb_control_interface_descriptor_t const* desc_itf, uint8_t itf_count, uint16_t max_len);
 
 // Claim an endpoint
 bool tu_edpt_claim(endpoint_state_t* ep_state);

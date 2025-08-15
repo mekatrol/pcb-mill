@@ -165,8 +165,8 @@ static void transfer_complete(uint8_t ep_addr, uint32_t xferred_bytes) {
   const uint8_t ep_num = usb_endpoint_number(ep_addr);
   const uint8_t ep_dir = usb_endpoint_direction(ep_addr);
 
-  _usbd_dev.ep_status[ep_num][ep_dir].busy = 0;
-  _usbd_dev.ep_status[ep_num][ep_dir].claimed = 0;
+  usb_device.ep_status[ep_num][ep_dir].busy = 0;
+  usb_device.ep_status[ep_num][ep_dir].claimed = 0;
 
   if (ep_num == 0) {
     usbd_control_xfer_cb(ep_addr, xferred_bytes);
@@ -219,13 +219,13 @@ void handle_ctr_tx(uint32_t endpoint_idn) {
 static void setup_received(usb_control_request_t *setup_received) {
   // Mark as connected after receiving 1st setup packet.
   // But it is easier to set it every time instead of wasting time to check then set
-  _usbd_dev.connected = 1;
+  usb_device.connected = 1;
 
   // mark both in & out control as free
-  _usbd_dev.ep_status[USB_EP0_ADDR][USB_ENDPOINT_DIRECTION_OUT].busy = 0;
-  _usbd_dev.ep_status[USB_EP0_ADDR][USB_ENDPOINT_DIRECTION_OUT].claimed = 0;
-  _usbd_dev.ep_status[USB_EP0_ADDR][USB_ENDPOINT_DIRECTION_IN].busy = 0;
-  _usbd_dev.ep_status[USB_EP0_ADDR][USB_ENDPOINT_DIRECTION_IN].claimed = 0;
+  usb_device.ep_status[USB_EP0_ADDR][USB_ENDPOINT_DIRECTION_OUT].busy = 0;
+  usb_device.ep_status[USB_EP0_ADDR][USB_ENDPOINT_DIRECTION_OUT].claimed = 0;
+  usb_device.ep_status[USB_EP0_ADDR][USB_ENDPOINT_DIRECTION_IN].busy = 0;
+  usb_device.ep_status[USB_EP0_ADDR][USB_ENDPOINT_DIRECTION_IN].claimed = 0;
 
   // Process control request
   if (!process_control_request(setup_received)) {

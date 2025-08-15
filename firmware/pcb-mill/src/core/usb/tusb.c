@@ -66,7 +66,7 @@ bool tu_edpt_validate(usb_endpoint_descriptor_t const* desc_ep, bool is_host) {
   return true;
 }
 
-void tu_edpt_bind_driver(uint8_t ep2drv[][2], tusb_desc_interface_t const* desc_itf, uint16_t desc_len) {
+void tu_edpt_bind_driver(uint8_t ep2drv[][2], usb_control_interface_descriptor_t const* desc_itf, uint16_t desc_len) {
   uint8_t const* p_desc = (uint8_t const*)desc_itf;
   uint8_t const* desc_end = p_desc + desc_len;
 
@@ -79,7 +79,7 @@ void tu_edpt_bind_driver(uint8_t ep2drv[][2], tusb_desc_interface_t const* desc_
   }
 }
 
-uint16_t tu_desc_get_interface_total_len(tusb_desc_interface_t const* desc_itf, uint8_t itf_count, uint16_t max_len) {
+uint16_t tu_desc_get_interface_total_len(usb_control_interface_descriptor_t const* desc_itf, uint8_t itf_count, uint16_t max_len) {
   uint8_t const* p_desc = (uint8_t const*)desc_itf;
   uint16_t len = 0;
 
@@ -98,7 +98,7 @@ uint16_t tu_desc_get_interface_total_len(tusb_desc_interface_t const* desc_itf, 
         return len;
       }
       if ((tu_desc_type(p_desc) == USB_DESC_INTERFACE) &&
-          ((tusb_desc_interface_t const*)p_desc)->bAlternateSetting == 0) {
+          ((usb_control_interface_descriptor_t const*)p_desc)->bAlternateSetting == 0) {
         break;
       }
 

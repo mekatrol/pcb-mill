@@ -28,7 +28,7 @@ typedef struct {
 
 } usbd_device_t;
 
-extern usbd_device_t _usbd_dev;
+extern usbd_device_t usb_device;
 
 bool process_control_request(usb_control_request_t const* request);
 
@@ -67,10 +67,6 @@ bool tud_control_status(usb_control_request_t const* request);
 // Invoked when received GET DEVICE DESCRIPTOR request
 // Application return pointer to descriptor
 uint8_t const* tud_descriptor_device_cb(void);
-
-// Invoked when received GET CONFIGURATION DESCRIPTOR request
-// Application return pointer to descriptor, whose contents must exist long enough for transfer to complete
-uint8_t const* tud_descriptor_configuration_cb(uint8_t index);
 
 // Invoked when received GET STRING DESCRIPTOR request
 // Application return pointer to descriptor, whose contents must exist long enough for transfer to complete

@@ -57,8 +57,8 @@ typedef enum {
 } usb_class_code_t;
 
 enum {
-  USB_DESC_CONFIG_ATT_REMOTE_WAKEUP = 1u << 5,
-  USB_DESC_CONFIG_ATT_SELF_POWERED = 1u << 6,
+  USB_DESC_CONFIG_ATT_REMOTE_WAKEUP = 1U << 5,
+  USB_DESC_CONFIG_ATT_SELF_POWERED = 1U << 6,
 };
 
 // TODO remove
@@ -91,38 +91,7 @@ typedef struct __attribute__((packed)) {
   uint8_t bNumDeviceCaps;   ///< Number of device capability descriptors in the BOS
 } tusb_desc_bos_t;
 
-_Static_assert(sizeof(tusb_desc_bos_t) == 5, "size is not correct");
-
-/// USB Configuration Descriptor
-typedef struct __attribute__((packed)) {
-  uint8_t bLength;          ///< Size of this descriptor in bytes
-  uint8_t bDescriptorType;  ///< CONFIGURATION Descriptor Type
-  uint16_t wTotalLength;    ///< Total length of data returned for this configuration. Includes the combined length of all descriptors (configuration, interface, endpoint, and class- or vendor-specific) returned for this configuration.
-
-  uint8_t bNumInterfaces;       ///< Number of interfaces supported by this configuration
-  uint8_t bConfigurationValue;  ///< Value to use as an argument to the SetConfiguration() request to select this configuration.
-  uint8_t iConfiguration;       ///< Index of string descriptor describing this configuration
-  uint8_t bmAttributes;         ///< Configuration characteristics \n D7: Reserved (set to one)\n D6: Self-powered \n D5: Remote Wakeup \n D4...0: Reserved (reset to zero) \n D7 is reserved and must be set to one for historical reasons. \n A device configuration that uses power from the bus and a local source reports a non-zero value in bMaxPower to indicate the amount of bus power required and sets D6. The actual power source at runtime may be determined using the GetStatus(DEVICE) request (see USB 2.0 spec Section 9.4.5). \n If a device configuration supports remote wakeup, D5 is set to one.
-  uint8_t bMaxPower;            ///< Maximum power consumption of the USB device from the bus in this specific configuration when the device is fully operational. Expressed in 2 mA units (i.e., 50 = 100 mA).
-} tusb_desc_configuration_t;
-
-_Static_assert(sizeof(tusb_desc_configuration_t) == 9, "size is not correct");
-
-/// USB Interface Descriptor
-typedef struct __attribute__((packed)) {
-  uint8_t bLength;          ///< Size of this descriptor in bytes
-  uint8_t bDescriptorType;  ///< INTERFACE Descriptor Type
-
-  uint8_t bInterfaceNumber;    ///< Number of this interface. Zero-based value identifying the index in the array of concurrent interfaces supported by this configuration.
-  uint8_t bAlternateSetting;   ///< Value used to select this alternate setting for the interface identified in the prior field
-  uint8_t bNumEndpoints;       ///< Number of endpoints used by this interface (excluding endpoint zero). If this value is zero, this interface only uses the Default Control Pipe.
-  uint8_t bInterfaceClass;     ///< Class code (assigned by the USB-IF). \li A value of zero is reserved for future standardization. \li If this field is set to FFH, the interface class is vendor-specific. \li All other values are reserved for assignment by the USB-IF.
-  uint8_t bInterfaceSubClass;  ///< Subclass code (assigned by the USB-IF). \n These codes are qualified by the value of the bInterfaceClass field. \li If the bInterfaceClass field is reset to zero, this field must also be reset to zero. \li If the bInterfaceClass field is not set to FFH, all values are reserved for assignment by the USB-IF.
-  uint8_t bInterfaceProtocol;  ///< Protocol code (assigned by the USB). \n These codes are qualified by the value of the bInterfaceClass and the bInterfaceSubClass fields. If an interface supports class-specific requests, this code identifies the protocols that the device uses as defined by the specification of the device class. \li If this field is reset to zero, the device does not use a class-specific protocol on this interface. \li If this field is set to FFH, the device uses a vendor-specific protocol for this interface.
-  uint8_t iInterface;          ///< Index of string descriptor describing this interface
-} tusb_desc_interface_t;
-
-_Static_assert(sizeof(tusb_desc_interface_t) == 9, "size is not correct");
+_Static_assert(sizeof(tusb_desc_bos_t) == 5, "size must be 5");
 
 /// USB Endpoint Descriptor
 typedef struct __attribute__((packed)) {
@@ -142,7 +111,7 @@ typedef struct __attribute__((packed)) {
   uint8_t bInterval;        // Polling interval, in frames or microframes depending on the operating speed
 } usb_endpoint_descriptor_t;
 
-_Static_assert(sizeof(usb_endpoint_descriptor_t) == 7, "size is not correct");
+_Static_assert(sizeof(usb_endpoint_descriptor_t) == 7, "size must be 7");
 
 /// USB Other Speed Configuration Descriptor
 typedef struct __attribute__((packed)) {
@@ -172,24 +141,7 @@ typedef struct __attribute__((packed)) {
   uint8_t bReserved;           ///< Reserved for future use, must be zero
 } tusb_desc_device_qualifier_t;
 
-_Static_assert(sizeof(tusb_desc_device_qualifier_t) == 10, "size is not correct");
-
-/// USB Interface Association Descriptor (IAD ECN)
-typedef struct __attribute__((packed)) {
-  uint8_t bLength;          ///< Size of descriptor
-  uint8_t bDescriptorType;  ///< Other_speed_Configuration Type
-
-  uint8_t bFirstInterface;  ///< Index of the first associated interface.
-  uint8_t bInterfaceCount;  ///< Total number of associated interfaces.
-
-  uint8_t bFunctionClass;     ///< Interface class ID.
-  uint8_t bFunctionSubClass;  ///< Interface subclass ID.
-  uint8_t bFunctionProtocol;  ///< Interface protocol ID.
-
-  uint8_t iFunction;  ///< Index of the string descriptor describing the interface association.
-} tusb_desc_interface_assoc_t;
-
-_Static_assert(sizeof(tusb_desc_interface_assoc_t) == 8, "size is not correct");
+_Static_assert(sizeof(tusb_desc_device_qualifier_t) == 10, "size must be 10");
 
 // USB String Descriptor
 typedef struct __attribute__((packed)) {

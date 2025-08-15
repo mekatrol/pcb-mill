@@ -357,7 +357,7 @@ typedef struct __attribute__((packed)) {
   uint8_t data_bits;  ///< can be 5, 6, 7, 8 or 16
 } cdc_line_coding_t;
 
-_Static_assert(sizeof(cdc_line_coding_t) == 7, "size is not correct");
+_Static_assert(sizeof(cdc_line_coding_t) == 7, "size must be 7");
 
 typedef union __attribute__((packed)) {
   struct __attribute__((packed)) {
@@ -368,7 +368,7 @@ typedef union __attribute__((packed)) {
   uint8_t value;
 } cdc_line_control_state_t;
 
-_Static_assert(sizeof(cdc_line_control_state_t) == 1, "size is not correct");
+_Static_assert(sizeof(cdc_line_control_state_t) == 1, "size must be 1");
 
 //--------------------------------------------------------------------+
 // Notifications
@@ -394,7 +394,7 @@ typedef union __attribute__((packed)) {
   uint16_t value;
 } cdc_notify_uart_state_t;
 
-_Static_assert(sizeof(cdc_notify_uart_state_t) == 2, "size is not correct");
+_Static_assert(sizeof(cdc_notify_uart_state_t) == 2, "size must be 2");
 
 // CDC 1.2 section 6.3.3 table 21
 typedef struct __attribute__((packed)) {
@@ -410,6 +410,6 @@ typedef struct __attribute__((packed)) {
   };
 } cdc_notify_msg_t;
 
-_Static_assert(sizeof(cdc_notify_msg_t) == 16, "size is not correct");
+_Static_assert(sizeof(cdc_notify_msg_t) == 16, "size must be 16");
 
 #endif

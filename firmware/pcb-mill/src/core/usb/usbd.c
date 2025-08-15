@@ -34,12 +34,12 @@ __attribute__((weak)) uint8_t const* tud_descriptor_other_speed_configuration_cb
 // Device Data
 //--------------------------------------------------------------------+
 
-usbd_device_t _usbd_dev;
+usbd_device_t usb_device;
 
 //--------------------------------------------------------------------+
 // Prototypes
 //--------------------------------------------------------------------+
-static bool process_set_config(uint8_t cfg_num);
+static bool usb_set_configuration();
 static bool process_get_descriptor(usb_control_request_t const* request);
 
 // from usbd_control.c
@@ -51,11 +51,11 @@ void usbd_control_set_complete_callback(usbd_control_xfer_cb_t fp);
 // Application API
 //--------------------------------------------------------------------+
 bool tud_connected(void) {
-  return _usbd_dev.connected;
+  return usb_device.connected;
 }
 
 bool tud_mounted(void) {
-  return _usbd_dev.cfg_num ? true : false;
+  return usb_device.cfg_num ? true : false;
 }
 
 bool tud_disconnect(void) {
@@ -64,7 +64,7 @@ bool tud_disconnect(void) {
 }
 
 bool usb_init_driver() {
-  memset(&_usbd_dev, 0, sizeof(usbd_device_t));
+  memset(&usb_device, 0, sizeof(usbd_device_t));
 
   // Init class drivers
   cdcd_init();
@@ -79,9 +79,9 @@ bool usb_init_driver() {
 void usb_configuration_reset() {
   cdcd_reset();
 
-  memset(&_usbd_dev, 0, sizeof(usbd_device_t));
-  memset(_usbd_dev.itf2drv, 0xFF, sizeof(_usbd_dev.itf2drv));  // invalid mapping
-  memset(_usbd_dev.ep2drv, 0xFF, sizeof(_usbd_dev.ep2drv));    // invalid mapping
+  memset(&usb_device, 0, sizeof(usbd_device_t));
+  memset(usb_device.itf2drv, 0xFF, sizeof(usb_device.itf2drv));  // invalid mapping
+  memset(usb_device.ep2drv, 0xFF, sizeof(usb_device.ep2drv));    // invalid mapping
 }
 
 //--------------------------------------------------------------------+
@@ -135,11 +135,11 @@ bool process_control_request(usb_control_request_t const* request) {
           dcd_set_address((uint8_t)request->wValue);
 
           // skip tud_control_status()
-          _usbd_dev.addressed = 1;
+          usb_device.addressed = 1;
           break;
 
         case USB_STD_GET_CONFIGURATION: {
-          uint8_t cfg_num = _usbd_dev.cfg_num;
+          uint8_t cfg_num = usb_device.cfg_num;
           tud_control_xfer(request, &cfg_num, 1);
         } break;
 
@@ -147,8 +147,8 @@ bool process_control_request(usb_control_request_t const* request) {
           uint8_t const cfg_num = (uint8_t)request->wValue;
 
           // Only process if new configure is different
-          if (_usbd_dev.cfg_num != cfg_num) {
-            if (_usbd_dev.cfg_num) {
+          if (usb_device.cfg_num != cfg_num) {
+            if (usb_device.cfg_num) {
               // disable SOF
               dcd_sof_enable(false);
 
@@ -159,13 +159,13 @@ bool process_control_request(usb_control_request_t const* request) {
               usb_configuration_reset();
             }
 
-            _usbd_dev.cfg_num = cfg_num;
+            usb_device.cfg_num = cfg_num;
 
             // Handle the new configuration and execute the corresponding callback
             if (cfg_num) {
               // switch to new configuration if not zero
-              if (!process_set_config(cfg_num)) {
-                _usbd_dev.cfg_num = 0;
+              if (!usb_set_configuration(cfg_num)) {
+                usb_device.cfg_num = 0;
                 return false;
               }
 
@@ -188,7 +188,7 @@ bool process_control_request(usb_control_request_t const* request) {
           switch (request->wValue) {
             case TUSB_REQ_FEATURE_REMOTE_WAKEUP:
               // Host may enable remote wake up before suspending especially HID device
-              _usbd_dev.remote_wakeup_en = true;
+              usb_device.remote_wakeup_en = true;
               tud_control_status(request);
               break;
 
@@ -205,7 +205,7 @@ bool process_control_request(usb_control_request_t const* request) {
           }
 
           // Host may disable remote wake up after resuming
-          _usbd_dev.remote_wakeup_en = false;
+          usb_device.remote_wakeup_en = false;
           tud_control_status(request);
           break;
 
@@ -213,7 +213,7 @@ bool process_control_request(usb_control_request_t const* request) {
           // Device status bit mask
           // - Bit 0: Self Powered
           // - Bit 1: Remote Wakeup enabled
-          uint16_t status = (uint16_t)((1u) | (_usbd_dev.remote_wakeup_en ? 2u : 0u));
+          uint16_t status = (uint16_t)((1u) | (usb_device.remote_wakeup_en ? 2u : 0u));
           tud_control_xfer(request, &status, 2);
           break;
         }
@@ -261,7 +261,7 @@ bool process_control_request(usb_control_request_t const* request) {
       uint8_t const ep_addr = U16_LOW(request->wIndex);
       uint8_t const ep_num = usb_endpoint_number(ep_addr);
 
-      if (ep_num >= ARRAY_SIZE(_usbd_dev.ep2drv)) {
+      if (ep_num >= ARRAY_SIZE(usb_device.ep2drv)) {
         return false;
       }
 
@@ -295,7 +295,7 @@ bool process_control_request(usb_control_request_t const* request) {
             usbd_control_set_complete_callback(NULL);
 
             // skip ZLP status if driver already did that
-            if (!_usbd_dev.ep_status[0][USB_ENDPOINT_DIRECTION_IN].busy) tud_control_status(request);
+            if (!usb_device.ep_status[0][USB_ENDPOINT_DIRECTION_IN].busy) tud_control_status(request);
           } break;
 
           // Unknown/Unsupported request
@@ -313,21 +313,19 @@ bool process_control_request(usb_control_request_t const* request) {
   return true;
 }
 
-// Process Set Configure Request
-// This function parse configuration descriptor & open drivers accordingly
-static bool process_set_config(uint8_t cfg_num) {
-  // index is cfg_num-1
-  tusb_desc_configuration_t const* desc_cfg = (tusb_desc_configuration_t const*)tud_descriptor_configuration_cb(cfg_num - 1);
+static bool usb_set_configuration() {
+  const usb_configuration_descriptor_t* desc_cfg = (const usb_configuration_descriptor_t*)usb_descriptor_configuration();
+
   if (desc_cfg == NULL || desc_cfg->bDescriptorType != USB_DESC_CONFIGURATION) {
     return false;
   }
 
   // Parse configuration descriptor
-  _usbd_dev.remote_wakeup_support = (desc_cfg->bmAttributes & USB_DESC_CONFIG_ATT_REMOTE_WAKEUP) ? 1u : 0u;
-  _usbd_dev.self_powered = (desc_cfg->bmAttributes & USB_DESC_CONFIG_ATT_SELF_POWERED) ? 1u : 0u;
+  usb_device.remote_wakeup_support = (desc_cfg->bmAttributes & USB_DESC_CONFIG_ATT_REMOTE_WAKEUP) ? 1u : 0u;
+  usb_device.self_powered = (desc_cfg->bmAttributes & USB_DESC_CONFIG_ATT_SELF_POWERED) ? 1u : 0u;
 
   // Parse interface descriptor
-  uint8_t const* p_desc = ((uint8_t const*)desc_cfg) + sizeof(tusb_desc_configuration_t);
+  uint8_t const* p_desc = ((uint8_t const*)desc_cfg) + sizeof(usb_configuration_descriptor_t);
   uint8_t const* desc_end = ((uint8_t const*)desc_cfg) + desc_cfg->wTotalLength;
 
   while (p_desc < desc_end) {
@@ -335,7 +333,7 @@ static bool process_set_config(uint8_t cfg_num) {
 
     // Class will always starts with Interface Association (if any) and then Interface descriptor
     if (USB_DESC_INTERFACE_ASSOCIATION == tu_desc_type(p_desc)) {
-      tusb_desc_interface_assoc_t const* desc_iad = (tusb_desc_interface_assoc_t const*)p_desc;
+      const usb_interface_association_descriptor_t* desc_iad = (const usb_interface_association_descriptor_t*)p_desc;
       assoc_itf_count = desc_iad->bInterfaceCount;
 
       p_desc = tu_desc_next(p_desc);  // next to Interface
@@ -344,13 +342,14 @@ static bool process_set_config(uint8_t cfg_num) {
     if (USB_DESC_INTERFACE != tu_desc_type(p_desc)) {
       return false;
     }
-    tusb_desc_interface_t const* desc_itf = (tusb_desc_interface_t const*)p_desc;
+
+    const usb_control_interface_descriptor_t* desc_itf = (const usb_control_interface_descriptor_t*)p_desc;
 
     // Find driver for this interface
     uint16_t const remaining_len = (uint16_t)(desc_end - p_desc);
     uint16_t const drv_len = cdcd_open(desc_itf, remaining_len);
 
-    if ((sizeof(tusb_desc_interface_t) <= drv_len) && (drv_len <= remaining_len)) {
+    if ((sizeof(usb_control_interface_descriptor_t) <= drv_len) && (drv_len <= remaining_len)) {
       if (assoc_itf_count == 1) {
         assoc_itf_count = 2;
       }
@@ -360,14 +359,14 @@ static bool process_set_config(uint8_t cfg_num) {
         uint8_t const itf_num = desc_itf->bInterfaceNumber + i;
 
         // Interface number must not be used already
-        if (_usbd_dev.itf2drv[itf_num] != 0xFF) {
+        if (usb_device.itf2drv[itf_num] != 0xFF) {
           return false;
         }
-        _usbd_dev.itf2drv[itf_num] = 0;
+        usb_device.itf2drv[itf_num] = 0;
       }
 
       // bind all endpoints to found driver
-      tu_edpt_bind_driver(_usbd_dev.ep2drv, desc_itf, drv_len);
+      tu_edpt_bind_driver(usb_device.ep2drv, desc_itf, drv_len);
 
       // next Interface
       p_desc += drv_len;
@@ -402,7 +401,7 @@ static bool process_get_descriptor(usb_control_request_t const* request) {
 
       // Only response with exactly 1 Packet if: not addressed and host requested more data than device descriptor has.
       // This only happens with the very first get device descriptor and EP0 size = 8 or 16.
-      if ((USB_EP0_BUFFER_SIZE < sizeof(usb_device_desc_t)) && !_usbd_dev.addressed &&
+      if ((USB_EP0_BUFFER_SIZE < sizeof(usb_device_desc_t)) && !usb_device.addressed &&
           ((usb_control_request_t const*)request)->wLength > sizeof(usb_device_desc_t)) {
         // Hack here: we modify the request length to prevent usbd_control response with zlp
         // since we are responding with 1 packet & less data than wLength.
@@ -435,7 +434,7 @@ static bool process_get_descriptor(usb_control_request_t const* request) {
       uintptr_t desc_config;
 
       if (desc_type == USB_DESC_CONFIGURATION) {
-        desc_config = (uintptr_t)tud_descriptor_configuration_cb(desc_index);
+        desc_config = (uintptr_t)usb_descriptor_configuration(desc_index);
         if (!desc_config) {
           return false;
         }
@@ -448,7 +447,7 @@ static bool process_get_descriptor(usb_control_request_t const* request) {
       }
 
       // Use offsetof to avoid pointer to the odd/misaligned address
-      uint16_t const total_len = tu_unaligned_read16((const void*)(desc_config + offsetof(tusb_desc_configuration_t, wTotalLength)));
+      uint16_t const total_len = tu_unaligned_read16((const void*)(desc_config + offsetof(usb_configuration_descriptor_t, wTotalLength)));
 
       return tud_control_xfer(request, (void*)desc_config, total_len);
     }
@@ -528,7 +527,7 @@ bool usbd_edpt_open(usb_endpoint_descriptor_t const* desc_ep) {
 bool usbd_edpt_claim(uint8_t ep_addr) {
   uint8_t const epnum = usb_endpoint_number(ep_addr);
   uint8_t const dir = usb_endpoint_direction(ep_addr);
-  endpoint_state_t* ep_state = &_usbd_dev.ep_status[epnum][dir];
+  endpoint_state_t* ep_state = &usb_device.ep_status[epnum][dir];
 
   return tu_edpt_claim(ep_state);
 }
@@ -536,7 +535,7 @@ bool usbd_edpt_claim(uint8_t ep_addr) {
 bool usbd_edpt_release(uint8_t ep_addr) {
   uint8_t const epnum = usb_endpoint_number(ep_addr);
   uint8_t const dir = usb_endpoint_direction(ep_addr);
-  endpoint_state_t* ep_state = &_usbd_dev.ep_status[epnum][dir];
+  endpoint_state_t* ep_state = &usb_device.ep_status[epnum][dir];
 
   return tu_edpt_release(ep_state);
 }
@@ -546,20 +545,20 @@ bool usbd_edpt_xfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes) {
   uint8_t const dir = usb_endpoint_direction(ep_addr);
 
   // Attempt to transfer on a busy endpoint, sound like an race condition !
-  if (_usbd_dev.ep_status[epnum][dir].busy != 0) {
+  if (usb_device.ep_status[epnum][dir].busy != 0) {
     return false;
   }
 
   // Set busy first since the actual transfer can be complete before dcd_edpt_xfer()
   // could return and USBD task can preempt and clear the busy
-  _usbd_dev.ep_status[epnum][dir].busy = 1;
+  usb_device.ep_status[epnum][dir].busy = 1;
 
   if (dcd_edpt_xfer(ep_addr, buffer, total_bytes)) {
     return true;
   } else {
     // DCD error, mark endpoint as ready to allow next transfer
-    _usbd_dev.ep_status[epnum][dir].busy = 0;
-    _usbd_dev.ep_status[epnum][dir].claimed = 0;
+    usb_device.ep_status[epnum][dir].busy = 0;
+    usb_device.ep_status[epnum][dir].claimed = 0;
     return false;
   }
 }
@@ -568,7 +567,7 @@ bool usbd_edpt_busy(uint8_t ep_addr) {
   uint8_t const epnum = usb_endpoint_number(ep_addr);
   uint8_t const dir = usb_endpoint_direction(ep_addr);
 
-  return _usbd_dev.ep_status[epnum][dir].busy;
+  return usb_device.ep_status[epnum][dir].busy;
 }
 
 void usbd_edpt_stall(uint8_t ep_addr) {
@@ -577,8 +576,8 @@ void usbd_edpt_stall(uint8_t ep_addr) {
 
   // only stalled if currently cleared
   usb_endpoint_stall(ep_addr);
-  _usbd_dev.ep_status[epnum][dir].stalled = 1;
-  _usbd_dev.ep_status[epnum][dir].busy = 1;
+  usb_device.ep_status[epnum][dir].stalled = 1;
+  usb_device.ep_status[epnum][dir].busy = 1;
 }
 
 void usbd_edpt_clear_stall(uint8_t ep_addr) {
@@ -587,13 +586,13 @@ void usbd_edpt_clear_stall(uint8_t ep_addr) {
 
   // only clear if currently stalled
   dcd_edpt_clear_stall(ep_addr);
-  _usbd_dev.ep_status[epnum][dir].stalled = 0;
-  _usbd_dev.ep_status[epnum][dir].busy = 0;
+  usb_device.ep_status[epnum][dir].stalled = 0;
+  usb_device.ep_status[epnum][dir].busy = 0;
 }
 
 bool usbd_edpt_stalled(uint8_t ep_addr) {
   uint8_t const epnum = usb_endpoint_number(ep_addr);
   uint8_t const dir = usb_endpoint_direction(ep_addr);
 
-  return _usbd_dev.ep_status[epnum][dir].stalled;
+  return usb_device.ep_status[epnum][dir].stalled;
 }

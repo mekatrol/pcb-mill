@@ -194,18 +194,18 @@ void cdcd_reset() {
   circular_buffer_reset(&_cdcd_itf.tx_buffer);
 }
 
-uint16_t cdcd_open(const tusb_desc_interface_t* itf_desc, uint16_t max_len) {
+uint16_t cdcd_open(const usb_control_interface_descriptor_t* descriptor, uint16_t max_len) {
   // Only support ACM subclass
-  if (itf_desc->bInterfaceClass != TUSB_CLASS_CDC ||
-      itf_desc->bInterfaceSubClass != CDC_COMM_SUBCLASS_ABSTRACT_CONTROL_MODEL) {
+  if (descriptor->bInterfaceClass != TUSB_CLASS_CDC ||
+      descriptor->bInterfaceSubClass != CDC_COMM_SUBCLASS_ABSTRACT_CONTROL_MODEL) {
     return 0;
   }
 
   //------------- Control Interface -------------//
-  _cdcd_itf.itf_num = itf_desc->bInterfaceNumber;
+  _cdcd_itf.itf_num = descriptor->bInterfaceNumber;
 
-  uint16_t drv_len = sizeof(tusb_desc_interface_t);
-  const uint8_t* p_desc = tu_desc_next(itf_desc);
+  uint16_t drv_len = sizeof(usb_control_interface_descriptor_t);
+  const uint8_t* p_desc = tu_desc_next(descriptor);
 
   // Communication Functional Descriptors
   while (USB_DESC_CS_INTERFACE == tu_desc_type(p_desc) && drv_len <= max_len) {
@@ -227,7 +227,7 @@ uint16_t cdcd_open(const tusb_desc_interface_t* itf_desc, uint16_t max_len) {
 
   //------------- Data Interface (if any) -------------//
   if ((USB_DESC_INTERFACE == tu_desc_type(p_desc)) &&
-      (TUSB_CLASS_CDC_DATA == ((const tusb_desc_interface_t*)p_desc)->bInterfaceClass)) {
+      (TUSB_CLASS_CDC_DATA == ((const usb_control_interface_descriptor_t*)p_desc)->bInterfaceClass)) {
     // next to endpoint descriptor
     drv_len += tu_desc_len(p_desc);
     p_desc = tu_desc_next(p_desc);
