@@ -1,15 +1,6 @@
 #include "dcd.h"
 #include "usbd_pvt.h"
 
-//--------------------------------------------------------------------+
-// MACRO CONSTANT TYPEDEF
-//--------------------------------------------------------------------+
-
-enum {
-  ENDPOINT_CTRL_OUT = 0x00,
-  ENDPOINT_CTRL_IN = 0x80
-};
-
 typedef struct {
   usb_control_request_t request;
   uint8_t* buffer;
@@ -20,21 +11,13 @@ typedef struct {
 
 static usbd_control_xfer_t _ctrl_xfer;
 
-static struct {
-  union {
-    __attribute__((aligned(4)))
-    uint8_t buf[USB_EP0_BUFFER_SIZE];
-
-    __attribute__((aligned(1)))
-    uint8_t buf_dcache_padding[USB_EP0_BUFFER_SIZE];
-  };
-} _ctrl_epbuf;
+static __attribute__((aligned(4))) uint8_t ep0_control_buffer[USB_EP0_BUFFER_SIZE];
 
 static inline bool status_stage_xact(const usb_control_request_t* request) {
   // Opposite to endpoint in Data Phase
   const usb_endpoint_direction_t request_direction = usb_request_direction(request->bmRequestType);
-  const uint8_t ep_addr = request_direction ? ENDPOINT_CTRL_OUT : ENDPOINT_CTRL_IN;
-  return usbd_edpt_xfer(ep_addr, NULL, 0);
+  const uint8_t ep_addr = request_direction ? USB_DIR_OUT : USB_DIR_IN;
+  return usb_endpoint_transfer(ep_addr, NULL, 0);
 }
 
 // Status phase
@@ -52,21 +35,22 @@ bool tud_control_status(const usb_control_request_t* request) {
 // This function can also transfer an zero-length packet
 static bool data_stage_xact() {
   const uint16_t xact_len = min_u16(_ctrl_xfer.data_len - _ctrl_xfer.total_xferred, USB_EP0_BUFFER_SIZE);
-  uint8_t ep_addr = ENDPOINT_CTRL_OUT;
+  uint8_t ep_addr = USB_DIR_OUT;
 
   const usb_endpoint_direction_t request_direction = usb_request_direction(_ctrl_xfer.request.bmRequestType);
   if (request_direction == USB_ENDPOINT_DIRECTION_IN) {
-    ep_addr = ENDPOINT_CTRL_IN;
+    ep_addr = USB_DIR_IN;
     if (xact_len) {
       if (xact_len > USB_EP0_BUFFER_SIZE) {
         return false;
       }
 
-      memcpy(_ctrl_epbuf.buf, _ctrl_xfer.buffer, xact_len);
+      // Copy data to ep0_control_buffer
+      memcpy(ep0_control_buffer, _ctrl_xfer.buffer, xact_len);
     }
   }
 
-  return usbd_edpt_xfer(ep_addr, xact_len ? _ctrl_epbuf.buf : NULL, xact_len);
+  return usb_endpoint_transfer(ep_addr, xact_len ? ep0_control_buffer : NULL, xact_len);
 }
 
 // Transmit data to/from the control endpoint.
@@ -123,10 +107,10 @@ void usbd_control_set_request(const usb_control_request_t* request) {
 // - DATA stage of control endpoint or
 // - Status stage
 bool usbd_control_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes) {
-  const usb_endpoint_direction_t request_direction = usb_request_direction(_ctrl_xfer.request.bmRequestType);
+  const uint8_t request_direction = USB_EP_DIR(_ctrl_xfer.request.bmRequestType);
 
   // Endpoint Address is opposite to direction bit, this is Status Stage complete event
-  if (usb_endpoint_direction(ep_addr) != request_direction) {
+  if (USB_EP_DIR(ep_addr) != request_direction) {
     if (xferred_bytes != 0) {
       return false;
     }
@@ -142,11 +126,11 @@ bool usbd_control_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes) {
     return true;
   }
 
-  if (request_direction == USB_ENDPOINT_DIRECTION_OUT) {
+  if (request_direction == USB_DIR_OUT) {
     if (!_ctrl_xfer.buffer) {
       return false;
     }
-    memcpy(_ctrl_xfer.buffer, _ctrl_epbuf.buf, xferred_bytes);
+    memcpy(_ctrl_xfer.buffer, ep0_control_buffer, xferred_bytes);
   }
 
   _ctrl_xfer.total_xferred += (uint16_t)xferred_bytes;
@@ -171,8 +155,8 @@ bool usbd_control_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes) {
       }
     } else {
       // Stall both IN and OUT control endpoint
-      usb_endpoint_stall(ENDPOINT_CTRL_OUT);
-      usb_endpoint_stall(ENDPOINT_CTRL_IN);
+      usb_endpoint_stall(USB_DIR_OUT);
+      usb_endpoint_stall(USB_DIR_IN);
     }
   } else {
     // More data to transfer

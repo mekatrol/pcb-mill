@@ -34,6 +34,30 @@
 #define USB_ENDPOINT_RX_BUFFER_SIZE 64UL
 #define USB_ENDPOINT_TX_BUFFER_SIZE 64UL
 
+// Direction bit
+#define USB_DIR_OUT 0x00  // Host-to-device
+#define USB_DIR_IN 0x80   // Device-to-host
+
+// Masks
+#define USB_EP_NUM_MASK 0x0F             // Bits 0..3 = endpoint number
+#define USB_EP_DIR_MASK 0x80             // Bit 7 = direction
+#define USB_EP_PACKET_SIZE_MASK 0x7FFUL  // Bits 0–10 = Max packet size in bytes (0–1024)
+
+// Extract endpoint number (0..15)
+#define USB_EP_NUM(addr) ((uint8_t)((addr) & USB_EP_NUM_MASK))
+
+// Extract direction (USB_DIR_IN or USB_DIR_OUT)
+#define USB_EP_DIR(addr) ((uint8_t)((addr) & USB_EP_DIR_MASK))
+
+// Convert direction bit (USB_DIR_IN or USB_DIR_OUT) to direction index (0x01 or 0x00)
+#define USB_EP_DIR_IDX(addr) ((uint8_t)(USB_EP_DIR((addr)) >> 7))
+
+// Build endpoint address from number and direction
+#define USB_EP_ADDR(num, dir) ((uint8_t)((num) & USB_EP_NUM_MASK) | ((dir) & USB_EP_DIR_MASK))
+
+// Extract endpoint packet size
+#define USB_EP_PACKET_SIZE(packet_size) (((uint32_t)(packet_size)) & USB_EP_PACKET_SIZE_MASK)
+
 // See Table 237. Transmission status encoding in RM0444
 typedef enum {
   USB_ENDPOINT_STATE_DISABLED = 0b00,
@@ -131,8 +155,6 @@ typedef enum {
 typedef enum {
   USB_ENDPOINT_DIRECTION_OUT = 0,  // VTTX bit is set in the USB_CHEPnR register
   USB_ENDPOINT_DIRECTION_IN = 1,   // VTRX bit or both VTTX/VTRX are set in the USB_CHEPnR
-
-  USB_ENDPOINT_DIRECTION_IN_MASK = 0x80
 } usb_endpoint_direction_t;
 
 /// Standard USB control request (USB 2.0 Spec, Table 9-2)
@@ -146,10 +168,9 @@ typedef struct __attribute__((packed)) {
 
 _Static_assert(sizeof(usb_control_request_t) == 8, "sizeof(usb_control_request_t) must be 8");
 
-__attribute__((always_inline)) static inline usb_request_recipient_t usb_request_recipient(uint8_t bm) { return bm & USB_REQUEST_RECIPIENT_MASK; }
-__attribute__((always_inline)) static inline usb_request_type_t usb_request_type(uint8_t bm) { return (bm & USB_REQUEST_TYPE_MASK) >> 5; }
-__attribute__((always_inline)) static inline usb_endpoint_direction_t usb_request_direction(uint8_t bm) { return (bm & USB_ENDPOINT_DIRECTION_IN_MASK) >> 7; }
-__attribute__((always_inline)) static inline usb_endpoint_direction_t usb_endpoint_direction(uint8_t addr) { return (addr & USB_ENDPOINT_DIRECTION_IN_MASK) >> 7; }
+__attribute__((always_inline)) static inline usb_request_recipient_t usb_request_recipient(uint8_t bm) { return (bm)&USB_REQUEST_RECIPIENT_MASK; }
+__attribute__((always_inline)) static inline usb_request_type_t usb_request_type(uint8_t bm) { return ((bm)&USB_REQUEST_TYPE_MASK) >> 5; }
+__attribute__((always_inline)) static inline usb_endpoint_direction_t usb_request_direction(uint8_t bm) { return USB_EP_DIR((bm)) >> 7; }
 
 // USB Device Descriptor
 typedef struct __attribute__((packed)) {

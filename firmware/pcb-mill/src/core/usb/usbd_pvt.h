@@ -11,7 +11,7 @@
 typedef bool (*usbd_control_xfer_cb_t)(uint8_t stage, usb_control_request_t const* request);
 
 // Submit a usb transfer
-bool usbd_edpt_xfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes);
+bool usb_endpoint_transfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes);
 
 // Claim an endpoint before submitting a transfer.
 // If caller does not make any transfer, it must release endpoint for others.

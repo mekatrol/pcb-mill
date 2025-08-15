@@ -79,7 +79,7 @@ static bool _prep_out_transaction() {
   available_count = circular_buffer_space(&usb_cdc_interface.rx_buffer);
 
   if (available_count >= USB_EP0_BUFFER_SIZE) {
-    return usbd_edpt_xfer(usb_cdc_interface.ep_out, usb_cdc_epbuf.epout, USB_EP0_BUFFER_SIZE);
+    return usb_endpoint_transfer(usb_cdc_interface.ep_out, usb_cdc_epbuf.epout, USB_EP0_BUFFER_SIZE);
   } else {
     // Release endpoint since we don't make any transfer
     usbd_edpt_release(usb_cdc_interface.ep_out);
@@ -132,7 +132,7 @@ uint32_t usb_cdc_write_flush() {
   const uint16_t count = circular_buffer_read(&usb_cdc_interface.tx_buffer, usb_cdc_epbuf.epin, USB_EP0_BUFFER_SIZE);
 
   if (count) {
-    if (!usbd_edpt_xfer(usb_cdc_interface.ep_in, usb_cdc_epbuf.epin, count)) {
+    if (!usb_endpoint_transfer(usb_cdc_interface.ep_in, usb_cdc_epbuf.epin, count)) {
       return 0;
     }
     return count;
@@ -300,7 +300,7 @@ bool usb_cdc_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes) {
       // xferred_bytes is multiple of EP Packet size and not zero
       if (circular_buffer_count(&usb_cdc_interface.tx_buffer) == 0 && xferred_bytes && (0 == (xferred_bytes & (USB_ENDPOINT_TX_BUFFER_SIZE - 1)))) {
         if (usbd_edpt_claim(usb_cdc_interface.ep_in)) {
-          if (!usbd_edpt_xfer(usb_cdc_interface.ep_in, NULL, 0)) {
+          if (!usb_endpoint_transfer(usb_cdc_interface.ep_in, NULL, 0)) {
             return false;
           }
         }

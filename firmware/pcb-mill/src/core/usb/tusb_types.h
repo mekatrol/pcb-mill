@@ -107,7 +107,9 @@ typedef struct __attribute__((packed)) {
     uint8_t : 2;
   } bmAttributes;
 
-  uint16_t wMaxPacketSize;  // Bit 10..0 : max packet size, bit 12..11 additional transaction per highspeed micro-frame
+  uint16_t wMaxPacketSize;  // Bits 0–10  = Max packet size in bytes (0–1024)
+                            // Bits 11–12 = Additional transactions per microframe (high-speed only)
+                            // Bits 13–15 = Reserved (must be zero)
   uint8_t bInterval;        // Polling interval, in frames or microframes depending on the operating speed
 } usb_endpoint_descriptor_t;
 
@@ -189,23 +191,6 @@ typedef struct __attribute__((packed)) {
   uint16_t wTransferSize;
   uint16_t bcdDFUVersion;
 } tusb_desc_dfu_functional_t;
-
-// Get Endpoint number from address
-__attribute__((always_inline)) static inline uint8_t usb_endpoint_number(uint8_t addr) {
-  return (uint8_t)(addr & (~USB_ENDPOINT_DIRECTION_IN_MASK));
-}
-
-__attribute__((always_inline)) static inline uint8_t usb_endpoint_addr(uint8_t num, uint8_t dir) {
-  return (uint8_t)(num | (dir ? USB_ENDPOINT_DIRECTION_IN_MASK : 0));
-}
-
-__attribute__((always_inline)) static inline uint32_t usb_endpoint_packet_size(usb_endpoint_descriptor_t const* endpoint_descriptor) {
-  return (uint32_t)endpoint_descriptor->wMaxPacketSize & 0x7FF;
-}
-
-//--------------------------------------------------------------------+
-// Descriptor helper
-//--------------------------------------------------------------------+
 
 // return next descriptor
 __attribute__((always_inline)) static inline uint8_t const* tu_desc_next(void const* desc) {

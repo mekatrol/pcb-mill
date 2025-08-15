@@ -126,7 +126,7 @@ uint8_t const usb_desc_configuration[] = {
     // CDC Notification Endpoint (Interrupt IN)
     7,                             // bLength: size of endpoint descriptor
     USB_DESCRIPTOR_TYPE_ENDPOINT,  // bDescriptorType: ENDPOINT (0x05)
-    0x81,                          // bEndpointAddress: IN endpoint 1 (0x80 | 1)
+    USB_DIR_IN | 0x01,             // bEndpointAddress: IN endpoint 1 (0x80 | 1)
     0x03,                          // bmAttributes: interrupt type
     0x08,                          // wMaxPacketSize (low byte): 8 bytes
     0x00,                          // wMaxPacketSize (high byte)
@@ -146,7 +146,7 @@ uint8_t const usb_desc_configuration[] = {
     // Data OUT Endpoint (Bulk OUT)
     7,                             // bLength: endpoint descriptor size
     USB_DESCRIPTOR_TYPE_ENDPOINT,  // bDescriptorType: ENDPOINT
-    0x02,                          // bEndpointAddress: OUT endpoint 2
+    USB_DIR_OUT | 0x02,            // bEndpointAddress: OUT endpoint (0x00 | 2)
     0x02,                          // bmAttributes: bulk transfer
     0x40,                          // wMaxPacketSize low byte: 64 bytes
     0x00,                          // wMaxPacketSize high byte
@@ -155,7 +155,7 @@ uint8_t const usb_desc_configuration[] = {
     // Data IN Endpoint (Bulk IN)
     7,                             // bLength
     USB_DESCRIPTOR_TYPE_ENDPOINT,  // bDescriptorType: ENDPOINT
-    0x82,                          // bEndpointAddress: IN endpoint 2 (0x80 | 2)
+    USB_DIR_IN | 0x02,             // bEndpointAddress: IN endpoint 2 (0x80 | 2)
     0x02,                          // bmAttributes: bulk
     0x40,                          // wMaxPacketSize low byte: 64 bytes
     0x00,                          // wMaxPacketSize high byte

@@ -243,8 +243,8 @@ bool process_control_request(usb_control_request_t const* request) {
 
     //------------- Endpoint Request -------------//
     case USB_REQUEST_RECIPIENT_ENDPOINT: {
-      uint8_t const ep_addr = U16_LOW(request->wIndex);
-      uint8_t const ep_num = usb_endpoint_number(ep_addr);
+      uint8_t const ep_addr = (uint8_t)(request->wIndex & 0xFF);
+      uint8_t const ep_num = USB_EP_NUM(ep_addr);
 
       if (ep_num >= sizeof(usb_device.ep2drv) / sizeof(usb_device.ep2drv[0])) {
         return false;
@@ -466,7 +466,7 @@ bool usb_endpoint_open_set(const usb_endpoint_descriptor_t* desc_ep, uint8_t xfe
       return false;
     }
 
-    if (usb_endpoint_direction(desc_ep->bEndpointAddress) == USB_ENDPOINT_DIRECTION_IN) {
+    if (USB_EP_DIR(desc_ep->bEndpointAddress) == USB_DIR_IN) {
       (*ep_in) = desc_ep->bEndpointAddress;
     } else {
       (*ep_out) = desc_ep->bEndpointAddress;
@@ -479,74 +479,74 @@ bool usb_endpoint_open_set(const usb_endpoint_descriptor_t* desc_ep, uint8_t xfe
 }
 
 bool usbd_edpt_claim(uint8_t ep_addr) {
-  uint8_t const ep_num = usb_endpoint_number(ep_addr);
-  uint8_t const ep_direction = usb_endpoint_direction(ep_addr);
-  endpoint_state_t* ep_state = &usb_device.ep_status[ep_num][ep_direction];
+  uint8_t const ep_num = USB_EP_NUM(ep_addr);
+  const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
+  endpoint_state_t* ep_state = &usb_device.ep_status[ep_num][ep_dir_idx];
 
   return tu_edpt_claim(ep_state);
 }
 
 bool usbd_edpt_release(uint8_t ep_addr) {
-  uint8_t const ep_num = usb_endpoint_number(ep_addr);
-  uint8_t const ep_direction = usb_endpoint_direction(ep_addr);
-  endpoint_state_t* ep_state = &usb_device.ep_status[ep_num][ep_direction];
+  uint8_t const ep_num = USB_EP_NUM(ep_addr);
+  const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
+  endpoint_state_t* ep_state = &usb_device.ep_status[ep_num][ep_dir_idx];
 
   return tu_edpt_release(ep_state);
 }
 
-bool usbd_edpt_xfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes) {
-  uint8_t const ep_num = usb_endpoint_number(ep_addr);
-  uint8_t const ep_direction = usb_endpoint_direction(ep_addr);
+bool usb_endpoint_transfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes) {
+  uint8_t const ep_num = USB_EP_NUM(ep_addr);
+  const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
 
   // Attempt to transfer on a busy endpoint, sound like an race condition !
-  if (usb_device.ep_status[ep_num][ep_direction].busy != 0) {
+  if (usb_device.ep_status[ep_num][ep_dir_idx].busy != 0) {
     return false;
   }
 
   // Set busy first since the actual transfer can be complete before dcd_edpt_xfer()
   // could return and USBD task can preempt and clear the busy
-  usb_device.ep_status[ep_num][ep_direction].busy = 1;
+  usb_device.ep_status[ep_num][ep_dir_idx].busy = 1;
 
   if (dcd_edpt_xfer(ep_addr, buffer, total_bytes)) {
     return true;
   } else {
     // DCD error, mark endpoint as ready to allow next transfer
-    usb_device.ep_status[ep_num][ep_direction].busy = 0;
-    usb_device.ep_status[ep_num][ep_direction].claimed = 0;
+    usb_device.ep_status[ep_num][ep_dir_idx].busy = 0;
+    usb_device.ep_status[ep_num][ep_dir_idx].claimed = 0;
     return false;
   }
 }
 
 bool usbd_edpt_busy(uint8_t ep_addr) {
-  uint8_t const ep_num = usb_endpoint_number(ep_addr);
-  uint8_t const ep_direction = usb_endpoint_direction(ep_addr);
+  uint8_t const ep_num = USB_EP_NUM(ep_addr);
+  const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
 
-  return usb_device.ep_status[ep_num][ep_direction].busy;
+  return usb_device.ep_status[ep_num][ep_dir_idx].busy;
 }
 
 void usbd_edpt_stall(uint8_t ep_addr) {
-  uint8_t const ep_num = usb_endpoint_number(ep_addr);
-  uint8_t const ep_direction = usb_endpoint_direction(ep_addr);
+  uint8_t const ep_num = USB_EP_NUM(ep_addr);
+  const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
 
   // only stalled if currently cleared
   usb_endpoint_stall(ep_addr);
-  usb_device.ep_status[ep_num][ep_direction].stalled = 1;
-  usb_device.ep_status[ep_num][ep_direction].busy = 1;
+  usb_device.ep_status[ep_num][ep_dir_idx].stalled = 1;
+  usb_device.ep_status[ep_num][ep_dir_idx].busy = 1;
 }
 
 void usbd_edpt_clear_stall(uint8_t ep_addr) {
-  uint8_t const ep_num = usb_endpoint_number(ep_addr);
-  uint8_t const ep_direction = usb_endpoint_direction(ep_addr);
+  uint8_t const ep_num = USB_EP_NUM(ep_addr);
+  const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
 
   // only clear if currently stalled
   dcd_edpt_clear_stall(ep_addr);
-  usb_device.ep_status[ep_num][ep_direction].stalled = 0;
-  usb_device.ep_status[ep_num][ep_direction].busy = 0;
+  usb_device.ep_status[ep_num][ep_dir_idx].stalled = 0;
+  usb_device.ep_status[ep_num][ep_dir_idx].busy = 0;
 }
 
 bool usbd_edpt_stalled(uint8_t ep_addr) {
-  uint8_t const ep_num = usb_endpoint_number(ep_addr);
-  uint8_t const ep_direction = usb_endpoint_direction(ep_addr);
+  uint8_t const ep_num = USB_EP_NUM(ep_addr);
+  const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
 
-  return usb_device.ep_status[ep_num][ep_direction].stalled;
+  return usb_device.ep_status[ep_num][ep_dir_idx].stalled;
 }
