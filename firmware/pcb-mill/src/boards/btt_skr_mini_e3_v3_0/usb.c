@@ -8,8 +8,8 @@
 #define USB_EP_STATUS_MASK(dir) (3U << (USB_CHEP_TX_STTX_Pos + ((dir) == USB_EP_DIRECTION_IN_IDX ? 0 : 8)))
 #define USB_EP_DATA_TOGGLE_MASK(dir) (1U << (USB_CHEP_DTOG_TX_Pos + ((dir) == USB_EP_DIRECTION_IN_IDX ? 0 : 8)))
 
-#define ENDPOINT_TX_BUFFER 0
-#define ENDPOINT_RX_BUFFER 1
+#define USB_EP_TX_BUFFER 0
+#define USB_EP_RX_BUFFER 1
 
 // One of these for every EP IN & OUT, uses a bit of RAM....
 typedef struct {
@@ -181,8 +181,8 @@ void handle_ctr_rx(uint32_t endpoint_idn) {
   uint8_t const ep_num = endpoint_reg & USB_CHEP_ADDR;
   xfer_ctl_t *xfer = xfer_ctl_ptr(ep_num, USB_EP_DIRECTION_OUT_IDX);
 
-  uint16_t const rx_count = usb_pma_get_count(endpoint_idn, ENDPOINT_RX_BUFFER);
-  uint16_t pma_addr = (uint16_t)usb_pma_get_addr(endpoint_idn, ENDPOINT_RX_BUFFER);
+  uint16_t const rx_count = usb_pma_get_count(endpoint_idn, USB_EP_RX_BUFFER);
+  uint16_t pma_addr = (uint16_t)usb_pma_get_addr(endpoint_idn, USB_EP_RX_BUFFER);
 
   usb_read_packet_data(xfer->buffer + xfer->queued_len, pma_addr, rx_count);
   xfer->queued_len += rx_count;
@@ -266,8 +266,8 @@ void usb_init_hal() {
 }
 
 void handle_ctr_setup(uint32_t endpoint_idn) {
-  uint16_t rx_count = usb_pma_get_count(endpoint_idn, ENDPOINT_RX_BUFFER);
-  uint16_t rx_addr = usb_pma_get_addr(endpoint_idn, ENDPOINT_RX_BUFFER);
+  uint16_t rx_count = usb_pma_get_count(endpoint_idn, USB_EP_RX_BUFFER);
+  uint16_t rx_addr = usb_pma_get_addr(endpoint_idn, USB_EP_RX_BUFFER);
   uint8_t setup_packet[8] __attribute__((aligned(4)));
 
   usb_read_packet_data(setup_packet, rx_addr, rx_count);
@@ -364,13 +364,13 @@ static void usb_endpoint_set_rx_buffer_block_size(uint32_t endpoint_idn, uint32_
 
   // Get existing register value (we don't want to override ADDR_RX), note this clears COUNT_RX
   // which is valid because we are setting the buffer size and previous received data likely invalid
-  uint32_t usb_chep_txrxbd_n = USB_BUFFER_DESC_TABLE->endpoint[endpoint_idn].buffer[ENDPOINT_RX_BUFFER].count_addr;
+  uint32_t usb_chep_txrxbd_n = USB_BUFFER_DESC_TABLE->endpoint[endpoint_idn].buffer[USB_EP_RX_BUFFER].count_addr;
 
   // Merge BLSIZE, NUM_BLOCK and ADDR_RX
   usb_chep_txrxbd_n = memory_buffer_allocation | (usb_chep_txrxbd_n & 0x0000FFFFU);
 
   // Update register
-  USB_BUFFER_DESC_TABLE->endpoint[endpoint_idn].buffer[ENDPOINT_RX_BUFFER].count_addr = usb_chep_txrxbd_n;
+  USB_BUFFER_DESC_TABLE->endpoint[endpoint_idn].buffer[USB_EP_RX_BUFFER].count_addr = usb_chep_txrxbd_n;
 }
 
 static bool usb_read_packet_data(void *__restrict dst, uint16_t src, uint16_t byte_count) {
@@ -571,8 +571,8 @@ void usb_endpoint0_init() {
   uint16_t pma_rx_addr = usb_pma_next_addr(USB_EP0_BUFFER_SIZE);
   uint16_t pma_tx_addr = usb_pma_next_addr(USB_EP0_BUFFER_SIZE);
 
-  usb_pma_set_addr(0, ENDPOINT_RX_BUFFER, pma_rx_addr);
-  usb_pma_set_addr(0, ENDPOINT_TX_BUFFER, pma_tx_addr);
+  usb_pma_set_addr(0, USB_EP_RX_BUFFER, pma_rx_addr);
+  usb_pma_set_addr(0, USB_EP_TX_BUFFER, pma_tx_addr);
 
   uint32_t endpoint_reg = usb_endpoint_reg_get(0) & ~USB_CHEP_REG_MASK;
   endpoint_reg |= USB_EP_CONTROL;
@@ -614,7 +614,7 @@ bool usb_endpoint_open(usb_endpoint_descriptor_t const *endpoint_descriptor) {
 
   /* Create a packet memory buffer area. */
   uint16_t pma_addr = usb_pma_next_addr(packet_size);
-  usb_pma_set_addr(endpoint_idn, ep_dir_idx == USB_EP_DIRECTION_IN_IDX ? ENDPOINT_TX_BUFFER : ENDPOINT_RX_BUFFER, pma_addr);
+  usb_pma_set_addr(endpoint_idn, ep_dir_idx == USB_EP_DIRECTION_IN_IDX ? USB_EP_TX_BUFFER : USB_EP_RX_BUFFER, pma_addr);
 
   xfer_ctl_t *xfer = xfer_ctl_ptr(ep_num, ep_dir_idx);
   xfer->max_packet_size = packet_size;
@@ -658,12 +658,12 @@ static void usb_transmit_packet(xfer_ctl_t *xfer, uint16_t ep_ix) {
   uint32_t len = min_u16(xfer->total_len - xfer->queued_len, xfer->max_packet_size);
   uint32_t endpoint_reg = usb_endpoint_reg_get(ep_ix) | USB_EP_VTTX | USB_EP_VTRX;  // reserve CTR
 
-  uint16_t addr_ptr = (uint16_t)usb_pma_get_addr(ep_ix, ENDPOINT_TX_BUFFER);
+  uint16_t addr_ptr = (uint16_t)usb_pma_get_addr(ep_ix, USB_EP_TX_BUFFER);
 
   usb_write_packet_data(addr_ptr, &(xfer->buffer[xfer->queued_len]), len);
   xfer->queued_len += len;
 
-  usb_pma_set_count(ep_ix, ENDPOINT_TX_BUFFER, len);
+  usb_pma_set_count(ep_ix, USB_EP_TX_BUFFER, len);
   usb_endpoint_status(&endpoint_reg, USB_EP_DIRECTION_IN_IDX, USB_EP_STATE_VALID);
 
   endpoint_reg &= USB_CHEP_REG_MASK | USB_EP_STATUS_MASK(USB_EP_DIRECTION_IN_IDX);  // only change TX Status, reserve other toggle bits

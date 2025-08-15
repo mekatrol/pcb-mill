@@ -174,12 +174,12 @@ uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* descriptor, uint
   const usb_endpoint_descriptor_t* p_desc = (const usb_endpoint_descriptor_t*)tu_desc_next(descriptor);
 
   // Communication Functional Descriptors
-  while (USB_DESC_CS_INTERFACE == tu_desc_type(p_desc) && drv_len <= max_len) {
+  while (tu_desc_type(p_desc) == USB_DESC_CS_INTERFACE && drv_len <= max_len) {
     drv_len += tu_desc_len(p_desc);
     p_desc = (const usb_endpoint_descriptor_t*)tu_desc_next(p_desc);
   }
 
-  if (USB_DESC_ENDPOINT == tu_desc_type(p_desc)) {
+  if (tu_desc_type(p_desc) == USB_DESC_ENDPOINT) {
     // notification endpoint
     const usb_endpoint_descriptor_t* endpoint_descriptor = (const usb_endpoint_descriptor_t*)p_desc;
     if (!usb_endpoint_open(endpoint_descriptor)) {
