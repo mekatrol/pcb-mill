@@ -11,7 +11,6 @@ typedef enum {
 } handshake_state_t;
 
 typedef struct {
-  uint8_t interface_num;
   uint8_t ep_in;
   uint8_t ep_out;
 
@@ -19,7 +18,7 @@ typedef struct {
   // Bit 0 (DTR) — Host is ready (DCE can establish a connection).
   // Bit 1 (RTS) — Host requests the device to prepare for data transmission.
   // Other bits — Reserved, must be set to zero.
-  handshake_state_t handshake_state;
+  handshake_state_t flow_control_state;
 
   // For a USB CDC Virtual COM Port, this struct represents the Line Coding object defined in USB CDC Specification 1.2, Section 6.2.13.
   usb_cdc_line_coding_t line_coding;
@@ -88,15 +87,6 @@ static bool _prep_out_transaction() {
   }
 }
 
-bool usb_cdc_connected() {
-  // DTR set means connected
-  return tud_ready() && (usb_cdc_interface.handshake_state & CDC_CONTROL_LINE_STATE_DTR) != 0;
-}
-
-uint8_t usb_cdc_get_handshake_state() {
-  return usb_cdc_interface.handshake_state;
-}
-
 void usb_cdc_get_line_coding(usb_cdc_line_coding_t* coding) {
   (*coding) = usb_cdc_interface.line_coding;
 }
@@ -123,7 +113,6 @@ uint32_t usb_cdc_write(const uint8_t* buffer, uint32_t bufsize) {
 }
 
 uint32_t usb_cdc_write_flush() {
-  usb_cdc_epbuf_t* p_epbuf = &usb_cdc_epbuf;
   // Skip if usb is not ready yet
   if (!tud_ready()) {
     return 0;
@@ -140,10 +129,10 @@ uint32_t usb_cdc_write_flush() {
   }
 
   // Pull data from buffer
-  const uint16_t count = circular_buffer_read(&usb_cdc_interface.tx_buffer, p_epbuf->epin, USB_EP0_BUFFER_SIZE);
+  const uint16_t count = circular_buffer_read(&usb_cdc_interface.tx_buffer, usb_cdc_epbuf.epin, USB_EP0_BUFFER_SIZE);
 
   if (count) {
-    if (!usbd_edpt_xfer(usb_cdc_interface.ep_in, p_epbuf->epin, count)) {
+    if (!usbd_edpt_xfer(usb_cdc_interface.ep_in, usb_cdc_epbuf.epin, count)) {
       return 0;
     }
     return count;
@@ -180,8 +169,6 @@ uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* descriptor, uint
       descriptor->bInterfaceSubClass != CDC_COMM_SUBCLASS_ABSTRACT_CONTROL_MODEL) {
     return 0;
   }
-
-  usb_cdc_interface.interface_num = descriptor->bInterfaceNumber;
 
   uint16_t drv_len = sizeof(usb_control_interface_descriptor_t);
   const usb_endpoint_descriptor_t* p_desc = (const usb_endpoint_descriptor_t*)tu_desc_next(descriptor);
@@ -256,7 +243,7 @@ bool usb_cdc_control_xfer_cb(uint8_t stage, const usb_control_request_t* request
       if (stage == CONTROL_STAGE_SETUP) {
         tud_control_status(request);
       } else if (stage == CONTROL_STAGE_ACK) {
-        usb_cdc_interface.handshake_state = (uint8_t)request->wValue;
+        usb_cdc_interface.flow_control_state = (uint8_t)request->wValue;
 
         const bool dtr = (request->wValue & CDC_CONTROL_LINE_STATE_DTR) != 0;
         const bool rts = (request->wValue & CDC_CONTROL_LINE_STATE_RTS) != 0;

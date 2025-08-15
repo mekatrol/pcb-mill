@@ -18,6 +18,10 @@
 // number of physical endpoints available for the device, however it can
 // be less if not all endpoints are needed. Reducing this value saves memory
 // by not allocating unused endpoint memory.
+// Endpoints are:
+//   - ep0 - control endpoint (mandatory)
+//   - ep1 - bulk (CDC virtual com)
+//   - ep2 - interrupt
 #define USB_ENDPOINT_MAX 3
 
 // The size of endpoint 0 buffer
@@ -46,6 +50,7 @@ typedef enum {
 //   Interrupt	        Small, time-sensitive updates	        Guaranteed max latency
 typedef enum {
   USB_ENDPOINT_TYPE_CONTROL = 0,
+  USB_ENDPOINT_TYPE_ISOCHRONOUS = 1,
   USB_ENDPOINT_TYPE_BULK = 2,
   USB_ENDPOINT_TYPE_INTERRUPT = 3
 } usb_endpoint_type_t;
@@ -56,7 +61,7 @@ typedef enum {
 // Two interfaces supported:
 //  * CDC (Communications Device Class ) ACM (Abstract Control Model) [Virtual COM port]
 //  * MSC (Mass Storage Class)  [SD card]
-#define USB_MAX_INTERFACES 2
+#define USB_MAX_INTERFACES 1
 
 // This is the same as USB_DRD_PMABuffDescTypeDef
 typedef struct

@@ -6,8 +6,8 @@
 //--------------------------------------------------------------------+
 
 enum {
-  EDPT_CTRL_OUT = 0x00,
-  EDPT_CTRL_IN = 0x80
+  ENDPOINT_CTRL_OUT = 0x00,
+  ENDPOINT_CTRL_IN = 0x80
 };
 
 typedef struct {
@@ -30,15 +30,10 @@ static struct {
   };
 } _ctrl_epbuf;
 
-//--------------------------------------------------------------------+
-// Application API
-//--------------------------------------------------------------------+
-
-// Queue ZLP status transaction
 static inline bool status_stage_xact(const usb_control_request_t* request) {
   // Opposite to endpoint in Data Phase
   const usb_endpoint_direction_t request_direction = usb_request_direction(request->bmRequestType);
-  const uint8_t ep_addr = request_direction ? EDPT_CTRL_OUT : EDPT_CTRL_IN;
+  const uint8_t ep_addr = request_direction ? ENDPOINT_CTRL_OUT : ENDPOINT_CTRL_IN;
   return usbd_edpt_xfer(ep_addr, NULL, 0);
 }
 
@@ -57,11 +52,11 @@ bool tud_control_status(const usb_control_request_t* request) {
 // This function can also transfer an zero-length packet
 static bool data_stage_xact() {
   const uint16_t xact_len = min_u16(_ctrl_xfer.data_len - _ctrl_xfer.total_xferred, USB_EP0_BUFFER_SIZE);
-  uint8_t ep_addr = EDPT_CTRL_OUT;
+  uint8_t ep_addr = ENDPOINT_CTRL_OUT;
 
   const usb_endpoint_direction_t request_direction = usb_request_direction(_ctrl_xfer.request.bmRequestType);
   if (request_direction == USB_ENDPOINT_DIRECTION_IN) {
-    ep_addr = EDPT_CTRL_IN;
+    ep_addr = ENDPOINT_CTRL_IN;
     if (xact_len) {
       if (xact_len > USB_EP0_BUFFER_SIZE) {
         return false;
@@ -176,8 +171,8 @@ bool usbd_control_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes) {
       }
     } else {
       // Stall both IN and OUT control endpoint
-      usb_endpoint_stall(EDPT_CTRL_OUT);
-      usb_endpoint_stall(EDPT_CTRL_IN);
+      usb_endpoint_stall(ENDPOINT_CTRL_OUT);
+      usb_endpoint_stall(ENDPOINT_CTRL_IN);
     }
   } else {
     // More data to transfer

@@ -66,8 +66,7 @@ void usb_configuration_reset() {
   usb_cdc_reset();
 
   memset(&usb_device, 0, sizeof(usbd_device_t));
-  memset(usb_device.itf2drv, 0xFF, sizeof(usb_device.itf2drv));  // invalid mapping
-  memset(usb_device.ep2drv, 0xFF, sizeof(usb_device.ep2drv));    // invalid mapping
+  memset(usb_device.ep2drv, 0xFF, sizeof(usb_device.ep2drv));  // invalid mapping
 }
 
 //--------------------------------------------------------------------+
@@ -340,17 +339,6 @@ static bool usb_set_configuration() {
     if ((sizeof(usb_control_interface_descriptor_t) <= drv_len) && (drv_len <= remaining_len)) {
       if (assoc_itf_count == 1) {
         assoc_itf_count = 2;
-      }
-
-      // bind (associated) interfaces to found driver
-      for (uint8_t i = 0; i < assoc_itf_count; i++) {
-        uint8_t const interface_num = desc_itf->bInterfaceNumber + i;
-
-        // Interface number must not be used already
-        if (usb_device.itf2drv[interface_num] != 0xFF) {
-          return false;
-        }
-        usb_device.itf2drv[interface_num] = 0;
       }
 
       // bind all endpoints to found driver

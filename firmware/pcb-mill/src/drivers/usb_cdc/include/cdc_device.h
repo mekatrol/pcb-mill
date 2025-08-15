@@ -3,12 +3,6 @@
 
 #include "cdc.h"
 
-// Check if terminal is connected to this port
-bool usb_cdc_connected();
-
-// Get current line state. Bit 0:  DTR (Data Terminal Ready), Bit 1: RTS (Request to Send)
-uint8_t usb_cdc_get_handshake_state();
-
 // Get current line encoding: bit rate, stop bits parity etc ..
 void usb_cdc_get_line_coding(usb_cdc_line_coding_t* coding);
 
