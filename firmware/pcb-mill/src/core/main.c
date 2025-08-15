@@ -4,43 +4,21 @@
 
 config_interface_t machine_config = {
     .version = 1 << 16  // Version 1.0
-                        /* end default machine configuration*/
+
+    /* end default machine configuration*/
 };
 
-void cdc_task(void) {
-  // Only check if connected
-  if (usb_cdc_connected()) {
-    if (usb_cdc_available()) {
-      // Echo data
-      uint8_t buf[64];
-      uint32_t count = usb_cdc_read(buf, sizeof(buf));
-      usb_cdc_write(buf, count);
-      usb_cdc_write_flush();
-    }
-  }
-}
-
-// Invoked when cdc when line state changed e.g connected/disconnected
 void tud_cdc_line_state_cb(bool dtr, bool rts) {
-  (void)rts;
-
-  // TODO set some indicator
-  if (dtr) {
-    // Terminal connected
-  } else {
-    // Terminal disconnected
-  }
+  diag_printf("dtr: %d, rts: %d\r\n", dtr, rts);
 }
 
-// Invoked when CDC interface received data from host
 void tud_cdc_rx_cb() {
-  // while (usb_cdc_available()) {
-  //   char c = usb_cdc_read_char();
-  //   // Process character
-  //   // You could echo it back:
-  //   usb_cdc_write_char(c);
-  //   usb_cdc_write_flush();
-  // }
+  while (usb_cdc_available()) {
+    // Echo data
+    char c = usb_cdc_read_char();
+    usb_cdc_write_char(c);
+    usb_cdc_write_flush();
+  }
 }
 
 void main() {
@@ -74,6 +52,5 @@ void main() {
 
   // Loop forever
   while (true) {
-    cdc_task();
   }
 }

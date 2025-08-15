@@ -87,7 +87,6 @@ void handle_bus_reset();
 // Initialize USN in device mode
 void usb_device_init();
 
-__attribute__((always_inline)) static inline bool bit_set_test(uint32_t value, uint32_t pos) { return (value & (1 << pos)) ? true : false; }
 __attribute__((always_inline)) static inline uint16_t min_u16(uint16_t x, uint16_t y) { return (x < y) ? x : y; }
 
 __attribute__((always_inline)) static inline void usb_reset() {

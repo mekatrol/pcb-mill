@@ -22,7 +22,7 @@ typedef struct {
   handshake_state_t handshake_state;
 
   // For a USB CDC Virtual COM Port, this struct represents the Line Coding object defined in USB CDC Specification 1.2, Section 6.2.13.
-  __attribute__((aligned(4))) usb_cdc_line_coding_t line_coding;
+  usb_cdc_line_coding_t line_coding;
 
   // TX and RX circular buffer state
   circular_buffer_t rx_buffer;
@@ -65,7 +65,7 @@ static bool _prep_out_transaction() {
 
   // Prepare for incoming data but only allow what we can store in the ring buffer.
   // TODO Actually we can still carry out the transfer, keeping count of received bytes
-  // and slowly move it to the FIFO when read().
+  // and slowly move it to the buffer when read().
   // This pre-check reduces endpoint claiming
   if (available_count < USB_EP0_BUFFER_SIZE) {
     return false;
@@ -89,8 +89,8 @@ static bool _prep_out_transaction() {
 }
 
 bool usb_cdc_connected() {
-  // DTR (bit 0) active  is considered as connected
-  return tud_ready() && bit_set_test(usb_cdc_interface.handshake_state, 0);
+  // DTR set means connected
+  return tud_ready() && (usb_cdc_interface.handshake_state & CDC_CONTROL_LINE_STATE_DTR) != 0;
 }
 
 uint8_t usb_cdc_get_handshake_state() {
@@ -139,7 +139,7 @@ uint32_t usb_cdc_write_flush() {
     return 0;
   }
 
-  // Pull data from FIFO
+  // Pull data from buffer
   const uint16_t count = circular_buffer_read(&usb_cdc_interface.tx_buffer, p_epbuf->epin, USB_EP0_BUFFER_SIZE);
 
   if (count) {
@@ -167,10 +167,6 @@ void usb_cdc_init() {
   // Config circular buffers
   circular_buffer_init(&usb_cdc_interface.rx_buffer, usb_cdc_interface.rx_buffer_data, (sizeof(usb_cdc_interface.rx_buffer_data) / sizeof(usb_cdc_interface.rx_buffer_data[0])));
   circular_buffer_init(&usb_cdc_interface.tx_buffer, usb_cdc_interface.tx_buffer_data, (sizeof(usb_cdc_interface.tx_buffer_data) / sizeof(usb_cdc_interface.tx_buffer_data[0])));
-}
-
-bool usb_cdc_deinit(void) {
-  return true;
 }
 
 void usb_cdc_reset() {
@@ -260,15 +256,10 @@ bool usb_cdc_control_xfer_cb(uint8_t stage, const usb_control_request_t* request
       if (stage == CONTROL_STAGE_SETUP) {
         tud_control_status(request);
       } else if (stage == CONTROL_STAGE_ACK) {
-        // CDC PSTN v1.2 section 6.3.12
-        // Bit 0: Indicates if DTE is present or not.
-        //        This signal corresponds to V.24 signal 108/2 and RS-232 signal DTR (Data Terminal Ready)
-        // Bit 1: Carrier control for half-duplex modems.
-        //        This signal corresponds to V.24 signal 105 and RS-232 signal RTS (Request to Send)
-        bool const dtr = bit_set_test(request->wValue, 0);
-        bool const rts = bit_set_test(request->wValue, 1);
-
         usb_cdc_interface.handshake_state = (uint8_t)request->wValue;
+
+        const bool dtr = (request->wValue & CDC_CONTROL_LINE_STATE_DTR) != 0;
+        const bool rts = (request->wValue & CDC_CONTROL_LINE_STATE_RTS) != 0;
 
         // Invoke callback
         if (tud_cdc_line_state_cb) {
@@ -308,11 +299,11 @@ bool usb_cdc_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes) {
     _prep_out_transaction();
   }
 
-  // Data sent to host, we continue to fetch from tx fifo to send.
+  // Data sent to host, we continue to fetch from tx buffer to send.
   // Note: This will cause incorrect baudrate set in line coding.
   //       Though maybe the baudrate is not really important !!!
   if (ep_addr == usb_cdc_interface.ep_in) {
-    // invoke transmit callback to possibly refill tx fifo
+    // invoke transmit callback to possibly refill tx buffer
     if (tud_cdc_tx_complete_cb) {
       tud_cdc_tx_complete_cb();
     }

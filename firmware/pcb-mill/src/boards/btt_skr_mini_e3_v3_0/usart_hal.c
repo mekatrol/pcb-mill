@@ -134,7 +134,7 @@ void usart_irq_handler(usart_instance_t *usart) {
     }
   }
 
-  // Is RX FIFO not empty?
+  // Is RX buffer not empty?
   if (hal->ISR & USART_ISR_RXNE_RXFNE) {
     usart->rx_buffer[usart->rx_buffer_head++] = hal->RDR;
     usart->rx_count++;

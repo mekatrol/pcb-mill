@@ -36,21 +36,10 @@ bool process_control_request(usb_control_request_t const* request);
 // True if just got out of Bus Reset and received the very first data from host
 bool tud_connected(void);
 
-// Check if device is connected and configured
-bool tud_mounted(void);
-
-// Check if device is ready to transfer
+// True if device configured
 __attribute__((always_inline)) static inline bool tud_ready(void) {
-  return tud_mounted();
+  return usb_device.cfg_num ? true : false;
 }
-
-// Enable pull-up resistor on D+ D-
-// Return false on unsupported MCUs
-bool tud_disconnect(void);
-
-// Disable pull-up resistor on D+ D-
-// Return false on unsupported MCUs
-bool tud_connect(void);
 
 // Carry out Data and Status stage of control transfer
 // - If len = 0, it is equivalent to sending status only

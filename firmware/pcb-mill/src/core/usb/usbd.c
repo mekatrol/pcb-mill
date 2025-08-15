@@ -49,15 +49,6 @@ bool tud_connected(void) {
   return usb_device.connected;
 }
 
-bool tud_mounted(void) {
-  return usb_device.cfg_num ? true : false;
-}
-
-bool tud_disconnect(void) {
-  USB->BCDR &= ~(USB_BCDR_DPPU);
-  return true;
-}
-
 bool usb_init_driver() {
   memset(&usb_device, 0, sizeof(usbd_device_t));
 

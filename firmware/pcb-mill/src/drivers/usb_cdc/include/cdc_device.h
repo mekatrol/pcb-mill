@@ -24,7 +24,7 @@ __attribute__((always_inline)) static inline int32_t usb_cdc_read_char() {
   return usb_cdc_read(&ch, 1) ? (int32_t)ch : -1;
 }
 
-// Write bytes to TX FIFO, data may remain in the FIFO for a while
+// Write bytes to TX buffer, data may remain in the buffer for a while
 uint32_t usb_cdc_write(const uint8_t* buffer, uint32_t bufsize);
 
 // Write a byte
@@ -66,7 +66,6 @@ __attribute__((weak)) void tud_cdc_send_break_cb(uint16_t duration_ms);
 // INTERNAL USBD-CLASS DRIVER API
 //--------------------------------------------------------------------+
 void usb_cdc_init();
-bool usb_cdc_deinit();
 void usb_cdc_reset();
 uint16_t usb_cdc_open(usb_control_interface_descriptor_t const* itf_desc, uint16_t max_len);
 bool usb_cdc_control_xfer_cb(uint8_t stage, usb_control_request_t const* request);
