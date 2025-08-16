@@ -36,7 +36,7 @@ __attribute__((always_inline)) static inline const usb_interface_association_des
 //--------------------------------------------------------------------+
 // Weak stubs: invoked if no strong implementation is available
 //--------------------------------------------------------------------+
-__attribute__((weak)) uint8_t const* tud_descriptor_other_speed_configuration_cb(uint8_t index) {
+__attribute__((weak)) uint8_t const* usb_descriptor_other_speed_configuration(uint8_t index) {
   (void)index;
   return NULL;
 }
@@ -400,7 +400,7 @@ static bool process_get_descriptor(usb_control_request_t const* request) {
         }
       } else {
         // Host only request this after getting Device Qualifier descriptor
-        descriptor_config = (uintptr_t)tud_descriptor_other_speed_configuration_cb(descriptor_index);
+        descriptor_config = (uintptr_t)usb_descriptor_other_speed_configuration(descriptor_index);
         if (!descriptor_config) {
           return false;
         }

@@ -348,28 +348,10 @@ bool usb_endpoint_control_transfer(const usb_control_request_t* request, void* b
 // Send STATUS (zero length) packet
 bool tud_control_status(usb_control_request_t const* request);
 
-//--------------------------------------------------------------------+
-// Application Callbacks
-//--------------------------------------------------------------------+
-
-// Invoked when received GET DEVICE DESCRIPTOR request
-// Application return pointer to descriptor
 uint8_t const* get_device_descriptor(void);
-
-// Invoked when received GET STRING DESCRIPTOR request
-// Application return pointer to descriptor, whose contents must exist long enough for transfer to complete
 uint16_t const* usb_descriptor_string(uint8_t index, uint16_t langid);
-
-// Invoked when received GET DEVICE QUALIFIER DESCRIPTOR request
-// Application return pointer to descriptor, whose contents must exist long enough for transfer to complete.
-// device_qualifier descriptor describes information about a high-speed capable device that would
-// change if the device were operating at the other speed. If not highspeed capable stall this request.
 uint8_t const* usb_descriptor_device_qualifier(void);
-
-// Invoked when received GET OTHER SEED CONFIGURATION DESCRIPTOR request
-// Application return pointer to descriptor, whose contents must exist long enough for transfer to complete
-// Configuration descriptor in the other speed e.g if high speed then this is for full speed and vice versa
-uint8_t const* tud_descriptor_other_speed_configuration_cb(uint8_t index);
+uint8_t const* usb_descriptor_other_speed_configuration(uint8_t index);
 
 // Descriptor types recognised by this USB library
 typedef enum {
