@@ -4,9 +4,6 @@
 endpoint_packet_t transfer_buffer_state[USB_EP_MAX][2];
 ep_alloc_t endpoint_allocated_state[USB_EP_MAX];
 
-// Next available USB PMA buffer pointer location
-uint16_t usb_pma_next_available;
-
 void usb_endpoint_control_init();
 static bool usb_read_packet_data(void *__restrict dst, uint16_t src, uint16_t byte_count);
 void usb_transmit_packet(endpoint_packet_t *control_transfer, uint16_t ep_idn);
@@ -16,6 +13,41 @@ bool usb_cdc_transfer_cb(uint8_t ep_addr, uint32_t transferred_bytes);
 
 __attribute__((always_inline)) static inline endpoint_packet_t *endpoint_buffer_state(uint8_t ep_num, uint8_t dir) {
   return &transfer_buffer_state[ep_num][dir];
+}
+
+__attribute__((always_inline)) static inline uint16_t usb_pma_get_count(uint32_t endpoint_idn, uint8_t buf_id) {
+  uint16_t count;
+  count = (USB_BUFFER_DESC_TABLE->endpoint[endpoint_idn].buffer[buf_id].count_addr >> 16);
+  return count & 0x3FFU;
+}
+
+__attribute__((always_inline)) static inline void usb_pma_set_count(uint32_t endpoint_idn, uint8_t buf_id, uint16_t byte_count) {
+  uint32_t count_addr = USB_BUFFER_DESC_TABLE->endpoint[endpoint_idn].buffer[buf_id].count_addr;
+  count_addr = (count_addr & ~0x03FF0000u) | ((byte_count & 0x3FFu) << 16);
+  USB_BUFFER_DESC_TABLE->endpoint[endpoint_idn].buffer[buf_id].count_addr = count_addr;
+}
+
+__attribute__((always_inline)) static inline uint32_t usb_pma_get_endpoint_addr(uint32_t endpoint_idn, uint8_t buf_id) {
+  return USB_BUFFER_DESC_TABLE->endpoint[endpoint_idn].buffer[buf_id].count_addr & 0x0000FFFFU;
+}
+
+__attribute__((always_inline)) static inline void usb_endpoint_reg_set_clear_ctr(uint32_t endpoint_idn, usb_endpoint_direction_index_t dir) {
+  uint32_t endpoint_reg = USB->chep[endpoint_idn].CHEPnR;
+  endpoint_reg |= USB_EP_VTTX | USB_EP_VTRX;
+  endpoint_reg &= USB_CHEP_REG_MASK;
+  endpoint_reg &= ~(1 << (USB_CHEP_VTTX_Pos + (dir == USB_EP_DIRECTION_IN_IDX ? 0 : 8)));
+  usb_endpoint_reg_set(endpoint_idn, endpoint_reg, false);
+}
+
+__attribute__((always_inline)) static inline uint32_t unaligned_read32(const uint8_t *p) {
+  return (uint32_t)p[0] | ((uint32_t)p[1] << 8) | ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
+}
+
+__attribute__((always_inline)) static inline void unaligned_write32(uint8_t *p, uint32_t value) {
+  p[0] = (uint8_t)(value);
+  p[1] = (uint8_t)(value >> 8);
+  p[2] = (uint8_t)(value >> 16);
+  p[3] = (uint8_t)(value >> 24);
 }
 
 static void transfer_complete(uint8_t ep_addr, uint32_t transferred_bytes) {
@@ -290,7 +322,7 @@ void usb_device_init() {
   USB->CNTR |= USB_CNTR_RESETM | USB_CNTR_ESOFM | USB_CNTR_CTRM |
                USB_CNTR_SUSPM | USB_CNTR_WKUPM | USB_CNTR_PMAOVRM;
 
-  handle_bus_reset();
+  usb_hal_reset();
 
   // Enable pull up to tell host it can enumerate device
   USB->BCDR |= USB_BCDR_DPPU;
@@ -304,15 +336,12 @@ void usb_sof_set_enable(bool enable) {
   }
 }
 
-void handle_bus_reset() {
+void usb_hal_reset() {
+  // Disable USB
   USB->DADDR = 0U;
 
-  for (uint32_t i = 0; i < USB_EP_MAX; i++) {
-    ep_reset_allocated_state(endpoint_allocated_state, i);
-  }
-
-  // Reset PMA allocation (to end of EP buffer descriptor table)
-  usb_pma_next_available = 8 * USB_EP_MAX;
+  // Reset endpoints
+  usb_endpoint_reset();
 
   // EP0 must exist
   usb_endpoint_control_init();

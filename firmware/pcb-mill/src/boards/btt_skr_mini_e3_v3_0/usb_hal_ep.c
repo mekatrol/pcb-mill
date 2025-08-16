@@ -6,12 +6,94 @@
 
 extern endpoint_packet_t transfer_buffer_state[USB_EP_MAX][2];
 extern ep_alloc_t endpoint_allocated_state[USB_EP_MAX];
-extern uint16_t usb_pma_next_available;
+
+// Next available USB PMA buffer pointer location
+uint16_t usb_pma_next_available;
 
 uint8_t usb_endpoint_allocate(uint8_t ep_addr, uint8_t endpoint_type);
 
 __attribute__((always_inline)) static inline endpoint_packet_t *endpoint_buffer_state(uint8_t ep_num, uint8_t dir) {
   return &transfer_buffer_state[ep_num][dir];
+}
+
+__attribute__((always_inline)) static inline uint32_t usb_pma_next_addr(uint32_t usb_pma_next_available, uint32_t size) {
+  // Get next available Packet Memory Area location
+  uint32_t usb_pma_addr = usb_pma_next_available;
+
+  // Update next available by adding size (size is assumed to be 32 bit aligned)
+  usb_pma_next_available = (usb_pma_next_available + size);
+
+  return usb_pma_addr;
+}
+
+__attribute__((always_inline)) static inline void usb_endpoint_data_toggle(uint32_t *endpoint_reg, usb_endpoint_direction_index_t dir, usb_endpoint_state_t state) {
+  // Any bits set to 1 in state will be toggle the same bit in endpoint_reg
+  *endpoint_reg ^= (state << (USB_CHEP_DTOG_TX_Pos + (dir == USB_EP_DIRECTION_IN_IDX ? 0 : 8)));
+}
+
+__attribute__((always_inline)) static inline void usb_pma_set_endpoint_addr(uint32_t endpoint_idn, uint8_t buf_id, uint16_t addr) {
+  uint32_t count_addr = USB_BUFFER_DESC_TABLE->endpoint[endpoint_idn].buffer[buf_id].count_addr;
+  count_addr = (count_addr & 0xFFFF0000U) | (addr & 0x0000FFFCU);
+  USB_BUFFER_DESC_TABLE->endpoint[endpoint_idn].buffer[buf_id].count_addr = count_addr;
+}
+
+__attribute__((always_inline)) static inline void ep_reset_allocated_state(ep_alloc_t *endpoint_allocated_state, uint32_t ep_idn) {
+  endpoint_allocated_state[ep_idn].ep_num = 0xFF;
+  endpoint_allocated_state[ep_idn].ep_type = 0xFF;
+  endpoint_allocated_state[ep_idn].allocated[USB_EP_DIRECTION_OUT_IDX] = false;
+  endpoint_allocated_state[ep_idn].allocated[USB_EP_DIRECTION_IN_IDX] = false;
+}
+
+// Bit 31 BLSIZE: Block size
+// This bit selects the size of memory block used to define the allocated buffer area.
+//
+// – If BLSIZE = 0, the memory block is 2-byte large, which is the minimum block
+//   allowed in a half-word wide memory. With this block size the allocated buffer size
+//   ranges from 2 to 62 bytes.
+//
+// – If BLSIZE = 1, the memory block is 32-byte large, which permits to reach the
+//   maximum packet length defined by USB specifications. With this block size the
+//   allocated buffer size theoretically ranges from 32 to 1024 bytes, which is the longest
+//   packet size allowed by USB standard specifications. However, the applicable size is
+//   limited by the available buffer memory
+//
+// Bits 30:26 NUM_BLOCK[4:0]: Number of blocks
+// These bits define the number of memory blocks allocated to this packet buffer. The actual
+// amount of allocated memory depends on the BLSIZE value as illustrated in RM0444 Table 239.
+__attribute__((always_inline)) static inline uint32_t usb_endpoint_calc_rx_buffer_block_size(uint16_t buffer_size, uint32_t *blsize, uint32_t *num_block) {
+  uint32_t block_size_log2;  // log2(block_size)
+
+  if (buffer_size > 62) {
+    block_size_log2 = 5;  // 32 bytes
+    *blsize = 1;
+  } else {
+    block_size_log2 = 1;  // 2 bytes
+    *blsize = 0;
+  }
+
+  // Same as:
+  // block_count = (buffer_size + (32 - 1)) / 32 --> buffer_size  > 62
+  // block_count = (buffer_size + ( 2 - 1)) /  2 --> buffer_size <= 62
+  uint8_t block_count = (buffer_size + ((1 << block_size_log2) - 1)) >> block_size_log2;
+
+  // if BLSIZE == 1 then we need to subtract 1 from num_block
+  // See: RM0444 Table 239. Definition of allocated buffer memory
+  // Easiest way is to just subtract BLSIZE from NUM_BLOCK
+  *num_block = block_count - *blsize;
+
+  // Same as:
+  // block_count * 32 --> buffer_size  > 62
+  // block_count *  2 --> buffer_size <= 62
+  return block_count << block_size_log2;
+}
+
+void usb_endpoint_reset() {
+  for (uint32_t i = 0; i < USB_EP_MAX; i++) {
+    ep_reset_allocated_state(endpoint_allocated_state, i);
+  }
+
+  // Reset PMA allocation (to end of EP buffer descriptor table)
+  usb_pma_next_available = 8 * USB_EP_MAX;
 }
 
 void usb_endpoint_control_init() {
