@@ -5,7 +5,7 @@
 #define EP0_IDN 0
 
 extern endpoint_packet_t transfer_buffer_state[USB_EP_MAX][2];
-extern ep_alloc_t endpoint_allocated_state[USB_EP_MAX];
+ep_alloc_t endpoint_allocated_state[USB_EP_MAX];
 
 // Next available USB PMA buffer pointer location
 uint16_t usb_pma_next_available;

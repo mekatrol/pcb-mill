@@ -2,7 +2,6 @@
 #include "usb_hal.h"
 
 endpoint_packet_t transfer_buffer_state[USB_EP_MAX][2];
-ep_alloc_t endpoint_allocated_state[USB_EP_MAX];
 
 void usb_endpoint_control_init();
 static bool usb_read_packet_data(void *__restrict dst, uint16_t src, uint16_t byte_count);
