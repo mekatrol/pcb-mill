@@ -5,7 +5,7 @@
 #define EP0_IDN 0
 
 typedef struct {
-  uint8_t ep_num;
+  uint8_t ep_idn;
   uint8_t ep_type;
   bool allocated[EP_IN_OUT_PAIR];
 } ep_allocation_t;
@@ -18,8 +18,8 @@ uint16_t usb_pma_next_available;
 
 uint8_t usb_endpoint_allocate(uint8_t ep_addr, uint8_t endpoint_type);
 
-endpoint_packet_t *endpoint_buffer_state(uint8_t ep_num, uint8_t dir) {
-  return &transfer_buffer_state[ep_num][dir];
+endpoint_packet_t *endpoint_buffer_state(uint8_t ep_idn, uint8_t dir) {
+  return &transfer_buffer_state[ep_idn][dir];
 }
 
 __attribute__((always_inline)) static inline uint32_t usb_pma_next_addr(uint32_t usb_pma_next_available, uint32_t size) {
@@ -44,7 +44,7 @@ __attribute__((always_inline)) static inline void usb_pma_set_endpoint_addr(uint
 }
 
 __attribute__((always_inline)) static inline void ep_reset_allocated_state(ep_allocation_t *endpoint_allocated_state, uint32_t ep_idn) {
-  endpoint_allocated_state[ep_idn].ep_num = 0xFF;
+  endpoint_allocated_state[ep_idn].ep_idn = 0xFF;
   endpoint_allocated_state[ep_idn].ep_type = 0xFF;
   endpoint_allocated_state[ep_idn].allocated[USB_EP_DIRECTION_OUT_IDX] = false;
   endpoint_allocated_state[ep_idn].allocated[USB_EP_DIRECTION_IN_IDX] = false;
@@ -160,24 +160,24 @@ void usb_endpoint_set_rx_buffer_block_size(uint32_t ep_idn, uint32_t size) {
 }
 
 uint8_t usb_endpoint_allocate(uint8_t ep_addr, uint8_t endpoint_type) {
-  const uint8_t ep_num = USB_EP_NUM(ep_addr);
+  const uint8_t ep_idn = USB_EP_IDN(ep_addr);
   const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
 
   for (uint8_t i = 0; i < USB_EP_MAX; i++) {
     // Check if already allocated
     if (endpoint_allocated_state[i].allocated[ep_dir_idx] &&
         endpoint_allocated_state[i].ep_type == endpoint_type &&
-        endpoint_allocated_state[i].ep_num == ep_num) {
+        endpoint_allocated_state[i].ep_idn == ep_idn) {
       return i;
     }
 
     // If EP of current direction is not allocated
     if (!endpoint_allocated_state[i].allocated[ep_dir_idx]) {
       // Check if EP number is the same
-      if (endpoint_allocated_state[i].ep_num == 0xFF || endpoint_allocated_state[i].ep_num == ep_num) {
+      if (endpoint_allocated_state[i].ep_idn == 0xFF || endpoint_allocated_state[i].ep_idn == ep_idn) {
         // One EP pair has to be the same type
         if (endpoint_allocated_state[i].ep_type == 0xFF || endpoint_allocated_state[i].ep_type == endpoint_type) {
-          endpoint_allocated_state[i].ep_num = ep_num;
+          endpoint_allocated_state[i].ep_idn = ep_idn;
           endpoint_allocated_state[i].ep_type = endpoint_type;
           endpoint_allocated_state[i].allocated[ep_dir_idx] = true;
 
@@ -193,7 +193,6 @@ uint8_t usb_endpoint_allocate(uint8_t ep_addr, uint8_t endpoint_type) {
 
 bool usb_endpoint_open(const usb_endpoint_descriptor_t *endpoint_descriptor) {
   uint8_t const ep_addr = endpoint_descriptor->bEndpointAddress;
-  const uint8_t ep_num = USB_EP_NUM(ep_addr);
   const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
   const uint32_t packet_size = USB_EP_PACKET_SIZE(endpoint_descriptor->wMaxPacketSize);
   uint8_t const ep_idn = usb_endpoint_allocate(ep_addr, endpoint_descriptor->bmAttributes.type);
@@ -203,7 +202,7 @@ bool usb_endpoint_open(const usb_endpoint_descriptor_t *endpoint_descriptor) {
   }
 
   uint32_t endpoint_reg = usb_endpoint_reg_get(ep_idn) & ~USB_CHEP_REG_MASK;
-  endpoint_reg |= USB_EP_NUM(ep_addr);
+  endpoint_reg |= USB_EP_IDN(ep_addr);
 
   // Supported endpoint types
   switch (endpoint_descriptor->bmAttributes.type) {
@@ -224,7 +223,7 @@ bool usb_endpoint_open(const usb_endpoint_descriptor_t *endpoint_descriptor) {
   uint16_t pma_addr = usb_pma_next_addr(usb_pma_next_available, packet_size);
   usb_pma_set_endpoint_addr(ep_idn, ep_dir_idx == USB_EP_DIRECTION_IN_IDX ? USB_EP_TX_BUFFER : USB_EP_RX_BUFFER, pma_addr);
 
-  endpoint_packet_t *control_transfer = endpoint_buffer_state(ep_num, ep_dir_idx);
+  endpoint_packet_t *control_transfer = endpoint_buffer_state(ep_idn, ep_dir_idx);
   control_transfer->max_packet_size = packet_size;
   control_transfer->ep_idn = ep_idn;
 
@@ -257,14 +256,12 @@ void usb_endpoint_close_all() {
   usb_pma_next_available = 8 * USB_EP_MAX + 2 * USB_EP0_BUFFER_SIZE;
 }
 
-bool usb_endpoint_transfer_hal(uint8_t ep_num, uint8_t ep_dir_idx, uint8_t *buffer, uint16_t total_bytes) {
-  endpoint_packet_t *control_transfer = endpoint_buffer_state(ep_num, ep_dir_idx);
+bool usb_endpoint_transfer_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t *buffer, uint16_t total_bytes) {
+  endpoint_packet_t *control_transfer = endpoint_buffer_state(ep_idn, ep_dir_idx);
 
   control_transfer->buffer = buffer;
   control_transfer->total_len = total_bytes;
   control_transfer->queued_len = 0;
-
-  uint8_t const ep_idn = control_transfer->ep_idn;
 
   if (ep_dir_idx == USB_EP_DIRECTION_IN_IDX) {
     usb_transmit_packet(control_transfer, ep_idn);
@@ -283,10 +280,7 @@ bool usb_endpoint_transfer_hal(uint8_t ep_num, uint8_t ep_dir_idx, uint8_t *buff
   return true;
 }
 
-void usb_endpoint_stall_set_hal(uint8_t ep_num, uint8_t ep_dir_idx) {
-  endpoint_packet_t *control_transfer = endpoint_buffer_state(ep_num, ep_dir_idx);
-  uint8_t const ep_idn = control_transfer->ep_idn;
-
+void usb_endpoint_stall_set_hal(uint8_t ep_idn, uint8_t ep_dir_idx) {
   uint32_t endpoint_reg = usb_endpoint_reg_get(ep_idn);
   endpoint_reg &= USB_CHEP_REG_MASK | USB_EP_STATUS_MASK(ep_dir_idx);
   usb_endpoint_status(&endpoint_reg, ep_dir_idx, USB_EP_STATE_STALL);
@@ -294,10 +288,7 @@ void usb_endpoint_stall_set_hal(uint8_t ep_num, uint8_t ep_dir_idx) {
   usb_endpoint_reg_set_preserve(ep_idn, endpoint_reg, true);
 }
 
-void usb_endpoint_stall_clear_hal(uint8_t ep_num, uint8_t ep_dir_idx) {
-  endpoint_packet_t *control_transfer = endpoint_buffer_state(ep_num, ep_dir_idx);
-  uint8_t const ep_idn = control_transfer->ep_idn;
-
+void usb_endpoint_stall_clear_hal(uint8_t ep_idn, uint8_t ep_dir_idx) {
   // Get current value of CHEPnR
   uint32_t endpoint_reg = usb_endpoint_reg_get(ep_idn);
 
@@ -312,13 +303,13 @@ void usb_endpoint_stall_clear_hal(uint8_t ep_num, uint8_t ep_dir_idx) {
 }
 
 static void usb_endpoint_transfer_complete(uint8_t ep_addr, uint32_t transferred_bytes) {
-  const uint8_t ep_num = USB_EP_NUM(ep_addr);
+  const uint8_t ep_idn = USB_EP_IDN(ep_addr);
   const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
 
-  usb_device.ep_status[ep_num][ep_dir_idx].busy = 0;
-  usb_device.ep_status[ep_num][ep_dir_idx].claimed = 0;
+  usb_device.ep_status[ep_idn][ep_dir_idx].busy = 0;
+  usb_device.ep_status[ep_idn][ep_dir_idx].claimed = 0;
 
-  if (ep_num == 0) {
+  if (ep_idn == 0) {
     usb_control_transfer(ep_addr, transferred_bytes);
   } else {
     usb_cdc_transfer(ep_addr, transferred_bytes);
@@ -327,8 +318,7 @@ static void usb_endpoint_transfer_complete(uint8_t ep_addr, uint32_t transferred
 
 void usb_endpoint_ctr_rx(uint32_t ep_idn) {
   uint32_t endpoint_reg = usb_endpoint_reg_get(ep_idn);
-  const uint8_t ep_num = endpoint_reg & USB_CHEP_ADDR;
-  endpoint_packet_t *control_transfer = endpoint_buffer_state(ep_num, USB_EP_DIRECTION_OUT_IDX);
+  endpoint_packet_t *control_transfer = endpoint_buffer_state(ep_idn, USB_EP_DIRECTION_OUT_IDX);
 
   uint16_t const rx_count = usb_pma_get_count(ep_idn, USB_EP_RX_BUFFER);
   uint16_t pma_addr = (uint16_t)usb_pma_get_endpoint_addr(ep_idn, USB_EP_RX_BUFFER);
@@ -341,7 +331,7 @@ void usb_endpoint_ctr_rx(uint32_t ep_idn) {
 
     usb_endpoint_set_rx_buffer_block_size(ep_idn, (uint32_t)control_transfer->max_packet_size);
 
-    usb_endpoint_transfer_complete(ep_num, control_transfer->queued_len);
+    usb_endpoint_transfer_complete(ep_idn, control_transfer->queued_len);
 
     // ch32 seems to unconditionally accept ZLP on EP0 OUT, which can incorrectly use queued_len of previous
     // transfer. So reset total_len and queued_len to 0.

@@ -46,8 +46,8 @@
 #define USB_EP_DIR_MASK 0x80             // Bit 7 = direction
 #define USB_EP_PACKET_SIZE_MASK 0x7FFUL  // Bits 0–10 = Max packet size in bytes (0–1024)
 
-// Extract endpoint number (0..15)
-#define USB_EP_NUM(addr) ((uint8_t)((addr) & USB_EP_NUM_MASK))
+// Extract endpoint identifier (0..15)
+#define USB_EP_IDN(addr) ((uint8_t)((addr) & USB_EP_NUM_MASK))
 
 // Extract direction (USB_DIR_IN or USB_DIR_OUT)
 #define USB_EP_DIR(addr) ((uint8_t)((addr) & USB_EP_DIR_MASK))
@@ -580,15 +580,15 @@ bool usb_endpoint_open(usb_endpoint_descriptor_t const* endpoint_descriptor);
 void usb_endpoint_close_all();
 
 // Submit a transfer
-bool usb_endpoint_transfer_hal(uint8_t ep_num, uint8_t ep_dir_idx, uint8_t* buffer, uint16_t total_bytes);
+bool usb_endpoint_transfer_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t* buffer, uint16_t total_bytes);
 
 // Stall endpoint, any queuing transfer should be removed from endpoint
 void usb_endpoint_stall_set(uint8_t ep_addr);
-void usb_endpoint_stall_set_hal(uint8_t ep_num, uint8_t ep_dir_idx);
+void usb_endpoint_stall_set_hal(uint8_t ep_idn, uint8_t ep_dir_idx);
 
 // clear stall, data toggle is also reset to DATA0
 // This API never calls with control endpoints, since it is auto cleared when receiving setup packet
 void usb_endpoint_stall_clear(uint8_t ep_addr);
-void usb_endpoint_stall_clear_hal(uint8_t ep_num, uint8_t ep_dir_idx);
+void usb_endpoint_stall_clear_hal(uint8_t ep_idn, uint8_t ep_dir_idx);
 
 #endif  // __USB_H__
