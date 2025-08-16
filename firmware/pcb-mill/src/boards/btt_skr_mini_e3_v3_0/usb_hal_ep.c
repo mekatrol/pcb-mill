@@ -19,10 +19,6 @@ ep_assignment_t ep_assignment[USB_EP_MAX];
 // Next available USB PMA buffer pointer location
 uint16_t usb_pma_next_available;
 
-ep_packet_t *get_ep_packet(uint8_t ep_idn, uint8_t ep_dir_idx) {
-  return &ep_packet[ep_idn][ep_dir_idx];
-}
-
 __attribute__((always_inline)) static inline uint32_t usb_pma_next_addr(uint32_t size) {
   // Get next available Packet Memory Area location
   uint32_t usb_pma_addr = usb_pma_next_available;
@@ -226,7 +222,7 @@ bool usb_ep_open(const usb_ep_descriptor_t *ep_descriptor) {
   uint16_t pma_addr = usb_pma_next_addr(packet_size);
   usb_pma_set_ep_addr(ep_idn, ep_dir_idx == USB_EP_DIRECTION_IN_IDX ? USB_EP_TX_BUFFER : USB_EP_RX_BUFFER, pma_addr);
 
-  ep_packet_t *packet = get_ep_packet(ep_idn, ep_dir_idx);
+  ep_packet_t *packet = &ep_packet[ep_idn][ep_dir_idx];
   packet->max_packet_size = packet_size;
   packet->ep_idn = ep_idn;
 
@@ -260,7 +256,7 @@ void usb_ep_close_all() {
 }
 
 bool usb_ep_transfer_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t *buffer, uint16_t total_bytes) {
-  ep_packet_t *packet = get_ep_packet(ep_idn, ep_dir_idx);
+  ep_packet_t *packet = &ep_packet[ep_idn][ep_dir_idx];
 
   packet->buffer = buffer;
   packet->total_len = total_bytes;
@@ -321,7 +317,7 @@ static void usb_ep_transfer_complete(uint8_t ep_addr, uint32_t transferred_bytes
 
 void usb_ep_ctr_rx(uint32_t ep_idn) {
   uint32_t ep_reg = usb_ep_reg_get(ep_idn);
-  ep_packet_t *packet = get_ep_packet(ep_idn, USB_EP_DIRECTION_OUT_IDX);
+  ep_packet_t *packet = &ep_packet[ep_idn][USB_EP_DIRECTION_OUT_IDX];
 
   const uint16_t rx_count = usb_pma_get_count(ep_idn, USB_EP_RX_BUFFER);
   uint16_t pma_addr = (uint16_t)usb_pma_get_ep_addr(ep_idn, USB_EP_RX_BUFFER);
@@ -336,8 +332,6 @@ void usb_ep_ctr_rx(uint32_t ep_idn) {
 
     usb_ep_transfer_complete(ep_idn, packet->queued_len);
 
-    // ch32 seems to unconditionally accept ZLP on EP0 OUT, which can incorrectly use queued_len of previous
-    // transfer. So reset total_len and queued_len to 0.
     packet->total_len = packet->queued_len = 0;
   } else {
     ep_reg &= USB_CHEP_REG_MASK | USB_EP_STATUS_MASK(USB_EP_DIRECTION_OUT_IDX);  // will change RX Status, reserved other toggle bits
@@ -347,12 +341,12 @@ void usb_ep_ctr_rx(uint32_t ep_idn) {
 }
 
 void usb_ep_ctr_tx(uint32_t ep_idn) {
-  uint32_t ep_addr = usb_ep_reg_get(ep_idn) & USB_CHEP_ADDR;
-  ep_packet_t *packet = get_ep_packet(ep_addr, USB_EP_DIRECTION_IN_IDX);
+  ep_packet_t *packet = &ep_packet[ep_idn][USB_EP_DIRECTION_IN_IDX];
 
   if (packet->total_len != packet->queued_len) {
     usb_tx_packet(packet);
   } else {
+    uint32_t ep_addr = usb_ep_reg_get(ep_idn) & USB_CHEP_ADDR;
     usb_ep_transfer_complete(ep_addr | USB_DIR_IN, packet->queued_len);
   }
 }
