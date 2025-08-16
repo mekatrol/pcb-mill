@@ -4,7 +4,7 @@
 // EP0 identifier
 #define EP0_IDN 0
 
-extern endpoint_packet_t transfer_buffer_state[USB_EP_MAX][2];
+endpoint_packet_t transfer_buffer_state[USB_EP_MAX][2];
 ep_alloc_t endpoint_allocated_state[USB_EP_MAX];
 
 // Next available USB PMA buffer pointer location
@@ -12,7 +12,7 @@ uint16_t usb_pma_next_available;
 
 uint8_t usb_endpoint_allocate(uint8_t ep_addr, uint8_t endpoint_type);
 
-__attribute__((always_inline)) static inline endpoint_packet_t *endpoint_buffer_state(uint8_t ep_num, uint8_t dir) {
+endpoint_packet_t *endpoint_buffer_state(uint8_t ep_num, uint8_t dir) {
   return &transfer_buffer_state[ep_num][dir];
 }
 

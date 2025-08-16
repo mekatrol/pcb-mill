@@ -1,18 +1,12 @@
 #include "board_hal.h"
 #include "usb_hal.h"
 
-endpoint_packet_t transfer_buffer_state[USB_EP_MAX][2];
-
 void usb_endpoint_control_init();
 static bool usb_read_packet_data(void *__restrict dst, uint16_t src, uint16_t byte_count);
 void usb_transmit_packet(endpoint_packet_t *control_transfer, uint16_t ep_idn);
 
 bool usb_control_transfer_cb(uint8_t ep_addr, uint32_t transferred_bytes);
 bool usb_cdc_transfer_cb(uint8_t ep_addr, uint32_t transferred_bytes);
-
-__attribute__((always_inline)) static inline endpoint_packet_t *endpoint_buffer_state(uint8_t ep_num, uint8_t dir) {
-  return &transfer_buffer_state[ep_num][dir];
-}
 
 __attribute__((always_inline)) static inline uint16_t usb_pma_get_count(uint32_t endpoint_idn, uint8_t buf_id) {
   uint16_t count;

@@ -35,6 +35,7 @@ typedef struct {
 void usb_endpoint_reset();
 void usb_endpoint_set_rx_buffer_block_size(uint32_t endpoint_idn, uint32_t size);
 void usb_transmit_packet(endpoint_packet_t *control_transfer, uint16_t ep_idn);
+endpoint_packet_t *endpoint_buffer_state(uint8_t ep_num, uint8_t dir);
 
 __attribute__((always_inline)) static inline uint32_t usb_endpoint_reg_get(uint32_t endpoint_idn) {
   return USB->chep[endpoint_idn].CHEPnR;
