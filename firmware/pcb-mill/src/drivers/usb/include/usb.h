@@ -650,11 +650,8 @@ __attribute__((always_inline)) static inline const char* get_usb_request_code_na
   }
 }
 
-// Receive Set Address request, mcu port must also include status IN response
-void dcd_set_address(uint8_t dev_addr);
-
 // Enable/Disable Start-of-frame interrupt. Default is disabled
-void dcd_sof_enable(bool en);
+void usb_sof_set_enable(bool en);
 
 // Invoked when a control transfer's status stage is complete.
 // May help DCD to prepare for next control transfer, this API is optional.
@@ -666,7 +663,7 @@ bool usb_endpoint_open(usb_endpoint_descriptor_t const* endpoint_descriptor);
 // Close all non-control endpoints, cancel all pending transfers if any.
 // Invoked when switching from a non-zero Configuration by SET_CONFIGURE therefore
 // required for multiple configuration support.
-void dcd_edpt_close_all();
+void usb_close_all_endpoints();
 
 // Submit a transfer
 bool dcd_edpt_xfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes);

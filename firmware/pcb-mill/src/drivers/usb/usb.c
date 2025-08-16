@@ -141,7 +141,9 @@ bool process_control_request(usb_control_request_t const* request) {
           // or even require stack to not response with status at all
           // Therefore DCD must take full responsibility to response and include zlp status packet if needed.
           usbd_control_set_request(request);  // set request since DCD has no access to tud_control_status() API
-          dcd_set_address((uint8_t)request->wValue);
+
+          // Respond with status
+          dcd_edpt_xfer(USB_DIR_IN | 0x00, NULL, 0);
 
           // skip tud_control_status()
           usb_device.addressed = 1;
@@ -159,10 +161,10 @@ bool process_control_request(usb_control_request_t const* request) {
           if (usb_device.cfg_num != cfg_num) {
             if (usb_device.cfg_num) {
               // disable SOF
-              dcd_sof_enable(false);
+              usb_sof_set_enable(false);
 
               // close all non-control endpoints, cancel all pending transfers if any
-              dcd_edpt_close_all();
+              usb_close_all_endpoints();
 
               // close all drivers and current configured state except bus speed
               usb_configuration_reset();
@@ -265,7 +267,7 @@ bool process_control_request(usb_control_request_t const* request) {
     //------------- Endpoint Request -------------//
     case USB_REQUEST_RECIPIENT_ENDPOINT: {
       uint8_t const ep_addr = (uint8_t)(request->wIndex & 0xFF);
-      uint8_t const ep_num = USB_EP_NUM(ep_addr);
+      const uint8_t ep_num = USB_EP_NUM(ep_addr);
 
       if (ep_num >= sizeof(usb_device.ep2drv) / sizeof(usb_device.ep2drv[0])) {
         return false;
@@ -483,7 +485,7 @@ bool usb_endpoint_open_in_out(const usb_endpoint_descriptor_t* desc_ep, uint8_t 
 }
 
 bool usb_endpoint_claim(uint8_t ep_addr) {
-  uint8_t const ep_num = USB_EP_NUM(ep_addr);
+  const uint8_t ep_num = USB_EP_NUM(ep_addr);
   const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
   endpoint_state_t* ep_state = &usb_device.ep_status[ep_num][ep_dir_idx];
 
@@ -491,7 +493,7 @@ bool usb_endpoint_claim(uint8_t ep_addr) {
 }
 
 bool usb_endpoint_release(uint8_t ep_addr) {
-  uint8_t const ep_num = USB_EP_NUM(ep_addr);
+  const uint8_t ep_num = USB_EP_NUM(ep_addr);
   const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
   endpoint_state_t* ep_state = &usb_device.ep_status[ep_num][ep_dir_idx];
 
@@ -499,7 +501,7 @@ bool usb_endpoint_release(uint8_t ep_addr) {
 }
 
 bool usb_endpoint_transfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes) {
-  uint8_t const ep_num = USB_EP_NUM(ep_addr);
+  const uint8_t ep_num = USB_EP_NUM(ep_addr);
   const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
 
   // Attempt to transfer on a busy endpoint, sound like an race condition !
@@ -532,7 +534,7 @@ void usbd_edpt_stall(uint8_t ep_addr) {
 }
 
 void usb_endpoint_stall_clear(uint8_t ep_addr) {
-  uint8_t const ep_num = USB_EP_NUM(ep_addr);
+  const uint8_t ep_num = USB_EP_NUM(ep_addr);
   const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
 
   // only clear if currently stalled
@@ -542,7 +544,7 @@ void usb_endpoint_stall_clear(uint8_t ep_addr) {
 }
 
 bool usb_endpoint_is_stalled(uint8_t ep_addr) {
-  uint8_t const ep_num = USB_EP_NUM(ep_addr);
+  const uint8_t ep_num = USB_EP_NUM(ep_addr);
   const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
 
   return usb_device.ep_status[ep_num][ep_dir_idx].stalled;
@@ -556,7 +558,7 @@ typedef struct {
   usbd_control_xfer_cb_t complete_cb;
 } usbd_control_xfer_t;
 
-static usbd_control_xfer_t _ctrl_xfer;
+static usbd_control_xfer_t control_transfer;
 
 static __attribute__((aligned(4))) uint8_t ep0_control_buffer[USB_EP0_BUFFER_SIZE];
 
@@ -564,15 +566,16 @@ static inline bool status_stage_xact(const usb_control_request_t* request) {
   // Opposite to endpoint in Data Phase
   const usb_endpoint_direction_index_t request_direction = usb_request_direction(request->bmRequestType);
   const uint8_t ep_addr = request_direction ? USB_DIR_OUT : USB_DIR_IN;
+
   return usb_endpoint_transfer(ep_addr, NULL, 0);
 }
 
 // Status phase
 bool tud_control_status(const usb_control_request_t* request) {
-  _ctrl_xfer.request = (*request);
-  _ctrl_xfer.buffer = NULL;
-  _ctrl_xfer.total_xferred = 0;
-  _ctrl_xfer.data_len = 0;
+  control_transfer.request = (*request);
+  control_transfer.buffer = NULL;
+  control_transfer.total_xferred = 0;
+  control_transfer.data_len = 0;
 
   return status_stage_xact(request);
 }
@@ -581,10 +584,10 @@ bool tud_control_status(const usb_control_request_t* request) {
 // Each transaction has up to Endpoint0's max packet size.
 // This function can also transfer an zero-length packet
 static bool data_stage_xact() {
-  const uint16_t xact_len = min_u16(_ctrl_xfer.data_len - _ctrl_xfer.total_xferred, USB_EP0_BUFFER_SIZE);
+  const uint16_t xact_len = min_u16(control_transfer.data_len - control_transfer.total_xferred, USB_EP0_BUFFER_SIZE);
   uint8_t ep_addr = USB_DIR_OUT;
 
-  const usb_endpoint_direction_index_t request_direction = usb_request_direction(_ctrl_xfer.request.bmRequestType);
+  const usb_endpoint_direction_index_t request_direction = usb_request_direction(control_transfer.request.bmRequestType);
   if (request_direction == USB_EP_DIRECTION_IN_IDX) {
     ep_addr = USB_DIR_IN;
     if (xact_len) {
@@ -593,7 +596,7 @@ static bool data_stage_xact() {
       }
 
       // Copy data to ep0_control_buffer
-      memcpy(ep0_control_buffer, _ctrl_xfer.buffer, xact_len);
+      memcpy(ep0_control_buffer, control_transfer.buffer, xact_len);
     }
   }
 
@@ -603,13 +606,13 @@ static bool data_stage_xact() {
 // Transmit data to/from the control endpoint.
 // If the request's wLength is zero, a status packet is sent instead.
 bool tud_control_xfer(const usb_control_request_t* request, void* buffer, uint16_t len) {
-  _ctrl_xfer.request = (*request);
-  _ctrl_xfer.buffer = (uint8_t*)buffer;
-  _ctrl_xfer.total_xferred = 0U;
-  _ctrl_xfer.data_len = min_u16(len, request->wLength);
+  control_transfer.request = (*request);
+  control_transfer.buffer = (uint8_t*)buffer;
+  control_transfer.total_xferred = 0U;
+  control_transfer.data_len = min_u16(len, request->wLength);
 
   if (request->wLength > 0U) {
-    if (_ctrl_xfer.data_len > 0U) {
+    if (control_transfer.data_len > 0U) {
       if (!buffer) {
         return false;
       }
@@ -631,30 +634,29 @@ bool tud_control_xfer(const usb_control_request_t* request, void* buffer, uint16
 //--------------------------------------------------------------------+
 void usbd_control_set_request(const usb_control_request_t* request);
 void usbd_control_set_complete_callback(usbd_control_xfer_cb_t fp);
-bool usbd_control_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes);
+bool usb_control_transfer_cb(uint8_t ep_addr, uint32_t xferred_bytes);
 
 void usbd_control_reset(void) {
-  memset(&_ctrl_xfer, 0, sizeof(usbd_control_xfer_t));
+  memset(&control_transfer, 0, sizeof(usbd_control_xfer_t));
 }
 
 // Set complete callback
 void usbd_control_set_complete_callback(usbd_control_xfer_cb_t fp) {
-  _ctrl_xfer.complete_cb = fp;
+  control_transfer.complete_cb = fp;
 }
 
-// for dcd_set_address where DCD is responsible for status response
 void usbd_control_set_request(const usb_control_request_t* request) {
-  _ctrl_xfer.request = (*request);
-  _ctrl_xfer.buffer = NULL;
-  _ctrl_xfer.total_xferred = 0;
-  _ctrl_xfer.data_len = 0;
+  control_transfer.request = (*request);
+  control_transfer.buffer = NULL;
+  control_transfer.total_xferred = 0;
+  control_transfer.data_len = 0;
 }
 
 // callback when a transaction complete on
 // - DATA stage of control endpoint or
 // - Status stage
-bool usbd_control_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes) {
-  const uint8_t request_direction = USB_EP_DIR(_ctrl_xfer.request.bmRequestType);
+bool usb_control_transfer_cb(uint8_t ep_addr, uint32_t xferred_bytes) {
+  const uint8_t request_direction = USB_EP_DIR(control_transfer.request.bmRequestType);
 
   // Endpoint Address is opposite to direction bit, this is Status Stage complete event
   if (USB_EP_DIR(ep_addr) != request_direction) {
@@ -663,41 +665,41 @@ bool usbd_control_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes) {
     }
 
     // invoke optional dcd hook if available
-    dcd_edpt0_status_complete(&_ctrl_xfer.request);
+    dcd_edpt0_status_complete(&control_transfer.request);
 
-    if (_ctrl_xfer.complete_cb) {
+    if (control_transfer.complete_cb) {
       // TODO refactor with usbd_driver_print_control_complete_name
-      _ctrl_xfer.complete_cb(CONTROL_STAGE_ACK, &_ctrl_xfer.request);
+      control_transfer.complete_cb(CONTROL_STAGE_ACK, &control_transfer.request);
     }
 
     return true;
   }
 
   if (request_direction == USB_DIR_OUT) {
-    if (!_ctrl_xfer.buffer) {
+    if (!control_transfer.buffer) {
       return false;
     }
-    memcpy(_ctrl_xfer.buffer, ep0_control_buffer, xferred_bytes);
+    memcpy(control_transfer.buffer, ep0_control_buffer, xferred_bytes);
   }
 
-  _ctrl_xfer.total_xferred += (uint16_t)xferred_bytes;
-  _ctrl_xfer.buffer += xferred_bytes;
+  control_transfer.total_xferred += (uint16_t)xferred_bytes;
+  control_transfer.buffer += xferred_bytes;
 
   // Data Stage is complete when all request's length are transferred or
   // a short packet is sent including zero-length packet.
-  if ((_ctrl_xfer.request.wLength == _ctrl_xfer.total_xferred) ||
+  if ((control_transfer.request.wLength == control_transfer.total_xferred) ||
       (xferred_bytes < USB_EP0_BUFFER_SIZE)) {
     // DATA stage is complete
     bool is_ok = true;
 
     // invoke complete callback if set
     // callback can still stall control in status phase e.g out data does not make sense
-    if (_ctrl_xfer.complete_cb) {
-      is_ok = _ctrl_xfer.complete_cb(CONTROL_STAGE_DATA, &_ctrl_xfer.request);
+    if (control_transfer.complete_cb) {
+      is_ok = control_transfer.complete_cb(CONTROL_STAGE_DATA, &control_transfer.request);
     }
 
     if (is_ok) {
-      if (!status_stage_xact(&_ctrl_xfer.request)) {
+      if (!status_stage_xact(&control_transfer.request)) {
         return false;
       }
     } else {
