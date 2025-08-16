@@ -655,15 +655,13 @@ void usb_sof_set_enable(bool en);
 
 // Invoked when a control transfer's status stage is complete.
 // May help DCD to prepare for next control transfer, this API is optional.
-void dcd_edpt0_status_complete(usb_control_request_t const* request);
+void usb_endpoint_control_status_complete(usb_control_request_t const* request);
 
 // Configure endpoint's registers according to descriptor
 bool usb_endpoint_open(usb_endpoint_descriptor_t const* endpoint_descriptor);
 
-// Close all non-control endpoints, cancel all pending transfers if any.
-// Invoked when switching from a non-zero Configuration by SET_CONFIGURE therefore
-// required for multiple configuration support.
-void usb_close_all_endpoints();
+// Close all endpoints
+void usb_endpoint_close_all();
 
 // Submit a transfer
 bool usb_endpoint_transfer_hal(uint8_t ep_num, uint8_t ep_dir_idx, uint8_t* buffer, uint16_t total_bytes);

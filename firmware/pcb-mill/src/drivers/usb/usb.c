@@ -164,7 +164,7 @@ bool process_control_request(usb_control_request_t const* request) {
               usb_sof_set_enable(false);
 
               // close all non-control endpoints, cancel all pending transfers if any
-              usb_close_all_endpoints();
+              usb_endpoint_close_all();
 
               // close all drivers and current configured state except bus speed
               usb_configuration_reset();
@@ -665,7 +665,7 @@ bool usb_control_transfer_cb(uint8_t ep_addr, uint32_t transferred_bytes) {
     }
 
     // invoke optional dcd hook if available
-    dcd_edpt0_status_complete(&control_transfer.request);
+    usb_endpoint_control_status_complete(&control_transfer.request);
 
     if (control_transfer.complete_cb) {
       // TODO refactor with usbd_driver_print_control_complete_name

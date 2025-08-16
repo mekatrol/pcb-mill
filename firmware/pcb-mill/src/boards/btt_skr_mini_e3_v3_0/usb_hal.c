@@ -7,7 +7,7 @@ ep_alloc_t endpoint_allocated_state[USB_EP_MAX];
 // Next available USB PMA buffer pointer location
 uint16_t usb_pma_next_available;
 
-void usb_endpoint0_init();
+void usb_endpoint_control_init();
 static bool usb_read_packet_data(void *__restrict dst, uint16_t src, uint16_t byte_count);
 void usb_transmit_packet(endpoint_packet_t *control_transfer, uint16_t ep_idn);
 
@@ -305,7 +305,7 @@ void usb_sof_set_enable(bool enable) {
 }
 
 void handle_bus_reset() {
-  USB->DADDR = 0u;  // disable USB Function
+  USB->DADDR = 0U;
 
   for (uint32_t i = 0; i < USB_EP_MAX; i++) {
     ep_reset_allocated_state(endpoint_allocated_state, i);
@@ -315,7 +315,7 @@ void handle_bus_reset() {
   usb_pma_next_available = 8 * USB_EP_MAX;
 
   // EP0 must exist
-  usb_endpoint0_init();
+  usb_endpoint_control_init();
 
   // Enable USB
   USB->DADDR = USB_DADDR_EF;
