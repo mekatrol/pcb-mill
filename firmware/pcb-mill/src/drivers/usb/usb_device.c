@@ -391,19 +391,17 @@ static bool process_get_descriptor(usb_control_request_t const* request) {
 
     case USB_DESCRIPTOR_TYPE_CONFIGURATION:
     case USB_DESCRIPTOR_TYPE_OTHER_SPEED_CONFIG: {
-      uintptr_t descriptor_config;
+      uintptr_t descriptor_config = (uintptr_t)NULL;
 
       if (descriptor_type == USB_DESCRIPTOR_TYPE_CONFIGURATION) {
         descriptor_config = (uintptr_t)usb_descriptor_configuration(descriptor_index);
-        if (!descriptor_config) {
-          return false;
-        }
       } else {
         // Host only request this after getting Device Qualifier descriptor
         descriptor_config = (uintptr_t)usb_descriptor_other_speed_configuration(descriptor_index);
-        if (!descriptor_config) {
-          return false;
-        }
+      }
+
+      if (!descriptor_config) {
+        return false;
       }
 
       // Use offsetof to avoid pointer to the odd/misaligned address
