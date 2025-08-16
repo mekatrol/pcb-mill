@@ -699,7 +699,7 @@ bool tu_edpt_release(endpoint_state_t* ep_state) {
   return released;
 }
 
-void tu_edpt_bind_driver(uint8_t ep2drv[][2], const usb_control_interface_descriptor_t* descriptor_interface, uint16_t descriptor_len) {
+void tu_edpt_bind_driver(uint8_t ep2drv[][EP_IN_OUT_PAIR], const usb_control_interface_descriptor_t* descriptor_interface, uint16_t descriptor_len) {
   uint8_t const* discriptor = (uint8_t const*)descriptor_interface;
   uint8_t const* descriptor_end = discriptor + descriptor_len;
 

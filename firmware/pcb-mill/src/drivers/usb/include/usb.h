@@ -24,6 +24,9 @@
 //   - ep2 - interrupt
 #define USB_EP_MAX 3
 
+// A pait of endpoints max IN/OUT
+#define EP_IN_OUT_PAIR 2
+
 // The size of endpoint 0 buffer
 #define USB_EP0_BUFFER_SIZE 64UL
 
@@ -85,7 +88,7 @@ typedef struct
   union {
     struct {
       volatile uint32_t count_addr;
-    } buffer[2];
+    } buffer[EP_IN_OUT_PAIR];
 
     volatile uint32_t TXBD;
     volatile uint32_t RXBD;
@@ -262,9 +265,9 @@ typedef struct {
   };
   volatile uint8_t cfg_num;  // current active configuration (0x00 is not configured)
 
-  uint8_t ep2drv[USB_EP_MAX][2];  // map endpoint to driver ( 0xff is invalid ), can use only 4-bit each
+  uint8_t ep2drv[USB_EP_MAX][EP_IN_OUT_PAIR];  // map endpoint to driver ( 0xff is invalid ), can use only 4-bit each
 
-  endpoint_state_t ep_status[USB_EP_MAX][2];
+  endpoint_state_t ep_status[USB_EP_MAX][EP_IN_OUT_PAIR];
 
 } usbd_device_t;
 
@@ -319,7 +322,7 @@ bool usb_endpoint_is_stalled(uint8_t ep_addr);
 bool usb_endpoint_open_in_out(const usb_endpoint_descriptor_t* p_desc, uint8_t xfer_type, uint8_t* ep_out, uint8_t* ep_in);
 
 // Bind all endpoint of a interface descriptor to class driver
-void tu_edpt_bind_driver(uint8_t ep2drv[][2], usb_control_interface_descriptor_t const* p_desc, uint16_t desc_len);
+void tu_edpt_bind_driver(uint8_t ep2drv[][EP_IN_OUT_PAIR], usb_control_interface_descriptor_t const* p_desc, uint16_t desc_len);
 
 // Claim an endpoint
 bool tu_edpt_claim(endpoint_state_t* ep_state);

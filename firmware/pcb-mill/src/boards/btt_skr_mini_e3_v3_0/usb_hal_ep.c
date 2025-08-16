@@ -7,11 +7,11 @@
 typedef struct {
   uint8_t ep_num;
   uint8_t ep_type;
-  bool allocated[2];
-} ep_alloc_t;
+  bool allocated[EP_IN_OUT_PAIR];
+} ep_allocation_t;
 
-endpoint_packet_t transfer_buffer_state[USB_EP_MAX][2];
-ep_alloc_t endpoint_allocated_state[USB_EP_MAX];
+endpoint_packet_t transfer_buffer_state[USB_EP_MAX][EP_IN_OUT_PAIR];
+ep_allocation_t endpoint_allocated_state[USB_EP_MAX];
 
 // Next available USB PMA buffer pointer location
 uint16_t usb_pma_next_available;
@@ -43,7 +43,7 @@ __attribute__((always_inline)) static inline void usb_pma_set_endpoint_addr(uint
   USB_BUFFER_DESC_TABLE->endpoint[ep_idn].buffer[buf_id].count_addr = count_addr;
 }
 
-__attribute__((always_inline)) static inline void ep_reset_allocated_state(ep_alloc_t *endpoint_allocated_state, uint32_t ep_idn) {
+__attribute__((always_inline)) static inline void ep_reset_allocated_state(ep_allocation_t *endpoint_allocated_state, uint32_t ep_idn) {
   endpoint_allocated_state[ep_idn].ep_num = 0xFF;
   endpoint_allocated_state[ep_idn].ep_type = 0xFF;
   endpoint_allocated_state[ep_idn].allocated[USB_EP_DIRECTION_OUT_IDX] = false;

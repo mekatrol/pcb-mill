@@ -1,9 +1,6 @@
 #include "board_hal.h"
 #include "usb_hal.h"
 
-void usb_endpoint_control_init();
-void usb_transmit_packet(endpoint_packet_t *control_transfer, uint16_t ep_idn);
-
 __attribute__((always_inline)) static inline void usb_pma_set_count(uint32_t ep_idn, uint8_t buf_id, uint16_t byte_count) {
   uint32_t count_addr = USB_BUFFER_DESC_TABLE->endpoint[ep_idn].buffer[buf_id].count_addr;
   count_addr = (count_addr & ~0x03FF0000u) | ((byte_count & 0x3FFu) << 16);
