@@ -315,7 +315,7 @@ bool usb_endpoint_claim(uint8_t ep_addr);
 bool usb_endpoint_release(uint8_t ep_addr);
 
 // Set endpoint stalled
-void usbd_edpt_stall(uint8_t ep_addr);
+void usb_endpoint_stall_set(uint8_t ep_addr);
 
 // Clear endpoint stalled
 void usb_endpoint_stall_clear(uint8_t ep_addr);
@@ -666,13 +666,15 @@ bool usb_endpoint_open(usb_endpoint_descriptor_t const* endpoint_descriptor);
 void usb_close_all_endpoints();
 
 // Submit a transfer
-bool dcd_edpt_xfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes);
+bool usb_endpoint_transfer_hal(uint8_t ep_num, uint8_t ep_dir_idx, uint8_t* buffer, uint16_t total_bytes);
 
 // Stall endpoint, any queuing transfer should be removed from endpoint
 void usb_endpoint_stall_set(uint8_t ep_addr);
+void usb_endpoint_stall_set_hal(uint8_t ep_num, uint8_t ep_dir_idx);
 
 // clear stall, data toggle is also reset to DATA0
 // This API never calls with control endpoints, since it is auto cleared when receiving setup packet
-void dcd_edpt_clear_stall(uint8_t ep_addr);
+void usb_endpoint_stall_clear(uint8_t ep_addr);
+void usb_endpoint_stall_clear_hal(uint8_t ep_num, uint8_t ep_dir_idx);
 
 #endif  // __USB_H__

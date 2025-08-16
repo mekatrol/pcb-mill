@@ -32,14 +32,15 @@ typedef struct {
   bool allocated[2];
 } ep_alloc_t;
 
+void usb_endpoint_set_rx_buffer_block_size(uint32_t endpoint_idn, uint32_t size);
+void usb_transmit_packet(endpoint_packet_t *control_transfer, uint16_t ep_idn);
+
 __attribute__((always_inline)) static inline void ep_reset_allocated_state(ep_alloc_t *endpoint_allocated_state, uint32_t ep_idn) {
   endpoint_allocated_state[ep_idn].ep_num = 0xFF;
   endpoint_allocated_state[ep_idn].ep_type = 0xFF;
   endpoint_allocated_state[ep_idn].allocated[USB_EP_DIRECTION_OUT_IDX] = false;
   endpoint_allocated_state[ep_idn].allocated[USB_EP_DIRECTION_IN_IDX] = false;
 }
-
-void usb_endpoint_set_rx_buffer_block_size(uint32_t endpoint_idn, uint32_t size);
 
 __attribute__((always_inline)) static inline uint32_t usb_endpoint_reg_get(uint32_t endpoint_idn) {
   return USB->chep[endpoint_idn].CHEPnR;

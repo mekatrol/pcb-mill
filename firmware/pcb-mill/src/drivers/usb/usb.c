@@ -142,8 +142,8 @@ bool process_control_request(usb_control_request_t const* request) {
           // Therefore DCD must take full responsibility to response and include zlp status packet if needed.
           usbd_control_set_request(request);  // set request since DCD has no access to tud_control_status() API
 
-          // Respond with status
-          dcd_edpt_xfer(USB_DIR_IN | 0x00, NULL, 0);
+          // Respond with status (ep0)
+          usb_endpoint_transfer_hal(0x00, USB_DIR_IN >> 7, NULL, 0);
 
           // skip tud_control_status()
           usb_device.addressed = 1;
@@ -290,7 +290,7 @@ bool process_control_request(usb_control_request_t const* request) {
               if (USB_STD_CLEAR_FEATURE == request->bRequest) {
                 usb_endpoint_stall_clear(ep_addr);
               } else {
-                usbd_edpt_stall(ep_addr);
+                usb_endpoint_stall_set(ep_addr);
               }
             }
 
@@ -509,11 +509,11 @@ bool usb_endpoint_transfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_byte
     return false;
   }
 
-  // Set busy first since the actual transfer can be complete before dcd_edpt_xfer()
+  // Set busy first since the actual transfer can be complete before usb_endpoint_transfer_hal()
   // could return and USBD task can preempt and clear the busy
   usb_device.ep_status[ep_num][ep_dir_idx].busy = 1;
 
-  if (dcd_edpt_xfer(ep_addr, buffer, total_bytes)) {
+  if (usb_endpoint_transfer_hal(ep_num, ep_dir_idx, buffer, total_bytes)) {
     return true;
   } else {
     // DCD error, mark endpoint as ready to allow next transfer
@@ -523,12 +523,12 @@ bool usb_endpoint_transfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_byte
   }
 }
 
-void usbd_edpt_stall(uint8_t ep_addr) {
+void usb_endpoint_stall_set(uint8_t ep_addr) {
   const uint8_t ep_num = USB_EP_NUM(ep_addr);
   const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
 
   // only stalled if currently cleared
-  usb_endpoint_stall_set(ep_addr);
+  usb_endpoint_stall_set_hal(ep_num, ep_dir_idx);
   usb_device.ep_status[ep_num][ep_dir_idx].stalled = 1;
   usb_device.ep_status[ep_num][ep_dir_idx].busy = 1;
 }
@@ -538,7 +538,7 @@ void usb_endpoint_stall_clear(uint8_t ep_addr) {
   const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
 
   // only clear if currently stalled
-  dcd_edpt_clear_stall(ep_addr);
+  usb_endpoint_stall_clear_hal(ep_num, ep_dir_idx);
   usb_device.ep_status[ep_num][ep_dir_idx].stalled = 0;
   usb_device.ep_status[ep_num][ep_dir_idx].busy = 0;
 }
