@@ -11,14 +11,14 @@ void usb_endpoint0_init();
 static bool usb_read_packet_data(void *__restrict dst, uint16_t src, uint16_t byte_count);
 static void usb_transmit_packet(endpoint_packet_t *control_transfer, uint16_t ep_idn);
 
-bool usb_control_transfer_cb(uint8_t ep_addr, uint32_t xferred_bytes);
-bool usb_cdc_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes);
+bool usb_control_transfer_cb(uint8_t ep_addr, uint32_t transferred_bytes);
+bool usb_cdc_transfer_cb(uint8_t ep_addr, uint32_t transferred_bytes);
 
 __attribute__((always_inline)) static inline endpoint_packet_t *xfer_ctl_ptr(uint8_t ep_num, uint8_t dir) {
   return &transfer_buffer_state[ep_num][dir];
 }
 
-static void transfer_complete(uint8_t ep_addr, uint32_t xferred_bytes) {
+static void transfer_complete(uint8_t ep_addr, uint32_t transferred_bytes) {
   // Invoke the class callback associated with the endpoint address
   const uint8_t ep_num = USB_EP_NUM(ep_addr);
   const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
@@ -27,9 +27,9 @@ static void transfer_complete(uint8_t ep_addr, uint32_t xferred_bytes) {
   usb_device.ep_status[ep_num][ep_dir_idx].claimed = 0;
 
   if (ep_num == 0) {
-    usb_control_transfer_cb(ep_addr, xferred_bytes);
+    usb_control_transfer_cb(ep_addr, transferred_bytes);
   } else {
-    usb_cdc_xfer_cb(ep_addr, xferred_bytes);
+    usb_cdc_transfer_cb(ep_addr, transferred_bytes);
   }
 }
 
@@ -40,7 +40,7 @@ void handle_ctr_rx(uint32_t endpoint_idn) {
   endpoint_packet_t *control_transfer = xfer_ctl_ptr(ep_num, USB_EP_DIRECTION_OUT_IDX);
 
   uint16_t const rx_count = usb_pma_get_count(endpoint_idn, USB_EP_RX_BUFFER);
-  uint16_t pma_addr = (uint16_t)usb_pma_get_addr(endpoint_idn, USB_EP_RX_BUFFER);
+  uint16_t pma_addr = (uint16_t)usb_pma_get_endpoint_addr(endpoint_idn, USB_EP_RX_BUFFER);
 
   usb_read_packet_data(control_transfer->buffer + control_transfer->queued_len, pma_addr, rx_count);
   control_transfer->queued_len += rx_count;
@@ -125,7 +125,7 @@ void usb_init_hal() {
 
 void handle_ctr_setup(uint32_t endpoint_idn) {
   uint16_t rx_count = usb_pma_get_count(endpoint_idn, USB_EP_RX_BUFFER);
-  uint16_t rx_addr = usb_pma_get_addr(endpoint_idn, USB_EP_RX_BUFFER);
+  uint16_t rx_addr = usb_pma_get_endpoint_addr(endpoint_idn, USB_EP_RX_BUFFER);
   uint8_t setup_packet[8] __attribute__((aligned(4)));
 
   usb_read_packet_data(setup_packet, rx_addr, rx_count);
@@ -419,7 +419,7 @@ bool usb_endpoint_open(usb_endpoint_descriptor_t const *endpoint_descriptor) {
 
   /* Create a packet memory buffer area. */
   uint16_t pma_addr = usb_pma_next_addr(usb_pma_next_available, packet_size);
-  usb_pma_set_addr(endpoint_idn, ep_dir_idx == USB_EP_DIRECTION_IN_IDX ? USB_EP_TX_BUFFER : USB_EP_RX_BUFFER, pma_addr);
+  usb_pma_set_endpoint_addr(endpoint_idn, ep_dir_idx == USB_EP_DIRECTION_IN_IDX ? USB_EP_TX_BUFFER : USB_EP_RX_BUFFER, pma_addr);
 
   endpoint_packet_t *control_transfer = xfer_ctl_ptr(ep_num, ep_dir_idx);
   control_transfer->max_packet_size = packet_size;
@@ -457,7 +457,7 @@ void usb_close_all_endpoints() {
 static void usb_transmit_packet(endpoint_packet_t *control_transfer, uint16_t ep_idn) {
   uint32_t len = min_u16(control_transfer->total_len - control_transfer->queued_len, control_transfer->max_packet_size);
 
-  uint16_t addr_ptr = (uint16_t)usb_pma_get_addr(ep_idn, USB_EP_TX_BUFFER);
+  uint16_t addr_ptr = (uint16_t)usb_pma_get_endpoint_addr(ep_idn, USB_EP_TX_BUFFER);
 
   usb_write_packet_data(addr_ptr, &(control_transfer->buffer[control_transfer->queued_len]), len);
   control_transfer->queued_len += len;

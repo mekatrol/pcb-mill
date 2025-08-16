@@ -19,8 +19,8 @@ void usb_endpoint0_init() {
   uint16_t pma_rx_addr = usb_pma_next_addr(usb_pma_next_available, USB_EP0_BUFFER_SIZE);
   uint16_t pma_tx_addr = usb_pma_next_addr(usb_pma_next_available, USB_EP0_BUFFER_SIZE);
 
-  usb_pma_set_addr(0, USB_EP_RX_BUFFER, pma_rx_addr);
-  usb_pma_set_addr(0, USB_EP_TX_BUFFER, pma_tx_addr);
+  usb_pma_set_endpoint_addr(0, USB_EP_RX_BUFFER, pma_rx_addr);
+  usb_pma_set_endpoint_addr(0, USB_EP_TX_BUFFER, pma_tx_addr);
 
   uint32_t endpoint_reg = usb_endpoint_reg_get(0) & ~USB_CHEP_REG_MASK;
   endpoint_reg |= USB_EP_CONTROL;

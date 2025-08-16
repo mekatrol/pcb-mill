@@ -63,6 +63,6 @@ void usb_cdc_init();
 void usb_cdc_reset();
 uint16_t usb_cdc_open(usb_control_interface_descriptor_t const* itf_desc, uint16_t max_len);
 bool usb_cdc_control_xfer_cb(uint8_t stage, usb_control_request_t const* request);
-bool usb_cdc_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes);
+bool usb_cdc_transfer_cb(uint8_t ep_addr, uint32_t transferred_bytes);
 
 #endif /* _TUSB_CDC_DEVICE_H_ */

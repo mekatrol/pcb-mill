@@ -270,10 +270,10 @@ bool usb_cdc_control_xfer_cb(uint8_t stage, const usb_control_request_t* request
   return true;
 }
 
-bool usb_cdc_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes) {
+bool usb_cdc_transfer_cb(uint8_t ep_addr, uint32_t transferred_bytes) {
   // Received new data
   if (ep_addr == usb_cdc_interface.ep_out) {
-    circular_buffer_write(&usb_cdc_interface.rx_buffer, usb_cdc_epbuf.epout, xferred_bytes);
+    circular_buffer_write(&usb_cdc_interface.rx_buffer, usb_cdc_epbuf.epout, transferred_bytes);
 
     // invoke receive callback (if there is still data)
     if (tud_cdc_rx_cb && circular_buffer_count(&usb_cdc_interface.rx_buffer) > 0) {
@@ -295,8 +295,8 @@ bool usb_cdc_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes) {
 
     if (usb_cdc_write_flush() == 0) {
       // If there is no data left, a ZLP should be sent if
-      // xferred_bytes is multiple of EP Packet size and not zero
-      if (circular_buffer_count(&usb_cdc_interface.tx_buffer) == 0 && xferred_bytes && (0 == (xferred_bytes & (USB_EP_TX_BUFFER_SIZE - 1)))) {
+      // transferred_bytes is multiple of EP Packet size and not zero
+      if (circular_buffer_count(&usb_cdc_interface.tx_buffer) == 0 && transferred_bytes && (0 == (transferred_bytes & (USB_EP_TX_BUFFER_SIZE - 1)))) {
         if (usb_endpoint_claim(usb_cdc_interface.ep_in)) {
           if (!usb_endpoint_transfer(usb_cdc_interface.ep_in, NULL, 0)) {
             return false;

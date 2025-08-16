@@ -634,7 +634,7 @@ bool tud_control_xfer(const usb_control_request_t* request, void* buffer, uint16
 //--------------------------------------------------------------------+
 void usbd_control_set_request(const usb_control_request_t* request);
 void usbd_control_set_complete_callback(usbd_control_xfer_cb_t fp);
-bool usb_control_transfer_cb(uint8_t ep_addr, uint32_t xferred_bytes);
+bool usb_control_transfer_cb(uint8_t ep_addr, uint32_t transferred_bytes);
 
 void usbd_control_reset(void) {
   memset(&control_transfer, 0, sizeof(usbd_control_xfer_t));
@@ -655,12 +655,12 @@ void usbd_control_set_request(const usb_control_request_t* request) {
 // callback when a transaction complete on
 // - DATA stage of control endpoint or
 // - Status stage
-bool usb_control_transfer_cb(uint8_t ep_addr, uint32_t xferred_bytes) {
+bool usb_control_transfer_cb(uint8_t ep_addr, uint32_t transferred_bytes) {
   const uint8_t request_direction = USB_EP_DIR(control_transfer.request.bmRequestType);
 
   // Endpoint Address is opposite to direction bit, this is Status Stage complete event
   if (USB_EP_DIR(ep_addr) != request_direction) {
-    if (xferred_bytes != 0) {
+    if (transferred_bytes != 0) {
       return false;
     }
 
@@ -679,16 +679,16 @@ bool usb_control_transfer_cb(uint8_t ep_addr, uint32_t xferred_bytes) {
     if (!control_transfer.buffer) {
       return false;
     }
-    memcpy(control_transfer.buffer, ep0_control_buffer, xferred_bytes);
+    memcpy(control_transfer.buffer, ep0_control_buffer, transferred_bytes);
   }
 
-  control_transfer.total_xferred += (uint16_t)xferred_bytes;
-  control_transfer.buffer += xferred_bytes;
+  control_transfer.total_xferred += (uint16_t)transferred_bytes;
+  control_transfer.buffer += transferred_bytes;
 
   // Data Stage is complete when all request's length are transferred or
   // a short packet is sent including zero-length packet.
   if ((control_transfer.request.wLength == control_transfer.total_xferred) ||
-      (xferred_bytes < USB_EP0_BUFFER_SIZE)) {
+      (transferred_bytes < USB_EP0_BUFFER_SIZE)) {
     // DATA stage is complete
     bool is_ok = true;
 
