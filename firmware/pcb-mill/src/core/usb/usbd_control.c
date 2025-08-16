@@ -1,5 +1,4 @@
-#include "dcd.h"
-#include "usbd_pvt.h"
+#include "usb.h"
 
 typedef struct {
   usb_control_request_t request;
@@ -155,8 +154,8 @@ bool usbd_control_xfer_cb(uint8_t ep_addr, uint32_t xferred_bytes) {
       }
     } else {
       // Stall both IN and OUT control endpoint
-      usb_endpoint_stall(USB_DIR_OUT);
-      usb_endpoint_stall(USB_DIR_IN);
+      usb_endpoint_stall_set(USB_DIR_OUT);
+      usb_endpoint_stall_set(USB_DIR_IN);
     }
   } else {
     // More data to transfer

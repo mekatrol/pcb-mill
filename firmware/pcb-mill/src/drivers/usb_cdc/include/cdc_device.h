@@ -1,7 +1,7 @@
 #ifndef TUSB_CDC_DEVICE_H_
 #define TUSB_CDC_DEVICE_H_
 
-#include "cdc.h"
+#include "usb.h"
 
 // Get current line encoding: bit rate, stop bits parity etc ..
 void usb_cdc_get_line_coding(usb_cdc_line_coding_t* coding);

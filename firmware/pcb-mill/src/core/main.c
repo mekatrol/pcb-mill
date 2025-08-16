@@ -1,5 +1,4 @@
 #include "hal.h"
-#include "usbd.h"
 #include "cdc_device.h"
 
 config_interface_t machine_config = {

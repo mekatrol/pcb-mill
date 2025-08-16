@@ -1,6 +1,5 @@
 #include "board_hal.h"
 #include "usb.h"
-#include "dcd.h"
 
 #define RCC_CRRCR_HSI48ON (1 << 0)
 #define RCC_CRRCR_HSI48RDY (1 << 1)
@@ -230,8 +229,8 @@ static void setup_received(usb_control_request_t *setup_received) {
   // Process control request
   if (!process_control_request(setup_received)) {
     // Failed -> stall both control endpoint IN and OUT
-    usb_endpoint_stall(USB_EP0_ADDR | USB_DIR_IN);
-    usb_endpoint_stall(USB_EP0_ADDR | USB_DIR_OUT);
+    usb_endpoint_stall_set(USB_EP0_ADDR | USB_DIR_IN);
+    usb_endpoint_stall_set(USB_EP0_ADDR | USB_DIR_OUT);
   }
 }
 
@@ -703,8 +702,8 @@ bool dcd_edpt_xfer(uint8_t ep_addr, uint8_t *buffer, uint16_t total_bytes) {
   return edpt_xfer(ep_num, ep_dir_idx);
 }
 
-void usb_endpoint_stall(uint8_t ep_addr) {
-  uint8_t const ep_num = USB_EP_NUM(ep_addr);
+void usb_endpoint_stall_set(uint8_t ep_addr) {
+  const uint8_t ep_num = USB_EP_NUM(ep_addr);
   const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
   xfer_ctl_t *xfer = xfer_ctl_ptr(ep_num, ep_dir_idx);
   uint8_t const ep_idx = xfer->ep_idx;

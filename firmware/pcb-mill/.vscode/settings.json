@@ -10,7 +10,8 @@
     "diagnostics.h": "c",
     "build_config.h": "c",
     "hal.h": "c",
-    "usbd.h": "c"
+    "usbd.h": "c",
+    "cdc_device.h": "c"
   },
   "cortex-debug.variableUseNaturalFormat": true
 }

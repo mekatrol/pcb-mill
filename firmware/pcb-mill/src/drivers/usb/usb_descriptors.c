@@ -1,7 +1,7 @@
 
 #include <stdint.h>
 
-#include "usbd.h"
+#include "usb.h"
 #include "cdc_device.h"
 
 // -----------------------------------------------------------------------------
