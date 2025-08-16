@@ -7,11 +7,11 @@ config_interface_t machine_config = {
     /* end default machine configuration*/
 };
 
-void tud_cdc_line_state_cb(bool dtr, bool rts) {
+void usb_cdc_line_state_cb(bool dtr, bool rts) {
   diag_printf("dtr: %d, rts: %d\r\n", dtr, rts);
 }
 
-void tud_cdc_rx_cb() {
+void usb_cdc_rx_cb() {
   while (usb_cdc_available()) {
     // Echo data
     char c = usb_cdc_read_char();

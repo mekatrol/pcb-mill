@@ -16,13 +16,11 @@ typedef struct {
 // Active packets for each endpoint
 endpoint_packet_t transfer_buffer_state[USB_EP_MAX][EP_IN_OUT_PAIR];
 
-// State of endpoint allocation
+// State of endpoint assignment
 ep_assignment_t endpoint_assignment_state[USB_EP_MAX];
 
 // Next available USB PMA buffer pointer location
 uint16_t usb_pma_next_available;
-
-uint8_t usb_endpoint_assign(uint8_t ep_addr, uint8_t endpoint_type);
 
 endpoint_packet_t *endpoint_buffer_state(uint8_t ep_idn, uint8_t ep_dir_idx) {
   return &transfer_buffer_state[ep_idn][ep_dir_idx];
@@ -35,7 +33,7 @@ __attribute__((always_inline)) static inline uint32_t usb_pma_next_addr(uint32_t
   // Update next available by adding size (size is assumed to be 32 bit aligned)
   usb_pma_next_available = (usb_pma_next_available + size);
 
-  // Return the allocated address
+  // Return the assigned address
   return usb_pma_addr;
 }
 
@@ -105,8 +103,40 @@ void usb_endpoint_reset() {
     ep_reset_assigned_state(idn);
   }
 
-  // Reset PMA allocation (to end of EP buffer descriptor table)
+  // Reset PMA assignment (to end of EP buffer descriptor table)
   usb_pma_next_available = 8 * USB_EP_MAX;
+}
+
+uint8_t usb_endpoint_assign(uint8_t ep_addr, uint8_t endpoint_type) {
+  const uint8_t ep_idn = USB_EP_IDN(ep_addr);
+  const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
+
+  for (uint8_t idn = 0; idn < USB_EP_MAX; idn++) {
+    // Check if already assigned, and return existing identifier if so
+    if (endpoint_assignment_state[idn].assigned[ep_dir_idx] &&
+        endpoint_assignment_state[idn].ep_type == endpoint_type &&
+        endpoint_assignment_state[idn].ep_idn == ep_idn) {
+      return idn;
+    }
+
+    // Assign only if currently not assigned
+    if (!endpoint_assignment_state[idn].assigned[ep_dir_idx]) {
+      // Check if EP number is the same
+      if (endpoint_assignment_state[idn].ep_idn == UNASSIGNED_VALUE || endpoint_assignment_state[idn].ep_idn == ep_idn) {
+        // One EP pair has to be the same type
+        if (endpoint_assignment_state[idn].ep_type == UNASSIGNED_VALUE || endpoint_assignment_state[idn].ep_type == endpoint_type) {
+          endpoint_assignment_state[idn].ep_idn = ep_idn;
+          endpoint_assignment_state[idn].ep_type = endpoint_type;
+          endpoint_assignment_state[idn].assigned[ep_dir_idx] = true;
+
+          return idn;
+        }
+      }
+    }
+  }
+
+  // Assignment failed
+  return UNASSIGNED_VALUE;
 }
 
 void usb_endpoint_control_init() {
@@ -141,7 +171,7 @@ void usb_endpoint_control_status_complete(const usb_control_request_t *request) 
   if (request_recipient == USB_REQUEST_RECIPIENT_DEVICE &&
       request_type == USB_REQUEST_TYPE_STANDARD &&
       request->bRequest == USB_STD_SET_ADDRESS) {
-    uint8_t const dev_addr = (uint8_t)request->wValue;
+    const uint8_t dev_addr = (uint8_t)request->wValue;
     USB->DADDR = (USB_DADDR_EF | dev_addr);
   }
 
@@ -153,58 +183,27 @@ void usb_endpoint_set_rx_buffer_block_size(uint32_t ep_idn, uint32_t size) {
   usb_endpoint_calc_rx_buffer_block_size(size, &blsize, &num_block);
 
   // Merge BLSIZE and NUM_BLOCK and shift to correct bit positions
-  uint32_t memory_buffer_allocation = (blsize << BIT_31_POS) | (num_block << BIT_26_POS);
+  uint32_t memory_buffer_assignment = (blsize << BIT_31_POS) | (num_block << BIT_26_POS);
 
   // Get existing register value (we don't want to override ADDR_RX), note this clears COUNT_RX
   // which is valid because we are setting the buffer size and previous received data likely invalid
   uint32_t usb_chep_txrxbd_n = USB_BUFFER_DESC_TABLE->endpoint[ep_idn].buffer[USB_EP_RX_BUFFER].count_addr;
 
   // Merge BLSIZE, NUM_BLOCK and ADDR_RX
-  usb_chep_txrxbd_n = memory_buffer_allocation | (usb_chep_txrxbd_n & 0x0000FFFFU);
+  usb_chep_txrxbd_n = memory_buffer_assignment | (usb_chep_txrxbd_n & 0x0000FFFFU);
 
   // Update register
   USB_BUFFER_DESC_TABLE->endpoint[ep_idn].buffer[USB_EP_RX_BUFFER].count_addr = usb_chep_txrxbd_n;
 }
 
-uint8_t usb_endpoint_assign(uint8_t ep_addr, uint8_t endpoint_type) {
-  const uint8_t ep_idn = USB_EP_IDN(ep_addr);
-  const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
-
-  for (uint8_t idn = 0; idn < USB_EP_MAX; idn++) {
-    // Check if already assigned
-    if (endpoint_assignment_state[idn].assigned[ep_dir_idx] &&
-        endpoint_assignment_state[idn].ep_type == endpoint_type &&
-        endpoint_assignment_state[idn].ep_idn == ep_idn) {
-      return idn;
-    }
-
-    // If EP of current direction is not assigned
-    if (!endpoint_assignment_state[idn].assigned[ep_dir_idx]) {
-      // Check if EP number is the same
-      if (endpoint_assignment_state[idn].ep_idn == UNASSIGNED_VALUE || endpoint_assignment_state[idn].ep_idn == ep_idn) {
-        // One EP pair has to be the same type
-        if (endpoint_assignment_state[idn].ep_type == UNASSIGNED_VALUE || endpoint_assignment_state[idn].ep_type == endpoint_type) {
-          endpoint_assignment_state[idn].ep_idn = ep_idn;
-          endpoint_assignment_state[idn].ep_type = endpoint_type;
-          endpoint_assignment_state[idn].assigned[ep_dir_idx] = true;
-
-          return idn;
-        }
-      }
-    }
-  }
-
-  // Allocation failed
-  return 0;
-}
-
 bool usb_endpoint_open(const usb_endpoint_descriptor_t *endpoint_descriptor) {
-  uint8_t const ep_addr = endpoint_descriptor->bEndpointAddress;
+  const uint8_t ep_addr = endpoint_descriptor->bEndpointAddress;
   const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
   const uint32_t packet_size = USB_EP_PACKET_SIZE(endpoint_descriptor->wMaxPacketSize);
-  uint8_t const ep_idn = usb_endpoint_assign(ep_addr, endpoint_descriptor->bmAttributes.type);
+  const uint8_t ep_idn = usb_endpoint_assign(ep_addr, endpoint_descriptor->bmAttributes.type);
 
-  if (ep_idn >= USB_EP_MAX) {
+  // Fail if unassigned
+  if (ep_idn == UNASSIGNED_VALUE) {
     return false;
   }
 
@@ -259,7 +258,7 @@ void usb_endpoint_close_all() {
 
   NVIC_EnableIRQ(USB_UCPD1_2_IRQn);
 
-  // Reset PMA allocation
+  // Reset PMA assignment
   usb_pma_next_available = 8 * USB_EP_MAX + 2 * USB_EP0_BUFFER_SIZE;
 }
 
@@ -327,7 +326,7 @@ void usb_endpoint_ctr_rx(uint32_t ep_idn) {
   uint32_t ep_reg = usb_endpoint_reg_get(ep_idn);
   endpoint_packet_t *control_transfer = endpoint_buffer_state(ep_idn, USB_EP_DIRECTION_OUT_IDX);
 
-  uint16_t const rx_count = usb_pma_get_count(ep_idn, USB_EP_RX_BUFFER);
+  const uint16_t rx_count = usb_pma_get_count(ep_idn, USB_EP_RX_BUFFER);
   uint16_t pma_addr = (uint16_t)usb_pma_get_endpoint_addr(ep_idn, USB_EP_RX_BUFFER);
 
   usb_read_packet_data(control_transfer->buffer + control_transfer->queued_len, pma_addr, rx_count);

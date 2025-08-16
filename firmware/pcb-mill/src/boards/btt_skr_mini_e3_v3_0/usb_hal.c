@@ -139,8 +139,8 @@ void USB_UCPD1_2_IRQHandler() {
   // loop to handle all pending CTR interrupts
   while (USB->ISTR & USB_ISTR_CTR) {
     // These bits are written by the hardware according to the host channel or device endpoint number
-    uint32_t const ep_idn = USB->ISTR & USB_ISTR_IDN;
-    uint32_t const endpoint_reg = usb_endpoint_reg_get(ep_idn);
+    const uint32_t ep_idn = USB->ISTR & USB_ISTR_IDN;
+    const uint32_t endpoint_reg = usb_endpoint_reg_get(ep_idn);
 
     if (endpoint_reg & USB_EP_VTRX) {
       if (endpoint_reg & USB_EP_SETUP) {

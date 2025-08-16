@@ -9,7 +9,7 @@
 // This descriptor tells the host the overall characteristics of the USB device
 // before it requests configuration/interface/endpoint descriptors.
 // -----------------------------------------------------------------------------
-static const usb_device_descriptor_t descriptor_device = {
+const static usb_device_descriptor_t descriptor_device = {
     .bLength = sizeof(usb_device_descriptor_t),     // Size of this descriptor in bytes (should be 18 for a device descriptor)
     .bDescriptorType = USB_DESCRIPTOR_TYPE_DEVICE,  // Descriptor Type: DEVICE (0x01)
 
@@ -44,8 +44,8 @@ static const usb_device_descriptor_t descriptor_device = {
     .bNumConfigurations = 0x01,  // Number of configurations this device supports
 };
 
-uint8_t const* get_device_descriptor(void) {
-  return (uint8_t const*)&descriptor_device;
+const uint8_t* get_device_descriptor(void) {
+  return (const uint8_t*)&descriptor_device;
 }
 
 // Configuration descriptor defined interfaces
@@ -63,7 +63,7 @@ enum {
   INTERFACE_TOTAL_COUNT = INTERFACE_CDC_INTERFACE_COUNT
 };
 
-uint8_t const usb_descriptor_conf[] = {
+const uint8_t usb_descriptor_conf[] = {
     // Configuration Descriptor (usb_configuration_descriptor_t)
     9,                                  // bLength: Size of this descriptor in bytes (always 9)
     USB_DESCRIPTOR_TYPE_CONFIGURATION,  // bDescriptorType: CONFIGURATION descriptor (0x02)
@@ -186,7 +186,7 @@ const usb_configuration_descriptor_t* usb_descriptor_configuration() {
 }
 
 // String descriptors
-char const* string_descriptor_arr[] = {
+const char* string_descriptor_arr[] = {
     (const char[]){0x09, 0x04},  // LANGID (English)
     "ST",                        // Manufacturer
     "PCB Mill",                  // Product
@@ -196,7 +196,7 @@ char const* string_descriptor_arr[] = {
 
 static uint16_t descriptor_str[32];
 
-uint16_t const* usb_descriptor_string(uint8_t index, uint16_t langid) {
+const uint16_t* usb_descriptor_string(uint8_t index, uint16_t langid) {
   (void)langid;
 
   if (index == 0) {

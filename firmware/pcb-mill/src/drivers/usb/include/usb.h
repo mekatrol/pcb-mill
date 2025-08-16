@@ -17,7 +17,7 @@
 // The number of endpoints to define, this should be limited to the
 // number of physical endpoints available for the device, however it can
 // be less if not all endpoints are needed. Reducing this value saves memory
-// by not allocating unused endpoint memory.
+// by not assigning unused endpoint memory.
 // Endpoints are:
 //   - ep0 - control endpoint (mandatory)
 //   - ep1 - bulk (CDC virtual com)
@@ -263,7 +263,7 @@ typedef struct {
     uint8_t remote_wakeup_support : 1;  // configuration descriptor's attribute
     uint8_t self_powered : 1;           // configuration descriptor's attribute
   };
-  volatile uint8_t cfg_num;  // current active configuration (0x00 is not configured)
+  volatile uint8_t config_num;  // current active configuration (0x00 is not configured)
 
   uint8_t ep2drv[USB_EP_MAX][EP_IN_OUT_PAIR];  // map endpoint to driver ( 0xff is invalid ), can use only 4-bit each
 
@@ -297,7 +297,7 @@ _Static_assert(sizeof(usb_cdc_line_coding_t) == 7, "size must be 7");
 
 const usb_configuration_descriptor_t* usb_descriptor_configuration();
 
-typedef bool (*usb_cdc_control_transfer_t)(uint8_t stage, usb_control_request_t const* request);
+typedef bool (*usb_cdc_control_transfer_t)(uint8_t stage, const usb_control_request_t* request);
 
 // Submit a usb transfer
 bool usb_endpoint_transfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes);
@@ -322,7 +322,7 @@ bool usb_endpoint_is_stalled(uint8_t ep_addr);
 bool usb_endpoint_open_in_out(const usb_endpoint_descriptor_t* p_desc, uint8_t xfer_type, uint8_t* ep_out, uint8_t* ep_in);
 
 // Bind all endpoint of a interface descriptor to class driver
-void tu_edpt_bind_driver(uint8_t ep2drv[][EP_IN_OUT_PAIR], usb_control_interface_descriptor_t const* p_desc, uint16_t desc_len);
+void tu_edpt_bind_driver(uint8_t ep2drv[][EP_IN_OUT_PAIR], const usb_control_interface_descriptor_t* p_desc, uint16_t desc_len);
 
 // Claim an endpoint
 bool tu_edpt_claim(endpoint_state_t* ep_state);
@@ -332,15 +332,15 @@ bool tu_edpt_release(endpoint_state_t* ep_state);
 
 extern usbd_device_t usb_device;
 
-bool process_control_request(usb_control_request_t const* request);
+bool process_control_request(const usb_control_request_t* request);
 
 // Check if device is connected (may not mounted/configured yet)
 // True if just got out of Bus Reset and received the very first data from host
-bool tud_connected(void);
+bool usb_connected(void);
 
 // True if device configured
-__attribute__((always_inline)) static inline bool tud_ready(void) {
-  return usb_device.cfg_num ? true : false;
+__attribute__((always_inline)) static inline bool usb_ready(void) {
+  return usb_device.config_num ? true : false;
 }
 
 // Carry out Data and Status stage of control transfer
@@ -349,12 +349,12 @@ __attribute__((always_inline)) static inline bool tud_ready(void) {
 bool usb_endpoint_control_transfer(const usb_control_request_t* request, void* buffer, uint16_t len);
 
 // Send STATUS (zero length) packet
-bool tud_control_status(usb_control_request_t const* request);
+bool usb_control_status(const usb_control_request_t* request);
 
-uint8_t const* get_device_descriptor(void);
-uint16_t const* usb_descriptor_string(uint8_t index, uint16_t langid);
-uint8_t const* usb_descriptor_device_qualifier(void);
-uint8_t const* usb_descriptor_other_speed_configuration(uint8_t index);
+const uint8_t* get_device_descriptor(void);
+const uint16_t* usb_descriptor_string(uint8_t index, uint16_t langid);
+const uint8_t* usb_descriptor_device_qualifier(void);
+const uint8_t* usb_descriptor_other_speed_configuration(uint8_t index);
 
 // Descriptor types recognised by this USB library
 typedef enum {
@@ -466,28 +466,28 @@ typedef struct __attribute__((packed)) {
 } tusb_descriptor_string_t;
 
 // return next descriptor
-__attribute__((always_inline)) static inline uint8_t const* usb_next_descriptor(void const* desc) {
-  uint8_t const* desc8 = (uint8_t const*)desc;
+__attribute__((always_inline)) static inline const uint8_t* usb_next_descriptor(const void* desc) {
+  const uint8_t* desc8 = (const uint8_t*)desc;
   return desc8 + desc8[DESC_OFFSET_LEN];
 }
 
 // get descriptor length
-__attribute__((always_inline)) static inline uint8_t usb_descriptor_len(void const* desc) {
-  return ((uint8_t const*)desc)[DESC_OFFSET_LEN];
+__attribute__((always_inline)) static inline uint8_t usb_descriptor_len(const void* desc) {
+  return ((const uint8_t*)desc)[DESC_OFFSET_LEN];
 }
 
 // get descriptor type
-__attribute__((always_inline)) static inline uint8_t usb_descriptor_type(void const* desc) {
-  return ((uint8_t const*)desc)[DESC_OFFSET_TYPE];
+__attribute__((always_inline)) static inline uint8_t usb_descriptor_type(const void* desc) {
+  return ((const uint8_t*)desc)[DESC_OFFSET_TYPE];
 }
 
 // get descriptor subtype
-__attribute__((always_inline)) static inline uint8_t tu_desc_subtype(void const* desc) {
-  return ((uint8_t const*)desc)[DESC_OFFSET_SUBTYPE];
+__attribute__((always_inline)) static inline uint8_t tu_desc_subtype(const void* desc) {
+  return ((const uint8_t*)desc)[DESC_OFFSET_SUBTYPE];
 }
 
-__attribute__((always_inline)) static inline uint8_t tu_desc_is_valid(void const* desc, uint8_t const* desc_end) {
-  const uint8_t* desc8 = (uint8_t const*)desc;
+__attribute__((always_inline)) static inline uint8_t tu_desc_is_valid(const void* desc, const uint8_t* desc_end) {
+  const uint8_t* desc8 = (const uint8_t*)desc;
   return (desc8 < desc_end) && (usb_next_descriptor(desc) <= desc_end);
 }
 
@@ -571,10 +571,10 @@ void usb_sof_set_enable(bool en);
 
 // Invoked when a control transfer's status stage is complete.
 // May help DCD to prepare for next control transfer, this API is optional.
-void usb_endpoint_control_status_complete(usb_control_request_t const* request);
+void usb_endpoint_control_status_complete(const usb_control_request_t* request);
 
 // Configure endpoint's registers according to descriptor
-bool usb_endpoint_open(usb_endpoint_descriptor_t const* endpoint_descriptor);
+bool usb_endpoint_open(const usb_endpoint_descriptor_t* endpoint_descriptor);
 
 // Close all endpoints
 void usb_endpoint_close_all();

@@ -53,7 +53,7 @@ static usb_cdc_epbuf_t usb_cdc_epbuf;
 
 static bool _prep_out_transaction() {
   // Skip if usb is not ready yet
-  if (!(tud_ready() && usb_cdc_interface.ep_out)) {
+  if (!(usb_ready() && usb_cdc_interface.ep_out)) {
     return false;
   }
 
@@ -112,7 +112,7 @@ uint32_t usb_cdc_write(const uint8_t* buffer, uint32_t bufsize) {
 
 uint32_t usb_cdc_write_flush() {
   // Skip if usb is not ready yet
-  if (!tud_ready()) {
+  if (!usb_ready()) {
     return 0;
   }
 
@@ -212,7 +212,7 @@ uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* descriptor, uint
 // Invoked when a control transfer occurred on an interface of this class
 // Driver response accordingly to the request and the transfer stage (setup/data/ack)
 // return false to stall control endpoint (e.g unsupported request)
-bool usb_cdc_control_xfer_cb(uint8_t stage, const usb_control_request_t* request) {
+bool usb_cdc_control_transfer(uint8_t stage, const usb_control_request_t* request) {
   const usb_request_type_t request_type = usb_request_type(request->bmRequestType);
 
   // Handle class request only
@@ -225,8 +225,8 @@ bool usb_cdc_control_xfer_cb(uint8_t stage, const usb_control_request_t* request
       if (stage == CONTROL_STAGE_SETUP) {
         usb_endpoint_control_transfer(request, &usb_cdc_interface.line_coding, sizeof(usb_cdc_line_coding_t));
       } else if (stage == CONTROL_STAGE_ACK) {
-        if (tud_cdc_line_coding_cb) {
-          tud_cdc_line_coding_cb(&usb_cdc_interface.line_coding);
+        if (usb_cdc_line_coding_cb) {
+          usb_cdc_line_coding_cb(&usb_cdc_interface.line_coding);
         }
       }
       break;
@@ -239,7 +239,7 @@ bool usb_cdc_control_xfer_cb(uint8_t stage, const usb_control_request_t* request
 
     case CDC_REQUEST_SET_CONTROL_LINE_STATE:
       if (stage == CONTROL_STAGE_SETUP) {
-        tud_control_status(request);
+        usb_control_status(request);
       } else if (stage == CONTROL_STAGE_ACK) {
         usb_cdc_interface.flow_control_state = (uint8_t)request->wValue;
 
@@ -247,19 +247,16 @@ bool usb_cdc_control_xfer_cb(uint8_t stage, const usb_control_request_t* request
         const bool rts = (request->wValue & CDC_CONTROL_LINE_STATE_RTS) != 0;
 
         // Invoke callback
-        if (tud_cdc_line_state_cb) {
-          tud_cdc_line_state_cb(dtr, rts);
+        if (usb_cdc_line_state_cb) {
+          usb_cdc_line_state_cb(dtr, rts);
         }
       }
       break;
 
     case CDC_REQUEST_SEND_BREAK:
       if (stage == CONTROL_STAGE_SETUP) {
-        tud_control_status(request);
+        usb_control_status(request);
       } else if (stage == CONTROL_STAGE_ACK) {
-        if (tud_cdc_send_break_cb) {
-          tud_cdc_send_break_cb(request->wValue);
-        }
       }
       break;
 
@@ -276,8 +273,8 @@ bool usb_cdc_transfer(uint8_t ep_addr, uint32_t transferred_bytes) {
     circular_buffer_write(&usb_cdc_interface.rx_buffer, usb_cdc_epbuf.epout, transferred_bytes);
 
     // invoke receive callback (if there is still data)
-    if (tud_cdc_rx_cb && circular_buffer_count(&usb_cdc_interface.rx_buffer) > 0) {
-      tud_cdc_rx_cb();
+    if (usb_cdc_rx_cb && circular_buffer_count(&usb_cdc_interface.rx_buffer) > 0) {
+      usb_cdc_rx_cb();
     }
 
     // prepare for OUT transaction
@@ -289,8 +286,8 @@ bool usb_cdc_transfer(uint8_t ep_addr, uint32_t transferred_bytes) {
   //       Though maybe the baudrate is not really important !!!
   if (ep_addr == usb_cdc_interface.ep_in) {
     // invoke transmit callback to possibly refill tx buffer
-    if (tud_cdc_tx_complete_cb) {
-      tud_cdc_tx_complete_cb();
+    if (usb_cdc_tx_complete_cb) {
+      usb_cdc_tx_complete_cb();
     }
 
     if (usb_cdc_write_flush() == 0) {

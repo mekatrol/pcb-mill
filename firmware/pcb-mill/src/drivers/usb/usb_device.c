@@ -36,7 +36,7 @@ __attribute__((always_inline)) static inline const usb_interface_association_des
 //--------------------------------------------------------------------+
 // Weak stubs: invoked if no strong implementation is available
 //--------------------------------------------------------------------+
-__attribute__((weak)) uint8_t const* usb_descriptor_other_speed_configuration(uint8_t index) {
+__attribute__((weak)) const uint8_t* usb_descriptor_other_speed_configuration(uint8_t index) {
   (void)index;
   return NULL;
 }
@@ -51,17 +51,14 @@ usbd_device_t usb_device;
 // Prototypes
 //--------------------------------------------------------------------+
 static bool usb_set_configuration();
-static bool process_get_descriptor(usb_control_request_t const* request);
+static bool process_get_descriptor(const usb_control_request_t* request);
 
 // from usbd_control.c
 void usbd_control_reset(void);
-void usbd_control_set_request(usb_control_request_t const* request);
+void usbd_control_set_request(const usb_control_request_t* request);
 void usbd_control_set_complete_callback(usb_cdc_control_transfer_t fp);
 
-//--------------------------------------------------------------------+
-// Application API
-//--------------------------------------------------------------------+
-bool tud_connected(void) {
+bool usb_connected(void) {
   return usb_device.connected;
 }
 
@@ -90,14 +87,14 @@ void usb_configuration_reset() {
 //--------------------------------------------------------------------+
 
 // Helper to invoke class driver control request handler
-static bool invoke_class_control(usb_control_request_t const* request) {
-  usbd_control_set_complete_callback(usb_cdc_control_xfer_cb);
-  return usb_cdc_control_xfer_cb(CONTROL_STAGE_SETUP, request);
+static bool invoke_class_control(const usb_control_request_t* request) {
+  usbd_control_set_complete_callback(usb_cdc_control_transfer);
+  return usb_cdc_control_transfer(CONTROL_STAGE_SETUP, request);
 }
 
 // This handles the actual request and its response.
 // Returns false if unable to complete the request, causing caller to stall control endpoints.
-bool process_control_request(usb_control_request_t const* request) {
+bool process_control_request(const usb_control_request_t* request) {
   usbd_control_set_complete_callback(NULL);
 
   const usb_request_type_t request_type = usb_request_type(request->bmRequestType);
@@ -132,26 +129,26 @@ bool process_control_request(usb_control_request_t const* request) {
           // Depending on mcu, status phase could be sent either before or after changing device address,
           // or even require stack to not response with status at all
           // Therefore DCD must take full responsibility to response and include zlp status packet if needed.
-          usbd_control_set_request(request);  // set request since DCD has no access to tud_control_status() API
+          usbd_control_set_request(request);  // set request since DCD has no access to usb_control_status() API
 
           // Respond with status (ep0)
           usb_endpoint_transfer_hal(0x00, USB_DIR_IN >> 7, NULL, 0);
 
-          // skip tud_control_status()
+          // skip usb_control_status()
           usb_device.addressed = 1;
           break;
 
         case USB_STD_GET_CONFIGURATION: {
-          uint8_t cfg_num = usb_device.cfg_num;
-          usb_endpoint_control_transfer(request, &cfg_num, 1);
+          uint8_t config_num = usb_device.config_num;
+          usb_endpoint_control_transfer(request, &config_num, 1);
         } break;
 
         case USB_STD_SET_CONFIGURATION: {
-          uint8_t const cfg_num = (uint8_t)request->wValue;
+          const uint8_t config_num = (uint8_t)request->wValue;
 
           // Only process if new configure is different
-          if (usb_device.cfg_num != cfg_num) {
-            if (usb_device.cfg_num) {
+          if (usb_device.config_num != config_num) {
+            if (usb_device.config_num) {
               // disable SOF
               usb_sof_set_enable(false);
 
@@ -162,13 +159,13 @@ bool process_control_request(usb_control_request_t const* request) {
               usb_configuration_reset();
             }
 
-            usb_device.cfg_num = cfg_num;
+            usb_device.config_num = config_num;
 
             // Handle the new configuration and execute the corresponding callback
-            if (cfg_num) {
+            if (config_num) {
               // switch to new configuration if not zero
-              if (!usb_set_configuration(cfg_num)) {
-                usb_device.cfg_num = 0;
+              if (!usb_set_configuration(config_num)) {
+                usb_device.config_num = 0;
                 return false;
               }
 
@@ -178,7 +175,7 @@ bool process_control_request(usb_control_request_t const* request) {
             }
           }
 
-          tud_control_status(request);
+          usb_control_status(request);
         } break;
 
         case USB_STD_GET_DESCRIPTOR:
@@ -189,7 +186,7 @@ bool process_control_request(usb_control_request_t const* request) {
             case TUSB_REQ_FEATURE_REMOTE_WAKEUP:
               // Host may enable remote wake up before suspending especially HID device
               usb_device.remote_wakeup_en = true;
-              tud_control_status(request);
+              usb_control_status(request);
               break;
 
             // Stall unsupported feature selector
@@ -206,7 +203,7 @@ bool process_control_request(usb_control_request_t const* request) {
 
           // Host may disable remote wake up after resuming
           usb_device.remote_wakeup_en = false;
-          tud_control_status(request);
+          usb_control_status(request);
           break;
 
         case USB_STD_GET_STATUS: {
@@ -245,7 +242,7 @@ bool process_control_request(usb_control_request_t const* request) {
               uint8_t alternate = 0;
               usb_endpoint_control_transfer(request, &alternate, 1);
             } else {
-              tud_control_status(request);
+              usb_control_status(request);
             }
             break;
 
@@ -258,7 +255,7 @@ bool process_control_request(usb_control_request_t const* request) {
 
     //------------- Endpoint Request -------------//
     case USB_REQUEST_RECIPIENT_ENDPOINT: {
-      uint8_t const ep_addr = (uint8_t)(request->wIndex & 0xFF);
+      const uint8_t ep_addr = (uint8_t)(request->wIndex & 0xFF);
       const uint8_t ep_idn = USB_EP_IDN(ep_addr);
 
       if (ep_idn >= sizeof(usb_device.ep2drv) / sizeof(usb_device.ep2drv[0])) {
@@ -296,7 +293,7 @@ bool process_control_request(usb_control_request_t const* request) {
 
             // skip ZLP status if driver already did that
             if (!usb_device.ep_status[0][USB_EP_DIRECTION_IN_IDX].busy) {
-              tud_control_status(request);
+              usb_control_status(request);
             }
           } break;
 
@@ -327,8 +324,8 @@ static bool usb_set_configuration() {
   usb_device.self_powered = (descriptor_config->bmAttributes & USB_DESCRIPTOR_TYPE_CONFIG_ATT_SELF_POWERED) ? 1U : 0U;
 
   // Parse interface descriptor
-  uint8_t const* discriptor = ((uint8_t const*)descriptor_config) + sizeof(usb_configuration_descriptor_t);
-  uint8_t const* descriptor_end = ((uint8_t const*)descriptor_config) + descriptor_config->wTotalLength;
+  const uint8_t* discriptor = ((const uint8_t*)descriptor_config) + sizeof(usb_configuration_descriptor_t);
+  const uint8_t* descriptor_end = ((const uint8_t*)descriptor_config) + descriptor_config->wTotalLength;
 
   while (discriptor < descriptor_end) {
     uint8_t assoc_itf_count = 1;
@@ -348,8 +345,8 @@ static bool usb_set_configuration() {
     const usb_control_interface_descriptor_t* descriptor_interface = (const usb_control_interface_descriptor_t*)discriptor;
 
     // Find driver for this interface
-    uint16_t const remaining_len = (uint16_t)(descriptor_end - discriptor);
-    uint16_t const drv_len = usb_cdc_open(descriptor_interface, remaining_len);
+    const uint16_t remaining_len = (uint16_t)(descriptor_end - discriptor);
+    const uint16_t drv_len = usb_cdc_open(descriptor_interface, remaining_len);
 
     if ((sizeof(usb_control_interface_descriptor_t) <= drv_len) && (drv_len <= remaining_len)) {
       if (assoc_itf_count == 1) {
@@ -374,14 +371,14 @@ typedef struct {
 } __attribute__((packed)) tu_unaligned_uint16_t;
 
 __attribute__((always_inline)) static inline uint16_t tu_unaligned_read16(const void* mem) {
-  tu_unaligned_uint16_t const* ua16 = (tu_unaligned_uint16_t const*)mem;
+  const tu_unaligned_uint16_t* ua16 = (const tu_unaligned_uint16_t*)mem;
   return ua16->val;
 }
 
 // return descriptor's buffer and update descriptor_len
-static bool process_get_descriptor(usb_control_request_t const* request) {
-  usb_descriptor_type_t const descriptor_type = (usb_descriptor_type_t)U16_HIGH(request->wValue);
-  uint8_t const descriptor_index = U16_LOW(request->wValue);
+static bool process_get_descriptor(const usb_control_request_t* request) {
+  const usb_descriptor_type_t descriptor_type = (usb_descriptor_type_t)U16_HIGH(request->wValue);
+  const uint8_t descriptor_index = U16_LOW(request->wValue);
 
   switch (descriptor_type) {
     case USB_DESCRIPTOR_TYPE_DEVICE: {
@@ -405,14 +402,14 @@ static bool process_get_descriptor(usb_control_request_t const* request) {
       }
 
       // Use offsetof to avoid pointer to the odd/misaligned address
-      uint16_t const total_len = tu_unaligned_read16((const void*)(descriptor_config + offsetof(usb_configuration_descriptor_t, wTotalLength)));
+      const uint16_t total_len = tu_unaligned_read16((const void*)(descriptor_config + offsetof(usb_configuration_descriptor_t, wTotalLength)));
 
       return usb_endpoint_control_transfer(request, (void*)descriptor_config, total_len);
     }
 
     case USB_DESCRIPTOR_TYPE_STRING: {
       // String Descriptor always uses the desc set from user
-      uint8_t const* descriptor_str = (uint8_t const*)usb_descriptor_string(descriptor_index, request->wIndex);
+      const uint8_t* descriptor_str = (const uint8_t*)usb_descriptor_string(descriptor_index, request->wIndex);
       if (!descriptor_str) {
         return false;
       }
@@ -544,7 +541,7 @@ static inline bool status_stage_xact(const usb_control_request_t* request) {
 }
 
 // Status phase
-bool tud_control_status(const usb_control_request_t* request) {
+bool usb_control_status(const usb_control_request_t* request) {
   control_transfer.request = (*request);
   control_transfer.buffer = NULL;
   control_transfer.total_xferred = 0;
@@ -700,12 +697,12 @@ bool tu_edpt_release(endpoint_state_t* ep_state) {
 }
 
 void tu_edpt_bind_driver(uint8_t ep2drv[][EP_IN_OUT_PAIR], const usb_control_interface_descriptor_t* descriptor_interface, uint16_t descriptor_len) {
-  uint8_t const* discriptor = (uint8_t const*)descriptor_interface;
-  uint8_t const* descriptor_end = discriptor + descriptor_len;
+  const uint8_t* discriptor = (const uint8_t*)descriptor_interface;
+  const uint8_t* descriptor_end = discriptor + descriptor_len;
 
   while (discriptor < descriptor_end) {
     if (USB_DESCRIPTOR_TYPE_ENDPOINT == usb_descriptor_type(discriptor)) {
-      uint8_t const ep_addr = ((usb_endpoint_descriptor_t const*)discriptor)->bEndpointAddress;
+      const uint8_t ep_addr = ((const usb_endpoint_descriptor_t*)discriptor)->bEndpointAddress;
       ep2drv[USB_EP_IDN(ep_addr)][USB_EP_DIR_IDX(ep_addr)] = 0;
     }
     discriptor = usb_next_descriptor(discriptor);

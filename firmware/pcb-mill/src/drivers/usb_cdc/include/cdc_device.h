@@ -27,7 +27,7 @@ __attribute__((always_inline)) static inline uint32_t usb_cdc_write_char(uint8_t
 }
 
 // Write a null-terminated string
-__attribute__((always_inline)) static inline uint32_t usb_cdc_write_str(uint8_t const* str) {
+__attribute__((always_inline)) static inline uint32_t usb_cdc_write_str(const uint8_t* str) {
   return usb_cdc_write(str, strlen((char*)str));
 }
 
@@ -39,30 +39,24 @@ uint32_t usb_cdc_write_flush();
 //--------------------------------------------------------------------+
 
 // Invoked when received new data
-__attribute__((weak)) void tud_cdc_rx_cb();
+__attribute__((weak)) void usb_cdc_rx_cb();
 
 // Invoked when a TX is complete and therefore space becomes available in TX buffer
-__attribute__((weak)) void tud_cdc_tx_complete_cb();
+__attribute__((weak)) void usb_cdc_tx_complete_cb();
 
 // Invoked when line state DTR & RTS are changed via SET_CONTROL_LINE_STATE
-__attribute__((weak)) void tud_cdc_line_state_cb(bool dtr, bool rts);
+__attribute__((weak)) void usb_cdc_line_state_cb(bool dtr, bool rts);
 
 // Invoked when line coding is change via SET_LINE_CODING
-__attribute__((weak)) void tud_cdc_line_coding_cb(usb_cdc_line_coding_t const* p_line_coding);
-
-// Invoked when received send break
-// \param[in]  itf  interface for which send break was received.
-// \param[in]  duration_ms  the length of time, in milliseconds, of the break signal. If a value of FFFFh, then the
-//                          device will send a break until another SendBreak request is received with value 0000h.
-__attribute__((weak)) void tud_cdc_send_break_cb(uint16_t duration_ms);
+__attribute__((weak)) void usb_cdc_line_coding_cb(const usb_cdc_line_coding_t* p_line_coding);
 
 //--------------------------------------------------------------------+
 // INTERNAL USBD-CLASS DRIVER API
 //--------------------------------------------------------------------+
 void usb_cdc_init();
 void usb_cdc_reset();
-uint16_t usb_cdc_open(usb_control_interface_descriptor_t const* itf_desc, uint16_t max_len);
-bool usb_cdc_control_xfer_cb(uint8_t stage, usb_control_request_t const* request);
+uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* itf_desc, uint16_t max_len);
+bool usb_cdc_control_transfer(uint8_t stage, const usb_control_request_t* request);
 bool usb_cdc_transfer(uint8_t ep_addr, uint32_t transferred_bytes);
 
 #endif /* _TUSB_CDC_DEVICE_H_ */
