@@ -56,7 +56,7 @@ static bool process_get_descriptor(usb_control_request_t const* request);
 // from usbd_control.c
 void usbd_control_reset(void);
 void usbd_control_set_request(usb_control_request_t const* request);
-void usbd_control_set_complete_callback(usbd_control_xfer_cb_t fp);
+void usbd_control_set_complete_callback(usb_cdc_control_transfer_t fp);
 
 //--------------------------------------------------------------------+
 // Application API
@@ -528,7 +528,7 @@ typedef struct {
   uint8_t* buffer;
   uint16_t data_len;
   uint16_t total_xferred;
-  usbd_control_xfer_cb_t complete_cb;
+  usb_cdc_control_transfer_t complete_cb;
 } usbd_control_xfer_t;
 
 static usbd_control_xfer_t control_transfer;
@@ -600,19 +600,15 @@ bool usb_endpoint_control_transfer(const usb_control_request_t* request, void* b
   return true;
 }
 
-//--------------------------------------------------------------------+
-// USBD API
-//--------------------------------------------------------------------+
 void usbd_control_set_request(const usb_control_request_t* request);
-void usbd_control_set_complete_callback(usbd_control_xfer_cb_t fp);
-bool usb_control_transfer_cb(uint8_t ep_addr, uint32_t transferred_bytes);
+void usbd_control_set_complete_callback(usb_cdc_control_transfer_t fp);
 
 void usbd_control_reset(void) {
   memset(&control_transfer, 0, sizeof(usbd_control_xfer_t));
 }
 
 // Set complete callback
-void usbd_control_set_complete_callback(usbd_control_xfer_cb_t fp) {
+void usbd_control_set_complete_callback(usb_cdc_control_transfer_t fp) {
   control_transfer.complete_cb = fp;
 }
 
@@ -623,10 +619,7 @@ void usbd_control_set_request(const usb_control_request_t* request) {
   control_transfer.data_len = 0;
 }
 
-// callback when a transaction complete on
-// - DATA stage of control endpoint or
-// - Status stage
-bool usb_control_transfer_cb(uint8_t ep_addr, uint32_t transferred_bytes) {
+bool usb_control_transfer(uint8_t ep_addr, uint32_t transferred_bytes) {
   const uint8_t request_direction = USB_EP_DIR(control_transfer.request.bmRequestType);
 
   // Endpoint Address is opposite to direction bit, this is Status Stage complete event
@@ -639,7 +632,6 @@ bool usb_control_transfer_cb(uint8_t ep_addr, uint32_t transferred_bytes) {
     usb_endpoint_control_status_complete(&control_transfer.request);
 
     if (control_transfer.complete_cb) {
-      // TODO refactor with usbd_driver_print_control_complete_name
       control_transfer.complete_cb(CONTROL_STAGE_ACK, &control_transfer.request);
     }
 

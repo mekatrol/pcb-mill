@@ -294,7 +294,7 @@ _Static_assert(sizeof(usb_cdc_line_coding_t) == 7, "size must be 7");
 
 const usb_configuration_descriptor_t* usb_descriptor_configuration();
 
-typedef bool (*usbd_control_xfer_cb_t)(uint8_t stage, usb_control_request_t const* request);
+typedef bool (*usb_cdc_control_transfer_t)(uint8_t stage, usb_control_request_t const* request);
 
 // Submit a usb transfer
 bool usb_endpoint_transfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes);

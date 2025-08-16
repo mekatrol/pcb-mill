@@ -270,7 +270,7 @@ bool usb_cdc_control_xfer_cb(uint8_t stage, const usb_control_request_t* request
   return true;
 }
 
-bool usb_cdc_transfer_cb(uint8_t ep_addr, uint32_t transferred_bytes) {
+bool usb_cdc_transfer(uint8_t ep_addr, uint32_t transferred_bytes) {
   // Received new data
   if (ep_addr == usb_cdc_interface.ep_out) {
     circular_buffer_write(&usb_cdc_interface.rx_buffer, usb_cdc_epbuf.epout, transferred_bytes);

@@ -2,34 +2,20 @@
 #include "usb_hal.h"
 
 void usb_endpoint_control_init();
-static bool usb_read_packet_data(void *__restrict dst, uint16_t src, uint16_t byte_count);
 void usb_transmit_packet(endpoint_packet_t *control_transfer, uint16_t ep_idn);
 
-bool usb_control_transfer_cb(uint8_t ep_addr, uint32_t transferred_bytes);
-bool usb_cdc_transfer_cb(uint8_t ep_addr, uint32_t transferred_bytes);
-
-__attribute__((always_inline)) static inline uint16_t usb_pma_get_count(uint32_t endpoint_idn, uint8_t buf_id) {
-  uint16_t count;
-  count = (USB_BUFFER_DESC_TABLE->endpoint[endpoint_idn].buffer[buf_id].count_addr >> 16);
-  return count & 0x3FFU;
-}
-
-__attribute__((always_inline)) static inline void usb_pma_set_count(uint32_t endpoint_idn, uint8_t buf_id, uint16_t byte_count) {
-  uint32_t count_addr = USB_BUFFER_DESC_TABLE->endpoint[endpoint_idn].buffer[buf_id].count_addr;
+__attribute__((always_inline)) static inline void usb_pma_set_count(uint32_t ep_idn, uint8_t buf_id, uint16_t byte_count) {
+  uint32_t count_addr = USB_BUFFER_DESC_TABLE->endpoint[ep_idn].buffer[buf_id].count_addr;
   count_addr = (count_addr & ~0x03FF0000u) | ((byte_count & 0x3FFu) << 16);
-  USB_BUFFER_DESC_TABLE->endpoint[endpoint_idn].buffer[buf_id].count_addr = count_addr;
+  USB_BUFFER_DESC_TABLE->endpoint[ep_idn].buffer[buf_id].count_addr = count_addr;
 }
 
-__attribute__((always_inline)) static inline uint32_t usb_pma_get_endpoint_addr(uint32_t endpoint_idn, uint8_t buf_id) {
-  return USB_BUFFER_DESC_TABLE->endpoint[endpoint_idn].buffer[buf_id].count_addr & 0x0000FFFFU;
-}
-
-__attribute__((always_inline)) static inline void usb_endpoint_reg_set_clear_ctr(uint32_t endpoint_idn, usb_endpoint_direction_index_t dir) {
-  uint32_t endpoint_reg = USB->chep[endpoint_idn].CHEPnR;
+__attribute__((always_inline)) static inline void usb_endpoint_reg_set_clear_ctr(uint32_t ep_idn, usb_endpoint_direction_index_t dir) {
+  uint32_t endpoint_reg = USB->chep[ep_idn].CHEPnR;
   endpoint_reg |= USB_EP_VTTX | USB_EP_VTRX;
   endpoint_reg &= USB_CHEP_REG_MASK;
   endpoint_reg &= ~(1 << (USB_CHEP_VTTX_Pos + (dir == USB_EP_DIRECTION_IN_IDX ? 0 : 8)));
-  usb_endpoint_reg_set(endpoint_idn, endpoint_reg, false);
+  usb_endpoint_reg_set(ep_idn, endpoint_reg, false);
 }
 
 __attribute__((always_inline)) static inline uint32_t unaligned_read32(const uint8_t *p) {
@@ -41,62 +27,6 @@ __attribute__((always_inline)) static inline void unaligned_write32(uint8_t *p, 
   p[1] = (uint8_t)(value >> 8);
   p[2] = (uint8_t)(value >> 16);
   p[3] = (uint8_t)(value >> 24);
-}
-
-static void transfer_complete(uint8_t ep_addr, uint32_t transferred_bytes) {
-  // Invoke the class callback associated with the endpoint address
-  const uint8_t ep_num = USB_EP_NUM(ep_addr);
-  const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
-
-  usb_device.ep_status[ep_num][ep_dir_idx].busy = 0;
-  usb_device.ep_status[ep_num][ep_dir_idx].claimed = 0;
-
-  if (ep_num == 0) {
-    usb_control_transfer_cb(ep_addr, transferred_bytes);
-  } else {
-    usb_cdc_transfer_cb(ep_addr, transferred_bytes);
-  }
-}
-
-// Handle CTR interrupt for the RX/OUT direction
-void handle_ctr_rx(uint32_t endpoint_idn) {
-  uint32_t endpoint_reg = usb_endpoint_reg_get(endpoint_idn);
-  const uint8_t ep_num = endpoint_reg & USB_CHEP_ADDR;
-  endpoint_packet_t *control_transfer = endpoint_buffer_state(ep_num, USB_EP_DIRECTION_OUT_IDX);
-
-  uint16_t const rx_count = usb_pma_get_count(endpoint_idn, USB_EP_RX_BUFFER);
-  uint16_t pma_addr = (uint16_t)usb_pma_get_endpoint_addr(endpoint_idn, USB_EP_RX_BUFFER);
-
-  usb_read_packet_data(control_transfer->buffer + control_transfer->queued_len, pma_addr, rx_count);
-  control_transfer->queued_len += rx_count;
-
-  if ((rx_count < control_transfer->max_packet_size) || (control_transfer->queued_len >= control_transfer->total_len)) {
-    // all bytes received or short packet
-
-    usb_endpoint_set_rx_buffer_block_size(endpoint_idn, (uint32_t)control_transfer->max_packet_size);
-
-    transfer_complete(ep_num, control_transfer->queued_len);
-
-    // ch32 seems to unconditionally accept ZLP on EP0 OUT, which can incorrectly use queued_len of previous
-    // transfer. So reset total_len and queued_len to 0.
-    control_transfer->total_len = control_transfer->queued_len = 0;
-  } else {
-    endpoint_reg &= USB_CHEP_REG_MASK | USB_EP_STATUS_MASK(USB_EP_DIRECTION_OUT_IDX);  // will change RX Status, reserved other toggle bits
-    usb_endpoint_status(&endpoint_reg, USB_EP_DIRECTION_OUT_IDX, USB_EP_STATE_VALID);
-    usb_endpoint_reg_set_preserve(endpoint_idn, endpoint_reg, false);
-  }
-}
-
-// Handle CTR interrupt for the TX/IN direction
-void handle_ctr_tx(uint32_t endpoint_idn) {
-  uint32_t endpoint_addr = usb_endpoint_reg_get(endpoint_idn) & USB_CHEP_ADDR;
-  endpoint_packet_t *control_transfer = endpoint_buffer_state(endpoint_addr, USB_EP_DIRECTION_IN_IDX);
-
-  if (control_transfer->total_len != control_transfer->queued_len) {
-    usb_transmit_packet(control_transfer, endpoint_idn);
-  } else {
-    transfer_complete(endpoint_addr | USB_DIR_IN, control_transfer->queued_len);
-  }
 }
 
 static void setup_received(usb_control_request_t *setup_received) {
@@ -148,15 +78,15 @@ void usb_init_hal() {
   NVIC_EnableIRQ(USB_UCPD1_2_IRQn);
 }
 
-void handle_ctr_setup(uint32_t endpoint_idn) {
-  uint16_t rx_count = usb_pma_get_count(endpoint_idn, USB_EP_RX_BUFFER);
-  uint16_t rx_addr = usb_pma_get_endpoint_addr(endpoint_idn, USB_EP_RX_BUFFER);
+void handle_ctr_setup(uint32_t ep_idn) {
+  uint16_t rx_count = usb_pma_get_count(ep_idn, USB_EP_RX_BUFFER);
+  uint16_t rx_addr = usb_pma_get_endpoint_addr(ep_idn, USB_EP_RX_BUFFER);
   uint8_t setup_packet[8] __attribute__((aligned(4)));
 
   usb_read_packet_data(setup_packet, rx_addr, rx_count);
 
   // Clear CTR RX if another setup packet arrived before this, it will be discarded
-  usb_endpoint_reg_set_clear_ctr(endpoint_idn, USB_EP_DIRECTION_OUT_IDX);
+  usb_endpoint_reg_set_clear_ctr(ep_idn, USB_EP_DIRECTION_OUT_IDX);
 
   // Setup packet should always be 8 bytes. If not, we probably missed the packet
   if (rx_count == 8) {
@@ -212,21 +142,21 @@ void USB_UCPD1_2_IRQHandler() {
   // loop to handle all pending CTR interrupts
   while (USB->ISTR & USB_ISTR_CTR) {
     // These bits are written by the hardware according to the host channel or device endpoint number
-    uint32_t const endpoint_idn = USB->ISTR & USB_ISTR_IDN;
-    uint32_t const endpoint_reg = usb_endpoint_reg_get(endpoint_idn);
+    uint32_t const ep_idn = USB->ISTR & USB_ISTR_IDN;
+    uint32_t const endpoint_reg = usb_endpoint_reg_get(ep_idn);
 
     if (endpoint_reg & USB_EP_VTRX) {
       if (endpoint_reg & USB_EP_SETUP) {
-        handle_ctr_setup(endpoint_idn);  // CTR will be clear after copied setup packet
+        handle_ctr_setup(ep_idn);  // CTR will be clear after copied setup packet
       } else {
-        usb_endpoint_reg_set_clear_ctr(endpoint_idn, USB_EP_DIRECTION_OUT_IDX);
-        handle_ctr_rx(endpoint_idn);
+        usb_endpoint_reg_set_clear_ctr(ep_idn, USB_EP_DIRECTION_OUT_IDX);
+        usb_endpoint_ctr_rx(ep_idn);
       }
     }
 
     if (endpoint_reg & USB_EP_VTTX) {
-      usb_endpoint_reg_set_clear_ctr(endpoint_idn, USB_EP_DIRECTION_IN_IDX);
-      handle_ctr_tx(endpoint_idn);
+      usb_endpoint_reg_set_clear_ctr(ep_idn, USB_EP_DIRECTION_IN_IDX);
+      usb_endpoint_ctr_tx(ep_idn);
     }
   }
 
@@ -237,7 +167,7 @@ void USB_UCPD1_2_IRQHandler() {
   }
 }
 
-static bool usb_read_packet_data(void *__restrict dst, uint16_t src, uint16_t byte_count) {
+bool usb_read_packet_data(void *__restrict dst, uint16_t src, uint16_t byte_count) {
   if (byte_count == 0) {
     // Not count then nothing to read
     return true;
