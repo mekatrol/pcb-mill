@@ -9,7 +9,7 @@
 // This descriptor tells the host the overall characteristics of the USB device
 // before it requests configuration/interface/endpoint descriptors.
 // -----------------------------------------------------------------------------
-usb_device_desc_t const desc_device = {
+static const usb_device_desc_t desc_device = {
     .bLength = sizeof(usb_device_desc_t),  // Size of this descriptor in bytes (should be 18 for a device descriptor)
     .bDescriptorType = USB_DESC_DEVICE,    // Descriptor Type: DEVICE (0x01)
 

@@ -188,10 +188,7 @@ bool process_control_request(usb_control_request_t const* request) {
         } break;
 
         case USB_STD_GET_DESCRIPTOR:
-          if (!process_get_descriptor(request)) {
-            return false;
-          }
-          break;
+          return process_get_descriptor(request);
 
         case USB_STD_SET_FEATURE:
           switch (request->wValue) {
@@ -395,25 +392,8 @@ static bool process_get_descriptor(usb_control_request_t const* request) {
   switch (desc_type) {
     case USB_DESC_DEVICE: {
       void* desc_device = (void*)(uintptr_t)tud_descriptor_device_cb();
-      if (!desc_device) {
-        return false;
-      }
-
-      // Only response with exactly 1 Packet if: not addressed and host requested more data than device descriptor has.
-      // This only happens with the very first get device descriptor and EP0 size = 8 or 16.
-      if ((USB_EP0_BUFFER_SIZE < sizeof(usb_device_desc_t)) && !usb_device.addressed &&
-          ((usb_control_request_t const*)request)->wLength > sizeof(usb_device_desc_t)) {
-        // Hack here: we modify the request length to prevent usbd_control response with zlp
-        // since we are responding with 1 packet & less data than wLength.
-        usb_control_request_t mod_request = *request;
-        mod_request.wLength = USB_EP0_BUFFER_SIZE;
-
-        return tud_control_xfer(&mod_request, desc_device, USB_EP0_BUFFER_SIZE);
-      } else {
-        return tud_control_xfer(request, desc_device, sizeof(usb_device_desc_t));
-      }
+      return tud_control_xfer(request, desc_device, sizeof(usb_device_desc_t));
     }
-      // break; // unreachable
 
     case USB_DESC_BOS: {
       // requested by host if USB > 2.0 ( i.e 2.1 or 3.x )
