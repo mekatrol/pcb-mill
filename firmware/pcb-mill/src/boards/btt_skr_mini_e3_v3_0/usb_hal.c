@@ -1,12 +1,6 @@
 #include "board_hal.h"
 #include "usb_hal.h"
 
-__attribute__((always_inline)) static inline void usb_pma_set_count(uint32_t ep_idn, uint8_t buf_id, uint16_t byte_count) {
-  uint32_t count_addr = USB_BUFFER_DESC_TABLE->ep[ep_idn].buffer[buf_id].count_addr;
-  count_addr = (count_addr & ~0x03FF0000u) | ((byte_count & 0x3FFu) << 16);
-  USB_BUFFER_DESC_TABLE->ep[ep_idn].buffer[buf_id].count_addr = count_addr;
-}
-
 __attribute__((always_inline)) static inline void usb_ep_reg_set_clear_ctr(uint32_t ep_idn, usb_ep_direction_index_t dir) {
   uint32_t ep_reg = USB->chep[ep_idn].CHEPnR;
   ep_reg |= USB_EP_VTTX | USB_EP_VTRX;  // Preserve these bits
@@ -186,37 +180,6 @@ bool usb_rx_packet(void *__restrict dst, uint16_t src, uint16_t byte_count) {
   return true;
 }
 
-static bool usb_write_packet_data(uint16_t dst, const void *__restrict src, uint16_t byte_count) {
-  if (byte_count == 0) {
-    // Not count then nothing to write
-    return true;
-  }
-
-  // We are writing 32 bit values from unaligned byte locations
-  uint32_t write_count = byte_count / sizeof(uint32_t);
-
-  volatile uint32_t *pma_buf = (volatile uint32_t *)(USB_DRD_PMAADDR + dst);
-  const uint8_t *src8 = src;
-
-  while (write_count--) {
-    *pma_buf = unaligned_read_32(src8);
-    src8 += sizeof(uint32_t);
-    pma_buf++;
-  }
-
-  // odd bytes e.g 1 for 16-bit or 1-3 for 32-bit
-  uint16_t odd = byte_count & (sizeof(uint32_t) - 1);
-  if (odd) {
-    uint32_t temp = 0;
-    for (uint16_t i = 0; i < odd; i++) {
-      temp |= *src8++ << (i * 8);
-    }
-    *pma_buf = temp;
-  }
-
-  return true;
-}
-
 void usb_device_init() {
   // Perform USB peripheral reset
   USB->CNTR = USB_CNTR_USBRST | USB_CNTR_PDWN;
@@ -259,21 +222,4 @@ void usb_hal_reset() {
 
   // Enable USB
   USB->DADDR = USB_DADDR_EF;
-}
-
-void usb_tx_packet(ep_packet_t *packet) {
-  uint32_t len = min_u16(packet->total_len - packet->queued_len, packet->max_packet_size);
-
-  uint16_t addr_ptr = (uint16_t)usb_pma_get_ep_addr(packet->ep_idn, USB_EP_TX_BUFFER);
-
-  usb_write_packet_data(addr_ptr, &(packet->buffer[packet->queued_len]), len);
-  packet->queued_len += len;
-
-  usb_pma_set_count(packet->ep_idn, USB_EP_TX_BUFFER, len);
-
-  uint32_t ep_reg = usb_ep_reg_get(packet->ep_idn);
-  usb_ep_status(&ep_reg, USB_EP_DIRECTION_IN_IDX, USB_EP_STATE_VALID);
-
-  ep_reg &= USB_CHEP_REG_MASK | USB_EP_STATUS_MASK(USB_EP_DIRECTION_IN_IDX);  // only change TX Status, reserve other toggle bits
-  usb_ep_reg_set_preserve(packet->ep_idn, ep_reg, true);
 }

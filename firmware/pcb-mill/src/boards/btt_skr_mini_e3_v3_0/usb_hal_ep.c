@@ -5,6 +5,19 @@
 #define UNASSIGNED_VALUE 0xFFU
 
 typedef struct {
+  uint8_t *buffer;
+  uint16_t total_len;
+  uint16_t queued_len;
+
+  // ep0 this will be USB_EP0_BUFFER_SIZE
+  // ep1 to ep7 this will be the pack size set in USB_EP_RX_BUFFER_SIZE & USB_EP_TX_BUFFER_SIZE
+  uint16_t max_packet_size;
+
+  // Endpoint identifier (is zero based so can be used as index to arrays)
+  uint8_t ep_idn;
+} ep_packet_t;
+
+typedef struct {
   uint8_t ep_idn;
   uint8_t ep_type;
   bool assigned[EP_IN_OUT_PAIR];
@@ -33,6 +46,12 @@ __attribute__((always_inline)) static inline uint32_t usb_pma_next_addr(uint32_t
 __attribute__((always_inline)) static inline void usb_ep_data_toggle(uint32_t *ep_reg, usb_ep_direction_index_t ep_dir_idx, usb_ep_state_t state) {
   // Any bits set to 1 in state will be toggle the same bit in ep_reg
   *ep_reg ^= (state << (USB_CHEP_DTOG_TX_Pos + (ep_dir_idx == USB_EP_DIRECTION_IN_IDX ? 0 : 8)));
+}
+
+__attribute__((always_inline)) static inline void usb_pma_set_count(uint32_t ep_idn, uint8_t buf_id, uint16_t byte_count) {
+  uint32_t count_addr = USB_BUFFER_DESC_TABLE->ep[ep_idn].buffer[buf_id].count_addr;
+  count_addr = (count_addr & ~0x03FF0000u) | ((byte_count & 0x3FFu) << 16);
+  USB_BUFFER_DESC_TABLE->ep[ep_idn].buffer[buf_id].count_addr = count_addr;
 }
 
 __attribute__((always_inline)) static inline void usb_pma_set_ep_addr(uint32_t ep_idn, uint8_t idn_dir_idx, uint16_t addr) {
@@ -253,6 +272,54 @@ void usb_ep_close_all() {
 
   // Reset PMA assignment
   usb_pma_next_available = 8 * USB_EP_MAX + 2 * USB_EP0_BUFFER_SIZE;
+}
+
+bool usb_write_packet_data(uint16_t dst, const void *__restrict src, uint16_t byte_count) {
+  if (byte_count == 0) {
+    // Not count then nothing to write
+    return true;
+  }
+
+  // We are writing 32 bit values from unaligned byte locations
+  uint32_t write_count = byte_count / sizeof(uint32_t);
+
+  volatile uint32_t *pma_buf = (volatile uint32_t *)(USB_DRD_PMAADDR + dst);
+  const uint8_t *src8 = src;
+
+  while (write_count--) {
+    *pma_buf = unaligned_read_32(src8);
+    src8 += sizeof(uint32_t);
+    pma_buf++;
+  }
+
+  // odd bytes e.g 1 for 16-bit or 1-3 for 32-bit
+  uint16_t odd = byte_count & (sizeof(uint32_t) - 1);
+  if (odd) {
+    uint32_t temp = 0;
+    for (uint16_t i = 0; i < odd; i++) {
+      temp |= *src8++ << (i * 8);
+    }
+    *pma_buf = temp;
+  }
+
+  return true;
+}
+
+void usb_tx_packet(ep_packet_t *packet) {
+  uint32_t len = min_u16(packet->total_len - packet->queued_len, packet->max_packet_size);
+
+  uint16_t addr_ptr = (uint16_t)usb_pma_get_ep_addr(packet->ep_idn, USB_EP_TX_BUFFER);
+
+  usb_write_packet_data(addr_ptr, &(packet->buffer[packet->queued_len]), len);
+  packet->queued_len += len;
+
+  usb_pma_set_count(packet->ep_idn, USB_EP_TX_BUFFER, len);
+
+  uint32_t ep_reg = usb_ep_reg_get(packet->ep_idn);
+  usb_ep_status(&ep_reg, USB_EP_DIRECTION_IN_IDX, USB_EP_STATE_VALID);
+
+  ep_reg &= USB_CHEP_REG_MASK | USB_EP_STATUS_MASK(USB_EP_DIRECTION_IN_IDX);  // only change TX Status, reserve other toggle bits
+  usb_ep_reg_set_preserve(packet->ep_idn, ep_reg, true);
 }
 
 bool usb_ep_transfer_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t *buffer, uint16_t total_bytes) {

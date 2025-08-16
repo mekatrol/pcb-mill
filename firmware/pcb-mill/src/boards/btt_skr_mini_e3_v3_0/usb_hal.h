@@ -12,19 +12,6 @@
 #define USB_EP_TX_BUFFER 0
 #define USB_EP_RX_BUFFER 1
 
-typedef struct {
-  uint8_t *buffer;
-  uint16_t total_len;
-  uint16_t queued_len;
-
-  // ep0 this will be USB_EP0_BUFFER_SIZE
-  // ep1 to ep7 this will be the pack size set in USB_EP_RX_BUFFER_SIZE & USB_EP_TX_BUFFER_SIZE
-  uint16_t max_packet_size;
-
-  // Endpoint identifier (is zero based so can be used as index to arrays)
-  uint8_t ep_idn;
-} ep_packet_t;
-
 void usb_ep_reset();
 void usb_ep_set_rx_buffer_block_size(uint32_t ep_idn, uint32_t size);
 void usb_ep_control_init();
@@ -34,7 +21,6 @@ void usb_ep_ctr_tx(uint32_t ep_idn);
 bool usb_control_transfer(uint8_t ep_addr, uint32_t transferred_bytes);
 bool usb_cdc_transfer(uint8_t ep_addr, uint32_t transferred_bytes);
 
-void usb_tx_packet(ep_packet_t *packet);
 bool usb_rx_packet(void *__restrict dst, uint16_t src, uint16_t byte_count);
 
 __attribute__((always_inline)) static inline uint16_t usb_pma_get_count(uint32_t ep_idn, uint8_t buf_id) {
