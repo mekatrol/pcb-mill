@@ -36,14 +36,6 @@ __attribute__((always_inline)) static inline const usb_interface_association_des
 //--------------------------------------------------------------------+
 // Weak stubs: invoked if no strong implementation is available
 //--------------------------------------------------------------------+
-__attribute__((weak)) uint8_t const* tud_descriptor_bos_cb(void) {
-  return NULL;
-}
-
-__attribute__((weak)) uint8_t const* tud_descriptor_device_qualifier_cb(void) {
-  return NULL;
-}
-
 __attribute__((weak)) uint8_t const* tud_descriptor_other_speed_configuration_cb(uint8_t index) {
   (void)index;
   return NULL;
@@ -151,7 +143,7 @@ bool process_control_request(usb_control_request_t const* request) {
 
         case USB_STD_GET_CONFIGURATION: {
           uint8_t cfg_num = usb_device.cfg_num;
-          tud_control_xfer(request, &cfg_num, 1);
+          usb_endpoint_control_transfer(request, &cfg_num, 1);
         } break;
 
         case USB_STD_SET_CONFIGURATION: {
@@ -222,7 +214,7 @@ bool process_control_request(usb_control_request_t const* request) {
           // - Bit 0: Self Powered
           // - Bit 1: Remote Wakeup enabled
           uint16_t status = (uint16_t)((1u) | (usb_device.remote_wakeup_en ? 2u : 0u));
-          tud_control_xfer(request, &status, 2);
+          usb_endpoint_control_transfer(request, &status, 2);
           break;
         }
 
@@ -251,7 +243,7 @@ bool process_control_request(usb_control_request_t const* request) {
 
             if (USB_STD_GET_INTERFACE == request->bRequest) {
               uint8_t alternate = 0;
-              tud_control_xfer(request, &alternate, 1);
+              usb_endpoint_control_transfer(request, &alternate, 1);
             } else {
               tud_control_status(request);
             }
@@ -281,7 +273,7 @@ bool process_control_request(usb_control_request_t const* request) {
         switch (request->bRequest) {
           case USB_STD_GET_STATUS: {
             uint16_t status = usb_endpoint_is_stalled(ep_addr) ? 0x0001 : 0x0000;
-            tud_control_xfer(request, &status, 2);
+            usb_endpoint_control_transfer(request, &status, 2);
           } break;
 
           case USB_STD_CLEAR_FEATURE:
@@ -324,40 +316,40 @@ bool process_control_request(usb_control_request_t const* request) {
 }
 
 static bool usb_set_configuration() {
-  const usb_configuration_descriptor_t* desc_cfg = (const usb_configuration_descriptor_t*)usb_descriptor_configuration();
+  const usb_configuration_descriptor_t* descriptor_config = (const usb_configuration_descriptor_t*)usb_descriptor_configuration();
 
-  if (desc_cfg == NULL || desc_cfg->bDescriptorType != USB_DESC_CONFIGURATION) {
+  if (descriptor_config == NULL || descriptor_config->bDescriptorType != USB_DESCRIPTOR_TYPE_CONFIGURATION) {
     return false;
   }
 
   // Parse configuration descriptor
-  usb_device.remote_wakeup_support = (desc_cfg->bmAttributes & USB_DESC_CONFIG_ATT_REMOTE_WAKEUP) ? 1u : 0u;
-  usb_device.self_powered = (desc_cfg->bmAttributes & USB_DESC_CONFIG_ATT_SELF_POWERED) ? 1u : 0u;
+  usb_device.remote_wakeup_support = (descriptor_config->bmAttributes & USB_DESCRIPTOR_TYPE_CONFIG_ATT_REMOTE_WAKEUP) ? 1U : 0U;
+  usb_device.self_powered = (descriptor_config->bmAttributes & USB_DESCRIPTOR_TYPE_CONFIG_ATT_SELF_POWERED) ? 1U : 0U;
 
   // Parse interface descriptor
-  uint8_t const* p_desc = ((uint8_t const*)desc_cfg) + sizeof(usb_configuration_descriptor_t);
-  uint8_t const* desc_end = ((uint8_t const*)desc_cfg) + desc_cfg->wTotalLength;
+  uint8_t const* discriptor = ((uint8_t const*)descriptor_config) + sizeof(usb_configuration_descriptor_t);
+  uint8_t const* descriptor_end = ((uint8_t const*)descriptor_config) + descriptor_config->wTotalLength;
 
-  while (p_desc < desc_end) {
+  while (discriptor < descriptor_end) {
     uint8_t assoc_itf_count = 1;
 
     // Class will always starts with Interface Association (if any) and then Interface descriptor
-    if (USB_DESC_INTERFACE_ASSOCIATION == tu_desc_type(p_desc)) {
-      const usb_interface_association_descriptor_t* desc_iad = (const usb_interface_association_descriptor_t*)p_desc;
-      assoc_itf_count = desc_iad->bInterfaceCount;
+    if (USB_DESCRIPTOR_TYPE_INTERFACE_ASSOCIATION == usb_descriptor_type(discriptor)) {
+      const usb_interface_association_descriptor_t* descriptor_iad = (const usb_interface_association_descriptor_t*)discriptor;
+      assoc_itf_count = descriptor_iad->bInterfaceCount;
 
-      p_desc = tu_desc_next(p_desc);  // next to Interface
+      discriptor = usb_next_descriptor(discriptor);  // next to Interface
     }
 
-    if (USB_DESC_INTERFACE != tu_desc_type(p_desc)) {
+    if (USB_DESCRIPTOR_TYPE_INTERFACE != usb_descriptor_type(discriptor)) {
       return false;
     }
 
-    const usb_control_interface_descriptor_t* desc_itf = (const usb_control_interface_descriptor_t*)p_desc;
+    const usb_control_interface_descriptor_t* descriptor_interface = (const usb_control_interface_descriptor_t*)discriptor;
 
     // Find driver for this interface
-    uint16_t const remaining_len = (uint16_t)(desc_end - p_desc);
-    uint16_t const drv_len = usb_cdc_open(desc_itf, remaining_len);
+    uint16_t const remaining_len = (uint16_t)(descriptor_end - discriptor);
+    uint16_t const drv_len = usb_cdc_open(descriptor_interface, remaining_len);
 
     if ((sizeof(usb_control_interface_descriptor_t) <= drv_len) && (drv_len <= remaining_len)) {
       if (assoc_itf_count == 1) {
@@ -365,10 +357,10 @@ static bool usb_set_configuration() {
       }
 
       // bind all endpoints to found driver
-      tu_edpt_bind_driver(usb_device.ep2drv, desc_itf, drv_len);
+      tu_edpt_bind_driver(usb_device.ep2drv, descriptor_interface, drv_len);
 
       // next Interface
-      p_desc += drv_len;
+      discriptor += drv_len;
 
       break;  // exit driver find loop
     }
@@ -386,75 +378,58 @@ __attribute__((always_inline)) static inline uint16_t tu_unaligned_read16(const 
   return ua16->val;
 }
 
-// return descriptor's buffer and update desc_len
+// return descriptor's buffer and update descriptor_len
 static bool process_get_descriptor(usb_control_request_t const* request) {
-  usb_desc_type_t const desc_type = (usb_desc_type_t)U16_HIGH(request->wValue);
-  uint8_t const desc_index = U16_LOW(request->wValue);
+  usb_descriptor_type_t const descriptor_type = (usb_descriptor_type_t)U16_HIGH(request->wValue);
+  uint8_t const descriptor_index = U16_LOW(request->wValue);
 
-  switch (desc_type) {
-    case USB_DESC_DEVICE: {
-      void* desc_device = (void*)(uintptr_t)tud_descriptor_device_cb();
-      return tud_control_xfer(request, desc_device, sizeof(usb_device_desc_t));
+  switch (descriptor_type) {
+    case USB_DESCRIPTOR_TYPE_DEVICE: {
+      void* descriptor_device = (void*)(uintptr_t)get_device_descriptor();
+      return usb_endpoint_control_transfer(request, descriptor_device, sizeof(usb_device_descriptor_t));
     }
 
-    case USB_DESC_BOS: {
-      // requested by host if USB > 2.0 ( i.e 2.1 or 3.x )
-      uintptr_t desc_bos = (uintptr_t)tud_descriptor_bos_cb();
-      if (!desc_bos) {
-        return false;
-      }
+    case USB_DESCRIPTOR_TYPE_CONFIGURATION:
+    case USB_DESCRIPTOR_TYPE_OTHER_SPEED_CONFIG: {
+      uintptr_t descriptor_config;
 
-      // Use offsetof to avoid pointer to the odd/misaligned address
-      uint16_t const total_len = tu_unaligned_read16((const void*)(desc_bos + offsetof(tusb_desc_bos_t, wTotalLength)));
-
-      return tud_control_xfer(request, (void*)desc_bos, total_len);
-    }
-      // break; // unreachable
-
-    case USB_DESC_CONFIGURATION:
-    case USB_DESC_OTHER_SPEED_CONFIG: {
-      uintptr_t desc_config;
-
-      if (desc_type == USB_DESC_CONFIGURATION) {
-        desc_config = (uintptr_t)usb_descriptor_configuration(desc_index);
-        if (!desc_config) {
+      if (descriptor_type == USB_DESCRIPTOR_TYPE_CONFIGURATION) {
+        descriptor_config = (uintptr_t)usb_descriptor_configuration(descriptor_index);
+        if (!descriptor_config) {
           return false;
         }
       } else {
         // Host only request this after getting Device Qualifier descriptor
-        desc_config = (uintptr_t)tud_descriptor_other_speed_configuration_cb(desc_index);
-        if (!desc_config) {
+        descriptor_config = (uintptr_t)tud_descriptor_other_speed_configuration_cb(descriptor_index);
+        if (!descriptor_config) {
           return false;
         }
       }
 
       // Use offsetof to avoid pointer to the odd/misaligned address
-      uint16_t const total_len = tu_unaligned_read16((const void*)(desc_config + offsetof(usb_configuration_descriptor_t, wTotalLength)));
+      uint16_t const total_len = tu_unaligned_read16((const void*)(descriptor_config + offsetof(usb_configuration_descriptor_t, wTotalLength)));
 
-      return tud_control_xfer(request, (void*)desc_config, total_len);
+      return usb_endpoint_control_transfer(request, (void*)descriptor_config, total_len);
     }
-      // break; // unreachable
 
-    case USB_DESC_STRING: {
+    case USB_DESCRIPTOR_TYPE_STRING: {
       // String Descriptor always uses the desc set from user
-      uint8_t const* desc_str = (uint8_t const*)tud_descriptor_string_cb(desc_index, request->wIndex);
-      if (!desc_str) {
+      uint8_t const* descriptor_str = (uint8_t const*)tud_descriptor_string_cb(descriptor_index, request->wIndex);
+      if (!descriptor_str) {
         return false;
       }
 
       // first byte of descriptor is its size
-      return tud_control_xfer(request, (void*)(uintptr_t)desc_str, tu_desc_len(desc_str));
+      return usb_endpoint_control_transfer(request, (void*)(uintptr_t)descriptor_str, usb_descriptor_len(descriptor_str));
     }
-      // break; // unreachable
 
-    case USB_DESC_DEVICE_QUALIFIER: {
-      uint8_t const* desc_qualifier = tud_descriptor_device_qualifier_cb();
-      if (!desc_qualifier) {
+    case USB_DESCRIPTOR_TYPE_DEVICE_QUALIFIER: {
+      const uint8_t* descriptor_qualifier = usb_descriptor_device_qualifier();
+      if (!descriptor_qualifier) {
         return false;
       }
-      return tud_control_xfer(request, (void*)(uintptr_t)desc_qualifier, tu_desc_len(desc_qualifier));
+      return usb_endpoint_control_transfer(request, (void*)(uintptr_t)descriptor_qualifier, usb_descriptor_len(descriptor_qualifier));
     }
-      // break; // unreachable
 
     default:
       return false;
@@ -462,23 +437,23 @@ static bool process_get_descriptor(usb_control_request_t const* request) {
 }
 
 // Configure consecutive endpoint descriptors (IN & OUT)
-bool usb_endpoint_open_in_out(const usb_endpoint_descriptor_t* desc_ep, uint8_t xfer_type, uint8_t* ep_out, uint8_t* ep_in) {
+bool usb_endpoint_open_in_out(const usb_endpoint_descriptor_t* descriptor_ep, uint8_t xfer_type, uint8_t* ep_out, uint8_t* ep_in) {
   for (int i = 0; i < 2; i++) {
-    if (desc_ep->bDescriptorType != USB_DESC_ENDPOINT || desc_ep->bmAttributes.type != xfer_type) {
+    if (descriptor_ep->bDescriptorType != USB_DESCRIPTOR_TYPE_ENDPOINT || descriptor_ep->bmAttributes.type != xfer_type) {
       return false;
     }
 
-    if (!usb_endpoint_open(desc_ep)) {
+    if (!usb_endpoint_open(descriptor_ep)) {
       return false;
     }
 
-    if (USB_EP_DIR(desc_ep->bEndpointAddress) == USB_DIR_IN) {
-      (*ep_in) = desc_ep->bEndpointAddress;
+    if (USB_EP_DIR(descriptor_ep->bEndpointAddress) == USB_DIR_IN) {
+      (*ep_in) = descriptor_ep->bEndpointAddress;
     } else {
-      (*ep_out) = desc_ep->bEndpointAddress;
+      (*ep_out) = descriptor_ep->bEndpointAddress;
     }
 
-    desc_ep = (const usb_endpoint_descriptor_t*)tu_desc_next(desc_ep);
+    descriptor_ep = (const usb_endpoint_descriptor_t*)usb_next_descriptor(descriptor_ep);
   }
 
   return true;
@@ -603,9 +578,7 @@ static bool data_stage_xact() {
   return usb_endpoint_transfer(ep_addr, xact_len ? ep0_control_buffer : NULL, xact_len);
 }
 
-// Transmit data to/from the control endpoint.
-// If the request's wLength is zero, a status packet is sent instead.
-bool tud_control_xfer(const usb_control_request_t* request, void* buffer, uint16_t len) {
+bool usb_endpoint_control_transfer(const usb_control_request_t* request, void* buffer, uint16_t len) {
   control_transfer.request = (*request);
   control_transfer.buffer = (uint8_t*)buffer;
   control_transfer.total_xferred = 0U;
@@ -736,15 +709,15 @@ bool tu_edpt_release(endpoint_state_t* ep_state) {
   return released;
 }
 
-void tu_edpt_bind_driver(uint8_t ep2drv[][2], usb_control_interface_descriptor_t const* desc_itf, uint16_t desc_len) {
-  uint8_t const* p_desc = (uint8_t const*)desc_itf;
-  uint8_t const* desc_end = p_desc + desc_len;
+void tu_edpt_bind_driver(uint8_t ep2drv[][2], const usb_control_interface_descriptor_t* descriptor_interface, uint16_t descriptor_len) {
+  uint8_t const* discriptor = (uint8_t const*)descriptor_interface;
+  uint8_t const* descriptor_end = discriptor + descriptor_len;
 
-  while (p_desc < desc_end) {
-    if (USB_DESC_ENDPOINT == tu_desc_type(p_desc)) {
-      uint8_t const ep_addr = ((usb_endpoint_descriptor_t const*)p_desc)->bEndpointAddress;
+  while (discriptor < descriptor_end) {
+    if (USB_DESCRIPTOR_TYPE_ENDPOINT == usb_descriptor_type(discriptor)) {
+      uint8_t const ep_addr = ((usb_endpoint_descriptor_t const*)discriptor)->bEndpointAddress;
       ep2drv[USB_EP_NUM(ep_addr)][USB_EP_DIR_IDX(ep_addr)] = 0;
     }
-    p_desc = tu_desc_next(p_desc);
+    discriptor = usb_next_descriptor(discriptor);
   }
 }

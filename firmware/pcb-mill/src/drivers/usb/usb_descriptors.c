@@ -9,9 +9,9 @@
 // This descriptor tells the host the overall characteristics of the USB device
 // before it requests configuration/interface/endpoint descriptors.
 // -----------------------------------------------------------------------------
-static const usb_device_desc_t desc_device = {
-    .bLength = sizeof(usb_device_desc_t),  // Size of this descriptor in bytes (should be 18 for a device descriptor)
-    .bDescriptorType = USB_DESC_DEVICE,    // Descriptor Type: DEVICE (0x01)
+static const usb_device_descriptor_t descriptor_device = {
+    .bLength = sizeof(usb_device_descriptor_t),     // Size of this descriptor in bytes (should be 18 for a device descriptor)
+    .bDescriptorType = USB_DESCRIPTOR_TYPE_DEVICE,  // Descriptor Type: DEVICE (0x01)
 
     .bcdUSB = 0x0200,  // USB Specification version: 2.00 (BCD format)
 
@@ -44,8 +44,8 @@ static const usb_device_desc_t desc_device = {
     .bNumConfigurations = 0x01,  // Number of configurations this device supports
 };
 
-uint8_t const* tud_descriptor_device_cb(void) {
-  return (uint8_t const*)&desc_device;
+uint8_t const* get_device_descriptor(void) {
+  return (uint8_t const*)&descriptor_device;
 }
 
 // Configuration descriptor defined interfaces
@@ -63,7 +63,7 @@ enum {
   INTERFACE_TOTAL_COUNT = INTERFACE_CDC_INTERFACE_COUNT
 };
 
-uint8_t const usb_desc_configuration[] = {
+uint8_t const usb_descriptor_conf[] = {
     // Configuration Descriptor (usb_configuration_descriptor_t)
     9,                                  // bLength: Size of this descriptor in bytes (always 9)
     USB_DESCRIPTOR_TYPE_CONFIGURATION,  // bDescriptorType: CONFIGURATION descriptor (0x02)
@@ -76,14 +76,14 @@ uint8_t const usb_desc_configuration[] = {
     50,                                 // bMaxPower: maximum power in 2 mA units (50 = 100 mA)
 
     // Interface Association Descriptor (IAD) for CDC (usb_interface_association_descriptor_t)
-    8,                                // bLength: size of this descriptor in bytes (8)
-    USB_DESCRIPTOR_TYPE_ASSOCIATION,  // bDescriptorType: INTERFACE_ASSOCIATION (0x0B)
-    INTERFACE_CDC_NUM,                // bFirstInterface: first interface associated with this function
-    INTERFACE_CDC_INTERFACE_COUNT,    // bInterfaceCount: number of interfaces associated (CDC control + data)
-    0x02,                             // bFunctionClass: CDC class code
-    0x02,                             // bFunctionSubClass: Abstract Control Model (ACM)
-    0x00,                             // bFunctionProtocol: No protocol
-    0,                                // iFunction: index of string descriptor for this function (0 = none)
+    8,                                          // bLength: size of this descriptor in bytes (8)
+    USB_DESCRIPTOR_TYPE_INTERFACE_ASSOCIATION,  // bDescriptorType: INTERFACE_ASSOCIATION (0x0B)
+    INTERFACE_CDC_NUM,                          // bFirstInterface: first interface associated with this function
+    INTERFACE_CDC_INTERFACE_COUNT,              // bInterfaceCount: number of interfaces associated (CDC control + data)
+    0x02,                                       // bFunctionClass: CDC class code
+    0x02,                                       // bFunctionSubClass: Abstract Control Model (ACM)
+    0x00,                                       // bFunctionProtocol: No protocol
+    0,                                          // iFunction: index of string descriptor for this function (0 = none)
 
     // CDC Control Interface Descriptor (usb_control_interface_descriptor_t)
     9,                              // bLength: size of interface descriptor
@@ -162,14 +162,31 @@ uint8_t const usb_desc_configuration[] = {
     0,                             // bInterval
 };
 
+// Device Qualifier Descriptor for a High-Speed capable device
+__attribute__((aligned(4))) static const uint8_t device_qualifier_desc[] = {
+    0x0A,                                  // bLength = 10 bytes
+    USB_DESCRIPTOR_TYPE_DEVICE_QUALIFIER,  // bDescriptorType = 0x06
+    0x00, 0x02,                            // bcdUSB = USB 2.00
+    0x02,                                  // bInterfaceClass: CDC (Communications Device Class)
+    0x02,                                  // bInterfaceSubClass: ACM
+    0x00,                                  // bInterfaceProtocol: No protocol
+    USB_EP0_BUFFER_SIZE,                   // bMaxPacketSize0 = 64 bytes for EP0
+    0x01,                                  // bNumConfigurations (how many at this speed)
+    0x00                                   // bReserved = 0
+};
+
+const uint8_t* usb_descriptor_device_qualifier() {
+  return (uint8_t*)device_qualifier_desc;
+}
+
 const usb_configuration_descriptor_t* usb_descriptor_configuration() {
-  // The start of usb_desc_configuration is the description configuration for the device
+  // The start of usb_descriptor_configuration is the description configuration for the device
   // So just cast and return it
-  return (usb_configuration_descriptor_t*)usb_desc_configuration;
+  return (usb_configuration_descriptor_t*)usb_descriptor_conf;
 }
 
 // String descriptors
-char const* string_desc_arr[] = {
+char const* string_descriptor_arr[] = {
     (const char[]){0x09, 0x04},  // LANGID (English)
     "ST",                        // Manufacturer
     "PCB Mill",                  // Product
@@ -177,27 +194,27 @@ char const* string_desc_arr[] = {
     "PCB Mill",                  // CDC Interface
 };
 
-static uint16_t _desc_str[32];
+static uint16_t descriptor_str[32];
 
 uint16_t const* tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
   (void)langid;
 
   if (index == 0) {
-    _desc_str[0] = (2 << 8) | USB_DESC_STRING;
-    _desc_str[1] = 0x0409;
-    return _desc_str;
+    descriptor_str[0] = (2 << 8) | USB_DESCRIPTOR_TYPE_STRING;
+    descriptor_str[1] = 0x0409;
+    return descriptor_str;
   }
 
-  if (!(index < sizeof(string_desc_arr) / sizeof(string_desc_arr[0]))) return NULL;
+  if (!(index < sizeof(string_descriptor_arr) / sizeof(string_descriptor_arr[0]))) return NULL;
 
-  const char* str = string_desc_arr[index];
+  const char* str = string_descriptor_arr[index];
   size_t len = strlen(str);
 
   if (len > 31) len = 31;
-  _desc_str[0] = (USB_DESC_STRING << 8) | (2 * len + 2);
+  descriptor_str[0] = (USB_DESCRIPTOR_TYPE_STRING << 8) | (2 * len + 2);
   for (size_t i = 0; i < len; ++i) {
-    _desc_str[1 + i] = str[i];
+    descriptor_str[1 + i] = str[i];
   }
 
-  return _desc_str;
+  return descriptor_str;
 }

@@ -127,14 +127,6 @@ typedef enum {
 } usb_request_recipient_t;
 
 typedef enum {
-  USB_DESCRIPTOR_TYPE_CONFIGURATION = 0x02,
-  USB_DESCRIPTOR_TYPE_INTERFACE = 0x04,
-  USB_DESCRIPTOR_TYPE_ENDPOINT = 0x05,
-  USB_DESCRIPTOR_TYPE_ASSOCIATION = 0x0B,
-  USB_DESCRIPTOR_TYPE_CS_INTERFACE = 0x24
-} usb_descriptor_type_t;
-
-typedef enum {
   USB_REQUEST_TYPE_STANDARD = 0,  // 00
   USB_REQUEST_TYPE_CLASS = 1,     // 01
   USB_REQUEST_TYPE_VENDOR = 2,    // 10
@@ -179,9 +171,9 @@ typedef struct __attribute__((packed)) {
   uint8_t iProduct;            ///< Index of string descriptor describing product (0 = none)
   uint8_t iSerialNumber;       ///< Index of string descriptor describing the device’s serial number (0 = none)
   uint8_t bNumConfigurations;  ///< Number of possible configurations supported by the device
-} usb_device_desc_t;
+} usb_device_descriptor_t;
 
-_Static_assert(sizeof(usb_device_desc_t) == 18, "sizeof(usb_device_desc_t) must be 18");
+_Static_assert(sizeof(usb_device_descriptor_t) == 18, "sizeof(usb_device_descriptor_t) must be 18");
 
 // Configuration Descriptor
 typedef struct __attribute__((packed)) {
@@ -351,7 +343,7 @@ __attribute__((always_inline)) static inline bool tud_ready(void) {
 // Carry out Data and Status stage of control transfer
 // - If len = 0, it is equivalent to sending status only
 // - If len > wLength : it will be truncated
-bool tud_control_xfer(usb_control_request_t const* request, void* buffer, uint16_t len);
+bool usb_endpoint_control_transfer(const usb_control_request_t* request, void* buffer, uint16_t len);
 
 // Send STATUS (zero length) packet
 bool tud_control_status(usb_control_request_t const* request);
@@ -362,39 +354,35 @@ bool tud_control_status(usb_control_request_t const* request);
 
 // Invoked when received GET DEVICE DESCRIPTOR request
 // Application return pointer to descriptor
-uint8_t const* tud_descriptor_device_cb(void);
+uint8_t const* get_device_descriptor(void);
 
 // Invoked when received GET STRING DESCRIPTOR request
 // Application return pointer to descriptor, whose contents must exist long enough for transfer to complete
 uint16_t const* tud_descriptor_string_cb(uint8_t index, uint16_t langid);
 
-// Invoked when received GET BOS DESCRIPTOR request
-// Application return pointer to descriptor
-uint8_t const* tud_descriptor_bos_cb(void);
-
 // Invoked when received GET DEVICE QUALIFIER DESCRIPTOR request
 // Application return pointer to descriptor, whose contents must exist long enough for transfer to complete.
 // device_qualifier descriptor describes information about a high-speed capable device that would
 // change if the device were operating at the other speed. If not highspeed capable stall this request.
-uint8_t const* tud_descriptor_device_qualifier_cb(void);
+uint8_t const* usb_descriptor_device_qualifier(void);
 
 // Invoked when received GET OTHER SEED CONFIGURATION DESCRIPTOR request
 // Application return pointer to descriptor, whose contents must exist long enough for transfer to complete
 // Configuration descriptor in the other speed e.g if high speed then this is for full speed and vice versa
 uint8_t const* tud_descriptor_other_speed_configuration_cb(uint8_t index);
 
+// Descriptor types recognised by this USB library
 typedef enum {
-  USB_DESC_DEVICE = 0x01,
-  USB_DESC_CONFIGURATION = 0x02,
-  USB_DESC_STRING = 0x03,
-  USB_DESC_INTERFACE = 0x04,
-  USB_DESC_ENDPOINT = 0x05,
-  USB_DESC_DEVICE_QUALIFIER = 0x06,
-  USB_DESC_OTHER_SPEED_CONFIG = 0x07,
-  USB_DESC_INTERFACE_ASSOCIATION = 0x0B,
-  USB_DESC_BOS = 0x0F,
-  USB_DESC_CS_INTERFACE = 0x24
-} usb_desc_type_t;
+  USB_DESCRIPTOR_TYPE_DEVICE = 0x01,
+  USB_DESCRIPTOR_TYPE_CONFIGURATION = 0x02,
+  USB_DESCRIPTOR_TYPE_STRING = 0x03,
+  USB_DESCRIPTOR_TYPE_INTERFACE = 0x04,
+  USB_DESCRIPTOR_TYPE_ENDPOINT = 0x05,
+  USB_DESCRIPTOR_TYPE_DEVICE_QUALIFIER = 0x06,
+  USB_DESCRIPTOR_TYPE_OTHER_SPEED_CONFIG = 0x07,
+  USB_DESCRIPTOR_TYPE_INTERFACE_ASSOCIATION = 0x0B,
+  USB_DESCRIPTOR_TYPE_CS_INTERFACE = 0x24
+} usb_descriptor_type_t;
 
 typedef enum {
   // ----- USB 2.0 Standard Requests (bRequest only) -----
@@ -436,8 +424,8 @@ typedef enum {
 } usb_class_code_t;
 
 enum {
-  USB_DESC_CONFIG_ATT_REMOTE_WAKEUP = 1U << 5,
-  USB_DESC_CONFIG_ATT_SELF_POWERED = 1U << 6,
+  USB_DESCRIPTOR_TYPE_CONFIG_ATT_REMOTE_WAKEUP = 1U << 5,
+  USB_DESCRIPTOR_TYPE_CONFIG_ATT_SELF_POWERED = 1U << 6,
 };
 
 // TODO remove
@@ -458,110 +446,53 @@ enum {
   CONTROL_STAGE_ACK     // 3
 };
 
-//--------------------------------------------------------------------+
-// USB Descriptors
-//--------------------------------------------------------------------+
-
-// USB Binary Device Object Store (BOS) Descriptor
-typedef struct __attribute__((packed)) {
-  uint8_t bLength;          ///< Size of this descriptor in bytes
-  uint8_t bDescriptorType;  ///< CONFIGURATION Descriptor Type
-  uint16_t wTotalLength;    ///< Total length of data returned for this descriptor
-  uint8_t bNumDeviceCaps;   ///< Number of device capability descriptors in the BOS
-} tusb_desc_bos_t;
-
-_Static_assert(sizeof(tusb_desc_bos_t) == 5, "size must be 5");
-
 /// USB Other Speed Configuration Descriptor
 typedef struct __attribute__((packed)) {
-  uint8_t bLength;          ///< Size of descriptor
-  uint8_t bDescriptorType;  ///< Other_speed_Configuration Type
-  uint16_t wTotalLength;    ///< Total length of data returned
-
-  uint8_t bNumInterfaces;       ///< Number of interfaces supported by this speed configuration
-  uint8_t bConfigurationValue;  ///< Value to use to select configuration
-  uint8_t iConfiguration;       ///< Index of string descriptor
-  uint8_t bmAttributes;         ///< Same as Configuration descriptor
-  uint8_t bMaxPower;            ///< Same as Configuration descriptor
-} tusb_desc_other_speed_t;
+  uint8_t bLength;              // Size of descriptor
+  uint8_t bDescriptorType;      // Other_speed_Configuration Type
+  uint16_t wTotalLength;        // Total length of data returned
+  uint8_t bNumInterfaces;       // Number of interfaces supported by this speed configuration
+  uint8_t bConfigurationValue;  // Value to use to select configuration
+  uint8_t iConfiguration;       // Index of string descriptor
+  uint8_t bmAttributes;         // Same as Configuration descriptor
+  uint8_t bMaxPower;            // Same as Configuration descriptor
+} usb_descriptor_other_speed_t;
 
 /// USB Device Qualifier Descriptor
 typedef struct __attribute__((packed)) {
-  uint8_t bLength;          ///< Size of descriptor
-  uint8_t bDescriptorType;  ///< Device Qualifier Type
-  uint16_t bcdUSB;          ///< USB specification version number (e.g., 0200H for V2.00)
+  uint8_t bLength;             // Size of descriptor
+  uint8_t bDescriptorType;     // Device Qualifier Type
+  uint16_t bcdUSB;             // USB specification version number (e.g., 0200H for V2.00
+  uint8_t bDeviceClass;        // Class Code
+  uint8_t bDeviceSubClass;     // SubClass Code
+  uint8_t bDeviceProtocol;     // Protocol Code
+  uint8_t bMaxPacketSize0;     // Maximum packet size for other speed
+  uint8_t bNumConfigurations;  // Number of Other-speed Configurations
+  uint8_t bReserved;           // Reserved for future use, must be zero
+} tusb_descriptor_device_qualifier_t;
 
-  uint8_t bDeviceClass;     ///< Class Code
-  uint8_t bDeviceSubClass;  ///< SubClass Code
-  uint8_t bDeviceProtocol;  ///< Protocol Code
-
-  uint8_t bMaxPacketSize0;     ///< Maximum packet size for other speed
-  uint8_t bNumConfigurations;  ///< Number of Other-speed Configurations
-  uint8_t bReserved;           ///< Reserved for future use, must be zero
-} tusb_desc_device_qualifier_t;
-
-_Static_assert(sizeof(tusb_desc_device_qualifier_t) == 10, "size must be 10");
+_Static_assert(sizeof(tusb_descriptor_device_qualifier_t) == 10, "size must be 10");
 
 // USB String Descriptor
 typedef struct __attribute__((packed)) {
   uint8_t bLength;          ///< Size of this descriptor in bytes
   uint8_t bDescriptorType;  ///< Descriptor Type
   uint16_t utf16le[];
-} tusb_desc_string_t;
-
-// USB Binary Device Object Store (BOS)
-typedef struct __attribute__((packed)) {
-  uint8_t bLength;
-  uint8_t bDescriptorType;
-  uint8_t bDevCapabilityType;
-  uint8_t bReserved;
-  uint8_t PlatformCapabilityUUID[16];
-  uint8_t CapabilityData[];
-} tusb_desc_bos_platform_t;
-
-// USB WebUSB URL Descriptor
-typedef struct __attribute__((packed)) {
-  uint8_t bLength;
-  uint8_t bDescriptorType;
-  uint8_t bScheme;
-  char url[];
-} tusb_desc_webusb_url_t;
-
-// DFU Functional Descriptor
-typedef struct __attribute__((packed)) {
-  uint8_t bLength;
-  uint8_t bDescriptorType;
-
-  union {
-    struct __attribute__((packed)) {
-      uint8_t bitCanDnload : 1;
-      uint8_t bitCanUpload : 1;
-      uint8_t bitManifestationTolerant : 1;
-      uint8_t bitWillDetach : 1;
-      uint8_t reserved : 4;
-    } bmAttributes;
-
-    uint8_t bAttributes;
-  };
-
-  uint16_t wDetachTimeOut;
-  uint16_t wTransferSize;
-  uint16_t bcdDFUVersion;
-} tusb_desc_dfu_functional_t;
+} tusb_descriptor_string_t;
 
 // return next descriptor
-__attribute__((always_inline)) static inline uint8_t const* tu_desc_next(void const* desc) {
+__attribute__((always_inline)) static inline uint8_t const* usb_next_descriptor(void const* desc) {
   uint8_t const* desc8 = (uint8_t const*)desc;
   return desc8 + desc8[DESC_OFFSET_LEN];
 }
 
 // get descriptor length
-__attribute__((always_inline)) static inline uint8_t tu_desc_len(void const* desc) {
+__attribute__((always_inline)) static inline uint8_t usb_descriptor_len(void const* desc) {
   return ((uint8_t const*)desc)[DESC_OFFSET_LEN];
 }
 
 // get descriptor type
-__attribute__((always_inline)) static inline uint8_t tu_desc_type(void const* desc) {
+__attribute__((always_inline)) static inline uint8_t usb_descriptor_type(void const* desc) {
   return ((uint8_t const*)desc)[DESC_OFFSET_TYPE];
 }
 
@@ -572,7 +503,7 @@ __attribute__((always_inline)) static inline uint8_t tu_desc_subtype(void const*
 
 __attribute__((always_inline)) static inline uint8_t tu_desc_is_valid(void const* desc, uint8_t const* desc_end) {
   const uint8_t* desc8 = (uint8_t const*)desc;
-  return (desc8 < desc_end) && (tu_desc_next(desc) <= desc_end);
+  return (desc8 < desc_end) && (usb_next_descriptor(desc) <= desc_end);
 }
 
 __attribute__((always_inline)) static inline uint16_t usb_get_request_type_code(const usb_control_request_t* request) {
