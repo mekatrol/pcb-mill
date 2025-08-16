@@ -330,8 +330,10 @@ bool usb_ep_transfer_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t *buffer, ui
   packet->queued_len = 0;
 
   if (ep_dir_idx == USB_EP_DIRECTION_IN_IDX) {
+    // Transmit from device is USB_EP_DIRECTION_IN_IDX to host
     usb_tx_packet(packet);
   } else {
+    // Receive to device is USB_EP_DIRECTION_OUT_IDX from host
     uint32_t ep_reg = usb_ep_reg_get(ep_idn);
     ep_reg &= USB_CHEP_REG_MASK | USB_EP_STATUS_MASK(ep_dir_idx);
 
@@ -343,6 +345,7 @@ bool usb_ep_transfer_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t *buffer, ui
     usb_ep_reg_set_preserve(ep_idn, ep_reg, true);
   }
 
+  // STM32G0B1 does not detect failures in this method so always return true (assume success)
   return true;
 }
 
