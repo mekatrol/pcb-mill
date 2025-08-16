@@ -148,7 +148,7 @@ uint8_t const usb_desc_configuration[] = {
     USB_DESCRIPTOR_TYPE_ENDPOINT,  // bDescriptorType: ENDPOINT
     USB_DIR_OUT | 0x02,            // bEndpointAddress: OUT endpoint (0x00 | 2)
     0x02,                          // bmAttributes: bulk transfer
-    0x40,                          // wMaxPacketSize low byte: 64 bytes
+    USB_EP_RX_BUFFER_SIZE,         // wMaxPacketSize low byte: 64 bytes
     0x00,                          // wMaxPacketSize high byte
     0,                             // bInterval: ignored for bulk
 
@@ -157,7 +157,7 @@ uint8_t const usb_desc_configuration[] = {
     USB_DESCRIPTOR_TYPE_ENDPOINT,  // bDescriptorType: ENDPOINT
     USB_DIR_IN | 0x02,             // bEndpointAddress: IN endpoint 2 (0x80 | 2)
     0x02,                          // bmAttributes: bulk
-    0x40,                          // wMaxPacketSize low byte: 64 bytes
+    USB_EP_TX_BUFFER_SIZE,         // wMaxPacketSize low byte: 64 bytes
     0x00,                          // wMaxPacketSize high byte
     0,                             // bInterval
 };
