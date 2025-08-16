@@ -55,12 +55,10 @@ LDFLAGS := -mcpu=$(MCU) -mthumb -nostartfiles -Wl,-Map=$(OUT_MAP),--fatal-warnin
 CFLAGS += -I$(SRC_DIR)/config
 CFLAGS += -I$(SRC_DIR)/core
 CFLAGS += -I$(SRC_DIR)/core/include
-CFLAGS += -I$(SRC_DIR)/core/usb
 CFLAGS += -I$(BOARD_DIR) -I$(BOARD_DIR)/include -I$(BOARD_DIR)/include/core
 
 # Core sources
 CSRCS := $(wildcard $(SRC_DIR)/core/*.c) \
-		 $(wildcard $(SRC_DIR)/core/usb/*.c) \
          $(wildcard $(BOARD_DIR)/*.c)
 
 ASRCS := $(wildcard $(SRC_DIR)/core/*.s) \
@@ -90,11 +88,6 @@ $(OBJ_DIR):
 
 # Compile C sources
 $(OBJ_DIR)/%.o: %.c
-	@echo "[CC] $<"
-	@$(MKDIR)
-	$(CC) $(CFLAGS) -c -o $@ $<
-
-$(OBJ_DIR)/usb%.o: usb/%.c
 	@echo "[CC] $<"
 	@$(MKDIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
