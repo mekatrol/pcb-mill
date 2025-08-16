@@ -31,10 +31,11 @@ void usb_ep_control_init();
 void usb_ep_ctr_rx(uint32_t ep_idn);
 void usb_ep_ctr_tx(uint32_t ep_idn);
 
-void usb_transmit_packet(ep_packet_t *packet, uint16_t ep_idn);
 bool usb_control_transfer(uint8_t ep_addr, uint32_t transferred_bytes);
 bool usb_cdc_transfer(uint8_t ep_addr, uint32_t transferred_bytes);
-bool usb_read_packet_data(void *__restrict dst, uint16_t src, uint16_t byte_count);
+
+void usb_tx_packet(ep_packet_t *packet);
+bool usb_rx_packet(void *__restrict dst, uint16_t src, uint16_t byte_count);
 
 __attribute__((always_inline)) static inline uint16_t usb_pma_get_count(uint32_t ep_idn, uint8_t buf_id) {
   uint16_t count;

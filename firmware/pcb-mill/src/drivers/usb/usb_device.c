@@ -92,27 +92,25 @@ static bool invoke_class_control(const usb_control_request_t* request) {
   return usb_cdc_control_transfer(CONTROL_STAGE_SETUP, request);
 }
 
-// This handles the actual request and its response.
-// Returns false if unable to complete the request, causing caller to stall control endpoints.
 bool process_control_request(const usb_control_request_t* request) {
   usbd_control_set_complete_callback(NULL);
 
   const usb_request_type_t request_type = usb_request_type(request->bmRequestType);
 
-  // Evertything >= USB_REQUEST_TYPE_RESERVED is reserved in spac and should not be used
+  // Evertything >= USB_REQUEST_TYPE_RESERVED is reserved in spec and should not be used
   if (request_type >= USB_REQUEST_TYPE_RESERVED) {
     return false;
   }
 
   // Vendor request
   if (request_type == USB_REQUEST_TYPE_VENDOR) {
+    // This driver has no vendor specific descriptors
     usbd_control_set_complete_callback(NULL);
     return false;
   }
 
   const usb_request_recipient_t request_recipient = usb_request_recipient(request->bmRequestType);
   switch (request_recipient) {
-    //------------- Device Requests e.g in enumeration -------------//
     case USB_REQUEST_RECIPIENT_DEVICE:
       if (USB_REQUEST_TYPE_CLASS == request_type) {
         // forward to class driver: "non-STD request to Interface"

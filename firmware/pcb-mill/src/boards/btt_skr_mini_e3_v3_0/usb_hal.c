@@ -9,7 +9,7 @@ __attribute__((always_inline)) static inline void usb_pma_set_count(uint32_t ep_
 
 __attribute__((always_inline)) static inline void usb_ep_reg_set_clear_ctr(uint32_t ep_idn, usb_ep_direction_index_t dir) {
   uint32_t ep_reg = USB->chep[ep_idn].CHEPnR;
-  ep_reg |= USB_EP_VTTX | USB_EP_VTRX;
+  ep_reg |= USB_EP_VTTX | USB_EP_VTRX;  // Preserve these bits
   ep_reg &= USB_CHEP_REG_MASK;
   ep_reg &= ~(1 << (USB_CHEP_VTTX_Pos + (dir == USB_EP_DIRECTION_IN_IDX ? 0 : 8)));
   usb_ep_reg_set(ep_idn, ep_reg, false);
@@ -27,21 +27,22 @@ __attribute__((always_inline)) static inline void unaligned_write32(uint8_t *p, 
 }
 
 static void setup_received(usb_control_request_t *setup_received) {
-  // Mark as connected after receiving 1st setup packet.
-  // But it is easier to set it every time instead of wasting time to check then set
+  // Setup recieved, therefore host has connected to device
   usb_device.connected = 1;
 
-  // mark both in & out control as free
-  usb_device.ep_status[USB_EP0_ADDR][USB_EP_DIRECTION_OUT_IDX].busy = 0;
-  usb_device.ep_status[USB_EP0_ADDR][USB_EP_DIRECTION_OUT_IDX].claimed = 0;
-  usb_device.ep_status[USB_EP0_ADDR][USB_EP_DIRECTION_IN_IDX].busy = 0;
-  usb_device.ep_status[USB_EP0_ADDR][USB_EP_DIRECTION_IN_IDX].claimed = 0;
+  // Reset state
+  usb_device.ep_status[EP0_IDN][USB_EP_DIRECTION_OUT_IDX].busy = 0;
+  usb_device.ep_status[EP0_IDN][USB_EP_DIRECTION_OUT_IDX].claimed = 0;
+  usb_device.ep_status[EP0_IDN][USB_EP_DIRECTION_IN_IDX].busy = 0;
+  usb_device.ep_status[EP0_IDN][USB_EP_DIRECTION_IN_IDX].claimed = 0;
 
   // Process control request
   if (!process_control_request(setup_received)) {
-    // Failed -> stall both control endpoint IN and OUT
-    usb_ep_stall_set(USB_EP0_ADDR | USB_DIR_IN);
-    usb_ep_stall_set(USB_EP0_ADDR | USB_DIR_OUT);
+    // USB 2.0 Specification, Section 9.2.7, “Error Handling”
+    // If a device detects a condition that prevents it from completing the request, it must indicate the error by returning a STALL handshake.
+    // For control transfers, the device must respond with a STALL to any setup or data stage packet it cannot handle.
+    usb_ep_stall_set(EP0_IDN | USB_DIR_IN);
+    usb_ep_stall_set(EP0_IDN | USB_DIR_OUT);
   }
 }
 
@@ -78,19 +79,20 @@ void usb_init_hal() {
 void handle_ctr_setup(uint32_t ep_idn) {
   uint16_t rx_count = usb_pma_get_count(ep_idn, USB_EP_RX_BUFFER);
   uint16_t rx_addr = usb_pma_get_ep_addr(ep_idn, USB_EP_RX_BUFFER);
-  uint8_t setup_packet[8] __attribute__((aligned(4)));
 
-  usb_read_packet_data(setup_packet, rx_addr, rx_count);
+  __attribute__((aligned(4)))
+  uint8_t setup_packet[8];
 
-  // Clear CTR RX if another setup packet arrived before this, it will be discarded
+  usb_rx_packet(setup_packet, rx_addr, rx_count);
+
+  // Clear CTR
   usb_ep_reg_set_clear_ctr(ep_idn, USB_EP_DIRECTION_OUT_IDX);
 
-  // Setup packet should always be 8 bytes. If not, we probably missed the packet
-  if (rx_count == 8) {
+  if (rx_count == sizeof(usb_control_request_t)) {
     setup_received((usb_control_request_t *)setup_packet);
-    // Hardware should reset EP0 RX/TX to NAK and both toggle to 1
   } else {
-    usb_ep_set_rx_buffer_block_size(0, sizeof(usb_control_request_t));
+    // Something was a mismatch, reset the endpoint state (by resetting size, which clears count etc)
+    usb_ep_set_rx_buffer_block_size(EP0_IDN, sizeof(usb_control_request_t));
   }
 }
 
@@ -164,9 +166,9 @@ void USB_UCPD1_2_IRQHandler() {
   }
 }
 
-bool usb_read_packet_data(void *__restrict dst, uint16_t src, uint16_t byte_count) {
+bool usb_rx_packet(void *__restrict dst, uint16_t src, uint16_t byte_count) {
   if (byte_count == 0) {
-    // Not count then nothing to read
+    // No count then nothing to read
     return true;
   }
 
@@ -187,7 +189,7 @@ bool usb_read_packet_data(void *__restrict dst, uint16_t src, uint16_t byte_coun
   if (odd) {
     uint32_t temp = *pma_buf;
     while (odd--) {
-      *dst8++ = (uint8_t)(temp & 0xfful);
+      *dst8++ = (uint8_t)(temp & 0xffUL);
       temp >>= 8;
     }
   }
@@ -270,19 +272,19 @@ void usb_hal_reset() {
   USB->DADDR = USB_DADDR_EF;
 }
 
-void usb_transmit_packet(ep_packet_t *packet, uint16_t ep_idn) {
+void usb_tx_packet(ep_packet_t *packet) {
   uint32_t len = min_u16(packet->total_len - packet->queued_len, packet->max_packet_size);
 
-  uint16_t addr_ptr = (uint16_t)usb_pma_get_ep_addr(ep_idn, USB_EP_TX_BUFFER);
+  uint16_t addr_ptr = (uint16_t)usb_pma_get_ep_addr(packet->ep_idn, USB_EP_TX_BUFFER);
 
   usb_write_packet_data(addr_ptr, &(packet->buffer[packet->queued_len]), len);
   packet->queued_len += len;
 
-  usb_pma_set_count(ep_idn, USB_EP_TX_BUFFER, len);
+  usb_pma_set_count(packet->ep_idn, USB_EP_TX_BUFFER, len);
 
-  uint32_t ep_reg = usb_ep_reg_get(ep_idn);
+  uint32_t ep_reg = usb_ep_reg_get(packet->ep_idn);
   usb_ep_status(&ep_reg, USB_EP_DIRECTION_IN_IDX, USB_EP_STATE_VALID);
 
   ep_reg &= USB_CHEP_REG_MASK | USB_EP_STATUS_MASK(USB_EP_DIRECTION_IN_IDX);  // only change TX Status, reserve other toggle bits
-  usb_ep_reg_set_preserve(ep_idn, ep_reg, true);
+  usb_ep_reg_set_preserve(packet->ep_idn, ep_reg, true);
 }

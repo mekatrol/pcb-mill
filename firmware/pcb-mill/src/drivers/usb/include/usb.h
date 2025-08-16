@@ -30,8 +30,8 @@
 // The size of endpoint 0 buffer
 #define USB_EP0_BUFFER_SIZE 64UL
 
-// The size of endpoint 0 address
-#define USB_EP0_ADDR 0
+// EP0 identifier
+#define EP0_IDN 0
 
 // The size of other endpoint buffers (e.g. CDC, MSC)
 #define USB_EP_RX_BUFFER_SIZE 64UL

@@ -1,9 +1,6 @@
 #include "board_hal.h"
 #include "usb_hal.h"
 
-// EP0 identifier
-#define EP0_IDN 0
-
 // Member unassigned value
 #define UNASSIGNED_VALUE 0xFFU
 
@@ -270,7 +267,7 @@ bool usb_ep_transfer_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t *buffer, ui
   packet->queued_len = 0;
 
   if (ep_dir_idx == USB_EP_DIRECTION_IN_IDX) {
-    usb_transmit_packet(packet, ep_idn);
+    usb_tx_packet(packet);
   } else {
     uint32_t ep_reg = usb_ep_reg_get(ep_idn);
     ep_reg &= USB_CHEP_REG_MASK | USB_EP_STATUS_MASK(ep_dir_idx);
@@ -329,7 +326,7 @@ void usb_ep_ctr_rx(uint32_t ep_idn) {
   const uint16_t rx_count = usb_pma_get_count(ep_idn, USB_EP_RX_BUFFER);
   uint16_t pma_addr = (uint16_t)usb_pma_get_ep_addr(ep_idn, USB_EP_RX_BUFFER);
 
-  usb_read_packet_data(packet->buffer + packet->queued_len, pma_addr, rx_count);
+  usb_rx_packet(packet->buffer + packet->queued_len, pma_addr, rx_count);
   packet->queued_len += rx_count;
 
   if ((rx_count < packet->max_packet_size) || (packet->queued_len >= packet->total_len)) {
@@ -354,7 +351,7 @@ void usb_ep_ctr_tx(uint32_t ep_idn) {
   ep_packet_t *packet = get_ep_packet(ep_addr, USB_EP_DIRECTION_IN_IDX);
 
   if (packet->total_len != packet->queued_len) {
-    usb_transmit_packet(packet, ep_idn);
+    usb_tx_packet(packet);
   } else {
     usb_ep_transfer_complete(ep_addr | USB_DIR_IN, packet->queued_len);
   }
