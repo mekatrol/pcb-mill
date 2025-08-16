@@ -59,12 +59,30 @@ __attribute__((always_inline)) static inline uint32_t usb_endpoint_reg_get(uint3
   return USB->chep[endpoint_idn].CHEPnR;
 }
 
+__attribute__((always_inline)) static inline uint32_t usb_endpoint_reg_get_preserve(uint32_t endpoint_idn) {
+  return USB->chep[endpoint_idn].CHEPnR;
+}
+
 __attribute__((always_inline)) static inline void usb_endpoint_reg_set(uint32_t endpoint_idn, uint32_t value, bool disable_usb_irq) {
   if (disable_usb_irq) {
     NVIC_DisableIRQ(USB_UCPD1_2_IRQn);
   }
 
   USB->chep[endpoint_idn].CHEPnR = value;
+
+  if (disable_usb_irq) {
+    NVIC_EnableIRQ(USB_UCPD1_2_IRQn);
+  }
+}
+
+__attribute__((always_inline)) static inline void usb_endpoint_reg_set_preserve(uint32_t endpoint_idn, uint32_t value, bool disable_usb_irq) {
+  if (disable_usb_irq) {
+    NVIC_DisableIRQ(USB_UCPD1_2_IRQn);
+  }
+
+  // USB_EP_VTTX and USB_EP_VTRX are rc_w0 bits so setting them to 1 preserves the current register values
+  // this will preserve  IN/OUT/SETUP transaction is successfully completed states
+  USB->chep[endpoint_idn].CHEPnR = (value | USB_EP_VTTX | USB_EP_VTRX);
 
   if (disable_usb_irq) {
     NVIC_EnableIRQ(USB_UCPD1_2_IRQn);
@@ -182,7 +200,7 @@ static void transfer_complete(uint8_t ep_addr, uint32_t xferred_bytes) {
 
 // Handle CTR interrupt for the RX/OUT direction
 void handle_ctr_rx(uint32_t endpoint_idn) {
-  uint32_t endpoint_reg = usb_endpoint_reg_get(endpoint_idn) | USB_EP_VTTX | USB_EP_VTRX;
+  uint32_t endpoint_reg = usb_endpoint_reg_get(endpoint_idn);
   const uint8_t ep_num = endpoint_reg & USB_CHEP_ADDR;
   endpoint_control_transfer_t *xfer = xfer_ctl_ptr(ep_num, USB_EP_DIRECTION_OUT_IDX);
 
@@ -205,7 +223,7 @@ void handle_ctr_rx(uint32_t endpoint_idn) {
   } else {
     endpoint_reg &= USB_CHEP_REG_MASK | USB_EP_STATUS_MASK(USB_EP_DIRECTION_OUT_IDX);  // will change RX Status, reserved other toggle bits
     usb_endpoint_status(&endpoint_reg, USB_EP_DIRECTION_OUT_IDX, USB_EP_STATE_VALID);
-    usb_endpoint_reg_set(endpoint_idn, endpoint_reg, false);
+    usb_endpoint_reg_set_preserve(endpoint_idn, endpoint_reg, false);
   }
 }
 
@@ -583,7 +601,7 @@ bool usb_endpoint_open(usb_endpoint_descriptor_t const *endpoint_descriptor) {
   }
 
   uint32_t endpoint_reg = usb_endpoint_reg_get(endpoint_idn) & ~USB_CHEP_REG_MASK;
-  endpoint_reg |= USB_EP_NUM(ep_addr) | USB_EP_VTTX | USB_EP_VTRX;
+  endpoint_reg |= USB_EP_NUM(ep_addr);
 
   // Supported endpoint types
   switch (endpoint_descriptor->bmAttributes.type) {
@@ -618,7 +636,7 @@ bool usb_endpoint_open(usb_endpoint_descriptor_t const *endpoint_descriptor) {
     endpoint_reg &= ~(USB_CHEP_TX_STTX_Msk | USB_EP_DTOG_TX);
   }
 
-  usb_endpoint_reg_set(endpoint_idn, endpoint_reg, true);
+  usb_endpoint_reg_set_preserve(endpoint_idn, endpoint_reg, true);
 
   return true;
 }
@@ -639,7 +657,6 @@ void usb_close_all_endpoints() {
 
 static void usb_transmit_packet(endpoint_control_transfer_t *xfer, uint16_t ep_ix) {
   uint32_t len = min_u16(xfer->total_len - xfer->queued_len, xfer->max_packet_size);
-  uint32_t endpoint_reg = usb_endpoint_reg_get(ep_ix) | USB_EP_VTTX | USB_EP_VTRX;  // reserve CTR
 
   uint16_t addr_ptr = (uint16_t)usb_pma_get_addr(ep_ix, USB_EP_TX_BUFFER);
 
@@ -647,10 +664,12 @@ static void usb_transmit_packet(endpoint_control_transfer_t *xfer, uint16_t ep_i
   xfer->queued_len += len;
 
   usb_pma_set_count(ep_ix, USB_EP_TX_BUFFER, len);
+
+  uint32_t endpoint_reg = usb_endpoint_reg_get(ep_ix);
   usb_endpoint_status(&endpoint_reg, USB_EP_DIRECTION_IN_IDX, USB_EP_STATE_VALID);
 
   endpoint_reg &= USB_CHEP_REG_MASK | USB_EP_STATUS_MASK(USB_EP_DIRECTION_IN_IDX);  // only change TX Status, reserve other toggle bits
-  usb_endpoint_reg_set(ep_ix, endpoint_reg, true);
+  usb_endpoint_reg_set_preserve(ep_ix, endpoint_reg, true);
 }
 
 static bool edpt_xfer(uint8_t ep_num, usb_endpoint_direction_index_t dir) {
@@ -660,7 +679,7 @@ static bool edpt_xfer(uint8_t ep_num, usb_endpoint_direction_index_t dir) {
   if (dir == USB_EP_DIRECTION_IN_IDX) {
     usb_transmit_packet(xfer, ep_idx);
   } else {
-    uint32_t endpoint_reg = usb_endpoint_reg_get(ep_idx) | USB_EP_VTTX | USB_EP_VTRX;  // reserve CTR
+    uint32_t endpoint_reg = usb_endpoint_reg_get(ep_idx);
     endpoint_reg &= USB_CHEP_REG_MASK | USB_EP_STATUS_MASK(dir);
 
     uint16_t rx_size = min_u16(xfer->total_len, xfer->max_packet_size);
@@ -668,7 +687,7 @@ static bool edpt_xfer(uint8_t ep_num, usb_endpoint_direction_index_t dir) {
     usb_endpoint_set_rx_buffer_block_size(ep_idx, (uint32_t)rx_size);
 
     usb_endpoint_status(&endpoint_reg, dir, USB_EP_STATE_VALID);
-    usb_endpoint_reg_set(ep_idx, endpoint_reg, true);
+    usb_endpoint_reg_set_preserve(ep_idx, endpoint_reg, true);
   }
 
   return true;
@@ -692,11 +711,11 @@ void usb_endpoint_stall_set(uint8_t ep_addr) {
   endpoint_control_transfer_t *xfer = xfer_ctl_ptr(ep_num, ep_dir_idx);
   uint8_t const ep_idx = xfer->ep_idx;
 
-  uint32_t endpoint_reg = usb_endpoint_reg_get(ep_idx) | USB_EP_VTTX | USB_EP_VTRX;  // reserve CTR bits
+  uint32_t endpoint_reg = usb_endpoint_reg_get(ep_idx);
   endpoint_reg &= USB_CHEP_REG_MASK | USB_EP_STATUS_MASK(ep_dir_idx);
   usb_endpoint_status(&endpoint_reg, ep_dir_idx, USB_EP_STATE_STALL);
 
-  usb_endpoint_reg_set(ep_idx, endpoint_reg, true);
+  usb_endpoint_reg_set_preserve(ep_idx, endpoint_reg, true);
 }
 
 void dcd_edpt_clear_stall(uint8_t ep_addr) {
@@ -706,7 +725,7 @@ void dcd_edpt_clear_stall(uint8_t ep_addr) {
   uint8_t const ep_idx = xfer->ep_idx;
 
   // Get current value of CHEPnR
-  uint32_t endpoint_reg = usb_endpoint_reg_get(ep_idx) | USB_EP_VTTX | USB_EP_VTRX;
+  uint32_t endpoint_reg = usb_endpoint_reg_get(ep_idx);
 
   // Clear state
   endpoint_reg &= USB_CHEP_REG_MASK | USB_EP_STATUS_MASK(ep_dir_idx) | USB_EP_DATA_TOGGLE_MASK(ep_dir_idx);
@@ -715,5 +734,5 @@ void dcd_edpt_clear_stall(uint8_t ep_addr) {
   usb_endpoint_data_toggle(&endpoint_reg, ep_dir_idx, 0);
 
   // Set value of CHEPnR
-  usb_endpoint_reg_set(ep_idx, endpoint_reg, true);
+  usb_endpoint_reg_set_preserve(ep_idx, endpoint_reg, true);
 }
