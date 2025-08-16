@@ -67,7 +67,7 @@ typedef enum {
   USB_EP_STATE_STALL = 0b01,
   USB_EP_STATE_NAK = 0b10,
   USB_EP_STATE_VALID = 0b11
-} usb_endpoint_state_t;
+} usb_ep_state_t;
 
 // The interrupt USB endpoint type is one of the four transfer types defined by the USB 2.0 specification:
 //   USB Transfer Type	Typical Use	                          Key Properties
@@ -80,7 +80,7 @@ typedef enum {
   USB_EP_TYPE_ISOCHRONOUS = 1,
   USB_EP_TYPE_BULK = 2,
   USB_EP_TYPE_INTERRUPT = 3
-} usb_endpoint_type_t;
+} usb_ep_type_t;
 
 // This is the same as USB_DRD_PMABuffDescTypeDef
 typedef struct
@@ -97,7 +97,7 @@ typedef struct
 
 // Buffer Table is located in Packet Memory Area (PMA)
 typedef struct {
-  usb_buffer_description_table_t endpoint[USB_EP_MAX];
+  usb_buffer_description_table_t ep[USB_EP_MAX];
 } usb_buffer_description_table_map_t;
 
 // Buffers can be placed anywhere inside the packet memory because their location and size is specified in a buffer description table,
@@ -141,7 +141,7 @@ typedef enum {
 typedef enum {
   USB_EP_DIRECTION_OUT_IDX = 0,
   USB_EP_DIRECTION_IN_IDX = 1,
-} usb_endpoint_direction_index_t;
+} usb_ep_direction_index_t;
 
 /// Standard USB control request (USB 2.0 Spec, Table 9-2)
 typedef struct __attribute__((packed)) {
@@ -156,7 +156,7 @@ _Static_assert(sizeof(usb_control_request_t) == 8, "sizeof(usb_control_request_t
 
 __attribute__((always_inline)) static inline usb_request_recipient_t usb_request_recipient(uint8_t bm) { return (bm)&USB_REQUEST_RECIPIENT_MASK; }
 __attribute__((always_inline)) static inline usb_request_type_t usb_request_type(uint8_t bm) { return ((bm)&USB_REQUEST_TYPE_MASK) >> 5; }
-__attribute__((always_inline)) static inline usb_endpoint_direction_index_t usb_request_direction(uint8_t bm) { return USB_EP_DIR((bm)) >> 7; }
+__attribute__((always_inline)) static inline usb_ep_direction_index_t usb_request_direction(uint8_t bm) { return USB_EP_DIR((bm)) >> 7; }
 
 // USB Device Descriptor
 typedef struct __attribute__((packed)) {
@@ -244,15 +244,15 @@ typedef struct __attribute__((packed)) {
                             // Bits 11–12 = Additional transactions per microframe (high-speed only)
                             // Bits 13–15 = Reserved (must be zero)
   uint8_t bInterval;        // Polling interval, in frames or microframes depending on the operating speed
-} usb_endpoint_descriptor_t;
+} usb_ep_descriptor_t;
 
-_Static_assert(sizeof(usb_endpoint_descriptor_t) == 7, "size must be 7");
+_Static_assert(sizeof(usb_ep_descriptor_t) == 7, "size must be 7");
 
 typedef struct __attribute__((packed)) {
   volatile uint8_t busy : 1;
   volatile uint8_t stalled : 1;
   volatile uint8_t claimed : 1;
-} endpoint_state_t;
+} ep_state_t;
 
 typedef struct {
   struct __attribute__((packed)) {
@@ -267,7 +267,7 @@ typedef struct {
 
   uint8_t ep2drv[USB_EP_MAX][EP_IN_OUT_PAIR];  // map endpoint to driver ( 0xff is invalid ), can use only 4-bit each
 
-  endpoint_state_t ep_status[USB_EP_MAX][EP_IN_OUT_PAIR];
+  ep_state_t ep_status[USB_EP_MAX][EP_IN_OUT_PAIR];
 
 } usbd_device_t;
 
@@ -300,35 +300,35 @@ const usb_configuration_descriptor_t* usb_descriptor_configuration();
 typedef bool (*usb_cdc_control_transfer_t)(uint8_t stage, const usb_control_request_t* request);
 
 // Submit a usb transfer
-bool usb_endpoint_transfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes);
+bool usb_ep_transfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes);
 
 // Claim an endpoint before submitting a transfer.
 // If caller does not make any transfer, it must release endpoint for others.
-bool usb_endpoint_claim(uint8_t ep_addr);
+bool usb_ep_claim(uint8_t ep_addr);
 
 // Release claimed endpoint without submitting a transfer
-bool usb_endpoint_release(uint8_t ep_addr);
+bool usb_ep_release(uint8_t ep_addr);
 
 // Set endpoint stalled
-void usb_endpoint_stall_set(uint8_t ep_addr);
+void usb_ep_stall_set(uint8_t ep_addr);
 
 // Clear endpoint stalled
-void usb_endpoint_stall_clear(uint8_t ep_addr);
+void usb_ep_stall_clear(uint8_t ep_addr);
 
 // Check if endpoint is stalled
-bool usb_endpoint_is_stalled(uint8_t ep_addr);
+bool usb_ep_is_stalled(uint8_t ep_addr);
 
 // Open a set of output and input endpoints
-bool usb_endpoint_open_in_out(const usb_endpoint_descriptor_t* p_desc, uint8_t xfer_type, uint8_t* ep_out, uint8_t* ep_in);
+bool usb_ep_open_in_out(const usb_ep_descriptor_t* p_desc, uint8_t xfer_type, uint8_t* ep_out, uint8_t* ep_in);
 
 // Bind all endpoint of a interface descriptor to class driver
 void tu_edpt_bind_driver(uint8_t ep2drv[][EP_IN_OUT_PAIR], const usb_control_interface_descriptor_t* p_desc, uint16_t desc_len);
 
 // Claim an endpoint
-bool tu_edpt_claim(endpoint_state_t* ep_state);
+bool tu_edpt_claim(ep_state_t* ep_state);
 
 // Release an endpoint
-bool tu_edpt_release(endpoint_state_t* ep_state);
+bool tu_edpt_release(ep_state_t* ep_state);
 
 extern usbd_device_t usb_device;
 
@@ -346,7 +346,7 @@ __attribute__((always_inline)) static inline bool usb_ready(void) {
 // Carry out Data and Status stage of control transfer
 // - If len = 0, it is equivalent to sending status only
 // - If len > wLength : it will be truncated
-bool usb_endpoint_control_transfer(const usb_control_request_t* request, void* buffer, uint16_t len);
+bool usb_ep_control_transfer(const usb_control_request_t* request, void* buffer, uint16_t len);
 
 // Send STATUS (zero length) packet
 bool usb_control_status(const usb_control_request_t* request);
@@ -571,24 +571,24 @@ void usb_sof_set_enable(bool en);
 
 // Invoked when a control transfer's status stage is complete.
 // May help DCD to prepare for next control transfer, this API is optional.
-void usb_endpoint_control_status_complete(const usb_control_request_t* request);
+void usb_ep_control_status_complete(const usb_control_request_t* request);
 
 // Configure endpoint's registers according to descriptor
-bool usb_endpoint_open(const usb_endpoint_descriptor_t* endpoint_descriptor);
+bool usb_ep_open(const usb_ep_descriptor_t* ep_descriptor);
 
 // Close all endpoints
-void usb_endpoint_close_all();
+void usb_ep_close_all();
 
 // Submit a transfer
-bool usb_endpoint_transfer_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t* buffer, uint16_t total_bytes);
+bool usb_ep_transfer_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t* buffer, uint16_t total_bytes);
 
 // Stall endpoint, any queuing transfer should be removed from endpoint
-void usb_endpoint_stall_set(uint8_t ep_addr);
-void usb_endpoint_stall_set_hal(uint8_t ep_idn, uint8_t ep_dir_idx);
+void usb_ep_stall_set(uint8_t ep_addr);
+void usb_ep_stall_set_hal(uint8_t ep_idn, uint8_t ep_dir_idx);
 
 // clear stall, data toggle is also reset to DATA0
 // This API never calls with control endpoints, since it is auto cleared when receiving setup packet
-void usb_endpoint_stall_clear(uint8_t ep_addr);
-void usb_endpoint_stall_clear_hal(uint8_t ep_idn, uint8_t ep_dir_idx);
+void usb_ep_stall_clear(uint8_t ep_addr);
+void usb_ep_stall_clear_hal(uint8_t ep_idn, uint8_t ep_dir_idx);
 
 #endif  // __USB_H__

@@ -132,7 +132,7 @@ bool process_control_request(const usb_control_request_t* request) {
           usbd_control_set_request(request);  // set request since DCD has no access to usb_control_status() API
 
           // Respond with status (ep0)
-          usb_endpoint_transfer_hal(0x00, USB_DIR_IN >> 7, NULL, 0);
+          usb_ep_transfer_hal(0x00, USB_DIR_IN >> 7, NULL, 0);
 
           // skip usb_control_status()
           usb_device.addressed = 1;
@@ -140,7 +140,7 @@ bool process_control_request(const usb_control_request_t* request) {
 
         case USB_STD_GET_CONFIGURATION: {
           uint8_t config_num = usb_device.config_num;
-          usb_endpoint_control_transfer(request, &config_num, 1);
+          usb_ep_control_transfer(request, &config_num, 1);
         } break;
 
         case USB_STD_SET_CONFIGURATION: {
@@ -153,7 +153,7 @@ bool process_control_request(const usb_control_request_t* request) {
               usb_sof_set_enable(false);
 
               // close all non-control endpoints, cancel all pending transfers if any
-              usb_endpoint_close_all();
+              usb_ep_close_all();
 
               // close all drivers and current configured state except bus speed
               usb_configuration_reset();
@@ -211,7 +211,7 @@ bool process_control_request(const usb_control_request_t* request) {
           // - Bit 0: Self Powered
           // - Bit 1: Remote Wakeup enabled
           uint16_t status = (uint16_t)((1u) | (usb_device.remote_wakeup_en ? 2u : 0u));
-          usb_endpoint_control_transfer(request, &status, 2);
+          usb_ep_control_transfer(request, &status, 2);
           break;
         }
 
@@ -240,7 +240,7 @@ bool process_control_request(const usb_control_request_t* request) {
 
             if (USB_STD_GET_INTERFACE == request->bRequest) {
               uint8_t alternate = 0;
-              usb_endpoint_control_transfer(request, &alternate, 1);
+              usb_ep_control_transfer(request, &alternate, 1);
             } else {
               usb_control_status(request);
             }
@@ -269,17 +269,17 @@ bool process_control_request(const usb_control_request_t* request) {
         // Handle STD request to endpoint
         switch (request->bRequest) {
           case USB_STD_GET_STATUS: {
-            uint16_t status = usb_endpoint_is_stalled(ep_addr) ? 0x0001 : 0x0000;
-            usb_endpoint_control_transfer(request, &status, 2);
+            uint16_t status = usb_ep_is_stalled(ep_addr) ? 0x0001 : 0x0000;
+            usb_ep_control_transfer(request, &status, 2);
           } break;
 
           case USB_STD_CLEAR_FEATURE:
           case USB_STD_SET_FEATURE: {
             if (TUSB_REQ_FEATURE_EDPT_HALT == request->wValue) {
               if (USB_STD_CLEAR_FEATURE == request->bRequest) {
-                usb_endpoint_stall_clear(ep_addr);
+                usb_ep_stall_clear(ep_addr);
               } else {
-                usb_endpoint_stall_set(ep_addr);
+                usb_ep_stall_set(ep_addr);
               }
             }
 
@@ -383,7 +383,7 @@ static bool process_get_descriptor(const usb_control_request_t* request) {
   switch (descriptor_type) {
     case USB_DESCRIPTOR_TYPE_DEVICE: {
       void* descriptor_device = (void*)(uintptr_t)get_device_descriptor();
-      return usb_endpoint_control_transfer(request, descriptor_device, sizeof(usb_device_descriptor_t));
+      return usb_ep_control_transfer(request, descriptor_device, sizeof(usb_device_descriptor_t));
     }
 
     case USB_DESCRIPTOR_TYPE_CONFIGURATION:
@@ -404,7 +404,7 @@ static bool process_get_descriptor(const usb_control_request_t* request) {
       // Use offsetof to avoid pointer to the odd/misaligned address
       const uint16_t total_len = tu_unaligned_read16((const void*)(descriptor_config + offsetof(usb_configuration_descriptor_t, wTotalLength)));
 
-      return usb_endpoint_control_transfer(request, (void*)descriptor_config, total_len);
+      return usb_ep_control_transfer(request, (void*)descriptor_config, total_len);
     }
 
     case USB_DESCRIPTOR_TYPE_STRING: {
@@ -415,7 +415,7 @@ static bool process_get_descriptor(const usb_control_request_t* request) {
       }
 
       // first byte of descriptor is its size
-      return usb_endpoint_control_transfer(request, (void*)(uintptr_t)descriptor_str, usb_descriptor_len(descriptor_str));
+      return usb_ep_control_transfer(request, (void*)(uintptr_t)descriptor_str, usb_descriptor_len(descriptor_str));
     }
 
     case USB_DESCRIPTOR_TYPE_DEVICE_QUALIFIER: {
@@ -423,7 +423,7 @@ static bool process_get_descriptor(const usb_control_request_t* request) {
       if (!descriptor_qualifier) {
         return false;
       }
-      return usb_endpoint_control_transfer(request, (void*)(uintptr_t)descriptor_qualifier, usb_descriptor_len(descriptor_qualifier));
+      return usb_ep_control_transfer(request, (void*)(uintptr_t)descriptor_qualifier, usb_descriptor_len(descriptor_qualifier));
     }
 
     default:
@@ -432,13 +432,13 @@ static bool process_get_descriptor(const usb_control_request_t* request) {
 }
 
 // Configure consecutive endpoint descriptors (IN & OUT)
-bool usb_endpoint_open_in_out(const usb_endpoint_descriptor_t* descriptor_ep, uint8_t xfer_type, uint8_t* ep_out, uint8_t* ep_in) {
+bool usb_ep_open_in_out(const usb_ep_descriptor_t* descriptor_ep, uint8_t xfer_type, uint8_t* ep_out, uint8_t* ep_in) {
   for (int i = 0; i < 2; i++) {
     if (descriptor_ep->bDescriptorType != USB_DESCRIPTOR_TYPE_ENDPOINT || descriptor_ep->bmAttributes.type != xfer_type) {
       return false;
     }
 
-    if (!usb_endpoint_open(descriptor_ep)) {
+    if (!usb_ep_open(descriptor_ep)) {
       return false;
     }
 
@@ -448,29 +448,29 @@ bool usb_endpoint_open_in_out(const usb_endpoint_descriptor_t* descriptor_ep, ui
       (*ep_out) = descriptor_ep->bEndpointAddress;
     }
 
-    descriptor_ep = (const usb_endpoint_descriptor_t*)usb_next_descriptor(descriptor_ep);
+    descriptor_ep = (const usb_ep_descriptor_t*)usb_next_descriptor(descriptor_ep);
   }
 
   return true;
 }
 
-bool usb_endpoint_claim(uint8_t ep_addr) {
+bool usb_ep_claim(uint8_t ep_addr) {
   const uint8_t ep_idn = USB_EP_IDN(ep_addr);
   const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
-  endpoint_state_t* ep_state = &usb_device.ep_status[ep_idn][ep_dir_idx];
+  ep_state_t* ep_state = &usb_device.ep_status[ep_idn][ep_dir_idx];
 
   return tu_edpt_claim(ep_state);
 }
 
-bool usb_endpoint_release(uint8_t ep_addr) {
+bool usb_ep_release(uint8_t ep_addr) {
   const uint8_t ep_idn = USB_EP_IDN(ep_addr);
   const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
-  endpoint_state_t* ep_state = &usb_device.ep_status[ep_idn][ep_dir_idx];
+  ep_state_t* ep_state = &usb_device.ep_status[ep_idn][ep_dir_idx];
 
   return tu_edpt_release(ep_state);
 }
 
-bool usb_endpoint_transfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes) {
+bool usb_ep_transfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes) {
   const uint8_t ep_idn = USB_EP_IDN(ep_addr);
   const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
 
@@ -479,11 +479,11 @@ bool usb_endpoint_transfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_byte
     return false;
   }
 
-  // Set busy first since the actual transfer can be complete before usb_endpoint_transfer_hal()
+  // Set busy first since the actual transfer can be complete before usb_ep_transfer_hal()
   // could return and USBD task can preempt and clear the busy
   usb_device.ep_status[ep_idn][ep_dir_idx].busy = 1;
 
-  if (usb_endpoint_transfer_hal(ep_idn, ep_dir_idx, buffer, total_bytes)) {
+  if (usb_ep_transfer_hal(ep_idn, ep_dir_idx, buffer, total_bytes)) {
     return true;
   } else {
     // DCD error, mark endpoint as ready to allow next transfer
@@ -493,27 +493,27 @@ bool usb_endpoint_transfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_byte
   }
 }
 
-void usb_endpoint_stall_set(uint8_t ep_addr) {
+void usb_ep_stall_set(uint8_t ep_addr) {
   const uint8_t ep_idn = USB_EP_IDN(ep_addr);
   const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
 
   // only stalled if currently cleared
-  usb_endpoint_stall_set_hal(ep_idn, ep_dir_idx);
+  usb_ep_stall_set_hal(ep_idn, ep_dir_idx);
   usb_device.ep_status[ep_idn][ep_dir_idx].stalled = 1;
   usb_device.ep_status[ep_idn][ep_dir_idx].busy = 1;
 }
 
-void usb_endpoint_stall_clear(uint8_t ep_addr) {
+void usb_ep_stall_clear(uint8_t ep_addr) {
   const uint8_t ep_idn = USB_EP_IDN(ep_addr);
   const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
 
   // only clear if currently stalled
-  usb_endpoint_stall_clear_hal(ep_idn, ep_dir_idx);
+  usb_ep_stall_clear_hal(ep_idn, ep_dir_idx);
   usb_device.ep_status[ep_idn][ep_dir_idx].stalled = 0;
   usb_device.ep_status[ep_idn][ep_dir_idx].busy = 0;
 }
 
-bool usb_endpoint_is_stalled(uint8_t ep_addr) {
+bool usb_ep_is_stalled(uint8_t ep_addr) {
   const uint8_t ep_idn = USB_EP_IDN(ep_addr);
   const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
 
@@ -534,10 +534,10 @@ static __attribute__((aligned(4))) uint8_t ep0_control_buffer[USB_EP0_BUFFER_SIZ
 
 static inline bool status_stage_xact(const usb_control_request_t* request) {
   // Opposite to endpoint in Data Phase
-  const usb_endpoint_direction_index_t request_direction = usb_request_direction(request->bmRequestType);
+  const usb_ep_direction_index_t request_direction = usb_request_direction(request->bmRequestType);
   const uint8_t ep_addr = request_direction ? USB_DIR_OUT : USB_DIR_IN;
 
-  return usb_endpoint_transfer(ep_addr, NULL, 0);
+  return usb_ep_transfer(ep_addr, NULL, 0);
 }
 
 // Status phase
@@ -557,7 +557,7 @@ static bool data_stage_xact() {
   const uint16_t xact_len = min_u16(control_transfer.data_len - control_transfer.total_xferred, USB_EP0_BUFFER_SIZE);
   uint8_t ep_addr = USB_DIR_OUT;
 
-  const usb_endpoint_direction_index_t request_direction = usb_request_direction(control_transfer.request.bmRequestType);
+  const usb_ep_direction_index_t request_direction = usb_request_direction(control_transfer.request.bmRequestType);
   if (request_direction == USB_EP_DIRECTION_IN_IDX) {
     ep_addr = USB_DIR_IN;
     if (xact_len) {
@@ -570,10 +570,10 @@ static bool data_stage_xact() {
     }
   }
 
-  return usb_endpoint_transfer(ep_addr, xact_len ? ep0_control_buffer : NULL, xact_len);
+  return usb_ep_transfer(ep_addr, xact_len ? ep0_control_buffer : NULL, xact_len);
 }
 
-bool usb_endpoint_control_transfer(const usb_control_request_t* request, void* buffer, uint16_t len) {
+bool usb_ep_control_transfer(const usb_control_request_t* request, void* buffer, uint16_t len) {
   control_transfer.request = (*request);
   control_transfer.buffer = (uint8_t*)buffer;
   control_transfer.total_xferred = 0U;
@@ -626,7 +626,7 @@ bool usb_control_transfer(uint8_t ep_addr, uint32_t transferred_bytes) {
     }
 
     // invoke optional dcd hook if available
-    usb_endpoint_control_status_complete(&control_transfer.request);
+    usb_ep_control_status_complete(&control_transfer.request);
 
     if (control_transfer.complete_cb) {
       control_transfer.complete_cb(CONTROL_STAGE_ACK, &control_transfer.request);
@@ -664,8 +664,8 @@ bool usb_control_transfer(uint8_t ep_addr, uint32_t transferred_bytes) {
       }
     } else {
       // Stall both IN and OUT control endpoint
-      usb_endpoint_stall_set(USB_DIR_OUT);
-      usb_endpoint_stall_set(USB_DIR_IN);
+      usb_ep_stall_set(USB_DIR_OUT);
+      usb_ep_stall_set(USB_DIR_IN);
     }
   } else {
     // More data to transfer
@@ -677,7 +677,7 @@ bool usb_control_transfer(uint8_t ep_addr, uint32_t transferred_bytes) {
   return true;
 }
 
-bool tu_edpt_claim(endpoint_state_t* ep_state) {
+bool tu_edpt_claim(ep_state_t* ep_state) {
   // can only claim the endpoint if it is not busy and not claimed yet.
   const bool ep_available = (ep_state->busy == 0) && (ep_state->claimed == 0);
 
@@ -688,7 +688,7 @@ bool tu_edpt_claim(endpoint_state_t* ep_state) {
   return ep_available;
 }
 
-bool tu_edpt_release(endpoint_state_t* ep_state) {
+bool tu_edpt_release(ep_state_t* ep_state) {
   const bool released = (ep_state->claimed == 1) && (ep_state->busy == 0);
   if (released) {
     ep_state->claimed = 0;
@@ -702,7 +702,7 @@ void tu_edpt_bind_driver(uint8_t ep2drv[][EP_IN_OUT_PAIR], const usb_control_int
 
   while (discriptor < descriptor_end) {
     if (USB_DESCRIPTOR_TYPE_ENDPOINT == usb_descriptor_type(discriptor)) {
-      const uint8_t ep_addr = ((const usb_endpoint_descriptor_t*)discriptor)->bEndpointAddress;
+      const uint8_t ep_addr = ((const usb_ep_descriptor_t*)discriptor)->bEndpointAddress;
       ep2drv[USB_EP_IDN(ep_addr)][USB_EP_DIR_IDX(ep_addr)] = 0;
     }
     discriptor = usb_next_descriptor(discriptor);

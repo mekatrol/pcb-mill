@@ -23,34 +23,34 @@ typedef struct {
 
   // Endpoint identifier (is zero based so can be used as index to arrays)
   uint8_t ep_idn;
-} endpoint_packet_t;
+} ep_packet_t;
 
-void usb_endpoint_reset();
-void usb_endpoint_set_rx_buffer_block_size(uint32_t ep_idn, uint32_t size);
-void usb_endpoint_control_init();
-void usb_endpoint_ctr_rx(uint32_t ep_idn);
-void usb_endpoint_ctr_tx(uint32_t ep_idn);
+void usb_ep_reset();
+void usb_ep_set_rx_buffer_block_size(uint32_t ep_idn, uint32_t size);
+void usb_ep_control_init();
+void usb_ep_ctr_rx(uint32_t ep_idn);
+void usb_ep_ctr_tx(uint32_t ep_idn);
 
-void usb_transmit_packet(endpoint_packet_t *control_transfer, uint16_t ep_idn);
+void usb_transmit_packet(ep_packet_t *packet, uint16_t ep_idn);
 bool usb_control_transfer(uint8_t ep_addr, uint32_t transferred_bytes);
 bool usb_cdc_transfer(uint8_t ep_addr, uint32_t transferred_bytes);
 bool usb_read_packet_data(void *__restrict dst, uint16_t src, uint16_t byte_count);
 
 __attribute__((always_inline)) static inline uint16_t usb_pma_get_count(uint32_t ep_idn, uint8_t buf_id) {
   uint16_t count;
-  count = (USB_BUFFER_DESC_TABLE->endpoint[ep_idn].buffer[buf_id].count_addr >> 16);
+  count = (USB_BUFFER_DESC_TABLE->ep[ep_idn].buffer[buf_id].count_addr >> 16);
   return count & 0x3FFU;
 }
 
-__attribute__((always_inline)) static inline uint32_t usb_pma_get_endpoint_addr(uint32_t ep_idn, uint8_t buf_id) {
-  return USB_BUFFER_DESC_TABLE->endpoint[ep_idn].buffer[buf_id].count_addr & 0x0000FFFFU;
+__attribute__((always_inline)) static inline uint32_t usb_pma_get_ep_addr(uint32_t ep_idn, uint8_t buf_id) {
+  return USB_BUFFER_DESC_TABLE->ep[ep_idn].buffer[buf_id].count_addr & 0x0000FFFFU;
 }
 
-__attribute__((always_inline)) static inline uint32_t usb_endpoint_reg_get(uint32_t ep_idn) {
+__attribute__((always_inline)) static inline uint32_t usb_ep_reg_get(uint32_t ep_idn) {
   return USB->chep[ep_idn].CHEPnR;
 }
 
-__attribute__((always_inline)) static inline void usb_endpoint_reg_set(uint32_t ep_idn, uint32_t value, bool disable_usb_irq) {
+__attribute__((always_inline)) static inline void usb_ep_reg_set(uint32_t ep_idn, uint32_t value, bool disable_usb_irq) {
   if (disable_usb_irq) {
     NVIC_DisableIRQ(USB_UCPD1_2_IRQn);
   }
@@ -62,7 +62,7 @@ __attribute__((always_inline)) static inline void usb_endpoint_reg_set(uint32_t 
   }
 }
 
-__attribute__((always_inline)) static inline void usb_endpoint_reg_set_preserve(uint32_t ep_idn, uint32_t value, bool disable_usb_irq) {
+__attribute__((always_inline)) static inline void usb_ep_reg_set_preserve(uint32_t ep_idn, uint32_t value, bool disable_usb_irq) {
   if (disable_usb_irq) {
     NVIC_DisableIRQ(USB_UCPD1_2_IRQn);
   }
@@ -76,9 +76,9 @@ __attribute__((always_inline)) static inline void usb_endpoint_reg_set_preserve(
   }
 }
 
-__attribute__((always_inline)) static inline void usb_endpoint_status(uint32_t *endpoint_reg, usb_endpoint_direction_index_t dir, usb_endpoint_state_t state) {
-  // Any bits set to 1 in state will be toggle the same bit in endpoint_reg
-  *endpoint_reg ^= (state << (USB_CHEP_TX_STTX_Pos + (dir == USB_EP_DIRECTION_IN_IDX ? 0 : 8)));
+__attribute__((always_inline)) static inline void usb_ep_status(uint32_t *ep_reg, usb_ep_direction_index_t dir, usb_ep_state_t state) {
+  // Any bits set to 1 in state will be toggle the same bit in ep_reg
+  *ep_reg ^= (state << (USB_CHEP_TX_STTX_Pos + (dir == USB_EP_DIRECTION_IN_IDX ? 0 : 8)));
 }
 
 #endif  // __USB_HAL_H__
