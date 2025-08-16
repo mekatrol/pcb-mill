@@ -196,7 +196,7 @@ char const* string_descriptor_arr[] = {
 
 static uint16_t descriptor_str[32];
 
-uint16_t const* tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
+uint16_t const* usb_descriptor_string(uint8_t index, uint16_t langid) {
   (void)langid;
 
   if (index == 0) {

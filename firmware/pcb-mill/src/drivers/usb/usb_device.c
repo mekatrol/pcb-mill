@@ -414,7 +414,7 @@ static bool process_get_descriptor(usb_control_request_t const* request) {
 
     case USB_DESCRIPTOR_TYPE_STRING: {
       // String Descriptor always uses the desc set from user
-      uint8_t const* descriptor_str = (uint8_t const*)tud_descriptor_string_cb(descriptor_index, request->wIndex);
+      uint8_t const* descriptor_str = (uint8_t const*)usb_descriptor_string(descriptor_index, request->wIndex);
       if (!descriptor_str) {
         return false;
       }
