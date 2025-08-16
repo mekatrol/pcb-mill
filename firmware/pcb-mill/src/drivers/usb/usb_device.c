@@ -364,15 +364,6 @@ static bool usb_set_configuration() {
   return true;
 }
 
-typedef struct {
-  uint16_t val;
-} __attribute__((packed)) tu_unaligned_uint16_t;
-
-__attribute__((always_inline)) static inline uint16_t tu_unaligned_read16(const void* mem) {
-  const tu_unaligned_uint16_t* ua16 = (const tu_unaligned_uint16_t*)mem;
-  return ua16->val;
-}
-
 // return descriptor's buffer and update descriptor_len
 static bool process_get_descriptor(const usb_control_request_t* request) {
   const usb_descriptor_type_t descriptor_type = (usb_descriptor_type_t)U16_HIGH(request->wValue);
@@ -400,7 +391,7 @@ static bool process_get_descriptor(const usb_control_request_t* request) {
       }
 
       // Use offsetof to avoid pointer to the odd/misaligned address
-      const uint16_t total_len = tu_unaligned_read16((const void*)(descriptor_config + offsetof(usb_configuration_descriptor_t, wTotalLength)));
+      const uint16_t total_len = unaligned_read_16((const void*)(descriptor_config + offsetof(usb_configuration_descriptor_t, wTotalLength)));
 
       return usb_ep_control_transfer(request, (void*)descriptor_config, total_len);
     }

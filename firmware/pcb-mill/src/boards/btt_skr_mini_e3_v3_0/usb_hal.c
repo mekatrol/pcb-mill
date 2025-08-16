@@ -15,17 +15,6 @@ __attribute__((always_inline)) static inline void usb_ep_reg_set_clear_ctr(uint3
   usb_ep_reg_set(ep_idn, ep_reg, false);
 }
 
-__attribute__((always_inline)) static inline uint32_t unaligned_read32(const uint8_t *p) {
-  return (uint32_t)p[0] | ((uint32_t)p[1] << 8) | ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
-}
-
-__attribute__((always_inline)) static inline void unaligned_write32(uint8_t *p, uint32_t value) {
-  p[0] = (uint8_t)(value);
-  p[1] = (uint8_t)(value >> 8);
-  p[2] = (uint8_t)(value >> 16);
-  p[3] = (uint8_t)(value >> 24);
-}
-
 static void setup_received(usb_control_request_t *setup_received) {
   // Setup recieved, therefore host has connected to device
   usb_device.connected = 1;
@@ -179,7 +168,7 @@ bool usb_rx_packet(void *__restrict dst, uint16_t src, uint16_t byte_count) {
   uint8_t *dst8 = (uint8_t *)dst;
 
   while (read_count--) {
-    unaligned_write32(dst8, (uint32_t)(*pma_buf));
+    unaligned_write_32(dst8, (uint32_t)(*pma_buf));
     dst8 += sizeof(uint32_t);
     pma_buf++;
   }
@@ -210,7 +199,7 @@ static bool usb_write_packet_data(uint16_t dst, const void *__restrict src, uint
   const uint8_t *src8 = src;
 
   while (write_count--) {
-    *pma_buf = unaligned_read32(src8);
+    *pma_buf = unaligned_read_32(src8);
     src8 += sizeof(uint32_t);
     pma_buf++;
   }

@@ -11,6 +11,8 @@
 
 #include "stm32g0xx.h"
 
+#include "aligned_memory.h"
+
 // USB registers strong type
 #define USB ((USB_DRD_TypeDef*)USB_BASE)
 
