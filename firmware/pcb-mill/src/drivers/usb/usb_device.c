@@ -130,7 +130,7 @@ bool process_control_request(const usb_control_request_t* request) {
           usbd_control_set_request(request);  // set request since DCD has no access to usb_control_status() API
 
           // Respond with status (ep0)
-          usb_ep_transfer_queue_hal(0x00, USB_DIR_IN >> 7, NULL, 0);
+          usb_ep_transfer_queue_hal(0x00, USB_DIR_DEVICE_OUT_HOST_IN >> 7, NULL, 0);
 
           // skip usb_control_status()
           usb_device.addressed = 1;
@@ -431,7 +431,7 @@ bool usb_ep_open_in_out(const usb_ep_descriptor_t* descriptor_ep, uint8_t xfer_t
       return false;
     }
 
-    if (USB_EP_DIR(descriptor_ep->bEndpointAddress) == USB_DIR_IN) {
+    if (USB_EP_DIR(descriptor_ep->bEndpointAddress) == USB_DIR_DEVICE_OUT_HOST_IN) {
       (*ep_in) = descriptor_ep->bEndpointAddress;
     } else {
       (*ep_out) = descriptor_ep->bEndpointAddress;
@@ -524,7 +524,7 @@ static __attribute__((aligned(4))) uint8_t ep0_control_buffer[USB_EP0_BUFFER_SIZ
 static inline bool status_stage_xact(const usb_control_request_t* request) {
   // Opposite to endpoint in Data Phase
   const usb_ep_direction_index_t request_direction = usb_request_direction(request->bmRequestType);
-  const uint8_t ep_addr = request_direction ? USB_DIR_OUT : USB_DIR_IN;
+  const uint8_t ep_addr = request_direction ? USB_DIR_DEVICE_IN_HOST_OUT : USB_DIR_DEVICE_OUT_HOST_IN;
 
   return usb_ep_transfer(ep_addr, NULL, 0);
 }
@@ -544,11 +544,11 @@ bool usb_control_status(const usb_control_request_t* request) {
 // This function can also transfer an zero-length packet
 static bool data_stage_xact() {
   const uint16_t xact_len = min_u16(control_transfer.data_len - control_transfer.total_xferred, USB_EP0_BUFFER_SIZE);
-  uint8_t ep_addr = USB_DIR_OUT;
+  uint8_t ep_addr = USB_DIR_DEVICE_IN_HOST_OUT;
 
   const usb_ep_direction_index_t request_direction = usb_request_direction(control_transfer.request.bmRequestType);
   if (request_direction == USB_EP_DIRECTION_IN_IDX) {
-    ep_addr = USB_DIR_IN;
+    ep_addr = USB_DIR_DEVICE_OUT_HOST_IN;
     if (xact_len) {
       if (xact_len > USB_EP0_BUFFER_SIZE) {
         return false;
@@ -624,7 +624,7 @@ bool usb_control_transfer(uint8_t ep_addr, uint32_t transferred_bytes) {
     return true;
   }
 
-  if (request_direction == USB_DIR_OUT) {
+  if (request_direction == USB_DIR_DEVICE_IN_HOST_OUT) {
     if (!control_transfer.buffer) {
       return false;
     }
@@ -653,8 +653,8 @@ bool usb_control_transfer(uint8_t ep_addr, uint32_t transferred_bytes) {
       }
     } else {
       // Stall both IN and OUT control endpoint
-      usb_ep_stall_set(USB_DIR_OUT);
-      usb_ep_stall_set(USB_DIR_IN);
+      usb_ep_stall_set(USB_DIR_DEVICE_IN_HOST_OUT);
+      usb_ep_stall_set(USB_DIR_DEVICE_OUT_HOST_IN);
     }
   } else {
     // More data to transfer

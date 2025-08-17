@@ -124,13 +124,13 @@ const uint8_t usb_descriptor_conf[] = {
     INTERFACE_CDC_DATA_NUM,            // bSlaveInterface0: CDC data interface
 
     // CDC Notification Endpoint (Interrupt IN)
-    7,                             // bLength: size of endpoint descriptor
-    USB_DESCRIPTOR_TYPE_ENDPOINT,  // bDescriptorType: ENDPOINT (0x05)
-    USB_DIR_IN | 0x01,             // bEndpointAddress: IN endpoint 1 (0x80 | 1)
-    0x03,                          // bmAttributes: interrupt type
-    0x08,                          // wMaxPacketSize (low byte): 8 bytes
-    0x00,                          // wMaxPacketSize (high byte)
-    1,                             // bInterval: polling interval in ms
+    7,                                  // bLength: size of endpoint descriptor
+    USB_DESCRIPTOR_TYPE_ENDPOINT,       // bDescriptorType: ENDPOINT (0x05)
+    USB_DIR_DEVICE_OUT_HOST_IN | 0x01,  // bEndpointAddress: IN endpoint 1 (0x80 | 1)
+    0x03,                               // bmAttributes: interrupt type
+    0x08,                               // wMaxPacketSize (low byte): 8 bytes
+    0x00,                               // wMaxPacketSize (high byte)
+    1,                                  // bInterval: polling interval in ms
 
     // CDC Data Interface Descriptor
     9,                              // bLength: size of interface descriptor
@@ -144,22 +144,22 @@ const uint8_t usb_descriptor_conf[] = {
     0,                              // iInterface: string index
 
     // Data OUT Endpoint (Bulk OUT)
-    7,                             // bLength: endpoint descriptor size
-    USB_DESCRIPTOR_TYPE_ENDPOINT,  // bDescriptorType: ENDPOINT
-    USB_DIR_OUT | 0x02,            // bEndpointAddress: OUT endpoint (0x00 | 2)
-    0x02,                          // bmAttributes: bulk transfer
-    USB_EP_RX_BUFFER_SIZE,         // wMaxPacketSize low byte: 64 bytes
-    0x00,                          // wMaxPacketSize high byte
-    0,                             // bInterval: ignored for bulk
+    7,                                  // bLength: endpoint descriptor size
+    USB_DESCRIPTOR_TYPE_ENDPOINT,       // bDescriptorType: ENDPOINT
+    USB_DIR_DEVICE_IN_HOST_OUT | 0x02,  // bEndpointAddress: OUT endpoint (0x00 | 2)
+    0x02,                               // bmAttributes: bulk transfer
+    USB_EP_RX_BUFFER_SIZE,              // wMaxPacketSize low byte: 64 bytes
+    0x00,                               // wMaxPacketSize high byte
+    0,                                  // bInterval: ignored for bulk
 
     // Data IN Endpoint (Bulk IN)
-    7,                             // bLength
-    USB_DESCRIPTOR_TYPE_ENDPOINT,  // bDescriptorType: ENDPOINT
-    USB_DIR_IN | 0x02,             // bEndpointAddress: IN endpoint 2 (0x80 | 2)
-    0x02,                          // bmAttributes: bulk
-    USB_EP_TX_BUFFER_SIZE,         // wMaxPacketSize low byte: 64 bytes
-    0x00,                          // wMaxPacketSize high byte
-    0,                             // bInterval
+    7,                                  // bLength
+    USB_DESCRIPTOR_TYPE_ENDPOINT,       // bDescriptorType: ENDPOINT
+    USB_DIR_DEVICE_OUT_HOST_IN | 0x02,  // bEndpointAddress: IN endpoint 2 (0x80 | 2)
+    0x02,                               // bmAttributes: bulk
+    USB_EP_TX_BUFFER_SIZE,              // wMaxPacketSize low byte: 64 bytes
+    0x00,                               // wMaxPacketSize high byte
+    0,                                  // bInterval
 };
 
 // Device Qualifier Descriptor for a High-Speed capable device

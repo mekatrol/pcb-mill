@@ -230,8 +230,8 @@ static void usb_ep_set_rx_buffer_block_size(uint32_t ep_idn, uint32_t size) {
 }
 
 static void usb_ep_control_init() {
-  usb_ep_assign(USB_DIR_OUT, USB_EP_TYPE_CONTROL);
-  usb_ep_assign(USB_DIR_IN, USB_EP_TYPE_CONTROL);
+  usb_ep_assign(USB_DIR_DEVICE_IN_HOST_OUT, USB_EP_TYPE_CONTROL);
+  usb_ep_assign(USB_DIR_DEVICE_OUT_HOST_IN, USB_EP_TYPE_CONTROL);
 
   ep_packet_buffer[EP0_IDN][USB_EP_DIRECTION_OUT_IDX].max_packet_size = USB_EP0_BUFFER_SIZE;
   ep_packet_buffer[EP0_IDN][USB_EP_DIRECTION_OUT_IDX].ep_idn = EP0_IDN;
@@ -388,7 +388,7 @@ static void usb_ep_tx_queued_bytes(uint32_t ep_idn) {
     usb_tx_packet(packet);
   } else {
     uint32_t ep_addr = USB->chep[ep_idn].CHEPnR & USB_CHEP_ADDR;
-    usb_ep_transfer_complete(ep_addr | USB_DIR_IN, packet->queued_len);
+    usb_ep_transfer_complete(ep_addr | USB_DIR_DEVICE_OUT_HOST_IN, packet->queued_len);
   }
 }
 
@@ -416,8 +416,8 @@ static void setup_received(usb_control_request_t *setup_received) {
     // USB 2.0 Specification, Section 9.2.7, “Error Handling”
     // If a device detects a condition that prevents it from completing the request, it must indicate the error by returning a STALL handshake.
     // For control transfers, the device must respond with a STALL to any setup or data stage packet it cannot handle.
-    usb_ep_stall_set(EP0_IDN | USB_DIR_IN);
-    usb_ep_stall_set(EP0_IDN | USB_DIR_OUT);
+    usb_ep_stall_set(EP0_IDN | USB_DIR_DEVICE_OUT_HOST_IN);
+    usb_ep_stall_set(EP0_IDN | USB_DIR_DEVICE_IN_HOST_OUT);
   }
 }
 

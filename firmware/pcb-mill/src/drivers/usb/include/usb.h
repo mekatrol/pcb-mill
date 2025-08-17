@@ -40,8 +40,8 @@
 #define USB_EP_TX_BUFFER_SIZE 64UL
 
 // Direction bit (from host perspective)
-#define USB_DIR_OUT 0x00  // Host-to-device
-#define USB_DIR_IN 0x80   // Device-to-host
+#define USB_DIR_DEVICE_IN_HOST_OUT 0x00  // Host-to-device
+#define USB_DIR_DEVICE_OUT_HOST_IN 0x80  // Device-to-host
 
 // Masks
 #define USB_EP_NUM_MASK 0x0F             // Bits 0..3 = endpoint number
@@ -51,10 +51,10 @@
 // Extract endpoint identifier (0..15)
 #define USB_EP_IDN(addr) ((uint8_t)((addr) & USB_EP_NUM_MASK))
 
-// Extract direction (USB_DIR_IN or USB_DIR_OUT)
+// Extract direction (USB_DIR_DEVICE_OUT_HOST_IN or USB_DIR_DEVICE_IN_HOST_OUT)
 #define USB_EP_DIR(addr) ((uint8_t)((addr) & USB_EP_DIR_MASK))
 
-// Convert direction bit (USB_DIR_IN or USB_DIR_OUT) to direction index (0x01 or 0x00)
+// Convert direction bit (USB_DIR_DEVICE_OUT_HOST_IN or USB_DIR_DEVICE_IN_HOST_OUT) to direction index (0x01 or 0x00)
 #define USB_EP_DIR_IDX(addr) ((uint8_t)(USB_EP_DIR((addr)) >> 7))
 
 // Build endpoint address from number and direction
