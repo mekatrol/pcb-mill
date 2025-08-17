@@ -7,14 +7,18 @@ __attribute__((always_inline)) static inline void usb_ep_clear_correct_transfer(
   //  TX -> USB_CHEP_VTTX (USB_CHEP_VTTX_Pos + 0) ==  7U
   //  RX -> USB_CHEP_VTRX (USB_CHEP_VTTX_Pos + 8) == 15U
 
+  // Get current register value
   uint32_t ep_reg = USB->chep[ep_idn].CHEPnR;
+
+  // Clear THREE_ERR_RX, THREE_ERR_TX, DTOGRX, STATRX, DTOGTX, STATTX (ep_reg & 0x07FF8F8F)
   ep_reg &= USB_CHEP_REG_MASK;
+
+  // Clear USB_CHEP_VTTX or USB_CHEP_VTRX depending on ep_idn_idx
   ep_reg &= ~(1 << (USB_CHEP_VTTX_Pos + (ep_idn_idx == USB_EP_DIRECTION_IN_IDX ? 0 : 8)));
 
-  // USB_EP_VTTX and USB_EP_VTRX are rc_w0 bits so setting them to 1 preserves the current register values
-  // this will preserve  IN/OUT/SETUP transaction is successfully completed states
-  USB->chep[ep_idn].CHEPnR = (ep_reg | USB_EP_VTTX | USB_EP_VTRX);
-
+  // CHEPnR has many rc_w0 bits. This means we set a bit:
+  //    0 = clear that bit when writing the the CHEPnR
+  //    1 = no change to the bit when writing the the CHEPnR
   usb_ep_reg_set(ep_idn, ep_reg, false);
 }
 
