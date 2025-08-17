@@ -28,4 +28,4 @@ void circular_buffer_reset(circular_buffer_t* cb);
 uint32_t circular_buffer_read(circular_buffer_t* cb, uint8_t* data_buffer, uint32_t max_len);
 bool circular_buffer_write(circular_buffer_t* cb, const uint8_t* data_buffer, uint32_t write_len);
 
-#endif
+#endif  // __CIRCULAR_BUFFER_H__

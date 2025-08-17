@@ -1,0 +1,26 @@
+#ifndef __FEED_FORWARD_BUFFER_H__
+#define __FEED_FORWARD_BUFFER_H__
+
+#include <stdint.h>
+#include <stdbool.h>
+
+typedef struct {
+  uint8_t* buffer;       // Buffer location
+  uint16_t total_count;  // Total size to feed
+  uint16_t fed_count;    // Bytes already fed (processed)
+} feed_forward_buffer_t;
+
+// If total_length > transferred_length   → returns the number of bytes remaining.
+// If total_length == transferred_length  → returns 0.
+// If total_length < transferred_length   → returns underflows (wraps around, since unsigned).
+// Given feed_forward_remaining_count(total_length, transferred_length, max_buffer_size).
+//    uint16_t remaining = total_length - transferred_length;
+//    - If remaining > 0 → you get the smaller of (remaining, max_buffer_size).
+//    - If remaining == 0 → you get 0.
+//    - If remaining underflows → you get some large number (65535−x), so the min will be max_buffer_size
+__attribute__((always_inline)) static inline uint16_t feed_forward_remaining_count(feed_forward_buffer_t buffer, uint16_t max_buffer_size) {
+  uint16_t remaining = buffer.total_count - buffer.fed_count;
+  return (remaining < max_buffer_size) ? remaining : max_buffer_size;
+}
+
+#endif  // __FEED_FORWARD_BUFFER_H__

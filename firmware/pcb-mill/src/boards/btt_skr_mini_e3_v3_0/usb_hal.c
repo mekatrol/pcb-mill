@@ -1,5 +1,6 @@
 #include "board_hal.h"
 #include "cdc_device.h"
+#include "feed_forward_buffer.h"
 
 // Member unassigned value
 #define UNASSIGNED_VALUE 0xFFU
@@ -14,9 +15,9 @@
 #define USB_EP_RX_BUFFER 1
 
 typedef struct {
-  usb_transfer_packet_t packet;  // "Inherited" fields
-  uint16_t max_packet_size;      // Endpoint max ep_transfer size
-  uint8_t ep_idn;                // Endpoint identifier (is zero based so can be used as index to arrays)
+  feed_forward_buffer_t feed;  // "Inherited" fields
+  uint16_t max_packet_size;    // Endpoint max ep_transfer size
+  uint8_t ep_idn;              // Endpoint identifier (is zero based so can be used as index to arrays)
 } usb_ep_transfer_t;
 
 typedef struct {
@@ -294,17 +295,17 @@ __attribute__((always_inline)) static inline bool usb_write_unaligned_data(uint1
 }
 
 static void usb_tx_packet(usb_ep_transfer_t *ep_transfer) {
-  // Calculate the length of packet data to transfer (might be less than total_length if greater than max_packet_size)
-  uint32_t len = transfer_packet_remaining_length(ep_transfer->packet, ep_transfer->max_packet_size);
+  // Calculate the remaining length of data to write
+  uint32_t len = feed_forward_remaining_count(ep_transfer->feed, ep_transfer->max_packet_size);
 
   // Get pointer to the endpoing PMA
   uint16_t addr_ptr = (uint16_t)usb_pma_get_ep_addr(ep_transfer->ep_idn, USB_EP_TX_BUFFER);
 
   // Transfer next batch of data from the packet buffer to the PMA
-  usb_write_unaligned_data(addr_ptr, &(ep_transfer->packet.buffer[ep_transfer->packet.transferred_length]), len);
+  usb_write_unaligned_data(addr_ptr, &(ep_transfer->feed.buffer[ep_transfer->feed.fed_count]), len);
 
   // Update the transferred length
-  ep_transfer->packet.transferred_length += len;
+  ep_transfer->feed.fed_count += len;
 
   // Set the length of data in PMA
   usb_pma_set_count(ep_transfer->ep_idn, USB_EP_TX_BUFFER, len);
@@ -369,17 +370,17 @@ static void usb_ep_rx(uint32_t ep_idn) {
   const uint16_t rx_count = usb_pma_get_count(ep_idn, USB_EP_RX_BUFFER);
   uint16_t pma_addr = (uint16_t)usb_pma_get_ep_addr(ep_idn, USB_EP_RX_BUFFER);
 
-  usb_rx_packet(packet->packet.buffer + packet->packet.transferred_length, pma_addr, rx_count);
-  packet->packet.transferred_length += rx_count;
+  usb_rx_packet(packet->feed.buffer + packet->feed.fed_count, pma_addr, rx_count);
+  packet->feed.fed_count += rx_count;
 
-  if ((rx_count < packet->max_packet_size) || (packet->packet.transferred_length >= packet->packet.total_length)) {
+  if ((rx_count < packet->max_packet_size) || (packet->feed.fed_count >= packet->feed.total_count)) {
     // All bytes now received
 
     usb_ep_set_rx_buffer_block_size(ep_idn, (uint32_t)packet->max_packet_size);
 
-    usb_ep_transfer_complete(ep_idn, packet->packet.transferred_length);
+    usb_ep_transfer_complete(ep_idn, packet->feed.fed_count);
 
-    packet->packet.total_length = packet->packet.transferred_length = 0;
+    packet->feed.total_count = packet->feed.fed_count = 0;
   } else {
     ep_reg &= USB_CHEP_REG_MASK | USB_EP_STATUS_MASK(USB_DIR_DEVICE_IN_HOST_OUT_IDX);  // will change RX Status, reserved other toggle bits
     usb_ep_status(&ep_reg, USB_DIR_DEVICE_IN_HOST_OUT_IDX, USB_EP_STATE_VALID);
@@ -390,11 +391,11 @@ static void usb_ep_rx(uint32_t ep_idn) {
 static void usb_ep_tx_queued_bytes(uint32_t ep_idn) {
   usb_ep_transfer_t *ep_transfer = &ep_packet_buffer[ep_idn][USB_DIR_DEVICE_OUT_HOST_IN_IDX];
 
-  if (ep_transfer->packet.total_length != ep_transfer->packet.transferred_length) {
+  if (ep_transfer->feed.total_count != ep_transfer->feed.fed_count) {
     usb_tx_packet(ep_transfer);
   } else {
     uint32_t ep_addr = USB->chep[ep_idn].CHEPnR & USB_CHEP_ADDR;
-    usb_ep_transfer_complete(ep_addr | USB_DIR_DEVICE_OUT_HOST_IN, ep_transfer->packet.transferred_length);
+    usb_ep_transfer_complete(ep_addr | USB_DIR_DEVICE_OUT_HOST_IN, ep_transfer->feed.fed_count);
   }
 }
 
@@ -712,9 +713,9 @@ bool usb_ep_transfer_queue_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t *buff
   usb_ep_transfer_t *packet = &ep_packet_buffer[ep_idn][ep_dir_idx];
 
   // Initialise packet
-  packet->packet.buffer = buffer;             // Use callers buffer
-  packet->packet.total_length = total_bytes;  // We are going to transfer total bytes
-  packet->packet.transferred_length = 0;      // Nothing has been transferred yet
+  packet->feed.buffer = buffer;            // Use callers buffer
+  packet->feed.total_count = total_bytes;  // We are going to transfer total bytes
+  packet->feed.fed_count = 0;              // Nothing has been transferred yet
 
   if (ep_dir_idx == USB_DIR_DEVICE_OUT_HOST_IN_IDX) {
     // Transmit from device is USB_DIR_DEVICE_OUT_HOST_IN_IDX to host
@@ -724,7 +725,7 @@ bool usb_ep_transfer_queue_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t *buff
     uint32_t ep_reg = USB->chep[ep_idn].CHEPnR;
     ep_reg &= (USB_CHEP_REG_MASK | USB_EP_STATUS_MASK(ep_dir_idx));
 
-    usb_ep_set_rx_buffer_block_size(ep_idn, (uint32_t)packet->packet.total_length);
+    usb_ep_set_rx_buffer_block_size(ep_idn, (uint32_t)packet->feed.total_count);
     usb_ep_status(&ep_reg, ep_dir_idx, USB_EP_STATE_VALID);
     usb_ep_reg_set_preserve(ep_idn, ep_reg, true);
   }

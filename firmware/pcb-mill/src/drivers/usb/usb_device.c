@@ -1,5 +1,6 @@
 #include "usb.h"
 #include "cdc_device.h"
+#include "feed_forward_buffer.h"
 #include "stm32g0xx.h"
 
 typedef enum {
@@ -23,7 +24,7 @@ typedef struct {
 usbd_device_t usb_device;
 
 typedef struct {
-  usb_transfer_packet_t packet;            // "Inherited" fields
+  feed_forward_buffer_t feed;              // "Inherited" fields
   usb_control_request_t request;           // The control request being transferred
   usb_cdc_control_transfer_t complete_cb;  // Callback when transfer is complete
 } usb_control_transfer_t;
@@ -469,7 +470,7 @@ bool usb_ep_transfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes) {
   if (usb_ep_transfer_queue_hal(ep_idn, ep_dir_idx, buffer, total_bytes)) {
     return true;
   } else {
-    // DCD error, mark endpoint as ready to allow next transfer
+    // Transfer error, reset busy and claimed
     usb_device.ep_status[ep_idn][ep_dir_idx].busy = 0;
     usb_device.ep_status[ep_idn][ep_dir_idx].claimed = 0;
     return false;
@@ -514,23 +515,27 @@ static inline bool status_stage_xact(const usb_control_request_t* request) {
 // Status phase
 bool usb_control_status(const usb_control_request_t* request) {
   control_transfer.request = (*request);
-  control_transfer.packet.buffer = NULL;
-  control_transfer.packet.transferred_length = 0;
-  control_transfer.packet.total_length = 0;
+  control_transfer.feed.buffer = NULL;
+  control_transfer.feed.fed_count = 0;
+  control_transfer.feed.total_count = 0;
 
   return status_stage_xact(request);
 }
 
-// Queue a transaction in Data Stage
-// Each transaction has up to Endpoint0's max packet size.
-// This function can also transfer an zero-length packet
 static bool data_stage_xact() {
-  const uint16_t len = transfer_packet_remaining_length(control_transfer.packet, USB_EP0_BUFFER_SIZE);
-  uint8_t ep_addr = USB_DIR_DEVICE_IN_HOST_OUT;
+  // Calculate the remaining length of data to transfer
+  const uint16_t len = feed_forward_remaining_count(control_transfer.feed, USB_EP0_BUFFER_SIZE);
 
+  // Address for EP0 host OUT (assume OUT)
+  uint8_t ep0_addr = USB_DIR_DEVICE_IN_HOST_OUT;
+
+  // Get direction from request
   const usb_direction_index_t request_direction = usb_request_direction(control_transfer.request.bmRequestType);
+
+  // Is the direction IN?
   if (request_direction == USB_DIR_DEVICE_OUT_HOST_IN_IDX) {
-    ep_addr = USB_DIR_DEVICE_OUT_HOST_IN;
+    // Address for EP0 host IN
+    ep0_addr = USB_DIR_DEVICE_OUT_HOST_IN;
 
     if (len > 0) {
       if (len > USB_EP0_BUFFER_SIZE) {
@@ -538,25 +543,26 @@ static bool data_stage_xact() {
       }
 
       // Copy data to ep0_control_buffer
-      memcpy(ep0_control_buffer, control_transfer.packet.buffer, len);
+      memcpy(ep0_control_buffer, control_transfer.feed.buffer, len);
     }
   }
 
-  return usb_ep_transfer(ep_addr, len > 0 ? ep0_control_buffer : NULL, len);
+  return usb_ep_transfer(ep0_addr, len > 0 ? ep0_control_buffer : NULL, len);
 }
 
 bool usb_ep_control_transfer(const usb_control_request_t* request, void* buffer, uint16_t len) {
   control_transfer.request = (*request);
-  control_transfer.packet.buffer = (uint8_t*)buffer;
-  control_transfer.packet.transferred_length = 0U;
-  control_transfer.packet.total_length = (len < request->wLength) ? len : request->wLength;
+  control_transfer.feed.buffer = (uint8_t*)buffer;
+  control_transfer.feed.fed_count = 0U;
+  control_transfer.feed.total_count = (len < request->wLength) ? len : request->wLength;
 
   if (request->wLength > 0U) {
-    if (control_transfer.packet.total_length > 0U) {
+    if (control_transfer.feed.total_count > 0U) {
       if (!buffer) {
         return false;
       }
     }
+
     if (!data_stage_xact()) {
       return false;
     }
@@ -583,9 +589,9 @@ void usbd_control_set_complete_callback(usb_cdc_control_transfer_t fp) {
 
 void usbd_control_set_request(const usb_control_request_t* request) {
   control_transfer.request = (*request);
-  control_transfer.packet.buffer = NULL;
-  control_transfer.packet.transferred_length = 0;
-  control_transfer.packet.total_length = 0;
+  control_transfer.feed.buffer = NULL;
+  control_transfer.feed.fed_count = 0;
+  control_transfer.feed.total_count = 0;
 }
 
 bool usb_control_transfer(uint8_t ep_addr, uint32_t transferred_bytes) {
@@ -608,18 +614,19 @@ bool usb_control_transfer(uint8_t ep_addr, uint32_t transferred_bytes) {
   }
 
   if (request_direction == USB_DIR_DEVICE_IN_HOST_OUT) {
-    if (!control_transfer.packet.buffer) {
+    if (!control_transfer.feed.buffer) {
       return false;
     }
-    memcpy(control_transfer.packet.buffer, ep0_control_buffer, transferred_bytes);
+
+    memcpy(control_transfer.feed.buffer, ep0_control_buffer, transferred_bytes);
   }
 
-  control_transfer.packet.transferred_length += (uint16_t)transferred_bytes;
-  control_transfer.packet.buffer += transferred_bytes;
+  control_transfer.feed.fed_count += (uint16_t)transferred_bytes;
+  control_transfer.feed.buffer += transferred_bytes;
 
   // Data Stage is complete when all request's length are transferred or
   // a short packet is sent including zero-length packet.
-  if ((control_transfer.request.wLength == control_transfer.packet.transferred_length) ||
+  if ((control_transfer.request.wLength == control_transfer.feed.fed_count) ||
       (transferred_bytes < USB_EP0_BUFFER_SIZE)) {
     // DATA stage is complete
     bool is_ok = true;
