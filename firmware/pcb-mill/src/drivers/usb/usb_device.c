@@ -524,7 +524,7 @@ bool usb_control_status(const usb_control_request_t* request) {
 
 static bool data_stage_xact() {
   // Calculate the remaining length of data to transfer
-  const uint16_t len = feed_forward_remaining_count(control_transfer.feed, USB_EP0_BUFFER_SIZE);
+  const uint16_t len = feed_forward_remaining_count(&control_transfer.feed, USB_EP0_BUFFER_SIZE);
 
   // Address for EP0 host OUT (assume OUT)
   uint8_t ep0_addr = USB_DIR_DEVICE_IN_HOST_OUT;

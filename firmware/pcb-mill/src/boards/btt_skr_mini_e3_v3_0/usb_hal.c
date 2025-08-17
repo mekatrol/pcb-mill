@@ -296,7 +296,7 @@ __attribute__((always_inline)) static inline bool usb_write_unaligned_data(uint1
 
 static void usb_tx_packet(usb_ep_transfer_t *ep_transfer) {
   // Calculate the remaining length of data to write
-  uint32_t len = feed_forward_remaining_count(ep_transfer->feed, ep_transfer->max_packet_size);
+  uint32_t len = feed_forward_remaining_count(&ep_transfer->feed, ep_transfer->max_packet_size);
 
   // Get pointer to the endpoing PMA
   uint16_t addr_ptr = (uint16_t)usb_pma_get_ep_addr(ep_transfer->ep_idn, USB_EP_TX_BUFFER);
