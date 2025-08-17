@@ -250,6 +250,7 @@ bool process_control_request(const usb_control_request_t* request) {
     case USB_REQUEST_RECIPIENT_ENDPOINT: {
       const uint8_t ep_addr = (uint8_t)(request->wIndex & 0xFF);
       const uint8_t ep_idn = USB_EP_IDN(ep_addr);
+      const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
 
       if (ep_idn >= sizeof(usb_device.ep2drv) / sizeof(usb_device.ep2drv[0])) {
         return false;
@@ -262,7 +263,7 @@ bool process_control_request(const usb_control_request_t* request) {
         // Handle STD request to endpoint
         switch (request->bRequest) {
           case USB_STD_GET_STATUS: {
-            uint16_t status = usb_ep_is_stalled(ep_addr) ? 0x0001 : 0x0000;
+            uint16_t status = usb_ep_stall_get_hal(ep_addr, ep_dir_idx) ? 0x0001 : 0x0000;
             usb_ep_control_transfer(request, &status, 2);
           } break;
 
@@ -284,10 +285,6 @@ bool process_control_request(const usb_control_request_t* request) {
             invoke_class_control(request);
             usbd_control_set_complete_callback(NULL);
 
-            // skip ZLP status if driver already did that
-            if (!usb_device.ep_status[0][USB_DIR_DEVICE_OUT_HOST_IN_IDX].busy) {
-              usb_control_status(request);
-            }
           } break;
 
           // Unknown/Unsupported request
@@ -438,41 +435,14 @@ bool usb_ep_open_in_out(const usb_ep_descriptor_t* descriptor_ep, uint8_t xfer_t
   return true;
 }
 
-bool usb_ep_claim(uint8_t ep_addr) {
-  const uint8_t ep_idn = USB_EP_IDN(ep_addr);
-  const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
-  ep_state_t* ep_state = &usb_device.ep_status[ep_idn][ep_dir_idx];
-
-  return tu_edpt_claim(ep_state);
-}
-
-bool usb_ep_release(uint8_t ep_addr) {
-  const uint8_t ep_idn = USB_EP_IDN(ep_addr);
-  const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
-  ep_state_t* ep_state = &usb_device.ep_status[ep_idn][ep_dir_idx];
-
-  return tu_edpt_release(ep_state);
-}
-
 bool usb_ep_transfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes) {
   const uint8_t ep_idn = USB_EP_IDN(ep_addr);
   const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
 
-  // Attempt to transfer on a busy endpoint, sound like an race condition !
-  if (usb_device.ep_status[ep_idn][ep_dir_idx].busy != 0) {
-    return false;
-  }
-
-  // Set busy first since the actual transfer can be complete before usb_ep_transfer_queue_hal()
-  // could return and USBD task can preempt and clear the busy
-  usb_device.ep_status[ep_idn][ep_dir_idx].busy = 1;
-
   if (usb_ep_transfer_queue_hal(ep_idn, ep_dir_idx, buffer, total_bytes)) {
     return true;
   } else {
-    // Transfer error, reset busy and claimed
-    usb_device.ep_status[ep_idn][ep_dir_idx].busy = 0;
-    usb_device.ep_status[ep_idn][ep_dir_idx].claimed = 0;
+    // Transfer error
     return false;
   }
 }
@@ -483,8 +453,6 @@ void usb_ep_stall_set(uint8_t ep_addr) {
 
   // only stalled if currently cleared
   usb_ep_stall_set_hal(ep_idn, ep_dir_idx);
-  usb_device.ep_status[ep_idn][ep_dir_idx].stalled = 1;
-  usb_device.ep_status[ep_idn][ep_dir_idx].busy = 1;
 }
 
 void usb_ep_stall_clear(uint8_t ep_addr) {
@@ -493,15 +461,6 @@ void usb_ep_stall_clear(uint8_t ep_addr) {
 
   // only clear if currently stalled
   usb_ep_stall_clear_hal(ep_idn, ep_dir_idx);
-  usb_device.ep_status[ep_idn][ep_dir_idx].stalled = 0;
-  usb_device.ep_status[ep_idn][ep_dir_idx].busy = 0;
-}
-
-bool usb_ep_is_stalled(uint8_t ep_addr) {
-  const uint8_t ep_idn = USB_EP_IDN(ep_addr);
-  const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
-
-  return usb_device.ep_status[ep_idn][ep_dir_idx].stalled;
 }
 
 static inline bool status_stage_xact(const usb_control_request_t* request) {
@@ -654,25 +613,6 @@ bool usb_control_transfer(uint8_t ep_addr, uint32_t transferred_bytes) {
   }
 
   return true;
-}
-
-bool tu_edpt_claim(ep_state_t* ep_state) {
-  // can only claim the endpoint if it is not busy and not claimed yet.
-  const bool ep_available = (ep_state->busy == 0) && (ep_state->claimed == 0);
-
-  if (ep_available) {
-    ep_state->claimed = 1;
-  }
-
-  return ep_available;
-}
-
-bool tu_edpt_release(ep_state_t* ep_state) {
-  const bool released = (ep_state->claimed == 1) && (ep_state->busy == 0);
-  if (released) {
-    ep_state->claimed = 0;
-  }
-  return released;
 }
 
 void tu_edpt_bind_driver(uint8_t ep2drv[][EP_IN_OUT_PAIR], const usb_control_interface_descriptor_t* descriptor_interface, uint16_t descriptor_len) {

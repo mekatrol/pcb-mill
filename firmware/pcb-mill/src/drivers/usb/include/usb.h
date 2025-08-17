@@ -251,12 +251,6 @@ typedef struct __attribute__((packed)) {
 
 _Static_assert(sizeof(usb_ep_descriptor_t) == 7, "size must be 7");
 
-typedef struct __attribute__((packed)) {
-  volatile uint8_t busy : 1;
-  volatile uint8_t stalled : 1;
-  volatile uint8_t claimed : 1;
-} ep_state_t;
-
 typedef struct {
   struct __attribute__((packed)) {
     volatile uint8_t connected : 1;
@@ -269,8 +263,6 @@ typedef struct {
   volatile uint8_t config_num;  // current active configuration (0x00 is not configured)
 
   uint8_t ep2drv[USB_EP_MAX][EP_IN_OUT_PAIR];  // map endpoint to driver ( 0xff is invalid ), can use only 4-bit each
-
-  ep_state_t ep_status[USB_EP_MAX][EP_IN_OUT_PAIR];
 
 } usbd_device_t;
 
@@ -305,33 +297,17 @@ typedef bool (*usb_cdc_control_transfer_t)(uint8_t stage, const usb_control_requ
 // Submit a usb transfer
 bool usb_ep_transfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes);
 
-// Claim an endpoint before submitting a transfer.
-// If caller does not make any transfer, it must release endpoint for others.
-bool usb_ep_claim(uint8_t ep_addr);
-
-// Release claimed endpoint without submitting a transfer
-bool usb_ep_release(uint8_t ep_addr);
-
 // Set endpoint stalled
 void usb_ep_stall_set(uint8_t ep_addr);
 
 // Clear endpoint stalled
 void usb_ep_stall_clear(uint8_t ep_addr);
 
-// Check if endpoint is stalled
-bool usb_ep_is_stalled(uint8_t ep_addr);
-
 // Open a set of output and input endpoints
 bool usb_ep_open_in_out(const usb_ep_descriptor_t* p_desc, uint8_t xfer_type, uint8_t* ep_addr_out, uint8_t* ep_addr_in);
 
 // Bind all endpoint of a interface descriptor to class driver
 void tu_edpt_bind_driver(uint8_t ep2drv[][EP_IN_OUT_PAIR], const usb_control_interface_descriptor_t* p_desc, uint16_t desc_len);
-
-// Claim an endpoint
-bool tu_edpt_claim(ep_state_t* ep_state);
-
-// Release an endpoint
-bool tu_edpt_release(ep_state_t* ep_state);
 
 extern usbd_device_t usb_device;
 
@@ -588,6 +564,7 @@ bool usb_ep_transfer_queue_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t* buff
 // Stall endpoint, any queuing transfer should be removed from endpoint
 void usb_ep_stall_set(uint8_t ep_addr);
 void usb_ep_stall_set_hal(uint8_t ep_idn, uint8_t ep_dir_idx);
+bool usb_ep_stall_get_hal(uint8_t ep_idn, uint8_t ep_dir_idx);
 
 // clear stall, data toggle is also reset to DATA0
 // This API never calls with control endpoints, since it is auto cleared when receiving setup packet

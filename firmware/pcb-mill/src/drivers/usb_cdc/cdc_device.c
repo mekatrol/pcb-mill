@@ -68,19 +68,12 @@ static bool _prep_out_transaction() {
     return false;
   }
 
-  // claim endpoint
-  if (!usb_ep_claim(usb_cdc_interface.ep_addr_out)) {
-    return false;
-  }
-
   // Update available count
   available_count = circular_buffer_space(&usb_cdc_interface.rx_buffer);
 
   if (available_count >= USB_EP0_BUFFER_SIZE) {
     return usb_ep_transfer(usb_cdc_interface.ep_addr_out, usb_cdc_epbuf.epout, USB_EP0_BUFFER_SIZE);
   } else {
-    // Release endpoint since we don't make any transfer
-    usb_ep_release(usb_cdc_interface.ep_addr_out);
     return false;
   }
 }
@@ -121,11 +114,6 @@ uint32_t usb_cdc_write_flush() {
     return 0;
   }
 
-  // Claim the endpoint
-  if (!usb_ep_claim(usb_cdc_interface.ep_addr_in)) {
-    return 0;
-  }
-
   // Pull data from buffer
   const uint16_t count = circular_buffer_read(&usb_cdc_interface.tx_buffer, usb_cdc_epbuf.epin, USB_EP0_BUFFER_SIZE);
 
@@ -135,9 +123,6 @@ uint32_t usb_cdc_write_flush() {
     }
     return count;
   } else {
-    // Release endpoint since we don't make any transfer
-    // Note: data is dropped if terminal is not connected
-    usb_ep_release(usb_cdc_interface.ep_addr_in);
     return 0;
   }
 }
@@ -294,10 +279,8 @@ bool usb_cdc_transfer(uint8_t ep_addr, uint32_t transferred_bytes) {
       // If there is no data left, a ZLP should be sent if
       // transferred_bytes is multiple of EP Packet size and not zero
       if (circular_buffer_count(&usb_cdc_interface.tx_buffer) == 0 && transferred_bytes && (0 == (transferred_bytes & (USB_EP_TX_BUFFER_SIZE - 1)))) {
-        if (usb_ep_claim(usb_cdc_interface.ep_addr_in)) {
-          if (!usb_ep_transfer(usb_cdc_interface.ep_addr_in, NULL, 0)) {
-            return false;
-          }
+        if (!usb_ep_transfer(usb_cdc_interface.ep_addr_in, NULL, 0)) {
+          return false;
         }
       }
     }

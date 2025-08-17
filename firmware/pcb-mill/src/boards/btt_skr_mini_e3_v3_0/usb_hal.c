@@ -99,6 +99,17 @@ __attribute__((always_inline)) static inline void usb_ep_status(uint32_t *ep_reg
   *ep_reg ^= (state << (ep_dir_idx == USB_DIR_DEVICE_OUT_HOST_IN_IDX ? USB_CHEP_TX_STTX_Pos : USB_CHEP_RX_STRX_Pos));
 }
 
+__attribute__((always_inline)) static inline uint32_t usb_ep_status_get(uint32_t ep_reg, usb_direction_index_t ep_dir_idx) {
+  // Calculate status bits
+  uint32_t pos = (ep_dir_idx == USB_DIR_DEVICE_OUT_HOST_IN_IDX ? USB_CHEP_TX_STTX_Pos : USB_CHEP_RX_STRX_Pos);
+
+  // Makse status bits
+  uint32_t status = ep_reg & (3U << pos);
+
+  // Shift status to zero bit
+  return status >> pos;
+}
+
 __attribute__((always_inline)) static inline uint32_t usb_pma_next_addr(uint32_t size) {
   // Get next available Packet Memory Area location
   uint32_t usb_pma_addr = usb_pma_next_available;
@@ -322,10 +333,6 @@ static void usb_tx_packet(usb_ep_transfer_t *ep_transfer) {
 
 static void usb_ep_transfer_complete(uint8_t ep_addr, uint32_t transferred_bytes) {
   const uint8_t ep_idn = USB_EP_IDN(ep_addr);
-  const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
-
-  usb_device.ep_status[ep_idn][ep_dir_idx].busy = 0;
-  usb_device.ep_status[ep_idn][ep_dir_idx].claimed = 0;
 
   if (ep_idn == 0) {
     usb_control_transfer(ep_addr, transferred_bytes);
@@ -414,12 +421,6 @@ static void usb_ep_reset() {
 static void setup_received(usb_control_request_t *setup_received) {
   // Setup recieved, therefore host has connected to device
   usb_device.connected = 1;
-
-  // Reset state
-  usb_device.ep_status[EP0_IDN][USB_DIR_DEVICE_IN_HOST_OUT_IDX].busy = 0;
-  usb_device.ep_status[EP0_IDN][USB_DIR_DEVICE_IN_HOST_OUT_IDX].claimed = 0;
-  usb_device.ep_status[EP0_IDN][USB_DIR_DEVICE_OUT_HOST_IN_IDX].busy = 0;
-  usb_device.ep_status[EP0_IDN][USB_DIR_DEVICE_OUT_HOST_IN_IDX].claimed = 0;
 
   // Process control request
   if (!process_control_request(setup_received)) {
@@ -685,6 +686,17 @@ void usb_ep_control_status_complete(const usb_control_request_t *request) {
   }
 
   usb_ep_set_rx_buffer_block_size(EP0_IDN, sizeof(usb_control_request_t));
+}
+
+bool usb_ep_stall_get_hal(uint8_t ep_idn, uint8_t ep_dir_idx) {
+  uint32_t ep_reg = USB->chep[ep_idn].CHEPnR;
+  ep_reg &= USB_CHEP_REG_MASK | USB_EP_STATUS_MASK(ep_dir_idx);
+
+  // Get status bits
+  uint32_t status = usb_ep_status_get(ep_reg, ep_dir_idx);
+
+  // Return true if stalled
+  return status == USB_EP_STATE_STALL;
 }
 
 void usb_ep_stall_set_hal(uint8_t ep_idn, uint8_t ep_dir_idx) {
