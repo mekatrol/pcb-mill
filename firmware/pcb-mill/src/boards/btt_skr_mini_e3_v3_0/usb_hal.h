@@ -15,8 +15,8 @@
 void usb_ep_reset();
 void usb_ep_set_rx_buffer_block_size(uint32_t ep_idn, uint32_t size);
 void usb_ep_control_init();
-void usb_ep_ctr_rx(uint32_t ep_idn);
-void usb_ep_ctr_tx(uint32_t ep_idn);
+void usb_ep_rx(uint32_t ep_idn);
+void usb_ep_tx_queued_bytes(uint32_t ep_idn);
 
 bool usb_control_transfer(uint8_t ep_addr, uint32_t transferred_bytes);
 bool usb_cdc_transfer(uint8_t ep_addr, uint32_t transferred_bytes);
@@ -31,10 +31,6 @@ __attribute__((always_inline)) static inline uint16_t usb_pma_get_count(uint32_t
 
 __attribute__((always_inline)) static inline uint32_t usb_pma_get_ep_addr(uint32_t ep_idn, uint8_t buf_id) {
   return USB_BUFFER_DESC_TABLE->ep[ep_idn].buffer[buf_id].count_addr & 0x0000FFFFU;
-}
-
-__attribute__((always_inline)) static inline uint32_t usb_ep_reg_get(uint32_t ep_idn) {
-  return USB->chep[ep_idn].CHEPnR;
 }
 
 __attribute__((always_inline)) static inline void usb_ep_reg_set(uint32_t ep_idn, uint32_t value, bool disable_usb_irq) {

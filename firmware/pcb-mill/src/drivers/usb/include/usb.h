@@ -581,8 +581,8 @@ bool usb_ep_open(const usb_ep_descriptor_t* ep_descriptor);
 // Close all endpoints
 void usb_ep_close_all();
 
-// Submit a transfer
-bool usb_ep_transfer_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t* buffer, uint16_t total_bytes);
+// Queue a transfer
+bool usb_ep_transfer_queue_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t* buffer, uint16_t total_bytes);
 
 // Stall endpoint, any queuing transfer should be removed from endpoint
 void usb_ep_stall_set(uint8_t ep_addr);

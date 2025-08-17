@@ -1,11 +1,20 @@
 #include "board_hal.h"
 #include "usb_hal.h"
 
-__attribute__((always_inline)) static inline void usb_ep_reg_set_clear_ctr(uint32_t ep_idn, usb_ep_direction_index_t dir) {
+__attribute__((always_inline)) static inline void usb_ep_clear_correct_transfer(uint32_t ep_idn, usb_ep_direction_index_t ep_idn_idx) {
+  // Correct transfer interupt flags are:
+  //  (VT == valid transation)
+  //  TX -> USB_CHEP_VTTX (USB_CHEP_VTTX_Pos + 0) ==  7U
+  //  RX -> USB_CHEP_VTRX (USB_CHEP_VTTX_Pos + 8) == 15U
+
   uint32_t ep_reg = USB->chep[ep_idn].CHEPnR;
-  ep_reg |= USB_EP_VTTX | USB_EP_VTRX;  // Preserve these bits
   ep_reg &= USB_CHEP_REG_MASK;
-  ep_reg &= ~(1 << (USB_CHEP_VTTX_Pos + (dir == USB_EP_DIRECTION_IN_IDX ? 0 : 8)));
+  ep_reg &= ~(1 << (USB_CHEP_VTTX_Pos + (ep_idn_idx == USB_EP_DIRECTION_IN_IDX ? 0 : 8)));
+
+  // USB_EP_VTTX and USB_EP_VTRX are rc_w0 bits so setting them to 1 preserves the current register values
+  // this will preserve  IN/OUT/SETUP transaction is successfully completed states
+  USB->chep[ep_idn].CHEPnR = (ep_reg | USB_EP_VTTX | USB_EP_VTRX);
+
   usb_ep_reg_set(ep_idn, ep_reg, false);
 }
 
@@ -59,7 +68,7 @@ void usb_init_hal() {
   NVIC_EnableIRQ(USB_UCPD1_2_IRQn);
 }
 
-void handle_ctr_setup(uint32_t ep_idn) {
+void usb_ep_setup(uint32_t ep_idn) {
   uint16_t rx_count = usb_pma_get_count(ep_idn, USB_EP_RX_BUFFER);
   uint16_t rx_addr = usb_pma_get_ep_addr(ep_idn, USB_EP_RX_BUFFER);
 
@@ -68,8 +77,8 @@ void handle_ctr_setup(uint32_t ep_idn) {
 
   usb_rx_packet(setup_packet, rx_addr, rx_count);
 
-  // Clear CTR
-  usb_ep_reg_set_clear_ctr(ep_idn, USB_EP_DIRECTION_OUT_IDX);
+  // Clear correct transfer flag
+  usb_ep_clear_correct_transfer(ep_idn, USB_EP_DIRECTION_OUT_IDX);
 
   if (rx_count == sizeof(usb_control_request_t)) {
     setup_received((usb_control_request_t *)setup_packet);
@@ -125,20 +134,28 @@ void USB_UCPD1_2_IRQHandler() {
   while (USB->ISTR & USB_ISTR_CTR) {
     // These bits are written by the hardware according to the host channel or device endpoint number
     const uint32_t ep_idn = USB->ISTR & USB_ISTR_IDN;
-    const uint32_t ep_reg = usb_ep_reg_get(ep_idn);
+    const uint32_t ep_reg = USB->chep[ep_idn].CHEPnR;
 
     if (ep_reg & USB_EP_VTRX) {
+      // Was a setup transaction received?
       if (ep_reg & USB_EP_SETUP) {
-        handle_ctr_setup(ep_idn);  // CTR will be clear after copied setup packet
+        // Setup processing clears the USB_EP_VTRX flag after receiving data
+        usb_ep_setup(ep_idn);
       } else {
-        usb_ep_reg_set_clear_ctr(ep_idn, USB_EP_DIRECTION_OUT_IDX);
-        usb_ep_ctr_rx(ep_idn);
+        // Clear USB_EP_VTRX
+        usb_ep_clear_correct_transfer(ep_idn, USB_EP_DIRECTION_OUT_IDX);
+
+        // Receive data
+        usb_ep_rx(ep_idn);
       }
     }
 
     if (ep_reg & USB_EP_VTTX) {
-      usb_ep_reg_set_clear_ctr(ep_idn, USB_EP_DIRECTION_IN_IDX);
-      usb_ep_ctr_tx(ep_idn);
+      // Clear USB_EP_VTTX
+      usb_ep_clear_correct_transfer(ep_idn, USB_EP_DIRECTION_IN_IDX);
+
+      // Transmit next batch of queued data (or complete transfer if none remianing in queue)
+      usb_ep_tx_queued_bytes(ep_idn);
     }
   }
 

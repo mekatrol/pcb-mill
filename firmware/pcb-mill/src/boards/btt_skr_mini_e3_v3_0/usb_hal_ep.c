@@ -5,17 +5,12 @@
 #define UNASSIGNED_VALUE 0xFFU
 
 typedef struct {
-  uint8_t *buffer;
-  uint16_t total_len;
-  uint16_t queued_len;
-
-  // ep0 this will be USB_EP0_BUFFER_SIZE
-  // ep1 to ep7 this will be the pack size set in USB_EP_RX_BUFFER_SIZE & USB_EP_TX_BUFFER_SIZE
-  uint16_t max_packet_size;
-
-  // Endpoint identifier (is zero based so can be used as index to arrays)
-  uint8_t ep_idn;
-} ep_packet_t;
+  uint8_t *buffer;           // The buffer location to transmit from/receive to
+  uint16_t transfer_length;  // The amount of data to transmit/receive
+  uint16_t queued_len;       // The number of bytes queued in the packet buffer for transmit/receive
+  uint16_t max_packet_size;  // The maximum packet size that can be transferred
+  uint8_t ep_idn;            // Endpoint identifier (is zero based so can be used as index to arrays)
+} ep_transfer_packet_t;
 
 typedef struct {
   uint8_t ep_idn;
@@ -24,7 +19,7 @@ typedef struct {
 } ep_assignment_t;
 
 // Active packets for each endpoint
-ep_packet_t ep_packet[USB_EP_MAX][EP_IN_OUT_PAIR];
+ep_transfer_packet_t ep_packet[USB_EP_MAX][EP_IN_OUT_PAIR];
 
 // State of endpoint assignment
 ep_assignment_t ep_assignment[USB_EP_MAX];
@@ -167,7 +162,7 @@ void usb_ep_control_init() {
   usb_pma_set_ep_addr(EP0_IDN, USB_EP_RX_BUFFER, pma_rx_addr);
   usb_pma_set_ep_addr(EP0_IDN, USB_EP_TX_BUFFER, pma_tx_addr);
 
-  uint32_t ep_reg = usb_ep_reg_get(EP0_IDN) & ~USB_CHEP_REG_MASK;
+  uint32_t ep_reg = USB->chep[EP0_IDN].CHEPnR & ~USB_CHEP_REG_MASK;
   ep_reg |= USB_EP_CONTROL;
   usb_ep_status(&ep_reg, USB_EP_DIRECTION_IN_IDX, USB_EP_STATE_NAK);
   usb_ep_status(&ep_reg, USB_EP_DIRECTION_OUT_IDX, USB_EP_STATE_NAK);
@@ -219,7 +214,7 @@ bool usb_ep_open(const usb_ep_descriptor_t *ep_descriptor) {
     return false;
   }
 
-  uint32_t ep_reg = usb_ep_reg_get(ep_idn) & ~USB_CHEP_REG_MASK;
+  uint32_t ep_reg = USB->chep[ep_idn].CHEPnR & ~USB_CHEP_REG_MASK;
   ep_reg |= USB_EP_IDN(ep_addr);
 
   // Supported endpoint types
@@ -241,7 +236,7 @@ bool usb_ep_open(const usb_ep_descriptor_t *ep_descriptor) {
   uint16_t pma_addr = usb_pma_next_addr(packet_size);
   usb_pma_set_ep_addr(ep_idn, ep_dir_idx == USB_EP_DIRECTION_IN_IDX ? USB_EP_TX_BUFFER : USB_EP_RX_BUFFER, pma_addr);
 
-  ep_packet_t *packet = &ep_packet[ep_idn][ep_dir_idx];
+  ep_transfer_packet_t *packet = &ep_packet[ep_idn][ep_dir_idx];
   packet->max_packet_size = packet_size;
   packet->ep_idn = ep_idn;
 
@@ -274,59 +269,78 @@ void usb_ep_close_all() {
   usb_pma_next_available = 8 * USB_EP_MAX + 2 * USB_EP0_BUFFER_SIZE;
 }
 
-bool usb_write_packet_data(uint16_t dst, const void *__restrict src, uint16_t byte_count) {
+/*
+ * This method writes data from an unaligned buffer to the endpoint buffer
+ */
+__attribute__((always_inline)) static inline bool usb_write_unaligned_data(uint16_t dst, const void *__restrict src, uint16_t byte_count) {
   if (byte_count == 0) {
-    // Not count then nothing to write
+    // No count then nothing to write
     return true;
   }
 
   // We are writing 32 bit values from unaligned byte locations
   uint32_t write_count = byte_count / sizeof(uint32_t);
 
+  // The PMA buffer we are writing to
   volatile uint32_t *pma_buf = (volatile uint32_t *)(USB_DRD_PMAADDR + dst);
+
+  // The unaligned buffer we area reading from
   const uint8_t *src8 = src;
 
+  // Read unaligned byte and write to PMA buffer
   while (write_count--) {
     *pma_buf = unaligned_read_32(src8);
     src8 += sizeof(uint32_t);
     pma_buf++;
   }
 
-  // odd bytes e.g 1 for 16-bit or 1-3 for 32-bit
+  // Write an remaining bytes (for odd byte_count)
+  // ie:
+  //    1   for 16-bit
+  //    1-3 for 32-bit
   uint16_t odd = byte_count & (sizeof(uint32_t) - 1);
   if (odd) {
-    uint32_t temp = 0;
+    uint32_t b = 0;
     for (uint16_t i = 0; i < odd; i++) {
-      temp |= *src8++ << (i * 8);
+      b |= *src8++ << (i * 8);
     }
-    *pma_buf = temp;
+    *pma_buf = b;
   }
 
   return true;
 }
 
-void usb_tx_packet(ep_packet_t *packet) {
-  uint32_t len = min_u16(packet->total_len - packet->queued_len, packet->max_packet_size);
+void usb_tx_packet(ep_transfer_packet_t *packet) {
+  uint32_t len = min_u16(packet->transfer_length - packet->queued_len, packet->max_packet_size);
 
   uint16_t addr_ptr = (uint16_t)usb_pma_get_ep_addr(packet->ep_idn, USB_EP_TX_BUFFER);
 
-  usb_write_packet_data(addr_ptr, &(packet->buffer[packet->queued_len]), len);
+  usb_write_unaligned_data(addr_ptr, &(packet->buffer[packet->queued_len]), len);
   packet->queued_len += len;
 
   usb_pma_set_count(packet->ep_idn, USB_EP_TX_BUFFER, len);
 
-  uint32_t ep_reg = usb_ep_reg_get(packet->ep_idn);
+  uint32_t ep_reg = USB->chep[packet->ep_idn].CHEPnR;
   usb_ep_status(&ep_reg, USB_EP_DIRECTION_IN_IDX, USB_EP_STATE_VALID);
 
   ep_reg &= USB_CHEP_REG_MASK | USB_EP_STATUS_MASK(USB_EP_DIRECTION_IN_IDX);  // only change TX Status, reserve other toggle bits
   usb_ep_reg_set_preserve(packet->ep_idn, ep_reg, true);
 }
 
-bool usb_ep_transfer_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t *buffer, uint16_t total_bytes) {
-  ep_packet_t *packet = &ep_packet[ep_idn][ep_dir_idx];
+/*
+ * Prepare HAL for sending / receiving data from host
+ */
+bool usb_ep_transfer_queue_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t *buffer, uint16_t total_bytes) {
+  ep_transfer_packet_t *packet = &ep_packet[ep_idn][ep_dir_idx];
 
+  // Cannot transfer more than configured packet size
+  if (total_bytes > packet->max_packet_size) {
+    return false;
+  }
+
+  // Initialise packet
   packet->buffer = buffer;
-  packet->total_len = total_bytes;
+  packet->transfer_length = total_bytes;
   packet->queued_len = 0;
 
   if (ep_dir_idx == USB_EP_DIRECTION_IN_IDX) {
@@ -334,13 +348,10 @@ bool usb_ep_transfer_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t *buffer, ui
     usb_tx_packet(packet);
   } else {
     // Receive to device is USB_EP_DIRECTION_OUT_IDX from host
-    uint32_t ep_reg = usb_ep_reg_get(ep_idn);
-    ep_reg &= USB_CHEP_REG_MASK | USB_EP_STATUS_MASK(ep_dir_idx);
+    uint32_t ep_reg = USB->chep[ep_idn].CHEPnR;
+    ep_reg &= (USB_CHEP_REG_MASK | USB_EP_STATUS_MASK(ep_dir_idx));
 
-    uint16_t rx_size = min_u16(packet->total_len, packet->max_packet_size);
-
-    usb_ep_set_rx_buffer_block_size(ep_idn, (uint32_t)rx_size);
-
+    usb_ep_set_rx_buffer_block_size(ep_idn, (uint32_t)packet->transfer_length);
     usb_ep_status(&ep_reg, ep_dir_idx, USB_EP_STATE_VALID);
     usb_ep_reg_set_preserve(ep_idn, ep_reg, true);
   }
@@ -350,7 +361,7 @@ bool usb_ep_transfer_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t *buffer, ui
 }
 
 void usb_ep_stall_set_hal(uint8_t ep_idn, uint8_t ep_dir_idx) {
-  uint32_t ep_reg = usb_ep_reg_get(ep_idn);
+  uint32_t ep_reg = USB->chep[ep_idn].CHEPnR;
   ep_reg &= USB_CHEP_REG_MASK | USB_EP_STATUS_MASK(ep_dir_idx);
   usb_ep_status(&ep_reg, ep_dir_idx, USB_EP_STATE_STALL);
 
@@ -359,7 +370,7 @@ void usb_ep_stall_set_hal(uint8_t ep_idn, uint8_t ep_dir_idx) {
 
 void usb_ep_stall_clear_hal(uint8_t ep_idn, uint8_t ep_dir_idx) {
   // Get current value of CHEPnR
-  uint32_t ep_reg = usb_ep_reg_get(ep_idn);
+  uint32_t ep_reg = USB->chep[ep_idn].CHEPnR;
 
   // Clear state
   ep_reg &= USB_CHEP_REG_MASK | USB_EP_STATUS_MASK(ep_dir_idx) | USB_EP_DATA_TOGGLE_MASK(ep_dir_idx);
@@ -385,24 +396,23 @@ static void usb_ep_transfer_complete(uint8_t ep_addr, uint32_t transferred_bytes
   }
 }
 
-void usb_ep_ctr_rx(uint32_t ep_idn) {
-  uint32_t ep_reg = usb_ep_reg_get(ep_idn);
-  ep_packet_t *packet = &ep_packet[ep_idn][USB_EP_DIRECTION_OUT_IDX];
-
+void usb_ep_rx(uint32_t ep_idn) {
+  uint32_t ep_reg = USB->chep[ep_idn].CHEPnR;
+  ep_transfer_packet_t *packet = &ep_packet[ep_idn][USB_EP_DIRECTION_OUT_IDX];
   const uint16_t rx_count = usb_pma_get_count(ep_idn, USB_EP_RX_BUFFER);
   uint16_t pma_addr = (uint16_t)usb_pma_get_ep_addr(ep_idn, USB_EP_RX_BUFFER);
 
   usb_rx_packet(packet->buffer + packet->queued_len, pma_addr, rx_count);
   packet->queued_len += rx_count;
 
-  if ((rx_count < packet->max_packet_size) || (packet->queued_len >= packet->total_len)) {
-    // all bytes received or short packet
+  if ((rx_count < packet->max_packet_size) || (packet->queued_len >= packet->transfer_length)) {
+    // All bytes now received
 
     usb_ep_set_rx_buffer_block_size(ep_idn, (uint32_t)packet->max_packet_size);
 
     usb_ep_transfer_complete(ep_idn, packet->queued_len);
 
-    packet->total_len = packet->queued_len = 0;
+    packet->transfer_length = packet->queued_len = 0;
   } else {
     ep_reg &= USB_CHEP_REG_MASK | USB_EP_STATUS_MASK(USB_EP_DIRECTION_OUT_IDX);  // will change RX Status, reserved other toggle bits
     usb_ep_status(&ep_reg, USB_EP_DIRECTION_OUT_IDX, USB_EP_STATE_VALID);
@@ -410,13 +420,13 @@ void usb_ep_ctr_rx(uint32_t ep_idn) {
   }
 }
 
-void usb_ep_ctr_tx(uint32_t ep_idn) {
-  ep_packet_t *packet = &ep_packet[ep_idn][USB_EP_DIRECTION_IN_IDX];
+void usb_ep_tx_queued_bytes(uint32_t ep_idn) {
+  ep_transfer_packet_t *packet = &ep_packet[ep_idn][USB_EP_DIRECTION_IN_IDX];
 
-  if (packet->total_len != packet->queued_len) {
+  if (packet->transfer_length != packet->queued_len) {
     usb_tx_packet(packet);
   } else {
-    uint32_t ep_addr = usb_ep_reg_get(ep_idn) & USB_CHEP_ADDR;
+    uint32_t ep_addr = USB->chep[ep_idn].CHEPnR & USB_CHEP_ADDR;
     usb_ep_transfer_complete(ep_addr | USB_DIR_IN, packet->queued_len);
   }
 }

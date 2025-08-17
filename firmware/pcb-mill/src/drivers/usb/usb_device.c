@@ -130,7 +130,7 @@ bool process_control_request(const usb_control_request_t* request) {
           usbd_control_set_request(request);  // set request since DCD has no access to usb_control_status() API
 
           // Respond with status (ep0)
-          usb_ep_transfer_hal(0x00, USB_DIR_IN >> 7, NULL, 0);
+          usb_ep_transfer_queue_hal(0x00, USB_DIR_IN >> 7, NULL, 0);
 
           // skip usb_control_status()
           usb_device.addressed = 1;
@@ -468,11 +468,11 @@ bool usb_ep_transfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes) {
     return false;
   }
 
-  // Set busy first since the actual transfer can be complete before usb_ep_transfer_hal()
+  // Set busy first since the actual transfer can be complete before usb_ep_transfer_queue_hal()
   // could return and USBD task can preempt and clear the busy
   usb_device.ep_status[ep_idn][ep_dir_idx].busy = 1;
 
-  if (usb_ep_transfer_hal(ep_idn, ep_dir_idx, buffer, total_bytes)) {
+  if (usb_ep_transfer_queue_hal(ep_idn, ep_dir_idx, buffer, total_bytes)) {
     return true;
   } else {
     // DCD error, mark endpoint as ready to allow next transfer
