@@ -146,6 +146,24 @@ uint8_t usb_ep_assign(uint8_t ep_addr, uint8_t ep_type) {
   return UNASSIGNED_VALUE;
 }
 
+void usb_ep_set_rx_buffer_block_size(uint32_t ep_idn, uint32_t size) {
+  uint32_t blsize, num_block;
+  usb_ep_calc_rx_buffer_block_size(size, &blsize, &num_block);
+
+  // Merge BLSIZE and NUM_BLOCK and shift to correct bit positions
+  uint32_t memory_buffer_assignment = (blsize << BIT_31_POS) | (num_block << BIT_26_POS);
+
+  // Get existing register value (we don't want to override ADDR_RX), note this clears COUNT_RX
+  // which is valid because we are setting the buffer size and previous received data likely invalid
+  uint32_t usb_chep_txrxbd_n = USB_BUFFER_DESC_TABLE->ep[ep_idn].buffer[USB_EP_RX_BUFFER].count_addr;
+
+  // Merge BLSIZE, NUM_BLOCK and ADDR_RX
+  usb_chep_txrxbd_n = memory_buffer_assignment | (usb_chep_txrxbd_n & 0x0000FFFFU);
+
+  // Update register
+  USB_BUFFER_DESC_TABLE->ep[ep_idn].buffer[USB_EP_RX_BUFFER].count_addr = usb_chep_txrxbd_n;
+}
+
 void usb_ep_control_init() {
   usb_ep_assign(USB_DIR_OUT, USB_EP_TYPE_CONTROL);
   usb_ep_assign(USB_DIR_IN, USB_EP_TYPE_CONTROL);
@@ -183,24 +201,6 @@ void usb_ep_control_status_complete(const usb_control_request_t *request) {
   }
 
   usb_ep_set_rx_buffer_block_size(EP0_IDN, sizeof(usb_control_request_t));
-}
-
-void usb_ep_set_rx_buffer_block_size(uint32_t ep_idn, uint32_t size) {
-  uint32_t blsize, num_block;
-  usb_ep_calc_rx_buffer_block_size(size, &blsize, &num_block);
-
-  // Merge BLSIZE and NUM_BLOCK and shift to correct bit positions
-  uint32_t memory_buffer_assignment = (blsize << BIT_31_POS) | (num_block << BIT_26_POS);
-
-  // Get existing register value (we don't want to override ADDR_RX), note this clears COUNT_RX
-  // which is valid because we are setting the buffer size and previous received data likely invalid
-  uint32_t usb_chep_txrxbd_n = USB_BUFFER_DESC_TABLE->ep[ep_idn].buffer[USB_EP_RX_BUFFER].count_addr;
-
-  // Merge BLSIZE, NUM_BLOCK and ADDR_RX
-  usb_chep_txrxbd_n = memory_buffer_assignment | (usb_chep_txrxbd_n & 0x0000FFFFU);
-
-  // Update register
-  USB_BUFFER_DESC_TABLE->ep[ep_idn].buffer[USB_EP_RX_BUFFER].count_addr = usb_chep_txrxbd_n;
 }
 
 bool usb_ep_open(const usb_ep_descriptor_t *ep_descriptor) {

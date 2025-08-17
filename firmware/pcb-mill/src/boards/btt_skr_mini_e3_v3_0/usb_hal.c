@@ -83,7 +83,7 @@ void usb_ep_setup(uint32_t ep_idn) {
   if (rx_count == sizeof(usb_control_request_t)) {
     setup_received((usb_control_request_t *)setup_packet);
   } else {
-    // Something was a mismatch, reset the endpoint state (by resetting size, which clears count etc)
+    // Something went wrong, reset the endpoint state (by resetting size, which clears count etc)
     usb_ep_set_rx_buffer_block_size(EP0_IDN, sizeof(usb_control_request_t));
   }
 }
