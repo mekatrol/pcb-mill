@@ -211,6 +211,7 @@ static uint8_t usb_ep_assign(uint8_t ep_addr, uint8_t ep_type) {
 }
 
 static void usb_ep_set_rx_buffer_block_size(uint32_t ep_idn, uint32_t size) {
+  // Calculate BLSIZE and NUM_BLOCK from size
   uint32_t blsize, num_block;
   usb_ep_calc_rx_buffer_block_size(size, &blsize, &num_block);
 
