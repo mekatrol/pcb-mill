@@ -705,11 +705,6 @@ void usb_ep_stall_clear_hal(uint8_t ep_idn, uint8_t ep_dir_idx) {
 bool usb_ep_transfer_queue_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t *buffer, uint16_t total_bytes) {
   ep_packet_buffer_t *packet = &ep_packet_buffer[ep_idn][ep_dir_idx];
 
-  // Cannot transfer more than configured packet size
-  if (total_bytes > packet->max_packet_size) {
-    return false;
-  }
-
   // Initialise packet
   packet->buffer = buffer;
   packet->transfer_length = total_bytes;
