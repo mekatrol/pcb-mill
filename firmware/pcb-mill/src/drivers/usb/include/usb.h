@@ -110,7 +110,7 @@ bool usb_control_transfer(uint8_t ep_addr, uint32_t transferred_bytes);
 // Initialize USN in device mode
 void usb_init_hal();
 
-__attribute__((always_inline)) static inline uint16_t min_u16(uint16_t x, uint16_t y) { return (x < y) ? x : y; }
+__attribute__((always_inline)) static inline uint16_t min_u16(uint16_t a, uint16_t b) { return (a < b) ? a : b; }
 
 __attribute__((always_inline)) static inline void usb_reset() {
   usb_hal_reset();
