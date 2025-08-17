@@ -109,9 +109,10 @@ typedef struct {
 void usbd_control_reset();
 void usb_configuration_reset();
 void usb_hal_reset();
+bool usb_control_transfer(uint8_t ep_addr, uint32_t transferred_bytes);
 
 // Initialize USN in device mode
-void usb_device_init();
+void usb_init_hal();
 
 __attribute__((always_inline)) static inline uint16_t min_u16(uint16_t x, uint16_t y) { return (x < y) ? x : y; }
 

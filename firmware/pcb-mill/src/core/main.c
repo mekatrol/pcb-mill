@@ -31,7 +31,7 @@ void main() {
   limits_init_hal();
 
   // Initialise USB
-  usb_init_hal();
+  usb_init_board_hal();
   usb_init_driver();
 
   uint32_t config_version = config_get_version();

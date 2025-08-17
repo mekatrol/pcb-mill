@@ -69,7 +69,7 @@ bool usb_init_driver() {
   usb_cdc_init();
 
   // Init device controller driver
-  usb_device_init();
+  usb_init_hal();
   NVIC_EnableIRQ(USB_UCPD1_2_IRQn);
 
   return true;
