@@ -4,8 +4,8 @@
 __attribute__((always_inline)) static inline void usb_ep_clear_correct_transfer(uint32_t ep_idn, usb_ep_direction_index_t ep_idn_idx) {
   // Correct transfer interupt flags are:
   //  (VT == valid transation)
-  //  TX -> USB_CHEP_VTTX (USB_CHEP_VTTX_Pos + 0) ==  7U
-  //  RX -> USB_CHEP_VTRX (USB_CHEP_VTTX_Pos + 8) == 15U
+  //  TX -> USB_CHEP_VTTX
+  //  RX -> USB_CHEP_VTRX
 
   // Get current register value
   uint32_t ep_reg = USB->chep[ep_idn].CHEPnR;
