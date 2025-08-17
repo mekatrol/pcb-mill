@@ -525,7 +525,7 @@ bool usb_control_status(const usb_control_request_t* request) {
 // Each transaction has up to Endpoint0's max packet size.
 // This function can also transfer an zero-length packet
 static bool data_stage_xact() {
-  const uint16_t len = transfer_remaining_length(control_transfer.packet.total_length, control_transfer.packet.transferred_length, USB_EP0_BUFFER_SIZE);
+  const uint16_t len = transfer_packet_remaining_length(control_transfer.packet, USB_EP0_BUFFER_SIZE);
   uint8_t ep_addr = USB_DIR_DEVICE_IN_HOST_OUT;
 
   const usb_direction_index_t request_direction = usb_request_direction(control_transfer.request.bmRequestType);

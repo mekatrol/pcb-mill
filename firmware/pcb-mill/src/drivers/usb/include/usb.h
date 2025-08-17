@@ -120,13 +120,13 @@ void usb_init_hal();
 // If total_length > transferred_length   → returns the number of bytes remaining.
 // If total_length == transferred_length  → returns 0.
 // If total_length < transferred_length   → returns underflows (wraps around, since unsigned).
-// Take transfer_remaining_length(total_length, transferred_length, max_size).
+// Take transfer_packet_remaining_length(total_length, transferred_length, max_size).
 //    uint16_t remaining = total_length - transferred_length;
 //    - If remaining > 0 → you get the smaller of (remaining, max_size).
 //    - If remaining == 0 → you get 0.
 //    - If remaining underflows → you get some large number (65535−x), so the min will be max_size
-__attribute__((always_inline)) static inline uint16_t transfer_remaining_length(uint16_t total_length, uint16_t transferred_length, uint16_t max_size) {
-  uint16_t remaining = total_length - transferred_length;
+__attribute__((always_inline)) static inline uint16_t transfer_packet_remaining_length(usb_transfer_packet_t packet, uint16_t max_size) {
+  uint16_t remaining = packet.total_length - packet.transferred_length;
   return (remaining < max_size) ? remaining : max_size;
 }
 
