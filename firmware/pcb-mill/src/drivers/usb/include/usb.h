@@ -39,10 +39,6 @@
 #define USB_EP_RX_BUFFER_SIZE 64UL
 #define USB_EP_TX_BUFFER_SIZE 64UL
 
-// Direction bit (from host perspective)
-#define USB_DIR_DEVICE_IN_HOST_OUT 0x00  // Host-to-device
-#define USB_DIR_DEVICE_OUT_HOST_IN 0x80  // Device-to-host
-
 // Masks
 #define USB_EP_NUM_MASK 0x0F             // Bits 0..3 = endpoint number
 #define USB_EP_DIR_MASK 0x80             // Bit 7 = direction
@@ -141,10 +137,16 @@ typedef enum {
   USB_REQUEST_TYPE_MASK = 0x60
 } usb_request_type_t;
 
+// Direction bit
 typedef enum {
-  USB_EP_DIRECTION_OUT_IDX = 0,
-  USB_EP_DIRECTION_IN_IDX = 1,
-} usb_ep_direction_index_t;
+  USB_DIR_DEVICE_IN_HOST_OUT = 0x00,  // Host-to-device
+  USB_DIR_DEVICE_OUT_HOST_IN = 0x80,  // Device-to-host
+} usb_direction_t;
+
+typedef enum {
+  USB_DIR_DEVICE_IN_HOST_OUT_IDX = 0,  // Host-to-device
+  USB_DIR_DEVICE_OUT_HOST_IN_IDX = 1,  // Device-to-host
+} usb_direction_index_t;
 
 /// Standard USB control request (USB 2.0 Spec, Table 9-2)
 typedef struct __attribute__((packed)) {
@@ -159,7 +161,7 @@ _Static_assert(sizeof(usb_control_request_t) == 8, "sizeof(usb_control_request_t
 
 __attribute__((always_inline)) static inline usb_request_recipient_t usb_request_recipient(uint8_t bm) { return (bm)&USB_REQUEST_RECIPIENT_MASK; }
 __attribute__((always_inline)) static inline usb_request_type_t usb_request_type(uint8_t bm) { return ((bm)&USB_REQUEST_TYPE_MASK) >> 5; }
-__attribute__((always_inline)) static inline usb_ep_direction_index_t usb_request_direction(uint8_t bm) { return USB_EP_DIR((bm)) >> 7; }
+__attribute__((always_inline)) static inline usb_direction_index_t usb_request_direction(uint8_t bm) { return USB_EP_DIR((bm)) >> 7; }
 
 // USB Device Descriptor
 typedef struct __attribute__((packed)) {

@@ -290,7 +290,7 @@ bool process_control_request(const usb_control_request_t* request) {
             usbd_control_set_complete_callback(NULL);
 
             // skip ZLP status if driver already did that
-            if (!usb_device.ep_status[0][USB_EP_DIRECTION_IN_IDX].busy) {
+            if (!usb_device.ep_status[0][USB_DIR_DEVICE_OUT_HOST_IN_IDX].busy) {
               usb_control_status(request);
             }
           } break;
@@ -523,7 +523,7 @@ static __attribute__((aligned(4))) uint8_t ep0_control_buffer[USB_EP0_BUFFER_SIZ
 
 static inline bool status_stage_xact(const usb_control_request_t* request) {
   // Opposite to endpoint in Data Phase
-  const usb_ep_direction_index_t request_direction = usb_request_direction(request->bmRequestType);
+  const usb_direction_index_t request_direction = usb_request_direction(request->bmRequestType);
   const uint8_t ep_addr = request_direction ? USB_DIR_DEVICE_IN_HOST_OUT : USB_DIR_DEVICE_OUT_HOST_IN;
 
   return usb_ep_transfer(ep_addr, NULL, 0);
@@ -546,8 +546,8 @@ static bool data_stage_xact() {
   const uint16_t xact_len = min_u16(control_transfer.data_len - control_transfer.total_xferred, USB_EP0_BUFFER_SIZE);
   uint8_t ep_addr = USB_DIR_DEVICE_IN_HOST_OUT;
 
-  const usb_ep_direction_index_t request_direction = usb_request_direction(control_transfer.request.bmRequestType);
-  if (request_direction == USB_EP_DIRECTION_IN_IDX) {
+  const usb_direction_index_t request_direction = usb_request_direction(control_transfer.request.bmRequestType);
+  if (request_direction == USB_DIR_DEVICE_OUT_HOST_IN_IDX) {
     ep_addr = USB_DIR_DEVICE_OUT_HOST_IN;
     if (xact_len) {
       if (xact_len > USB_EP0_BUFFER_SIZE) {
