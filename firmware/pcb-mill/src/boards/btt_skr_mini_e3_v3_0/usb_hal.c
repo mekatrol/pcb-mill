@@ -706,9 +706,9 @@ bool usb_ep_transfer_queue_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t *buff
   ep_packet_buffer_t *packet = &ep_packet_buffer[ep_idn][ep_dir_idx];
 
   // Initialise packet
-  packet->buffer = buffer;
-  packet->transfer_length = total_bytes;
-  packet->queued_len = 0;
+  packet->buffer = buffer;                // Use callers buffer
+  packet->transfer_length = total_bytes;  // We are going to transfer total bytes
+  packet->queued_len = 0;                 // Nothing is queued
 
   if (ep_dir_idx == USB_DIR_DEVICE_OUT_HOST_IN_IDX) {
     // Transmit from device is USB_DIR_DEVICE_OUT_HOST_IN_IDX to host

@@ -324,7 +324,7 @@ void usb_ep_stall_clear(uint8_t ep_addr);
 bool usb_ep_is_stalled(uint8_t ep_addr);
 
 // Open a set of output and input endpoints
-bool usb_ep_open_in_out(const usb_ep_descriptor_t* p_desc, uint8_t xfer_type, uint8_t* ep_out, uint8_t* ep_in);
+bool usb_ep_open_in_out(const usb_ep_descriptor_t* p_desc, uint8_t xfer_type, uint8_t* ep_addr_out, uint8_t* ep_addr_in);
 
 // Bind all endpoint of a interface descriptor to class driver
 void tu_edpt_bind_driver(uint8_t ep2drv[][EP_IN_OUT_PAIR], const usb_control_interface_descriptor_t* p_desc, uint16_t desc_len);

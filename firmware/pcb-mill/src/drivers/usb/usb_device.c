@@ -130,7 +130,7 @@ bool process_control_request(const usb_control_request_t* request) {
           usbd_control_set_request(request);  // set request since DCD has no access to usb_control_status() API
 
           // Respond with status (ep0)
-          usb_ep_transfer_queue_hal(0x00, USB_DIR_DEVICE_OUT_HOST_IN >> 7, NULL, 0);
+          usb_ep_transfer_queue_hal(EP0_IDN, USB_DIR_DEVICE_OUT_HOST_IN >> 7, NULL, 0);
 
           // skip usb_control_status()
           usb_device.addressed = 1;
@@ -421,7 +421,7 @@ static bool process_get_descriptor(const usb_control_request_t* request) {
 }
 
 // Configure consecutive endpoint descriptors (IN & OUT)
-bool usb_ep_open_in_out(const usb_ep_descriptor_t* descriptor_ep, uint8_t xfer_type, uint8_t* ep_out, uint8_t* ep_in) {
+bool usb_ep_open_in_out(const usb_ep_descriptor_t* descriptor_ep, uint8_t xfer_type, uint8_t* ep_addr_out, uint8_t* ep_addr_in) {
   for (int i = 0; i < 2; i++) {
     if (descriptor_ep->bDescriptorType != USB_DESCRIPTOR_TYPE_ENDPOINT || descriptor_ep->bmAttributes.type != xfer_type) {
       return false;
@@ -432,9 +432,9 @@ bool usb_ep_open_in_out(const usb_ep_descriptor_t* descriptor_ep, uint8_t xfer_t
     }
 
     if (USB_EP_DIR(descriptor_ep->bEndpointAddress) == USB_DIR_DEVICE_OUT_HOST_IN) {
-      (*ep_in) = descriptor_ep->bEndpointAddress;
+      (*ep_addr_in) = descriptor_ep->bEndpointAddress;
     } else {
-      (*ep_out) = descriptor_ep->bEndpointAddress;
+      (*ep_addr_out) = descriptor_ep->bEndpointAddress;
     }
 
     descriptor_ep = (const usb_ep_descriptor_t*)usb_next_descriptor(descriptor_ep);
