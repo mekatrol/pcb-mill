@@ -10,7 +10,7 @@ typedef struct {
   uint16_t queued_len;       // The number of bytes queued in the packet buffer for transmit/receive
   uint16_t max_packet_size;  // The maximum packet size that can be transferred
   uint8_t ep_idn;            // Endpoint identifier (is zero based so can be used as index to arrays)
-} ep_transfer_packet_t;
+} ep_packet_buffer_t;
 
 typedef struct {
   uint8_t ep_idn;
@@ -18,8 +18,10 @@ typedef struct {
   bool assigned[EP_IN_OUT_PAIR];
 } ep_assignment_t;
 
-// Active packets for each endpoint
-ep_transfer_packet_t ep_packet[USB_EP_MAX][EP_IN_OUT_PAIR];
+// Transfer packet buffers for each end point, used to buffer sending and receiving data
+// over endpoints. A packet might be larger than the hardware buffers
+// and having a buffered packet reduce chances of overrun on hardware buffers.
+ep_packet_buffer_t ep_packet_buffer[USB_EP_MAX][EP_IN_OUT_PAIR];
 
 // State of endpoint assignment
 ep_assignment_t ep_assignment[USB_EP_MAX];
@@ -168,11 +170,11 @@ void usb_ep_control_init() {
   usb_ep_assign(USB_DIR_OUT, USB_EP_TYPE_CONTROL);
   usb_ep_assign(USB_DIR_IN, USB_EP_TYPE_CONTROL);
 
-  ep_packet[EP0_IDN][USB_EP_DIRECTION_OUT_IDX].max_packet_size = USB_EP0_BUFFER_SIZE;
-  ep_packet[EP0_IDN][USB_EP_DIRECTION_OUT_IDX].ep_idn = EP0_IDN;
+  ep_packet_buffer[EP0_IDN][USB_EP_DIRECTION_OUT_IDX].max_packet_size = USB_EP0_BUFFER_SIZE;
+  ep_packet_buffer[EP0_IDN][USB_EP_DIRECTION_OUT_IDX].ep_idn = EP0_IDN;
 
-  ep_packet[EP0_IDN][USB_EP_DIRECTION_IN_IDX].max_packet_size = USB_EP0_BUFFER_SIZE;
-  ep_packet[EP0_IDN][USB_EP_DIRECTION_IN_IDX].ep_idn = EP0_IDN;
+  ep_packet_buffer[EP0_IDN][USB_EP_DIRECTION_IN_IDX].max_packet_size = USB_EP0_BUFFER_SIZE;
+  ep_packet_buffer[EP0_IDN][USB_EP_DIRECTION_IN_IDX].ep_idn = EP0_IDN;
 
   uint16_t pma_rx_addr = usb_pma_next_addr(USB_EP0_BUFFER_SIZE);
   uint16_t pma_tx_addr = usb_pma_next_addr(USB_EP0_BUFFER_SIZE);
@@ -236,7 +238,7 @@ bool usb_ep_open(const usb_ep_descriptor_t *ep_descriptor) {
   uint16_t pma_addr = usb_pma_next_addr(packet_size);
   usb_pma_set_ep_addr(ep_idn, ep_dir_idx == USB_EP_DIRECTION_IN_IDX ? USB_EP_TX_BUFFER : USB_EP_RX_BUFFER, pma_addr);
 
-  ep_transfer_packet_t *packet = &ep_packet[ep_idn][ep_dir_idx];
+  ep_packet_buffer_t *packet = &ep_packet_buffer[ep_idn][ep_dir_idx];
   packet->max_packet_size = packet_size;
   packet->ep_idn = ep_idn;
 
@@ -310,7 +312,7 @@ __attribute__((always_inline)) static inline bool usb_write_unaligned_data(uint1
   return true;
 }
 
-void usb_tx_packet(ep_transfer_packet_t *packet) {
+void usb_tx_packet(ep_packet_buffer_t *packet) {
   uint32_t len = min_u16(packet->transfer_length - packet->queued_len, packet->max_packet_size);
 
   uint16_t addr_ptr = (uint16_t)usb_pma_get_ep_addr(packet->ep_idn, USB_EP_TX_BUFFER);
@@ -331,7 +333,7 @@ void usb_tx_packet(ep_transfer_packet_t *packet) {
  * Prepare HAL for sending / receiving data from host
  */
 bool usb_ep_transfer_queue_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t *buffer, uint16_t total_bytes) {
-  ep_transfer_packet_t *packet = &ep_packet[ep_idn][ep_dir_idx];
+  ep_packet_buffer_t *packet = &ep_packet_buffer[ep_idn][ep_dir_idx];
 
   // Cannot transfer more than configured packet size
   if (total_bytes > packet->max_packet_size) {
@@ -398,7 +400,7 @@ static void usb_ep_transfer_complete(uint8_t ep_addr, uint32_t transferred_bytes
 
 void usb_ep_rx(uint32_t ep_idn) {
   uint32_t ep_reg = USB->chep[ep_idn].CHEPnR;
-  ep_transfer_packet_t *packet = &ep_packet[ep_idn][USB_EP_DIRECTION_OUT_IDX];
+  ep_packet_buffer_t *packet = &ep_packet_buffer[ep_idn][USB_EP_DIRECTION_OUT_IDX];
   const uint16_t rx_count = usb_pma_get_count(ep_idn, USB_EP_RX_BUFFER);
   uint16_t pma_addr = (uint16_t)usb_pma_get_ep_addr(ep_idn, USB_EP_RX_BUFFER);
 
@@ -421,7 +423,7 @@ void usb_ep_rx(uint32_t ep_idn) {
 }
 
 void usb_ep_tx_queued_bytes(uint32_t ep_idn) {
-  ep_transfer_packet_t *packet = &ep_packet[ep_idn][USB_EP_DIRECTION_IN_IDX];
+  ep_packet_buffer_t *packet = &ep_packet_buffer[ep_idn][USB_EP_DIRECTION_IN_IDX];
 
   if (packet->transfer_length != packet->queued_len) {
     usb_tx_packet(packet);
