@@ -1,4 +1,5 @@
 #include "usb.h"
+#include "diagnostics.h"
 #include "cdc_device.h"
 #include "feed_forward_buffer.h"
 #include "stm32g0xx.h"
@@ -118,16 +119,16 @@ bool process_control_request(const usb_control_request_t* request) {
 
       switch (request->bRequest) {
         case USB_STD_SET_ADDRESS:
-          // Depending on mcu, status phase could be sent either before or after changing device address,
-          // or even require stack to not response with status at all
-          // Therefore DCD must take full responsibility to response and include zlp status packet if needed.
-          usbd_control_set_request(request);  // set request since DCD has no access to usb_control_status() API
+          usbd_control_set_request(request);
 
           // Respond with status (ep0)
           usb_ep_transfer_queue_hal(EP0_IDN, USB_DIR_DEVICE_OUT_HOST_IN >> 7, NULL, 0);
 
-          // skip usb_control_status()
+          // USB has been addressed
+          usb_device.address = request->wValue & 0x7F;  // Address 0 - 127 (7 bit)
           usb_device.addressed = 1;
+
+          diag_printf("USB device address: %d\r\n", usb_device.address);
           break;
 
         case USB_STD_GET_CONFIGURATION: {

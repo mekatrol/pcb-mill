@@ -253,14 +253,14 @@ _Static_assert(sizeof(usb_ep_descriptor_t) == 7, "size must be 7");
 
 typedef struct {
   struct __attribute__((packed)) {
-    volatile uint8_t connected : 1;
-    volatile uint8_t addressed : 1;
-
+    volatile uint8_t connected : 1;     // USB is connected and ready for use
+    volatile uint8_t addressed : 1;     // USB has received address
     uint8_t remote_wakeup_en : 1;       // enable/disable by host
     uint8_t remote_wakeup_support : 1;  // configuration descriptor's attribute
     uint8_t self_powered : 1;           // configuration descriptor's attribute
   };
   volatile uint8_t config_num;  // current active configuration (0x00 is not configured)
+  volatile uint8_t address;     // USB device address
 
 } usbd_device_t;
 
