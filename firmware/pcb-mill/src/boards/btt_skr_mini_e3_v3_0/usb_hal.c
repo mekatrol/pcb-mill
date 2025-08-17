@@ -14,7 +14,7 @@ __attribute__((always_inline)) static inline void usb_ep_clear_correct_transfer(
   ep_reg &= USB_CHEP_REG_MASK;
 
   // Clear USB_CHEP_VTTX or USB_CHEP_VTRX depending on ep_idn_idx
-  ep_reg &= ~(1 << (USB_CHEP_VTTX_Pos + (ep_idn_idx == USB_EP_DIRECTION_IN_IDX ? 0 : 8)));
+  ep_reg &= ~(1 << (ep_idn_idx == USB_EP_DIRECTION_IN_IDX ? USB_CHEP_VTTX_Pos : USB_CHEP_VTRX_Pos));
 
   // CHEPnR has many rc_w0 bits. This means we set a bit:
   //    0 = clear that bit when writing the the CHEPnR
