@@ -10,8 +10,8 @@ __attribute__((always_inline)) static inline void usb_ep_clear_correct_transfer(
   // Get current register value
   uint32_t ep_reg = USB->chep[ep_idn].CHEPnR;
 
-  // Clear THREE_ERR_RX, THREE_ERR_TX, DTOGRX, STATRX, DTOGTX, STATTX (ep_reg & 0x07FF8F8F)
-  ep_reg &= USB_CHEP_REG_MASK;
+  // Clear THREE_ERR_RX, THREE_ERR_TX, DTOGRX, STATRX, DTOGTX, STATTX
+  ep_reg &= USB_CHEP_REG_MASK;  // ep_reg & 0x07FF8F8F
 
   // Clear USB_CHEP_VTTX or USB_CHEP_VTRX depending on ep_idn_idx
   ep_reg &= ~(1 << (ep_idn_idx == USB_EP_DIRECTION_IN_IDX ? USB_CHEP_VTTX_Pos : USB_CHEP_VTRX_Pos));
