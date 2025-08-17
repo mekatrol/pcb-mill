@@ -79,7 +79,6 @@ void usb_configuration_reset() {
   usb_cdc_reset();
 
   memset(&usb_device, 0, sizeof(usbd_device_t));
-  memset(usb_device.ep2drv, 0xFF, sizeof(usb_device.ep2drv));  // invalid mapping
 }
 
 static bool invoke_class_control(const usb_control_request_t* request) {
@@ -252,10 +251,6 @@ bool process_control_request(const usb_control_request_t* request) {
       const uint8_t ep_idn = USB_EP_IDN(ep_addr);
       const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
 
-      if (ep_idn >= sizeof(usb_device.ep2drv) / sizeof(usb_device.ep2drv[0])) {
-        return false;
-      }
-
       if (USB_REQUEST_TYPE_STANDARD != request_type) {
         // Forward class request to its driver
         return invoke_class_control(request);
@@ -263,7 +258,7 @@ bool process_control_request(const usb_control_request_t* request) {
         // Handle STD request to endpoint
         switch (request->bRequest) {
           case USB_STD_GET_STATUS: {
-            uint16_t status = usb_ep_stall_get_hal(ep_addr, ep_dir_idx) ? 0x0001 : 0x0000;
+            uint16_t status = usb_ep_stall_get_hal(ep_idn, ep_dir_idx) ? 0x0001 : 0x0000;
             usb_ep_control_transfer(request, &status, 2);
           } break;
 
@@ -342,9 +337,6 @@ static bool usb_set_configuration() {
       if (assoc_itf_count == 1) {
         assoc_itf_count = 2;
       }
-
-      // bind all endpoints to found driver
-      tu_edpt_bind_driver(usb_device.ep2drv, descriptor_interface, drv_len);
 
       // next Interface
       discriptor += drv_len;
@@ -613,17 +605,4 @@ bool usb_control_transfer(uint8_t ep_addr, uint32_t transferred_bytes) {
   }
 
   return true;
-}
-
-void tu_edpt_bind_driver(uint8_t ep2drv[][EP_IN_OUT_PAIR], const usb_control_interface_descriptor_t* descriptor_interface, uint16_t descriptor_len) {
-  const uint8_t* discriptor = (const uint8_t*)descriptor_interface;
-  const uint8_t* descriptor_end = discriptor + descriptor_len;
-
-  while (discriptor < descriptor_end) {
-    if (USB_DESCRIPTOR_TYPE_ENDPOINT == usb_descriptor_type(discriptor)) {
-      const uint8_t ep_addr = ((const usb_ep_descriptor_t*)discriptor)->bEndpointAddress;
-      ep2drv[USB_EP_IDN(ep_addr)][USB_EP_DIR_IDX(ep_addr)] = 0;
-    }
-    discriptor = usb_next_descriptor(discriptor);
-  }
 }
