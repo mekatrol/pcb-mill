@@ -43,14 +43,6 @@ __attribute__((always_inline)) static inline const usb_interface_association_des
 #define U16_HIGH(_u16) ((uint8_t)(((_u16) >> 8) & 0x00ff))
 #define U16_LOW(_u16) ((uint8_t)((_u16) & 0x00ff))
 
-//--------------------------------------------------------------------+
-// Weak stubs: invoked if no strong implementation is available
-//--------------------------------------------------------------------+
-__attribute__((weak)) const uint8_t* usb_descriptor_other_speed_configuration(uint8_t index) {
-  (void)index;
-  return NULL;
-}
-
 static bool usb_set_configuration();
 static bool process_get_descriptor(const usb_control_request_t* request);
 
@@ -360,35 +352,22 @@ static bool process_get_descriptor(const usb_control_request_t* request) {
       return usb_ep_control_transfer(request, descriptor_device, sizeof(usb_device_descriptor_t));
     }
 
-    case USB_DESCRIPTOR_TYPE_CONFIGURATION:
-    case USB_DESCRIPTOR_TYPE_OTHER_SPEED_CONFIG: {
-      uintptr_t descriptor_config = (uintptr_t)NULL;
-
-      if (descriptor_type == USB_DESCRIPTOR_TYPE_CONFIGURATION) {
-        descriptor_config = (uintptr_t)usb_descriptor_configuration(descriptor_index);
-      } else {
-        // Host only request this after getting Device Qualifier descriptor
-        descriptor_config = (uintptr_t)usb_descriptor_other_speed_configuration(descriptor_index);
-      }
-
-      if (!descriptor_config) {
-        return false;
-      }
-
-      // Use offsetof to avoid pointer to the odd/misaligned address
-      const uint16_t total_len = unaligned_read_16((const void*)(descriptor_config + offsetof(usb_configuration_descriptor_t, wTotalLength)));
-
-      return usb_ep_control_transfer(request, (void*)descriptor_config, total_len);
+    case USB_DESCRIPTOR_TYPE_CONFIGURATION: {
+      usb_configuration_descriptor_t* descriptor_config = (usb_configuration_descriptor_t*)usb_descriptor_configuration(descriptor_index);
+      return usb_ep_control_transfer(request, (void*)descriptor_config, descriptor_config->wTotalLength);
     }
 
+    case USB_DESCRIPTOR_TYPE_OTHER_SPEED_CONFIG:
+      return false;
+
     case USB_DESCRIPTOR_TYPE_STRING: {
-      // String Descriptor always uses the desc set from user
-      const uint8_t* descriptor_str = (const uint8_t*)usb_descriptor_string(descriptor_index, request->wIndex);
+      const uint8_t* descriptor_str = (const uint8_t*)usb_descriptor_string(descriptor_index);
+
+      // No string matching the descriptor index
       if (!descriptor_str) {
         return false;
       }
 
-      // first byte of descriptor is its size
       return usb_ep_control_transfer(request, (void*)(uintptr_t)descriptor_str, usb_descriptor_len(descriptor_str));
     }
 

@@ -326,9 +326,8 @@ bool usb_ep_control_transfer(const usb_control_request_t* request, void* buffer,
 bool usb_control_status(const usb_control_request_t* request);
 
 const uint8_t* get_device_descriptor(void);
-const uint16_t* usb_descriptor_string(uint8_t index, uint16_t langid);
+const uint16_t* usb_descriptor_string(uint8_t index);
 const uint8_t* usb_descriptor_device_qualifier(void);
-const uint8_t* usb_descriptor_other_speed_configuration(uint8_t index);
 
 // Descriptor types recognised by this USB library
 typedef enum {
@@ -432,12 +431,13 @@ typedef struct __attribute__((packed)) {
 
 _Static_assert(sizeof(tusb_descriptor_device_qualifier_t) == 10, "size must be 10");
 
-// USB String Descriptor
+// USB String Descriptor (USB 2.0 Spec, Table 9-16)
+// This descriptor provides human-readable strings (e.g., manufacturer, product, serial number).
 typedef struct __attribute__((packed)) {
-  uint8_t bLength;          ///< Size of this descriptor in bytes
-  uint8_t bDescriptorType;  ///< Descriptor Type
-  uint16_t utf16le[];
-} tusb_descriptor_string_t;
+  uint8_t bLength;          // Size of this descriptor in bytes
+  uint8_t bDescriptorType;  // Constant: USB_DESCRIPTOR_TYPE_STRING (0x03)
+  uint16_t wString[];       // UTF-16LE encoded string characters
+} usb_descriptor_string_t;
 
 // return next descriptor
 __attribute__((always_inline)) static inline const uint8_t* usb_next_descriptor(const void* desc) {

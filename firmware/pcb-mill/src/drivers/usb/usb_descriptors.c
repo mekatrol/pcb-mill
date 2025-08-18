@@ -196,9 +196,7 @@ const char* string_descriptor_arr[] = {
 
 static uint16_t descriptor_str[32];
 
-const uint16_t* usb_descriptor_string(uint8_t index, uint16_t langid) {
-  (void)langid;
-
+const uint16_t* usb_descriptor_string(uint8_t index) {
   if (index == 0) {
     descriptor_str[0] = (2 << 8) | USB_DESCRIPTOR_TYPE_STRING;
     descriptor_str[1] = 0x0409;

@@ -572,7 +572,9 @@ void USB_UCPD1_2_IRQHandler() {
     USB->ISTR = ~USB_ISTR_ESOF;
   }
 
-  // loop to handle all pending CTR interrupts
+  // USB_ISTR_CTR can have multiple events queued, so we need to iterate until
+  // all queued are cleared. If not we would return from interrupt only to interrupt again
+  // which is not efficient.
   while (USB->ISTR & USB_ISTR_CTR) {
     // These bits are written by the hardware according to the host channel or device endpoint number
     const uint32_t ep_idn = USB->ISTR & USB_ISTR_IDN;
