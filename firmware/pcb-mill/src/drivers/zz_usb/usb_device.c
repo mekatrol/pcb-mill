@@ -35,7 +35,7 @@ static usb_control_transfer_t control_transfer;
 static __attribute__((aligned(4))) uint8_t ep0_control_buffer[USB_EP0_BUFFER_SIZE];
 
 // Will return next interfac descriptor
-__attribute__((always_inline)) static inline const usb_interface_association_descriptor_t* next_interface(const usb_interface_association_descriptor_t* interface_assoc) {
+ALWAYS_INLINE static const usb_interface_association_descriptor_t* next_interface(const usb_interface_association_descriptor_t* interface_assoc) {
   return (const usb_interface_association_descriptor_t*)(interface_assoc + interface_assoc->bLength);
 }
 
@@ -62,7 +62,7 @@ bool usb_init_driver() {
   usb_cdc_init();
 
   // Init device controller driver
-  usb_init_hal();
+  usb_device_start_hal();
   NVIC_EnableIRQ(USB_UCPD1_2_IRQn);
 
   return true;
@@ -437,7 +437,7 @@ void usb_ep_stall_clear(uint8_t ep_addr) {
 
 static inline bool status_stage_xact(const usb_control_request_t* request) {
   // Opposite to endpoint in Data Phase
-  const usb_direction_index_t request_direction = usb_request_direction(request->bmRequestType);
+  const usb_request_direction_index_t request_direction = usb_request_direction(request->bmRequestType);
   const uint8_t ep_addr = request_direction ? USB_DIR_DEVICE_IN_HOST_OUT : USB_DIR_DEVICE_OUT_HOST_IN;
 
   return usb_ep_transfer(ep_addr, NULL, 0);
@@ -461,7 +461,7 @@ static bool data_stage_xact() {
   uint8_t ep0_addr = USB_DIR_DEVICE_IN_HOST_OUT;
 
   // Get direction from request
-  const usb_direction_index_t request_direction = usb_request_direction(control_transfer.request.bmRequestType);
+  const usb_request_direction_index_t request_direction = usb_request_direction(control_transfer.request.bmRequestType);
 
   // Is the direction IN?
   if (request_direction == USB_DIR_DEVICE_OUT_HOST_IN_IDX) {

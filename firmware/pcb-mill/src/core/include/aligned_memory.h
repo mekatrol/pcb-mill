@@ -84,20 +84,20 @@
  *         On M3/M4/M7 → allowed but slower (can take multiple cycles).
  **************************************************************************************************************************************************/
 
-__attribute__((always_inline)) static inline uint16_t unaligned_read_16(const uint8_t* p) {
+ALWAYS_INLINE static uint16_t unaligned_read_16(const uint8_t* p) {
   return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
 }
 
-__attribute__((always_inline)) static inline void unaligned_write_16(uint8_t* p, uint16_t value) {
+ALWAYS_INLINE static void unaligned_write_16(uint8_t* p, uint16_t value) {
   p[0] = (uint8_t)(value);
   p[1] = (uint8_t)(value >> 8);
 }
 
-__attribute__((always_inline)) static inline uint32_t unaligned_read_32(const uint8_t* p) {
+ALWAYS_INLINE static uint32_t unaligned_read_32(const uint8_t* p) {
   return (uint32_t)p[0] | ((uint32_t)p[1] << 8) | ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
 }
 
-__attribute__((always_inline)) static inline void unaligned_write_32(uint8_t* p, uint32_t value) {
+ALWAYS_INLINE static void unaligned_write_32(uint8_t* p, uint32_t value) {
   p[0] = (uint8_t)(value);
   p[1] = (uint8_t)(value >> 8);
   p[2] = (uint8_t)(value >> 16);

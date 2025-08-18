@@ -1,4 +1,5 @@
 #include "hal.h"
+#include "usb.h"
 /* TODO : pre clean code
 
 #include "cdc_device.h"
@@ -40,8 +41,11 @@ void main() {
   // Initialise limit detection
   limits_init_hal();
 
-  // Initialise USB
+  // Initialise board USB IO
   usb_init_board_hal();
+
+  // Start USB in device mode
+  usb_device_start_hal();
   // TODO: usb_init_driver();
 
   uint32_t config_version = config_get_version();

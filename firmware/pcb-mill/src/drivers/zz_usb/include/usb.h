@@ -12,6 +12,7 @@
 #include "stm32g0xx.h"
 
 #include "aligned_memory.h"
+#include "macros.h"
 
 // USB registers strong type
 #define USB ((USB_DRD_TypeDef*)USB_BASE)
@@ -26,7 +27,7 @@
 //   - ep2 - interrupt
 #define USB_EP_MAX 3
 
-// A pait of endpoints max IN/OUT
+// A pair of endpoints max IN/OUT
 #define EP_IN_OUT_PAIR 2
 
 // The size of endpoint 0 buffer
@@ -96,21 +97,21 @@ typedef struct
 // Buffer Table is located in Packet Memory Area (PMA)
 typedef struct {
   usb_buffer_description_table_t ep[USB_EP_MAX];
-} usb_buffer_description_table_map_t;
+} usb_buffer_description_tables_t;
 
 // Buffers can be placed anywhere inside the packet memory because their location and size is specified in a buffer description table,
 // which is also located in the packet memory
-#define USB_BUFFER_DESC_TABLE ((volatile usb_buffer_description_table_map_t*)(USB_DRD_PMAADDR))
+#define USB_BUFF_DESC ((volatile usb_buffer_description_tables_t*)(USB_DRD_PMAADDR))
 
 void usbd_control_reset();
 void usb_configuration_reset();
 void usb_hal_reset();
 bool usb_control_transfer(uint8_t ep_addr, uint32_t transferred_bytes);
 
-// Initialize USN in device mode
-void usb_init_hal();
+// Start USB in device mode
+void usb_device_start_hal();
 
-__attribute__((always_inline)) static inline void usb_reset() {
+ALWAYS_INLINE static void usb_reset() {
   usb_hal_reset();
   usb_configuration_reset();
   usbd_control_reset();
@@ -144,7 +145,7 @@ typedef enum {
 typedef enum {
   USB_DIR_DEVICE_IN_HOST_OUT_IDX = 0,  // Host-to-device
   USB_DIR_DEVICE_OUT_HOST_IN_IDX = 1,  // Device-to-host
-} usb_direction_index_t;
+} usb_request_direction_index_t;
 
 /// Standard USB control request (USB 2.0 Spec, Table 9-2)
 typedef struct __attribute__((packed)) {
@@ -157,9 +158,9 @@ typedef struct __attribute__((packed)) {
 
 _Static_assert(sizeof(usb_control_request_t) == 8, "sizeof(usb_control_request_t) must be 8");
 
-__attribute__((always_inline)) static inline usb_request_recipient_t usb_request_recipient(uint8_t bm) { return (bm)&USB_REQUEST_RECIPIENT_MASK; }
-__attribute__((always_inline)) static inline usb_request_type_t usb_request_type(uint8_t bm) { return ((bm)&USB_REQUEST_TYPE_MASK) >> 5; }
-__attribute__((always_inline)) static inline usb_direction_index_t usb_request_direction(uint8_t bm) { return USB_EP_DIR((bm)) >> 7; }
+ALWAYS_INLINE static usb_request_recipient_t usb_request_recipient(uint8_t bm) { return (bm)&USB_REQUEST_RECIPIENT_MASK; }
+ALWAYS_INLINE static usb_request_type_t usb_request_type(uint8_t bm) { return ((bm)&USB_REQUEST_TYPE_MASK) >> 5; }
+ALWAYS_INLINE static usb_request_direction_index_t usb_request_direction(uint8_t bm) { return USB_EP_DIR((bm)) >> 7; }
 
 // USB Device Descriptor
 typedef struct __attribute__((packed)) {
@@ -313,7 +314,7 @@ bool process_control_request(const usb_control_request_t* request);
 bool usb_connected(void);
 
 // True if device configured
-__attribute__((always_inline)) static inline bool usb_ready(void) {
+ALWAYS_INLINE static bool usb_ready(void) {
   return usb_device.config_num ? true : false;
 }
 
@@ -373,7 +374,7 @@ typedef enum {
 typedef enum {
   TUSB_REQ_FEATURE_EDPT_HALT = 0,
   TUSB_REQ_FEATURE_REMOTE_WAKEUP = 1
-} tusb_request_feature_selector_t;
+} usb_request_feature_selector_t;
 
 // https://www.usb.org/defined-class-codes
 typedef enum {
@@ -440,37 +441,37 @@ typedef struct __attribute__((packed)) {
 } usb_descriptor_string_t;
 
 // return next descriptor
-__attribute__((always_inline)) static inline const uint8_t* usb_next_descriptor(const void* desc) {
+ALWAYS_INLINE static const uint8_t* usb_next_descriptor(const void* desc) {
   const uint8_t* desc8 = (const uint8_t*)desc;
   return desc8 + desc8[DESC_OFFSET_LEN];
 }
 
 // get descriptor length
-__attribute__((always_inline)) static inline uint8_t usb_descriptor_len(const void* desc) {
+ALWAYS_INLINE static uint8_t usb_descriptor_len(const void* desc) {
   return ((const uint8_t*)desc)[DESC_OFFSET_LEN];
 }
 
 // get descriptor type
-__attribute__((always_inline)) static inline uint8_t usb_descriptor_type(const void* desc) {
+ALWAYS_INLINE static uint8_t usb_descriptor_type(const void* desc) {
   return ((const uint8_t*)desc)[DESC_OFFSET_TYPE];
 }
 
 // get descriptor subtype
-__attribute__((always_inline)) static inline uint8_t tu_desc_subtype(const void* desc) {
+ALWAYS_INLINE static uint8_t tu_desc_subtype(const void* desc) {
   return ((const uint8_t*)desc)[DESC_OFFSET_SUBTYPE];
 }
 
-__attribute__((always_inline)) static inline uint8_t tu_desc_is_valid(const void* desc, const uint8_t* desc_end) {
+ALWAYS_INLINE static uint8_t tu_desc_is_valid(const void* desc, const uint8_t* desc_end) {
   const uint8_t* desc8 = (const uint8_t*)desc;
   return (desc8 < desc_end) && (usb_next_descriptor(desc) <= desc_end);
 }
 
-__attribute__((always_inline)) static inline uint16_t usb_get_request_type_code(const usb_control_request_t* request) {
+ALWAYS_INLINE static uint16_t usb_get_request_type_code(const usb_control_request_t* request) {
   uint16_t req_code = ((request->bmRequestType & 0x60) << 3) | request->bRequest;
   return req_code;
 }
 
-__attribute__((always_inline)) static inline const char* get_usb_request_code_name(const usb_control_request_t* request) {
+ALWAYS_INLINE static const char* get_usb_request_code_name(const usb_control_request_t* request) {
   uint8_t type = request->bmRequestType & 0x60;  // 0x00=Standard, 0x20=Class, 0x40=Vendor
   uint8_t bRequest = (uint16_t)request->bRequest;
 

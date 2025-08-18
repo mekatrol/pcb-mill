@@ -13,7 +13,7 @@ uint32_t usb_cdc_available();
 uint32_t usb_cdc_read(void* buffer, uint32_t bufsize);
 
 // Read a byte, return -1 if there is none
-__attribute__((always_inline)) static inline int32_t usb_cdc_read_char() {
+ALWAYS_INLINE static int32_t usb_cdc_read_char() {
   uint8_t ch;
   return usb_cdc_read(&ch, 1) ? (int32_t)ch : -1;
 }
@@ -22,12 +22,12 @@ __attribute__((always_inline)) static inline int32_t usb_cdc_read_char() {
 uint32_t usb_cdc_write(const uint8_t* buffer, uint32_t bufsize);
 
 // Write a byte
-__attribute__((always_inline)) static inline uint32_t usb_cdc_write_char(uint8_t ch) {
+ALWAYS_INLINE static uint32_t usb_cdc_write_char(uint8_t ch) {
   return usb_cdc_write(&ch, 1);
 }
 
 // Write a null-terminated string
-__attribute__((always_inline)) static inline uint32_t usb_cdc_write_str(const uint8_t* str) {
+ALWAYS_INLINE static uint32_t usb_cdc_write_str(const uint8_t* str) {
   return usb_cdc_write(str, strlen((char*)str));
 }
 

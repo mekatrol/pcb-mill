@@ -2,7 +2,10 @@
   "files.associations": {
     "stm32g0xx.h": "c",
     "stm32g0b1xx.h": "c",
-    "system_stm32g0xx.h": "c"
+    "system_stm32g0xx.h": "c",
+    "*.bak": "c",
+    "macros.h": "c",
+    "usb.h": "c"
   },
   "cortex-debug.variableUseNaturalFormat": true
 }
