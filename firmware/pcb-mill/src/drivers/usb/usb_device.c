@@ -437,32 +437,36 @@ bool usb_process_control_request(const usb_control_request_t* request) {
 bool usb_control_transfer_complete(uint8_t ep_addr, uint32_t transferred_bytes) {
   const uint8_t request_direction = USB_EP_DIR(control_transfer.request.bmRequestType);
 
-  // Status stage complete:
-  // - Status direction is always opposite of the request/data stage
-  // - Must be a zero-length packet (ZLP)
-  if (USB_EP_DIR(ep_addr) != request_direction) {
+  // Status stage complete inidicated by status direction is always
+  // opposite of the request/data stage
+  if (request_direction != USB_EP_DIR(ep_addr)) {
+    // Must be a zero-length packet (ZLP)
     if (transferred_bytes != 0) {
-      return false;  // Invalid status stage transfer
+      return false;
     }
 
-    // invoke optional dcd hook if available
-    usb_ep_control_status_complete(&control_transfer.request);
-
+    // If the initiator provided a control completion callback then we should call it
     if (control_transfer.control_complete_cb) {
       control_transfer.control_complete_cb(&control_transfer.request);
     }
 
+    // Transfer was successful
     return true;
   }
 
+  // If the host is sending the device control data then we need to transfer it
+  // from the ep0_control_buffer to the feed buffer
   if (request_direction == USB_DIR_DEVICE_IN_HOST_OUT) {
+    // If the originator did not specify a buffer to place the data into then that is an issue
     if (!control_transfer.feed.buffer) {
       return false;
     }
 
+    // Copy the received data to the feed buffer
     memcpy(control_transfer.feed.buffer, ep0_control_buffer, transferred_bytes);
   }
 
+  // Update feed buffer info
   control_transfer.feed.fed_count += (uint16_t)transferred_bytes;
   control_transfer.feed.buffer += transferred_bytes;
 
