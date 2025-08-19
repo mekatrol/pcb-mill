@@ -1,4 +1,5 @@
 #include "board_hal.h"
+#include "feed_forward_buffer.h"
 #include "usb.h"
 
 // A pair of endpoints max IN/OUT
@@ -21,12 +22,6 @@ typedef enum {
   USB_EP_STATE_NAK = 0b10,
   USB_EP_STATE_VALID = 0b11
 } usb_ep_state_t;
-
-// Direction bit
-typedef enum {
-  USB_DIR_DEVICE_IN_HOST_OUT = 0x00,  // Host-to-device
-  USB_DIR_DEVICE_OUT_HOST_IN = 0x80,  // Device-to-host
-} usb_direction_t;
 
 // This is the same as USB_DRD_PMABuffDescTypeDef, except we can reference the
 // TXBD and RXBD using a direction index for the count_addr:
@@ -52,6 +47,17 @@ typedef struct {
 } usb_buffer_description_tables_t;
 
 _Static_assert(sizeof(usb_buffer_description_tables_t) == 64, "sizeof(usb_control_request_t) must be 64");
+
+typedef struct {
+  feed_forward_buffer_t feed;  // "Inherited" fields
+  uint16_t max_packet_size;    // Endpoint max ep_transfer size
+  uint8_t ep_idn;              // Endpoint identifier (is zero based so can be used as index to arrays)
+} usb_ep_transfer_t;
+
+// Transfer TX/RX buffer for each endpoint, used to buffer sending and receiving data
+// over endpoints. A transfer might be larger than the hardware buffers
+// and having a buffered transfer reduce chances of overrun on hardware buffers.
+static usb_ep_transfer_t ep_transfer_set[USB_EP_MAX][EP_IN_OUT_PAIR];
 
 // Buffer descriptor tables. Located at USB_DRD_PMAADDR.
 #define USB_BUFF_DESC ((volatile usb_buffer_description_tables_t *)(USB_DRD_PMAADDR))
@@ -164,14 +170,26 @@ ALWAYS_INLINE static void usb_ep_clear_correct_transfer(uint32_t ep_idn, usb_req
   usb_ep_reg_set(ep_idn, ep_reg, false);
 }
 
-ALWAYS_INLINE static uint16_t usb_pma_get_count(uint32_t ep_idn, uint8_t buf_id) {
+ALWAYS_INLINE static uint16_t usb_pma_count_get(uint32_t ep_idn, uint8_t buf_id) {
   uint16_t count;
   count = (USB_BUFF_DESC->ep[ep_idn].buffer[buf_id].count_addr >> 16);
   return count & 0x3FFU;
 }
 
-ALWAYS_INLINE static uint32_t usb_pma_get_ep_addr(uint32_t ep_idn, uint8_t buf_id) {
+ALWAYS_INLINE static void usb_pma_count_set(uint32_t ep_idn, uint8_t buf_id, uint16_t byte_count) {
+  uint32_t count_addr = USB_BUFF_DESC->ep[ep_idn].buffer[buf_id].count_addr;
+  count_addr = (count_addr & ~0x03FF0000u) | ((byte_count & 0x3FFu) << 16);
+  USB_BUFF_DESC->ep[ep_idn].buffer[buf_id].count_addr = count_addr;
+}
+
+ALWAYS_INLINE static uint32_t usb_pma_ep_addr_get(uint32_t ep_idn, uint8_t buf_id) {
   return USB_BUFF_DESC->ep[ep_idn].buffer[buf_id].count_addr & 0x0000FFFFU;
+}
+
+ALWAYS_INLINE static void usb_pma_ep_addr_set(uint32_t ep_idn, uint8_t idn_dir_idx, uint16_t addr) {
+  uint32_t count_addr = USB_BUFF_DESC->ep[ep_idn].buffer[idn_dir_idx].count_addr;
+  count_addr = (count_addr & 0xFFFF0000U) | (addr & 0x0000FFFCU);
+  USB_BUFF_DESC->ep[ep_idn].buffer[idn_dir_idx].count_addr = count_addr;
 }
 
 /****************************************************************************************************************************************
@@ -267,12 +285,23 @@ void usb_ep_stall_set(uint8_t ep_idn, uint8_t ep_dir_idx) {
   usb_ep_reg_set_preserve(ep_idn, ep_reg, true);
 }
 
+bool usb_ep_stall_get_hal(uint8_t ep_idn, uint8_t ep_dir_idx) {
+  uint32_t ep_reg = USB->chep[ep_idn].CHEPnR;
+  ep_reg &= USB_CHEP_REG_MASK | USB_EP_STATUS_MASK(ep_dir_idx);
+
+  // Get status bits
+  uint32_t status = usb_ep_status_get(ep_reg, ep_dir_idx);
+
+  // Return true if stalled
+  return status == USB_EP_STATE_STALL;
+}
+
 /*
  * Set up an endpoint
  */
 static void process_control_request_hal(usb_control_request_t *control_request) {
   // Process control request
-  if (!process_control_request(control_request)) {
+  if (!usb_process_control_request(control_request)) {
     // USB 2.0 Specification, Section 9.2.7, “Error Handling”
     // If a device detects a condition that prevents it from completing the request, it must indicate the error by returning a STALL handshake.
     // For control transfers, the device must respond with a STALL to any setup or data stage packet it cannot handle.
@@ -288,10 +317,10 @@ static void usb_ep_setup(uint32_t ep_idn) {
   uint8_t control_request[8];
 
   // Get received buffer PMA location
-  uint16_t rx_addr = usb_pma_get_ep_addr(ep_idn, USB_EP_RX_COUNT_ADDR_IDX);
+  uint16_t rx_addr = usb_pma_ep_addr_get(ep_idn, USB_EP_RX_COUNT_ADDR_IDX);
 
   // Get number of bytes received
-  uint16_t rx_count = usb_pma_get_count(ep_idn, USB_EP_RX_COUNT_ADDR_IDX);
+  uint16_t rx_count = usb_pma_count_get(ep_idn, USB_EP_RX_COUNT_ADDR_IDX);
 
   // Receive the request data
   usb_rx_pma_read(control_request, rx_addr, rx_count);
@@ -306,6 +335,94 @@ static void usb_ep_setup(uint32_t ep_idn) {
   } else {
     // Something went wrong, reset the control endpoint (by resetting size, which clears count etc)
     usb_ep_set_rx_buffer_block_size(EP0_IDN, sizeof(usb_control_request_t));
+  }
+}
+
+/*
+ * This method writes data from an unaligned buffer to the endpoint buffer
+ */
+static bool usb_write_unaligned_data(uint16_t dst, const void *__restrict src, uint16_t byte_count) {
+  if (byte_count == 0) {
+    // No count then nothing to write
+    return true;
+  }
+
+  // We are writing 32 bit values from unaligned byte locations
+  uint32_t write_count = byte_count / sizeof(uint32_t);
+
+  // The PMA buffer we are writing to
+  volatile uint32_t *pma_buf = (volatile uint32_t *)(USB_DRD_PMAADDR + dst);
+
+  // The unaligned buffer we area reading from
+  const uint8_t *src8 = src;
+
+  // Read unaligned byte and write to PMA buffer
+  while (write_count--) {
+    *pma_buf = unaligned_read_32(src8);
+    src8 += sizeof(uint32_t);
+    pma_buf++;
+  }
+
+  // Write an remaining bytes (for odd byte_count)
+  // ie:
+  //    1   for 16-bit
+  //    1-3 for 32-bit
+  uint16_t odd = byte_count & (sizeof(uint32_t) - 1);
+  if (odd) {
+    uint32_t b = 0;
+    for (uint16_t i = 0; i < odd; i++) {
+      b |= *src8++ << (i * 8);
+    }
+    *pma_buf = b;
+  }
+
+  return true;
+}
+
+static void usb_ep_transfer_complete(uint8_t ep_addr, uint32_t transferred_bytes) {
+  const uint8_t ep_idn = USB_EP_IDN(ep_addr);
+
+  if (ep_idn == 0) {
+    usb_control_transfer_complete(ep_addr, transferred_bytes);
+  } else {
+    usb_cdc_transfer(ep_addr, transferred_bytes);
+  }
+}
+
+static void usb_tx_packet(usb_ep_transfer_t *ep_transfer) {
+  // Calculate the remaining length of data to write
+  uint32_t len = feed_forward_remaining_count(&ep_transfer->feed, ep_transfer->max_packet_size);
+
+  // Get pointer to the endpoing PMA
+  uint16_t addr_ptr = (uint16_t)usb_pma_ep_addr_get(ep_transfer->ep_idn, USB_EP_TX_COUNT_ADDR_IDX);
+
+  // Transfer next batch of data from the feed buffer to the PMA
+  usb_write_unaligned_data(addr_ptr, &(ep_transfer->feed.buffer[ep_transfer->feed.fed_count]), len);
+
+  // Update the transferred length
+  ep_transfer->feed.fed_count += len;
+
+  // Set the length of data in PMA
+  usb_pma_count_set(ep_transfer->ep_idn, USB_EP_TX_COUNT_ADDR_IDX, len);
+
+  // Indicate endpoint is in a valid state
+  uint32_t ep_reg = USB->chep[ep_transfer->ep_idn].CHEPnR;
+
+  usb_ep_status(&ep_reg, USB_DIR_DEVICE_OUT_HOST_IN_IDX, USB_EP_STATE_VALID);
+
+  // Update TX Status
+  ep_reg &= USB_CHEP_REG_MASK | USB_EP_STATUS_MASK(USB_DIR_DEVICE_OUT_HOST_IN_IDX);
+  usb_ep_reg_set_preserve(ep_transfer->ep_idn, ep_reg, true);
+}
+
+static void usb_ep_tx_queued_bytes(uint32_t ep_idn) {
+  usb_ep_transfer_t *ep_transfer = &ep_transfer_set[ep_idn][USB_DIR_DEVICE_OUT_HOST_IN_IDX];
+
+  if (ep_transfer->feed.total_count != ep_transfer->feed.fed_count) {
+    usb_tx_packet(ep_transfer);
+  } else {
+    uint32_t ep_addr = USB->chep[ep_idn].CHEPnR & USB_CHEP_ADDR;
+    usb_ep_transfer_complete(ep_addr | USB_DIR_DEVICE_OUT_HOST_IN, ep_transfer->feed.fed_count);
   }
 }
 
@@ -484,4 +601,44 @@ void USB_UCPD1_2_IRQHandler() {
     //       device.
     USB->CNTR |= (USB_CNTR_SUSPEN | USB_CNTR_SUSPRDY);
   }
+}
+
+/*
+ * Prepare HAL for sending / receiving data from host
+ */
+bool usb_ep_queue_transfer_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t *buffer, uint16_t total_bytes) {
+  // Get the endpoint specific transfer buffer
+  usb_ep_transfer_t *ep_transfer = &ep_transfer_set[ep_idn][ep_dir_idx];
+
+  // Initialise transfer feed
+  ep_transfer->feed.buffer = buffer;            // Use callers buffer
+  ep_transfer->feed.total_count = total_bytes;  // We are going to transfer total bytes
+  ep_transfer->feed.fed_count = 0;              // Nothing has been transferred yet
+
+  if (ep_dir_idx == USB_DIR_DEVICE_OUT_HOST_IN_IDX) {
+    // Transmit from device is USB_DIR_DEVICE_OUT_HOST_IN_IDX to host
+    usb_tx_packet(ep_transfer);
+  } else {
+    // Receive to device is USB_DIR_DEVICE_IN_HOST_OUT_IDX from host
+    uint32_t ep_reg = USB->chep[ep_idn].CHEPnR;
+    ep_reg &= (USB_CHEP_REG_MASK | USB_EP_STATUS_MASK(ep_dir_idx));
+
+    usb_ep_set_rx_buffer_block_size(ep_idn, (uint32_t)ep_transfer->feed.total_count);
+    usb_ep_status(&ep_reg, ep_dir_idx, USB_EP_STATE_VALID);
+    usb_ep_reg_set_preserve(ep_idn, ep_reg, true);
+  }
+
+  // STM32G0B1 does not detect failures in this method so always return true (assume success)
+  return true;
+}
+
+/*
+ * Set the device address in HAL
+ */
+void usb_device_set_addr_hal(const uint8_t device_addr) {
+  // Set the device address and keep enabled
+  USB->DADDR = (USB_DADDR_EF | device_addr);
+
+  // Address is set upon ACK status response so we clear RX count
+  usb_ep_set_rx_buffer_block_size(EP0_IDN, sizeof(usb_control_request_t));
 }

@@ -103,10 +103,10 @@ typedef struct {
 // which is also located in the packet memory
 #define USB_BUFF_DESC ((volatile usb_buffer_description_tables_t*)(USB_DRD_PMAADDR))
 
-void usbd_control_reset();
+void usb_control_transfer_clear();
 void usb_configuration_reset();
 void usb_hal_reset();
-bool usb_control_transfer(uint8_t ep_addr, uint32_t transferred_bytes);
+bool usb_control_transfer_complete(uint8_t ep_addr, uint32_t transferred_bytes);
 
 // Start USB in device mode
 void usb_device_start_hal();
@@ -114,7 +114,7 @@ void usb_device_start_hal();
 ALWAYS_INLINE static void usb_reset() {
   usb_hal_reset();
   usb_configuration_reset();
-  usbd_control_reset();
+  usb_control_transfer_clear();
 }
 
 bool usb_init_driver();
@@ -294,7 +294,7 @@ const usb_configuration_descriptor_t* usb_descriptor_configuration();
 typedef bool (*usb_cdc_control_transfer_t)(uint8_t stage, const usb_control_request_t* request);
 
 // Submit a usb transfer
-bool usb_ep_transfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes);
+bool usb_ep_queue_transfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes);
 
 // Set endpoint stalled
 void usb_ep_stall_set(uint8_t ep_addr);
@@ -307,7 +307,7 @@ bool usb_ep_open_in_out(const usb_ep_descriptor_t* p_desc, uint8_t xfer_type, ui
 
 extern usbd_device_t usb_device;
 
-bool process_control_request(const usb_control_request_t* request);
+bool usb_process_control_request(const usb_control_request_t* request);
 
 // Check if device is connected (may not mounted/configured yet)
 // True if just got out of Bus Reset and received the very first data from host
@@ -321,10 +321,10 @@ ALWAYS_INLINE static bool usb_ready(void) {
 // Carry out Data and Status stage of control transfer
 // - If len = 0, it is equivalent to sending status only
 // - If len > wLength : it will be truncated
-bool usb_ep_control_transfer(const usb_control_request_t* request, void* buffer, uint16_t len);
+bool usb_ep_initiate_control_transfer(const usb_control_request_t* request, void* buffer, uint16_t len);
 
 // Send STATUS (zero length) packet
-bool usb_control_status(const usb_control_request_t* request);
+bool usb_control_init_status_stage(const usb_control_request_t* request);
 
 const uint8_t* get_device_descriptor(void);
 const uint16_t* usb_descriptor_string(uint8_t index);
@@ -555,7 +555,7 @@ bool usb_ep_open(const usb_ep_descriptor_t* ep_descriptor);
 void usb_ep_close_all();
 
 // Queue a transfer
-bool usb_ep_transfer_queue_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t* buffer, uint16_t total_bytes);
+bool usb_ep_queue_transfer_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t* buffer, uint16_t total_bytes);
 
 // Stall endpoint, any queuing transfer should be removed from endpoint
 void usb_ep_stall_set(uint8_t ep_addr);

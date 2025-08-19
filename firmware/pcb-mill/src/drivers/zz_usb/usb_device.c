@@ -47,8 +47,8 @@ static bool usb_set_configuration();
 static bool process_get_descriptor(const usb_control_request_t* request);
 
 // from usbd_control.c
-void usbd_control_reset(void);
-void usbd_control_set_request(const usb_control_request_t* request);
+void usb_control_transfer_clear(void);
+void usb_control_transfer_init_data_stage(const usb_control_request_t* request);
 void usbd_control_set_complete_callback(usb_cdc_control_transfer_t fp);
 
 bool usb_connected(void) {
@@ -79,7 +79,7 @@ static bool invoke_class_control(const usb_control_request_t* request) {
   return usb_cdc_control_transfer(CONTROL_STAGE_SETUP, request);
 }
 
-bool process_control_request(const usb_control_request_t* request) {
+bool usb_process_control_request(const usb_control_request_t* request) {
   usbd_control_set_complete_callback(NULL);
 
   const usb_request_type_t request_type = usb_request_type(request->bmRequestType);
@@ -111,10 +111,10 @@ bool process_control_request(const usb_control_request_t* request) {
 
       switch (request->bRequest) {
         case USB_STD_SET_ADDRESS:
-          usbd_control_set_request(request);
+          usb_control_transfer_init_data_stage(request);
 
           // Respond with status (ep0)
-          usb_ep_transfer_queue_hal(EP0_IDN, USB_DIR_DEVICE_OUT_HOST_IN >> 7, NULL, 0);
+          usb_ep_queue_transfer_hal(EP0_IDN, USB_DIR_DEVICE_OUT_HOST_IN >> 7, NULL, 0);
 
           // USB has been addressed
           usb_device.address = request->wValue & 0x7F;  // Address 0 - 127 (7 bit)
@@ -125,7 +125,7 @@ bool process_control_request(const usb_control_request_t* request) {
 
         case USB_STD_GET_CONFIGURATION: {
           uint8_t config_num = usb_device.config_num;
-          usb_ep_control_transfer(request, &config_num, 1);
+          usb_ep_initiate_control_transfer(request, &config_num, 1);
         } break;
 
         case USB_STD_SET_CONFIGURATION: {
@@ -160,7 +160,7 @@ bool process_control_request(const usb_control_request_t* request) {
             }
           }
 
-          usb_control_status(request);
+          usb_control_init_status_stage(request);
         } break;
 
         case USB_STD_GET_DESCRIPTOR:
@@ -171,7 +171,7 @@ bool process_control_request(const usb_control_request_t* request) {
             case TUSB_REQ_FEATURE_REMOTE_WAKEUP:
               // Host may enable remote wake up before suspending especially HID device
               usb_device.remote_wakeup_en = true;
-              usb_control_status(request);
+              usb_control_init_status_stage(request);
               break;
 
             // Stall unsupported feature selector
@@ -188,7 +188,7 @@ bool process_control_request(const usb_control_request_t* request) {
 
           // Host may disable remote wake up after resuming
           usb_device.remote_wakeup_en = false;
-          usb_control_status(request);
+          usb_control_init_status_stage(request);
           break;
 
         case USB_STD_GET_STATUS: {
@@ -196,7 +196,7 @@ bool process_control_request(const usb_control_request_t* request) {
           // - Bit 0: Self Powered
           // - Bit 1: Remote Wakeup enabled
           uint16_t status = (uint16_t)((1u) | (usb_device.remote_wakeup_en ? 2u : 0u));
-          usb_ep_control_transfer(request, &status, 2);
+          usb_ep_initiate_control_transfer(request, &status, 2);
           break;
         }
 
@@ -225,9 +225,9 @@ bool process_control_request(const usb_control_request_t* request) {
 
             if (USB_STD_GET_INTERFACE == request->bRequest) {
               uint8_t alternate = 0;
-              usb_ep_control_transfer(request, &alternate, 1);
+              usb_ep_initiate_control_transfer(request, &alternate, 1);
             } else {
-              usb_control_status(request);
+              usb_control_init_status_stage(request);
             }
             break;
 
@@ -252,7 +252,7 @@ bool process_control_request(const usb_control_request_t* request) {
         switch (request->bRequest) {
           case USB_STD_GET_STATUS: {
             uint16_t status = usb_ep_stall_get_hal(ep_idn, ep_dir_idx) ? 0x0001 : 0x0000;
-            usb_ep_control_transfer(request, &status, 2);
+            usb_ep_initiate_control_transfer(request, &status, 2);
           } break;
 
           case USB_STD_CLEAR_FEATURE:
@@ -349,12 +349,12 @@ static bool process_get_descriptor(const usb_control_request_t* request) {
   switch (descriptor_type) {
     case USB_DESCRIPTOR_TYPE_DEVICE: {
       void* descriptor_device = (void*)(uintptr_t)get_device_descriptor();
-      return usb_ep_control_transfer(request, descriptor_device, sizeof(usb_device_descriptor_t));
+      return usb_ep_initiate_control_transfer(request, descriptor_device, sizeof(usb_device_descriptor_t));
     }
 
     case USB_DESCRIPTOR_TYPE_CONFIGURATION: {
       usb_configuration_descriptor_t* descriptor_config = (usb_configuration_descriptor_t*)usb_descriptor_configuration(descriptor_index);
-      return usb_ep_control_transfer(request, (void*)descriptor_config, descriptor_config->wTotalLength);
+      return usb_ep_initiate_control_transfer(request, (void*)descriptor_config, descriptor_config->wTotalLength);
     }
 
     case USB_DESCRIPTOR_TYPE_OTHER_SPEED_CONFIG:
@@ -368,7 +368,7 @@ static bool process_get_descriptor(const usb_control_request_t* request) {
         return false;
       }
 
-      return usb_ep_control_transfer(request, (void*)(uintptr_t)descriptor_str, usb_descriptor_len(descriptor_str));
+      return usb_ep_initiate_control_transfer(request, (void*)(uintptr_t)descriptor_str, usb_descriptor_len(descriptor_str));
     }
 
     case USB_DESCRIPTOR_TYPE_DEVICE_QUALIFIER: {
@@ -376,7 +376,7 @@ static bool process_get_descriptor(const usb_control_request_t* request) {
       if (!descriptor_qualifier) {
         return false;
       }
-      return usb_ep_control_transfer(request, (void*)(uintptr_t)descriptor_qualifier, usb_descriptor_len(descriptor_qualifier));
+      return usb_ep_initiate_control_transfer(request, (void*)(uintptr_t)descriptor_qualifier, usb_descriptor_len(descriptor_qualifier));
     }
 
     default:
@@ -407,11 +407,11 @@ bool usb_ep_open_in_out(const usb_ep_descriptor_t* descriptor_ep, uint8_t xfer_t
   return true;
 }
 
-bool usb_ep_transfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes) {
+bool usb_ep_queue_transfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes) {
   const uint8_t ep_idn = USB_EP_IDN(ep_addr);
   const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
 
-  if (usb_ep_transfer_queue_hal(ep_idn, ep_dir_idx, buffer, total_bytes)) {
+  if (usb_ep_queue_transfer_hal(ep_idn, ep_dir_idx, buffer, total_bytes)) {
     return true;
   } else {
     // Transfer error
@@ -435,25 +435,25 @@ void usb_ep_stall_clear(uint8_t ep_addr) {
   usb_ep_stall_clear_hal(ep_idn, ep_dir_idx);
 }
 
-static inline bool status_stage_xact(const usb_control_request_t* request) {
+static inline bool usb_stage_control_status(const usb_control_request_t* request) {
   // Opposite to endpoint in Data Phase
   const usb_request_direction_index_t request_direction = usb_request_direction(request->bmRequestType);
   const uint8_t ep_addr = request_direction ? USB_DIR_DEVICE_IN_HOST_OUT : USB_DIR_DEVICE_OUT_HOST_IN;
 
-  return usb_ep_transfer(ep_addr, NULL, 0);
+  return usb_ep_queue_transfer(ep_addr, NULL, 0);
 }
 
 // Status phase
-bool usb_control_status(const usb_control_request_t* request) {
+bool usb_control_init_status_stage(const usb_control_request_t* request) {
   control_transfer.request = (*request);
   control_transfer.feed.buffer = NULL;
   control_transfer.feed.fed_count = 0;
   control_transfer.feed.total_count = 0;
 
-  return status_stage_xact(request);
+  return usb_stage_control_status(request);
 }
 
-static bool data_stage_xact() {
+static bool usb_stage_control_data() {
   // Calculate the remaining length of data to transfer
   const uint16_t len = feed_forward_remaining_count(&control_transfer.feed, USB_EP0_BUFFER_SIZE);
 
@@ -478,10 +478,10 @@ static bool data_stage_xact() {
     }
   }
 
-  return usb_ep_transfer(ep0_addr, len > 0 ? ep0_control_buffer : NULL, len);
+  return usb_ep_queue_transfer(ep0_addr, len > 0 ? ep0_control_buffer : NULL, len);
 }
 
-bool usb_ep_control_transfer(const usb_control_request_t* request, void* buffer, uint16_t len) {
+bool usb_ep_initiate_control_transfer(const usb_control_request_t* request, void* buffer, uint16_t len) {
   control_transfer.request = (*request);
   control_transfer.feed.buffer = (uint8_t*)buffer;
   control_transfer.feed.fed_count = 0U;
@@ -494,11 +494,11 @@ bool usb_ep_control_transfer(const usb_control_request_t* request, void* buffer,
       }
     }
 
-    if (!data_stage_xact()) {
+    if (!usb_stage_control_data()) {
       return false;
     }
   } else {
-    if (!status_stage_xact(request)) {
+    if (!usb_stage_control_status(request)) {
       return false;
     }
   }
@@ -506,10 +506,10 @@ bool usb_ep_control_transfer(const usb_control_request_t* request, void* buffer,
   return true;
 }
 
-void usbd_control_set_request(const usb_control_request_t* request);
+void usb_control_transfer_init_data_stage(const usb_control_request_t* request);
 void usbd_control_set_complete_callback(usb_cdc_control_transfer_t fp);
 
-void usbd_control_reset(void) {
+void usb_control_transfer_clear(void) {
   memset(&control_transfer, 0, sizeof(usb_control_transfer_t));
 }
 
@@ -518,14 +518,14 @@ void usbd_control_set_complete_callback(usb_cdc_control_transfer_t fp) {
   control_transfer.complete_cb = fp;
 }
 
-void usbd_control_set_request(const usb_control_request_t* request) {
+void usb_control_transfer_init_data_stage(const usb_control_request_t* request) {
   control_transfer.request = (*request);
   control_transfer.feed.buffer = NULL;
   control_transfer.feed.fed_count = 0;
   control_transfer.feed.total_count = 0;
 }
 
-bool usb_control_transfer(uint8_t ep_addr, uint32_t transferred_bytes) {
+bool usb_control_transfer_complete(uint8_t ep_addr, uint32_t transferred_bytes) {
   const uint8_t request_direction = USB_EP_DIR(control_transfer.request.bmRequestType);
 
   // Endpoint Address is opposite to direction bit, this is Status Stage complete event
@@ -569,7 +569,7 @@ bool usb_control_transfer(uint8_t ep_addr, uint32_t transferred_bytes) {
     }
 
     if (is_ok) {
-      if (!status_stage_xact(&control_transfer.request)) {
+      if (!usb_stage_control_status(&control_transfer.request)) {
         return false;
       }
     } else {
@@ -579,7 +579,7 @@ bool usb_control_transfer(uint8_t ep_addr, uint32_t transferred_bytes) {
     }
   } else {
     // More data to transfer
-    if (!data_stage_xact()) {
+    if (!usb_stage_control_data()) {
       return false;
     }
   }

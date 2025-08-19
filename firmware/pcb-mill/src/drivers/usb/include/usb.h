@@ -26,6 +26,12 @@ typedef enum {
   USB_DIR_DEVICE_OUT_HOST_IN_IDX = 1,  // Device-to-host
 } usb_request_direction_index_t;
 
+// Direction bit
+typedef enum {
+  USB_DIR_DEVICE_IN_HOST_OUT = 0x00,  // Host-to-device
+  USB_DIR_DEVICE_OUT_HOST_IN = 0x80,  // Device-to-host
+} usb_direction_t;
+
 typedef enum {
   // Type (bits 5..6)
   USB_REQUEST_TYPE_STANDARD = 0 << 5,  // 00b
@@ -139,8 +145,16 @@ _Static_assert(sizeof(usb_control_request_t) == 8, "sizeof(usb_control_request_t
 /*
  * USB HAL API methods - these must be implmented by a HAL (typically the board code)
  */
-void usb_device_start_hal();                                         // Start USB in device mode
-bool process_control_request(const usb_control_request_t* request);  // Process a control request
+void usb_device_start_hal();                                                                                // Start USB in device mode
+bool usb_ep_queue_transfer_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t* buffer, uint16_t total_bytes);  // Queue endpoint transfer in HAL
+void usb_device_set_addr_hal(const uint8_t device_addr);
+
+/*
+ * USB Device API methods
+ */
+bool usb_process_control_request(const usb_control_request_t* request);           // Process a control request
+bool usb_control_transfer_complete(uint8_t ep_addr, uint32_t transferred_bytes);  // An EP0 control transfer has completed
+bool usb_ep_transfer_complete(uint8_t ep_addr, uint32_t transferred_bytes);       // An EP (not EP0) transfer has completed
 
 /*
  * Full USB reset

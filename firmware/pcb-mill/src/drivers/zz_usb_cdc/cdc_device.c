@@ -224,7 +224,7 @@ bool usb_cdc_control_transfer(uint8_t stage, const usb_control_request_t* reques
 
     case CDC_REQUEST_SET_CONTROL_LINE_STATE:
       if (stage == CONTROL_STAGE_SETUP) {
-        usb_control_status(request);
+        usb_control_init_status_stage(request);
       } else if (stage == CONTROL_STAGE_ACK) {
         usb_cdc_interface.flow_control_state = (uint8_t)request->wValue;
 
@@ -240,7 +240,7 @@ bool usb_cdc_control_transfer(uint8_t stage, const usb_control_request_t* reques
 
     case CDC_REQUEST_SEND_BREAK:
       if (stage == CONTROL_STAGE_SETUP) {
-        usb_control_status(request);
+        usb_control_init_status_stage(request);
       } else if (stage == CONTROL_STAGE_ACK) {
       }
       break;
