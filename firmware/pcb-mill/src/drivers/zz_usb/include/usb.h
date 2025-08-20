@@ -303,7 +303,7 @@ void usb_ep_stall_set(uint8_t ep_addr);
 void usb_ep_stall_clear(uint8_t ep_addr);
 
 // Open a set of output and input endpoints
-bool usb_ep_open_in_out(const usb_ep_descriptor_t* p_desc, uint8_t xfer_type, uint8_t* ep_addr_out, uint8_t* ep_addr_in);
+bool usb_ep_open_in_out(const usb_ep_descriptor_t* descriptor, uint8_t transfer_type, uint8_t* ep_addr_out, uint8_t* ep_addr_in);
 
 extern usbd_device_t usb_device;
 
@@ -314,7 +314,7 @@ bool usb_process_control_request(const usb_control_request_t* request);
 bool usb_connected(void);
 
 // True if device configured
-ALWAYS_INLINE static bool usb_ready(void) {
+ALWAYS_INLINE static bool usb_configured(void) {
   return usb_device.config_num ? true : false;
 }
 
@@ -378,8 +378,8 @@ typedef enum {
 
 // https://www.usb.org/defined-class-codes
 typedef enum {
-  TUSB_CLASS_CDC = 2,
-  TUSB_CLASS_CDC_DATA = 10
+  USB_CLASS_CDC = 2,
+  USB_CLASS_CDC_DATA = 10
 } usb_class_code_t;
 
 enum {
@@ -389,9 +389,9 @@ enum {
 
 // TODO remove
 enum {
-  DESC_OFFSET_LEN = 0,
-  DESC_OFFSET_TYPE = 1,
-  DESC_OFFSET_SUBTYPE = 2
+  DESCRIPTOR_LEN_OFFSET = 0,
+  DESCRIPTOR_TYPE_OFFSET = 1,
+  DESCRIPTOR_SUBTYPE_OFFSET = 2
 };
 
 enum {
@@ -440,28 +440,28 @@ typedef struct __attribute__((packed)) {
   uint16_t wString[];       // UTF-16LE encoded string characters
 } usb_descriptor_string_t;
 
-// return next descriptor
+// Return next descriptor
 ALWAYS_INLINE static const uint8_t* usb_next_descriptor(const void* desc) {
   const uint8_t* desc8 = (const uint8_t*)desc;
-  return desc8 + desc8[DESC_OFFSET_LEN];
+  return desc8 + desc8[DESCRIPTOR_LEN_OFFSET];
 }
 
-// get descriptor length
+// Get descriptor length
 ALWAYS_INLINE static uint8_t usb_descriptor_len(const void* desc) {
-  return ((const uint8_t*)desc)[DESC_OFFSET_LEN];
+  return ((const uint8_t*)desc)[DESCRIPTOR_LEN_OFFSET];
 }
 
-// get descriptor type
+// Get descriptor type
 ALWAYS_INLINE static uint8_t usb_descriptor_type(const void* desc) {
-  return ((const uint8_t*)desc)[DESC_OFFSET_TYPE];
+  return ((const uint8_t*)desc)[DESCRIPTOR_TYPE_OFFSET];
 }
 
-// get descriptor subtype
-ALWAYS_INLINE static uint8_t tu_desc_subtype(const void* desc) {
-  return ((const uint8_t*)desc)[DESC_OFFSET_SUBTYPE];
+// Get descriptor subtype
+ALWAYS_INLINE static uint8_t usb_descriptor_subtype(const void* desc) {
+  return ((const uint8_t*)desc)[DESCRIPTOR_SUBTYPE_OFFSET];
 }
 
-ALWAYS_INLINE static uint8_t tu_desc_is_valid(const void* desc, const uint8_t* desc_end) {
+ALWAYS_INLINE static uint8_t usb_descriptor_is_valid(const void* desc, const uint8_t* desc_end) {
   const uint8_t* desc8 = (const uint8_t*)desc;
   return (desc8 < desc_end) && (usb_next_descriptor(desc) <= desc_end);
 }
@@ -549,7 +549,7 @@ void usb_sof_set_enable(bool en);
 void usb_ep_control_status_complete(const usb_control_request_t* request);
 
 // Configure endpoint's registers according to descriptor
-bool usb_ep_open(const usb_ep_descriptor_t* ep_descriptor);
+bool usb_ep_open_hal(const usb_ep_descriptor_t* ep_descriptor);
 
 // Close all endpoints
 void usb_ep_close_all();

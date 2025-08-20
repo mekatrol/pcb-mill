@@ -4,10 +4,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "macros.h"
+
 typedef struct {
-  uint8_t* buffer;       // Buffer location
-  uint16_t total_count;  // Total size to feed
-  uint16_t fed_count;    // Bytes already fed (processed)
+  const uint8_t* buffer;  // Buffer location
+  uint16_t total_count;   // Total size to feed
+  uint16_t fed_count;     // Bytes already fed (processed)
 } feed_forward_buffer_t;
 
 // If total_count >  fed_count → returns the number of bytes remaining.

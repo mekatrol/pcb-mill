@@ -26,7 +26,7 @@ typedef struct {
   bool assigned[EP_IN_OUT_PAIR];
 } ep_assignment_t;
 
-// Transfer buffers for eachend point, used to buffer sending and receiving data
+// Transfer buffers for each endpoint, used to buffer sending and receiving data
 // over endpoints. A transfer might be larger than the hardware buffers
 // and having a buffered transfer reduce chances of overrun on hardware buffers.
 static usb_ep_transfer_t ep_transfer_set[USB_EP_MAX][EP_IN_OUT_PAIR];
@@ -103,7 +103,7 @@ ALWAYS_INLINE static uint32_t usb_ep_status_get(uint32_t ep_reg, usb_request_dir
   // Calculate status bits
   uint32_t pos = (ep_dir_idx == USB_DIR_DEVICE_OUT_HOST_IN_IDX ? USB_CHEP_TX_STTX_Pos : USB_CHEP_RX_STRX_Pos);
 
-  // Makse status bits
+  // Mask status bits
   uint32_t status = ep_reg & (3U << pos);
 
   // Shift status to zero bit
@@ -372,7 +372,7 @@ static bool usb_rx_packet(void *__restrict dst, uint16_t src, uint16_t byte_coun
   return true;
 }
 
-static void usb_ep_rx(uint32_t ep_idn) {
+static void usb_ep_rx_queued_bytes(uint32_t ep_idn) {
   // Get the transfer buffer
   usb_ep_transfer_t *ep_transfer = &ep_transfer_set[ep_idn][USB_DIR_DEVICE_IN_HOST_OUT_IDX];
 
@@ -512,7 +512,7 @@ void usb_hal_reset() {
   // Disable USB
   USB->DADDR = 0U;
 
-  // Reset endpoints
+  // Reset endpoint assignments
   usb_ep_reset();
 
   // EP0 must exist
@@ -590,7 +590,7 @@ void USB_UCPD1_2_IRQHandler() {
         usb_ep_clear_correct_transfer(ep_idn, USB_DIR_DEVICE_IN_HOST_OUT_IDX);
 
         // Receive data
-        usb_ep_rx(ep_idn);
+        usb_ep_rx_queued_bytes(ep_idn);
       }
     }
 
@@ -610,7 +610,7 @@ void USB_UCPD1_2_IRQHandler() {
   }
 }
 
-bool usb_ep_open(const usb_ep_descriptor_t *ep_descriptor) {
+bool usb_ep_open_hal(const usb_ep_descriptor_t *ep_descriptor) {
   const uint8_t ep_addr = ep_descriptor->bEndpointAddress;
   const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
   const uint32_t packet_size = USB_EP_PACKET_SIZE(ep_descriptor->wMaxPacketSize);

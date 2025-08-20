@@ -1,16 +1,14 @@
 #include "hal.h"
 #include "usb.h"
-/* TODO : pre clean code
+#include "usb_cdc.h"
 
-#include "cdc_device.h"
+config_interface_t machine_config = {
+    .version = 1 << 16  // Version 1.0
 
-            config_interface_t machine_config = {
-                .version = 1 << 16  // Version 1.0
-
-                // end default machine configuration
+    // end default machine configuration
 };
 
-void usb_cdc_line_state_cb(bool dtr, bool rts) {
+void usb_cdc_handshake_cb(bool dtr, bool rts) {
   diag_printf("dtr: %d, rts: %d\r\n", dtr, rts);
 }
 
@@ -22,14 +20,6 @@ void usb_cdc_rx_cb() {
     usb_cdc_write_flush();
   }
 }
-
-*/
-
-config_interface_t machine_config = {
-    .version = 1 << 16  // Version 1.0
-
-    // end default machine configuration
-};
 
 void main() {
   // Initialise boards specific hardware
@@ -44,9 +34,11 @@ void main() {
   // Initialise board USB IO
   usb_init_board_hal();
 
+  // Initialise CDC (Virtual COM)
+  usb_cdc_init();
+
   // Start USB in device mode
   usb_device_start_hal();
-  // TODO: usb_init_driver();
 
   uint32_t config_version = config_get_version();
 

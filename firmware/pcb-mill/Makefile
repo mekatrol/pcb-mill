@@ -41,7 +41,7 @@ OUT_MAP := $(OBJ_DIR)$(SEP)pcb-mill.map
 OUT_BIN := $(OBJ_DIR)$(SEP)pcb-mill.bin
 
 # Compiler flags
-CFLAGS := -mcpu=$(MCU) -mthumb -g -O0 -ffreestanding -nostdlib -Wall -Werror # -Wno-unused-variable
+CFLAGS := -mcpu=$(MCU) -mthumb -g -O0 -ffreestanding -nostdlib -Wall -Werror -Wno-error=switch -Wno-switch # -Wno-unused-variable
 
 # Assembler flags
 ASFLAGS := -mcpu=$(MCU) -mthumb -g

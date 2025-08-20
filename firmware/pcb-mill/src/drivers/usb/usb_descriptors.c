@@ -2,7 +2,7 @@
 #include <stdint.h>
 
 #include "usb.h"
-#include "cdc_device.h"
+#include "usb_cdc.h"
 
 // -----------------------------------------------------------------------------
 // USB Device Descriptor (See USB 2.0 Spec, Section 9.6.1)
@@ -148,7 +148,7 @@ const uint8_t usb_descriptor_conf[] = {
     USB_DESCRIPTOR_TYPE_ENDPOINT,       // bDescriptorType: ENDPOINT
     USB_DIR_DEVICE_IN_HOST_OUT | 0x02,  // bEndpointAddress: OUT endpoint (0x00 | 2)
     0x02,                               // bmAttributes: bulk transfer
-    USB_EP_RX_BUFFER_SIZE,              // wMaxPacketSize low byte: 64 bytes
+    USB_CDC_EP_BUFFER_SIZE,             // wMaxPacketSize low byte: 64 bytes
     0x00,                               // wMaxPacketSize high byte
     0,                                  // bInterval: ignored for bulk
 
@@ -157,7 +157,7 @@ const uint8_t usb_descriptor_conf[] = {
     USB_DESCRIPTOR_TYPE_ENDPOINT,       // bDescriptorType: ENDPOINT
     USB_DIR_DEVICE_OUT_HOST_IN | 0x02,  // bEndpointAddress: IN endpoint 2 (0x80 | 2)
     0x02,                               // bmAttributes: bulk
-    USB_EP_TX_BUFFER_SIZE,              // wMaxPacketSize low byte: 64 bytes
+    USB_CDC_EP_BUFFER_SIZE,             // wMaxPacketSize low byte: 64 bytes
     0x00,                               // wMaxPacketSize high byte
     0,                                  // bInterval
 };

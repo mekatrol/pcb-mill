@@ -51,9 +51,9 @@ typedef struct {
 static usb_cdc_interface_t usb_cdc_interface;
 static usb_cdc_epbuf_t usb_cdc_epbuf;
 
-static bool _prep_out_transaction() {
+static bool usb_device_prep_out_transaction() {
   // Skip if usb is not ready yet
-  if (!(usb_ready() && usb_cdc_interface.ep_addr_out)) {
+  if (!(usb_configured() && usb_cdc_interface.ep_addr_out)) {
     return false;
   }
 
@@ -72,7 +72,7 @@ static bool _prep_out_transaction() {
   available_count = circular_buffer_space(&usb_cdc_interface.rx_buffer);
 
   if (available_count >= USB_EP0_BUFFER_SIZE) {
-    return usb_ep_transfer(usb_cdc_interface.ep_addr_out, usb_cdc_epbuf.epout, USB_EP0_BUFFER_SIZE);
+    return usb_ep_queue_transfer(usb_cdc_interface.ep_addr_out, usb_cdc_epbuf.epout, USB_EP0_BUFFER_SIZE);
   } else {
     return false;
   }
@@ -88,7 +88,7 @@ uint32_t usb_cdc_available() {
 
 uint32_t usb_cdc_read(void* buffer, uint32_t bufsize) {
   uint32_t num_read = circular_buffer_read(&usb_cdc_interface.rx_buffer, buffer, bufsize);
-  _prep_out_transaction();
+  usb_device_prep_out_transaction();
   return num_read;
 }
 
@@ -105,7 +105,7 @@ uint32_t usb_cdc_write(const uint8_t* buffer, uint32_t bufsize) {
 
 uint32_t usb_cdc_write_flush() {
   // Skip if usb is not ready yet
-  if (!usb_ready()) {
+  if (!usb_configured()) {
     return 0;
   }
 
@@ -118,7 +118,7 @@ uint32_t usb_cdc_write_flush() {
   const uint16_t count = circular_buffer_read(&usb_cdc_interface.tx_buffer, usb_cdc_epbuf.epin, USB_EP0_BUFFER_SIZE);
 
   if (count) {
-    if (!usb_ep_transfer(usb_cdc_interface.ep_addr_in, usb_cdc_epbuf.epin, count)) {
+    if (!usb_ep_queue_transfer(usb_cdc_interface.ep_addr_in, usb_cdc_epbuf.epin, count)) {
       return 0;
     }
     return count;
@@ -148,40 +148,40 @@ void usb_cdc_reset() {
 
 uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* descriptor, uint16_t max_len) {
   // Only support ACM subclass
-  if (descriptor->bInterfaceClass != TUSB_CLASS_CDC ||
+  if (descriptor->bInterfaceClass != USB_CLASS_CDC ||
       descriptor->bInterfaceSubClass != CDC_COMM_SUBCLASS_ABSTRACT_CONTROL_MODEL) {
     return 0;
   }
 
   uint16_t drv_len = sizeof(usb_control_interface_descriptor_t);
-  const usb_ep_descriptor_t* p_desc = (const usb_ep_descriptor_t*)usb_next_descriptor(descriptor);
+  const usb_ep_descriptor_t* descriptor = (const usb_ep_descriptor_t*)usb_next_descriptor(descriptor);
 
   // Communication Functional Descriptors
-  while (usb_descriptor_type(p_desc) == USB_DESCRIPTOR_TYPE_CS_INTERFACE && drv_len <= max_len) {
-    drv_len += usb_descriptor_len(p_desc);
-    p_desc = (const usb_ep_descriptor_t*)usb_next_descriptor(p_desc);
+  while (usb_descriptor_type(descriptor) == USB_DESCRIPTOR_TYPE_CS_INTERFACE && drv_len <= max_len) {
+    drv_len += usb_descriptor_len(descriptor);
+    descriptor = (const usb_ep_descriptor_t*)usb_next_descriptor(descriptor);
   }
 
-  if (usb_descriptor_type(p_desc) == USB_DESCRIPTOR_TYPE_ENDPOINT) {
+  if (usb_descriptor_type(descriptor) == USB_DESCRIPTOR_TYPE_ENDPOINT) {
     // notification endpoint
-    const usb_ep_descriptor_t* ep_descriptor = (const usb_ep_descriptor_t*)p_desc;
-    if (!usb_ep_open(ep_descriptor)) {
+    const usb_ep_descriptor_t* ep_descriptor = (const usb_ep_descriptor_t*)descriptor;
+    if (!usb_ep_open_hal(ep_descriptor)) {
       return 0;
     }
 
-    drv_len += usb_descriptor_len(p_desc);
-    p_desc = (const usb_ep_descriptor_t*)usb_next_descriptor(p_desc);
+    drv_len += usb_descriptor_len(descriptor);
+    descriptor = (const usb_ep_descriptor_t*)usb_next_descriptor(descriptor);
   }
 
   //------------- Data Interface (if any) -------------//
-  if ((USB_DESCRIPTOR_TYPE_INTERFACE == usb_descriptor_type(p_desc)) &&
-      (TUSB_CLASS_CDC_DATA == ((const usb_control_interface_descriptor_t*)p_desc)->bInterfaceClass)) {
+  if ((USB_DESCRIPTOR_TYPE_INTERFACE == usb_descriptor_type(descriptor)) &&
+      (USB_CLASS_CDC_DATA == ((const usb_control_interface_descriptor_t*)descriptor)->bInterfaceClass)) {
     // next to endpoint descriptor
-    drv_len += usb_descriptor_len(p_desc);
-    p_desc = (const usb_ep_descriptor_t*)usb_next_descriptor(p_desc);
+    drv_len += usb_descriptor_len(descriptor);
+    descriptor = (const usb_ep_descriptor_t*)usb_next_descriptor(descriptor);
 
     // Open endpoint pair
-    if (!usb_ep_open_in_out((const usb_ep_descriptor_t*)p_desc, USB_EP_TYPE_BULK, &usb_cdc_interface.ep_addr_out, &usb_cdc_interface.ep_addr_in)) {
+    if (!usb_ep_open_in_out((const usb_ep_descriptor_t*)descriptor, USB_EP_TYPE_BULK, &usb_cdc_interface.ep_addr_out, &usb_cdc_interface.ep_addr_in)) {
       return 0;
     }
 
@@ -189,7 +189,7 @@ uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* descriptor, uint
   }
 
   // Prepare for incoming data
-  _prep_out_transaction();
+  usb_device_prep_out_transaction();
 
   return drv_len;
 }
@@ -197,7 +197,7 @@ uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* descriptor, uint
 // Invoked when a control transfer occurred on an interface of this class
 // Driver response accordingly to the request and the transfer stage (setup/data/ack)
 // return false to stall control endpoint (e.g unsupported request)
-bool usb_cdc_control_transfer(uint8_t stage, const usb_control_request_t* request) {
+bool usb_device_control_transfer(uint8_t stage, const usb_control_request_t* request) {
   const usb_request_type_t request_type = usb_request_type(request->bmRequestType);
 
   // Handle class request only
@@ -232,8 +232,8 @@ bool usb_cdc_control_transfer(uint8_t stage, const usb_control_request_t* reques
         const bool rts = (request->wValue & CDC_CONTROL_LINE_STATE_RTS) != 0;
 
         // Invoke callback
-        if (usb_cdc_line_state_cb) {
-          usb_cdc_line_state_cb(dtr, rts);
+        if (usb_cdc_handshake_cb) {
+          usb_cdc_handshake_cb(dtr, rts);
         }
       }
       break;
@@ -263,7 +263,7 @@ bool usb_cdc_transfer(uint8_t ep_addr, uint32_t transferred_bytes) {
     }
 
     // prepare for OUT transaction
-    _prep_out_transaction();
+    usb_device_prep_out_transaction();
   }
 
   // Data sent to host, we continue to fetch from tx buffer to send.
@@ -279,7 +279,7 @@ bool usb_cdc_transfer(uint8_t ep_addr, uint32_t transferred_bytes) {
       // If there is no data left, a ZLP should be sent if
       // transferred_bytes is multiple of EP Packet size and not zero
       if (circular_buffer_count(&usb_cdc_interface.tx_buffer) == 0 && transferred_bytes && (0 == (transferred_bytes & (USB_EP_TX_BUFFER_SIZE - 1)))) {
-        if (!usb_ep_transfer(usb_cdc_interface.ep_addr_in, NULL, 0)) {
+        if (!usb_ep_queue_transfer(usb_cdc_interface.ep_addr_in, NULL, 0)) {
           return false;
         }
       }

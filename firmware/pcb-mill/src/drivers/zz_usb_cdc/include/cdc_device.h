@@ -45,7 +45,7 @@ __attribute__((weak)) void usb_cdc_rx_cb();
 __attribute__((weak)) void usb_cdc_tx_complete_cb();
 
 // Invoked when line state DTR & RTS are changed via SET_CONTROL_LINE_STATE
-__attribute__((weak)) void usb_cdc_line_state_cb(bool dtr, bool rts);
+__attribute__((weak)) void usb_cdc_handshake_cb(bool dtr, bool rts);
 
 // Invoked when line coding is change via SET_LINE_CODING
 __attribute__((weak)) void usb_cdc_line_coding_cb(const usb_cdc_line_coding_t* p_line_coding);
@@ -56,7 +56,7 @@ __attribute__((weak)) void usb_cdc_line_coding_cb(const usb_cdc_line_coding_t* p
 void usb_cdc_init();
 void usb_cdc_reset();
 uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* itf_desc, uint16_t max_len);
-bool usb_cdc_control_transfer(uint8_t stage, const usb_control_request_t* request);
+bool usb_device_control_transfer(uint8_t stage, const usb_control_request_t* request);
 bool usb_cdc_transfer(uint8_t ep_addr, uint32_t transferred_bytes);
 
 #endif /* _TUSB_CDC_DEVICE_H_ */
