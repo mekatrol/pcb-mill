@@ -431,6 +431,14 @@ static bool process_get_descriptor(const usb_control_request_t* request) {
 }
 
 /*
+ * Full USB reset
+ */
+void usb_reset() {
+  usb_device_start_hal();
+  usb_control_transfer_clear();
+}
+
+/*
  * All control requests are received on EP0.
  * They handle standard USB requests (enumeration, descriptors, addressing,
  * configuration, and status queries) as well as class- or vendor-specific

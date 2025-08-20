@@ -298,6 +298,7 @@ bool usb_ep_open_hal(const usb_ep_descriptor_t* ep_descriptor);
 /*
  * USB Device methods
  */
+void usb_reset();
 bool usb_process_control_request(const usb_control_request_t* request);           // Process a control request
 bool usb_control_transfer_complete(uint8_t ep_addr, uint32_t transferred_bytes);  // An EP0 control transfer has completed
 bool usb_ep_open_in_out(                                                          // Configure consecutive endpoint descriptors (IN & OUT)
@@ -321,13 +322,6 @@ extern usbd_device_t usb_device;
  */
 ALWAYS_INLINE static bool usb_configured(void) {
   return usb_device.config_num != 0;
-}
-
-/*
- * Full USB reset
- */
-ALWAYS_INLINE static void usb_reset() {
-  usb_device_start_hal();
 }
 
 /*

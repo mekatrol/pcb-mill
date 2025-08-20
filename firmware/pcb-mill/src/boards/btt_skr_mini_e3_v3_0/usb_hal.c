@@ -78,12 +78,12 @@ static ep_assignment_t ep_assignment[USB_EP_MAX];
 
 #define USB_PMA_BUFFER_START (sizeof(usb_buffer_description_tables_t))
 
-#define PMA_EP0_TX_BUFF_ADDR USB_PMA_BUFFER_START                        // Start at first location after usb_buffer_description_tables_t
-#define PMA_EP0_RX_BUFF_ADDR PMA_EP0_TX_BUFF_ADDR + USB_EP0_BUFFER_SIZE  // Start at end of TX buffer address
-#define PMA_NEXT_BUFF_ADDR PMA_EP0_RX_BUFF_ADDR + USB_EP0_BUFFER_SIZE    // next avaialble PMA space after EP0
+#define PMA_EP0_TX_BUFF_ADDR USB_PMA_BUFFER_START                          // Start at first location after usb_buffer_description_tables_t
+#define PMA_EP0_RX_BUFF_ADDR PMA_EP0_TX_BUFF_ADDR + USB_EP0_BUFFER_SIZE    // Start at end of TX buffer address
+#define PMA_EP_BUFF_ADDR_START PMA_EP0_RX_BUFF_ADDR + USB_EP0_BUFFER_SIZE  // next avaialble PMA space after EP0
 
 // Next available USB PMA buffer pointer location
-static uint16_t usb_pma_next_available = PMA_NEXT_BUFF_ADDR;
+static uint16_t usb_pma_next_available = PMA_EP_BUFF_ADDR_START;
 
 /****************************************************************************************************************************************
  * HAL internal inline methods
@@ -101,8 +101,8 @@ ALWAYS_INLINE static void usb_ep_reset() {
     ep_reset_assigned_state(idn);
   }
 
-  // Reset PMA assignment (to end of EP buffer descriptor table)
-  usb_pma_next_available = 8 * USB_EP_MAX;
+  // Reset PMA assignment (to first avaialble after EP0 buffers)
+  usb_pma_next_available = PMA_EP_BUFF_ADDR_START;
 }
 
 /*
