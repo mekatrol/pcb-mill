@@ -20,6 +20,18 @@
 // USB registers strong type
 #define USB ((USB_DRD_TypeDef*)USB_BASE)
 
+enum {
+  CONTROL_STAGE_IDLE = 0,  // No control transfer in progress (waiting for SETUP token)
+  CONTROL_STAGE_SETUP,     // Setup stage (8-byte setup packet received)
+  CONTROL_STAGE_DATA,      // Data stage (if wLength != 0)
+                           //   - Host → Device: OUT transactions
+                           //   - Device → Host: IN transactions
+  CONTROL_STAGE_STATUS     // Status stage (always present, opposite direction of data stage)
+                           //   - If Data OUT stage: device responds with IN (zero-length packet)
+                           //   - If Data IN stage: host responds with OUT (zero-length packet)
+                           //   - If no Data stage: default is IN (ZLP from device)
+};
+
 // USB class codes (see USB-IF Assigned Numbers)
 // These values may appear in device, interface, or function descriptors
 // depending on how the class is defined.
@@ -304,12 +316,17 @@ void usb_device_init();
 void usb_reset();
 bool usb_process_control_request(const usb_control_request_t* request);           // Process a control request
 bool usb_control_transfer_complete(uint8_t ep_addr, uint32_t transferred_bytes);  // An EP0 control transfer has completed
+bool usb_control_init_status_stage(const usb_control_request_t* request);         //
 void usb_ep_close_all();                                                          // Close all endpoints (unconfigure them)
+bool usb_ep_initiate_control_response(                                            // Initiate a staged control response
+    const usb_control_request_t* request,                                         //
+    const uint8_t* buffer,                                                        //
+    uint16_t len);                                                                //
 bool usb_ep_open_in_out(                                                          // Configure consecutive endpoint descriptors (IN & OUT)
-    const usb_ep_descriptor_t* descriptor,
-    uint8_t transfer_type,
-    uint8_t* ep_addr_out,
-    uint8_t* ep_addr_in);
+    const usb_ep_descriptor_t* descriptor,                                        //
+    uint8_t transfer_type,                                                        //
+    uint8_t* ep_addr_out,                                                         //
+    uint8_t* ep_addr_in);                                                         //
 
 /*
  * USB descriptor methods

@@ -5,7 +5,8 @@
     "system_stm32g0xx.h": "c",
     "*.bak": "c",
     "macros.h": "c",
-    "usb.h": "c"
+    "usb.h": "c",
+    "usb_cdc.h": "c"
   },
   "cortex-debug.variableUseNaturalFormat": true
 }

@@ -6,27 +6,6 @@
 #define U16_HIGH(u16) ((uint8_t)(((u16) >> 8) & 0x00ff))
 #define U16_LOW(u16) ((uint8_t)((u16) & 0x00ff))
 
-enum {
-  CONTROL_STAGE_IDLE = 0,  // No control transfer in progress (waiting for SETUP token)
-  CONTROL_STAGE_SETUP,     // Setup stage (8-byte setup packet received)
-  CONTROL_STAGE_DATA,      // Data stage (if wLength != 0)
-                           //   - Host → Device: OUT transactions
-                           //   - Device → Host: IN transactions
-  CONTROL_STAGE_STATUS     // Status stage (always present, opposite direction of data stage)
-                           //   - If Data OUT stage: device responds with IN (zero-length packet)
-                           //   - If Data IN stage: host responds with OUT (zero-length packet)
-                           //   - If no Data stage: default is IN (ZLP from device)
-};
-
-/// CDC ACM (Virtual COM Port) Class-Specific Request Codes
-/// See USB CDC Spec 1.2, Table 3.1 (Abstract Control Model Requests)
-typedef enum {
-  CDC_REQUEST_SET_LINE_CODING = 0x20,         // Set serial line coding (baud rate, stop bits, parity, data bits) :contentReference[oaicite:0]{index=0}
-  CDC_REQUEST_GET_LINE_CODING = 0x21,         // Get current serial line coding :contentReference[oaicite:1]{index=1}
-  CDC_REQUEST_SET_CONTROL_LINE_STATE = 0x22,  // Control RTS/DTR tone (host signals presence) :contentReference[oaicite:2]{index=2}
-  CDC_REQUEST_SEND_BREAK = 0x23               // Transmit break condition on the communication line :contentReference[oaicite:3]{index=3}
-} cdc_acm_request_t;
-
 typedef enum {
   USB_CONFIG_REMOTE_WAKEUP_MASK = 1U << 5,
   USB_CONFIG_SELF_POWERED_MASK = 1U << 6,
@@ -90,18 +69,6 @@ ALWAYS_INLINE static void usb_control_transfer_init_data_stage(const usb_control
 }
 
 /*
- * Initialise the control transfer status stage
- */
-ALWAYS_INLINE static bool usb_control_init_status_stage(const usb_control_request_t* request) {
-  control_transfer.request = (*request);
-  control_transfer.feed.buffer = NULL;
-  control_transfer.feed.fed_count = 0;
-  control_transfer.feed.total_count = 0;
-
-  return usb_stage_control_status(request);
-}
-
-/*
  * Reset device configuration
  */
 ALWAYS_INLINE static void usb_reset_config() {
@@ -145,6 +112,18 @@ static bool usb_stage_control_data() {
   }
 
   return usb_ep_queue_transfer(ep0_addr, len > 0 ? ep0_control_buffer : NULL, len);
+}
+
+/*
+ * Initialise the control transfer status stage
+ */
+bool usb_control_init_status_stage(const usb_control_request_t* request) {
+  control_transfer.request = (*request);
+  control_transfer.feed.buffer = NULL;
+  control_transfer.feed.fed_count = 0;
+  control_transfer.feed.total_count = 0;
+
+  return usb_stage_control_status(request);
 }
 
 /*
@@ -261,68 +240,10 @@ static void usb_ep_stall_clear(uint8_t ep_addr) {
   usb_ep_stall_clear_hal(ep_idn, ep_dir_idx);
 }
 
-// Invoked when a control transfer occurred on an interface of this class
-// Driver response accordingly to the request and the transfer stage (setup/data/ack)
-// return false to stall control endpoint (e.g unsupported request)
-bool usb_device_control_transfer(uint8_t control_stage, const usb_control_request_t* request) {
-  const usb_request_type_t request_type = usb_request_type(request->bmRequestType);
-
-  // Handle class request only
-  if (request_type != USB_REQUEST_TYPE_CLASS) {
-    return false;
-  }
-
-  switch (request->bRequest) {
-    case CDC_REQUEST_SET_LINE_CODING:
-      if (control_stage == CONTROL_STAGE_SETUP) {
-        usb_ep_initiate_control_response(request, (const uint8_t*)&usb_cdc.line_coding, sizeof(usb_cdc_line_coding_t));
-      } else if (control_stage == CONTROL_STAGE_STATUS) {
-        if (usb_cdc_line_coding_cb) {
-          usb_cdc_line_coding_cb(&usb_cdc.line_coding);
-        }
-      }
-      break;
-
-    case CDC_REQUEST_GET_LINE_CODING:
-      if (control_stage == CONTROL_STAGE_SETUP) {
-        usb_ep_initiate_control_response(request, (const uint8_t*)&usb_cdc.line_coding, sizeof(usb_cdc_line_coding_t));
-      }
-      break;
-
-    case CDC_REQUEST_SET_CONTROL_LINE_STATE:
-      if (control_stage == CONTROL_STAGE_SETUP) {
-        usb_control_init_status_stage(request);
-      } else if (control_stage == CONTROL_STAGE_STATUS) {
-        usb_cdc.flow_control_state = (uint8_t)request->wValue;
-
-        const bool dtr = (request->wValue & CDC_CONTROL_LINE_STATE_DTR) != 0;
-        const bool rts = (request->wValue & CDC_CONTROL_LINE_STATE_RTS) != 0;
-
-        // Invoke callback
-        if (usb_cdc_handshake_cb) {
-          usb_cdc_handshake_cb(dtr, rts);
-        }
-      }
-      break;
-
-    case CDC_REQUEST_SEND_BREAK:
-      if (control_stage == CONTROL_STAGE_SETUP) {
-        usb_control_init_status_stage(request);
-      } else if (control_stage == CONTROL_STAGE_STATUS) {
-      }
-      break;
-
-    default:
-      return false;  // stall unsupported request
-  }
-
-  return true;
-}
-
 //
 static bool usb_class_control_staging_init(const usb_control_request_t* request) {
-  usb_control_set_complete_callback(usb_device_control_transfer);
-  return usb_device_control_transfer(CONTROL_STAGE_SETUP, request);
+  usb_control_set_complete_callback(usb_cdc_control_transfer);
+  return usb_cdc_control_transfer(CONTROL_STAGE_SETUP, request);
 }
 
 static bool usb_set_configuration() {

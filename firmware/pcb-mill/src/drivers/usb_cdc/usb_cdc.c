@@ -1,6 +1,15 @@
 #include "usb.h"
 #include "usb_cdc.h"
 
+/// CDC ACM (Virtual COM Port) Class-Specific Request Codes
+/// See USB CDC Spec 1.2, Table 3.1 (Abstract Control Model Requests)
+typedef enum {
+  CDC_REQUEST_SET_LINE_CODING = 0x20,         // Set serial line coding (baud rate, stop bits, parity, data bits) :contentReference[oaicite:0]{index=0}
+  CDC_REQUEST_GET_LINE_CODING = 0x21,         // Get current serial line coding :contentReference[oaicite:1]{index=1}
+  CDC_REQUEST_SET_CONTROL_LINE_STATE = 0x22,  // Control RTS/DTR tone (host signals presence) :contentReference[oaicite:2]{index=2}
+  CDC_REQUEST_SEND_BREAK = 0x23               // Transmit break condition on the communication line :contentReference[oaicite:3]{index=3}
+} cdc_acm_request_t;
+
 typedef struct {
   union {
     __attribute__((aligned(4)))
@@ -23,12 +32,6 @@ static usb_cdc_epbuf_t usb_cdc_epbuf;
 
 // The USB CDC state and config
 usb_cdc_t usb_cdc;
-
-// DTR/RTS changed from SET_CONTROL_LINE_STATE
-__attribute__((weak)) void usb_cdc_handshake_cb(bool dtr, bool rts) {}
-
-// Line coding change from SET_LINE_CODING
-__attribute__((weak)) void usb_cdc_line_coding_cb(const usb_cdc_line_coding_t* p_line_coding) {}
 
 static bool usb_device_prep_out_transaction() {
   // Skip if usb is not yet configured
@@ -103,6 +106,64 @@ uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* control_descript
   usb_device_prep_out_transaction();
 
   return drv_len;
+}
+
+// Invoked when a control transfer occurred on an interface of this class
+// Driver response accordingly to the request and the transfer stage (setup/data/ack)
+// return false to stall control endpoint (e.g unsupported request)
+bool usb_cdc_control_transfer(uint8_t control_stage, const usb_control_request_t* request) {
+  const usb_request_type_t request_type = usb_request_type(request->bmRequestType);
+
+  // Handle class request only
+  if (request_type != USB_REQUEST_TYPE_CLASS) {
+    return false;
+  }
+
+  switch (request->bRequest) {
+    case CDC_REQUEST_SET_LINE_CODING:
+      if (control_stage == CONTROL_STAGE_SETUP) {
+        usb_ep_initiate_control_response(request, (const uint8_t*)&usb_cdc.line_coding, sizeof(usb_cdc_line_coding_t));
+      } else if (control_stage == CONTROL_STAGE_STATUS) {
+        if (usb_cdc_line_coding_cb) {
+          usb_cdc_line_coding_cb(&usb_cdc.line_coding);
+        }
+      }
+      break;
+
+    case CDC_REQUEST_GET_LINE_CODING:
+      if (control_stage == CONTROL_STAGE_SETUP) {
+        usb_ep_initiate_control_response(request, (const uint8_t*)&usb_cdc.line_coding, sizeof(usb_cdc_line_coding_t));
+      }
+      break;
+
+    case CDC_REQUEST_SET_CONTROL_LINE_STATE:
+      if (control_stage == CONTROL_STAGE_SETUP) {
+        usb_control_init_status_stage(request);
+      } else if (control_stage == CONTROL_STAGE_STATUS) {
+        usb_cdc.flow_control_state = (uint8_t)request->wValue;
+
+        const bool dtr = (request->wValue & CDC_CONTROL_LINE_STATE_DTR) != 0;
+        const bool rts = (request->wValue & CDC_CONTROL_LINE_STATE_RTS) != 0;
+
+        // Invoke callback
+        if (usb_cdc_handshake_cb) {
+          usb_cdc_handshake_cb(dtr, rts);
+        }
+      }
+      break;
+
+    case CDC_REQUEST_SEND_BREAK:
+      if (control_stage == CONTROL_STAGE_SETUP) {
+        usb_control_init_status_stage(request);
+      } else if (control_stage == CONTROL_STAGE_STATUS) {
+      }
+      break;
+
+    default:
+      return false;  // stall unsupported request
+  }
+
+  return true;
 }
 
 void usb_cdc_get_line_coding(usb_cdc_line_coding_t* coding) {
