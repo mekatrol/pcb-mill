@@ -39,7 +39,7 @@ static usb_control_transfer_t control_transfer;
  */
 static uint8_t ep0_control_buffer[USB_EP0_BUFFER_SIZE];
 
-ALWAYS_INLINE static bool usb_stage_control_status(const usb_control_request_t* request) {
+ALWAYS_INLINE static bool usb_control_status_stage(const usb_control_request_t* request) {
   // Opposite to endpoint in Data Phase
   const usb_request_direction_index_t request_direction = usb_request_direction(request->bmRequestType);
   const uint8_t ep_addr = request_direction ? USB_DIR_DEVICE_IN_HOST_OUT : USB_DIR_DEVICE_OUT_HOST_IN;
@@ -86,7 +86,7 @@ ALWAYS_INLINE static void usb_reset_config() {
 /*
  *
  */
-static bool usb_stage_control_data() {
+static bool usb_control_data_stage() {
   // Calculate the remaining length of data to transfer
   const uint16_t len = feed_forward_remaining_count(&control_transfer.feed, USB_EP0_BUFFER_SIZE);
 
@@ -123,7 +123,7 @@ bool usb_control_init_status_stage(const usb_control_request_t* request) {
   control_transfer.feed.fed_count = 0;
   control_transfer.feed.total_count = 0;
 
-  return usb_stage_control_status(request);
+  return usb_control_status_stage(request);
 }
 
 /*
@@ -137,15 +137,12 @@ bool usb_ep_initiate_control_response(const usb_control_request_t* request, cons
 
   // If the request contains data then commence the data stage for the request
   if (request->wLength > 0U) {
-    if (!usb_stage_control_data()) {
-      return false;
-    }
-
-    return true;
+    // This is the control data stage
+    return usb_control_data_stage();
   }
 
-  // This is a status stage and we just need to respond with the response
-  return usb_stage_control_status(request);
+  // This is the control status stage and we just need to respond with the response
+  return usb_control_status_stage(request);
 }
 
 /*
@@ -397,6 +394,9 @@ void usb_reset() {
  *    A zero-length packet (ZLP) used by the host to acknowledge that the transfer completed successfully.
  */
 bool usb_process_control_request(const usb_control_request_t* request) {
+  // Make sure control callback cleared
+  usb_control_set_complete_callback(NULL);
+
   // Can flag as connected as soon as first control request recieved
   usb_device.connected = 1;
 
@@ -539,6 +539,9 @@ bool usb_process_control_request(const usb_control_request_t* request) {
         switch (request->bRequest) {
           case USB_STD_GET_INTERFACE:
           case USB_STD_SET_INTERFACE:
+            // Make sure control callback cleared
+            usb_control_set_complete_callback(NULL);
+
             if (USB_STD_GET_INTERFACE == request->bRequest) {
               uint8_t alternate = 0;
               usb_ep_initiate_control_response(request, &alternate, 1);
@@ -649,7 +652,7 @@ bool usb_control_transfer_complete(uint8_t ep_addr, uint32_t transferred_bytes) 
 
     if (data_stage_complete_ok) {
       // Data stage complete so send control status
-      return usb_stage_control_status(&control_transfer.request);
+      return usb_control_status_stage(&control_transfer.request);
     }
 
     // Stall both IN and OUT control endpoint if not OK
@@ -660,7 +663,7 @@ bool usb_control_transfer_complete(uint8_t ep_addr, uint32_t transferred_bytes) 
   }
 
   // More data to transfer, so queue next batch of bytes to send
-  return usb_stage_control_data();
+  return usb_control_data_stage();
 }
 
 void usb_device_init() {
