@@ -210,12 +210,11 @@ typedef struct __attribute__((packed)) {
 _Static_assert(sizeof(usb_ep_descriptor_t) == 7, "size must be 7");
 
 typedef struct {
-  struct __attribute__((packed)) {
-    volatile uint8_t connected : 1;  // USB is connected and ready for use
-    volatile uint8_t addressed : 1;  // USB has received address
-    uint8_t remote_wakeup : 1;       // configuration descriptor's attribute
-    uint8_t self_powered : 1;        // configuration descriptor's attribute
-  };
+  volatile uint8_t connected : 1;    // USB is connected and ready for use
+  volatile uint8_t addressed : 1;    // USB has received address
+  uint8_t remote_wakeup : 1;         // configuration descriptor's attribute
+  uint8_t self_powered : 1;          // configuration descriptor's attribute
+  uint8_t reserved : 4;              // Padding to make a full byte
   volatile uint8_t config_num;       // current active configuration (0x00 is not configured)
   volatile uint8_t address_pending;  // USB device address is pending status stage
   volatile uint8_t address;          // USB device address
