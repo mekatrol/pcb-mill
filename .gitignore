@@ -45,6 +45,7 @@ firmware/cnc/gdb.txt
 firmware/grbl-ext/firmware
 firmware/grbl-ext/gdb.txt
 
-firmware/stm-disco/firmware/
+firmware/stm-disco/firmware
 firmware/grbl-original/firmware
 firmware/pcb-mill/firmware
+firmware/pcb-mill-refactor/firmware
