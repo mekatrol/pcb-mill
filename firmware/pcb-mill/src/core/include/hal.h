@@ -23,7 +23,4 @@ void stepper_interrupt();
 // Initialise limit detection
 void limits_init_hal();
 
-// Initialise USB
-void usb_init_board_hal();
-
 #endif  // __HAL_H__

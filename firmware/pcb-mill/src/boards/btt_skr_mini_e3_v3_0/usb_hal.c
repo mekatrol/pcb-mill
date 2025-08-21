@@ -657,12 +657,6 @@ void usb_init_function_hal() {
   // Disable USB while initialising USB
   USB->DADDR = 0U;
 
-  // Reset endpoints
-  for (uint32_t ep = 0; ep < USB_EP_MAX; ep++) {
-    // Clear CHEPnR (reset endpoint)
-    usb_ep_reg_set(ep, 0, false);
-  }
-
   // Reset endpoint assignments
   usb_ep_reset();
 
@@ -699,6 +693,12 @@ void usb_device_start_hal() {
 
   // Clear pending interrupts
   USB->ISTR = 0;
+
+  // Reset endpoints to disabled
+  for (uint32_t i = 0; i < USB_EP_MAX; i++) {
+    // This doesn't clear all bits since some bits are "toggle", but does set the type to DISABLED.
+    usb_ep_reg_set(i, 0, false);
+  }
 
   // Enable interrupt flags
   USB->CNTR |= USB_CNTR_RESETM |   // USB reset interrupt interrupt enabled

@@ -92,6 +92,8 @@ uint32_t usb_cdc_write_flush();
 
 void usb_cdc_init();
 
+void usb_cdc_reset();
+
 bool usb_cdc_transfer(uint8_t ep_addr, uint32_t transferred_bytes);
 
 uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* descriptor, uint16_t max_len);

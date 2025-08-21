@@ -71,7 +71,7 @@ ALWAYS_INLINE static bool usb_stage_control_status(const usb_control_request_t* 
 /*
  * Clear the control transfer request
  */
-ALWAYS_INLINE static void usb_control_transfer_clear() {
+ALWAYS_INLINE static void usb_control_transfer_reset() {
   memset(&control_transfer, 0, sizeof(usb_control_transfer_t));
 }
 
@@ -103,6 +103,8 @@ ALWAYS_INLINE static bool usb_control_init_status_stage(const usb_control_reques
  * Reset device configuration
  */
 ALWAYS_INLINE static void usb_reset_config() {
+  usb_cdc_reset();
+
   usb_device.self_powered = 1;     // Set to 1 if device is self powered
   usb_device.connected = 0;        // Set to 1 if device is connected
   usb_device.addressed = 0;        // Set to 1 if device has recieved its address
@@ -308,6 +310,7 @@ bool usb_device_control_transfer(uint8_t stage, const usb_control_request_t* req
   return true;
 }
 
+//
 static bool usb_class_control_staging_init(const usb_control_request_t* request) {
   control_transfer.control_complete_cb = usb_device_control_transfer;
   return usb_device_control_transfer(CONTROL_STAGE_SETUP, request);
@@ -434,8 +437,9 @@ static bool process_get_descriptor(const usb_control_request_t* request) {
  * Full USB reset
  */
 void usb_reset() {
-  usb_device_start_hal();
-  usb_control_transfer_clear();
+  usb_init_function_hal();
+  usb_reset_config();
+  usb_control_transfer_reset();
 }
 
 /*
@@ -736,4 +740,15 @@ bool usb_control_transfer_complete(uint8_t ep_addr, uint32_t transferred_bytes) 
 
   // More data to transfer, so queue next batch of bytes to send
   return usb_stage_control_data();
+}
+
+void usb_device_init() {
+  // Reset config to 'unconfigured'
+  usb_reset_config();
+
+  // Initialise CDC (Virtual COM) state
+  usb_cdc_init();
+
+  // Start USB in device mode
+  usb_device_start_hal();
 }

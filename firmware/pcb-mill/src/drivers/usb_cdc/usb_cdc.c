@@ -204,3 +204,8 @@ void usb_cdc_init() {
   circular_buffer_init(&usb_cdc.rx_buffer, usb_cdc.rx_buffer_data, (sizeof(usb_cdc.rx_buffer_data) / sizeof(usb_cdc.rx_buffer_data[0])));
   circular_buffer_init(&usb_cdc.tx_buffer, usb_cdc.tx_buffer_data, (sizeof(usb_cdc.tx_buffer_data) / sizeof(usb_cdc.tx_buffer_data[0])));
 }
+
+void usb_cdc_reset() {
+  circular_buffer_reset(&usb_cdc.rx_buffer);
+  circular_buffer_reset(&usb_cdc.tx_buffer);
+}

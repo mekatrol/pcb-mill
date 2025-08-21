@@ -34,11 +34,8 @@ void main() {
   // Initialise board USB IO
   usb_init_board_hal();
 
-  // Initialise CDC (Virtual COM)
-  usb_cdc_init();
-
-  // Start USB in device mode
-  usb_device_start_hal();
+  // Initialise USB device state
+  usb_device_init();
 
   uint32_t config_version = config_get_version();
 

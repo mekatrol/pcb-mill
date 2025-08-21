@@ -287,7 +287,9 @@ typedef struct {
 /*
  * USB HAL methods - these must be implmented by a HAL (typically the board code)
  */
-void usb_device_start_hal();                                                                                // Start USB in device mode
+void usb_init_board_hal();
+void usb_device_start_hal();
+void usb_init_function_hal();                                                                               // Start USB in device mode
 bool usb_ep_queue_transfer_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t* buffer, uint16_t total_bytes);  // Queue endpoint transfer in HAL
 void usb_device_set_addr_hal(const uint8_t device_addr);
 bool usb_ep_stall_get_hal(uint8_t ep_idn, uint8_t ep_dir_idx);
@@ -298,6 +300,7 @@ bool usb_ep_open_hal(const usb_ep_descriptor_t* ep_descriptor);
 /*
  * USB Device methods
  */
+void usb_device_init();
 void usb_reset();
 bool usb_process_control_request(const usb_control_request_t* request);           // Process a control request
 bool usb_control_transfer_complete(uint8_t ep_addr, uint32_t transferred_bytes);  // An EP0 control transfer has completed
