@@ -75,26 +75,28 @@ ALWAYS_INLINE static void usb_control_transfer_reset() {
   memset(&control_transfer, 0, sizeof(usb_control_transfer_t));
 }
 
+ALWAYS_INLINE static void usb_control_set_complete_callback(const usb_control_transfer_complete_t cb) {
+  control_transfer.control_complete_cb = cb;
+}
+
 /*
  * Initialise the control transfer data stage
  */
-ALWAYS_INLINE static void usb_control_transfer_init_data_stage(const usb_control_request_t* request, const usb_control_transfer_complete_t cb) {
+ALWAYS_INLINE static void usb_control_transfer_init_data_stage(const usb_control_request_t* request) {
   control_transfer.request = (*request);
   control_transfer.feed.buffer = NULL;
   control_transfer.feed.fed_count = 0;
   control_transfer.feed.total_count = 0;
-  control_transfer.control_complete_cb = cb;  // Can be NULL
 }
 
 /*
  * Initialise the control transfer status stage
  */
-ALWAYS_INLINE static bool usb_control_init_status_stage(const usb_control_request_t* request, const usb_control_transfer_complete_t cb) {
+ALWAYS_INLINE static bool usb_control_init_status_stage(const usb_control_request_t* request) {
   control_transfer.request = (*request);
   control_transfer.feed.buffer = NULL;
   control_transfer.feed.fed_count = 0;
   control_transfer.feed.total_count = 0;
-  control_transfer.control_complete_cb = cb;  // Can be NULL
 
   return usb_stage_control_status(request);
 }
@@ -209,10 +211,12 @@ static bool usb_device_get_status(const usb_control_request_t* request) {
 }
 
 static bool usb_device_set_address_complete(const uint8_t control_stage, const usb_control_request_t* request) {
-  usb_device.address = usb_device.address_pending;
-  usb_device.addressed = (usb_device.address != 0);
-  usb_device.address_pending = 0;
-  usb_device_set_addr_hal(usb_device.address);
+  if (control_stage == CONTROL_STAGE_STATUS) {
+    usb_device.address = usb_device.address_pending;
+    usb_device.addressed = (usb_device.address != 0);
+    usb_device.address_pending = 0;
+    usb_device_set_addr_hal(usb_device.address);
+  }
   return true;
 }
 
@@ -232,7 +236,8 @@ static bool usb_device_set_address(const usb_control_request_t* request) {
   usb_device.address_pending = device_address;
 
   // Per USB spec: apply address only after status stage completes
-  usb_control_init_status_stage(request, usb_device_set_address_complete);
+  usb_control_set_complete_callback(usb_device_set_address_complete);
+  usb_control_init_status_stage(request);
 
   // Queue status response for ep0
   usb_ep_queue_transfer_hal(EP0_IDN, USB_DIR_DEVICE_OUT_HOST_IN >> 7, NULL, 0);
@@ -259,7 +264,7 @@ static void usb_ep_stall_clear(uint8_t ep_addr) {
 // Invoked when a control transfer occurred on an interface of this class
 // Driver response accordingly to the request and the transfer stage (setup/data/ack)
 // return false to stall control endpoint (e.g unsupported request)
-bool usb_device_control_transfer(uint8_t stage, const usb_control_request_t* request) {
+bool usb_device_control_transfer(uint8_t control_stage, const usb_control_request_t* request) {
   const usb_request_type_t request_type = usb_request_type(request->bmRequestType);
 
   // Handle class request only
@@ -269,21 +274,25 @@ bool usb_device_control_transfer(uint8_t stage, const usb_control_request_t* req
 
   switch (request->bRequest) {
     case CDC_REQUEST_SET_LINE_CODING:
-      if (stage == CONTROL_STAGE_SETUP) {
+      if (control_stage == CONTROL_STAGE_SETUP) {
         usb_ep_initiate_control_response(request, (const uint8_t*)&usb_cdc.line_coding, sizeof(usb_cdc_line_coding_t));
+      } else if (control_stage == CONTROL_STAGE_STATUS) {
+        if (usb_cdc_line_coding_cb) {
+          usb_cdc_line_coding_cb(&usb_cdc.line_coding);
+        }
       }
       break;
 
     case CDC_REQUEST_GET_LINE_CODING:
-      if (stage == CONTROL_STAGE_SETUP) {
+      if (control_stage == CONTROL_STAGE_SETUP) {
         usb_ep_initiate_control_response(request, (const uint8_t*)&usb_cdc.line_coding, sizeof(usb_cdc_line_coding_t));
       }
       break;
 
     case CDC_REQUEST_SET_CONTROL_LINE_STATE:
-      if (stage == CONTROL_STAGE_SETUP) {
-        usb_control_init_status_stage(request, NULL);
-      } else if (stage == CONTROL_STAGE_STATUS) {
+      if (control_stage == CONTROL_STAGE_SETUP) {
+        usb_control_init_status_stage(request);
+      } else if (control_stage == CONTROL_STAGE_STATUS) {
         usb_cdc.flow_control_state = (uint8_t)request->wValue;
 
         const bool dtr = (request->wValue & CDC_CONTROL_LINE_STATE_DTR) != 0;
@@ -297,9 +306,9 @@ bool usb_device_control_transfer(uint8_t stage, const usb_control_request_t* req
       break;
 
     case CDC_REQUEST_SEND_BREAK:
-      if (stage == CONTROL_STAGE_SETUP) {
-        usb_control_init_status_stage(request, NULL);
-      } else if (stage == CONTROL_STAGE_STATUS) {
+      if (control_stage == CONTROL_STAGE_SETUP) {
+        usb_control_init_status_stage(request);
+      } else if (control_stage == CONTROL_STAGE_STATUS) {
       }
       break;
 
@@ -312,7 +321,7 @@ bool usb_device_control_transfer(uint8_t stage, const usb_control_request_t* req
 
 //
 static bool usb_class_control_staging_init(const usb_control_request_t* request) {
-  control_transfer.control_complete_cb = usb_device_control_transfer;
+  usb_control_set_complete_callback(usb_device_control_transfer);
   return usb_device_control_transfer(CONTROL_STAGE_SETUP, request);
 }
 
@@ -488,15 +497,8 @@ bool usb_process_control_request(const usb_control_request_t* request) {
   // Vendor request
   if (request_type == USB_REQUEST_TYPE_VENDOR) {
     // This device driver has no vendor specific descriptors
+    usb_control_set_complete_callback(NULL);
     return false;
-  }
-
-  switch (request_code) {
-    case USB_STD_GET_STATUS:
-      return usb_device_get_status(request);
-
-    case USB_STD_SET_ADDRESS:
-      return usb_device_set_address(request);
   }
 
   switch (request_recipient) {
@@ -513,15 +515,7 @@ bool usb_process_control_request(const usb_control_request_t* request) {
       // request->bRequest is of type usb_request_code_t
       switch (request_code) {
         case USB_STD_SET_ADDRESS:
-          usb_control_transfer_init_data_stage(request, NULL);
-
-          // Respond with status (ep0)
-          usb_ep_queue_transfer_hal(EP0_IDN, USB_DIR_DEVICE_OUT_HOST_IN >> 7, NULL, 0);
-
-          // USB has been addressed
-          usb_device.address = request->wValue & 0x7F;  // Address 0 - 127 (7 bit)
-          usb_device.addressed = 1;
-          break;
+          return usb_device_set_address(request);
 
         case USB_STD_GET_CONFIGURATION: {
           uint8_t config_num = usb_device.config_num;
@@ -549,6 +543,9 @@ bool usb_process_control_request(const usb_control_request_t* request) {
           // If the device advertised multiple configurations in its device descriptor (bNumConfigurations > 1), then the host could select between them, and config_num could flip between 1, 2, etc.
 
           if (usb_device.config_num != config_num) {
+            // Close any existing configured endpoints
+            usb_ep_close_all();
+
             // Reset all current configuration
             usb_reset_config();
 
@@ -568,7 +565,7 @@ bool usb_process_control_request(const usb_control_request_t* request) {
             }
           }
 
-          usb_control_init_status_stage(request, NULL);
+          usb_control_init_status_stage(request);
         } break;
 
         case USB_STD_GET_DESCRIPTOR:
@@ -579,7 +576,7 @@ bool usb_process_control_request(const usb_control_request_t* request) {
             case USB_FEATURE_REMOTE_WAKEUP:
               // Host may enable remote wake up before suspending especially HID device
               usb_device.remote_wakeup = true;
-              usb_control_init_status_stage(request, NULL);
+              usb_control_init_status_stage(request);
               break;
 
             // Stall unsupported feature selector
@@ -596,8 +593,11 @@ bool usb_process_control_request(const usb_control_request_t* request) {
 
           // Host may disable remote wake up after resuming
           usb_device.remote_wakeup = false;
-          usb_control_init_status_stage(request, NULL);
+          usb_control_init_status_stage(request);
           break;
+
+        case USB_STD_GET_STATUS:
+          return usb_device_get_status(request);
 
         // Unknown/Unsupported request
         default:
@@ -622,7 +622,7 @@ bool usb_process_control_request(const usb_control_request_t* request) {
               uint8_t alternate = 0;
               usb_ep_initiate_control_response(request, &alternate, 1);
             } else {
-              usb_control_init_status_stage(request, NULL);
+              usb_control_init_status_stage(request);
             }
             break;
 
@@ -658,7 +658,7 @@ bool usb_process_control_request(const usb_control_request_t* request) {
             // STD request must always be ACKed regardless of driver returned value
             // Also clear complete callback if driver set since it can also stall the request.
             usb_class_control_staging_init(request);
-            control_transfer.control_complete_cb = NULL;
+            usb_control_set_complete_callback(NULL);
           } break;
 
           // Unknown/Unsupported request

@@ -304,6 +304,7 @@ void usb_device_init();
 void usb_reset();
 bool usb_process_control_request(const usb_control_request_t* request);           // Process a control request
 bool usb_control_transfer_complete(uint8_t ep_addr, uint32_t transferred_bytes);  // An EP0 control transfer has completed
+void usb_ep_close_all();                                                          // Close all endpoints (unconfigure them)
 bool usb_ep_open_in_out(                                                          // Configure consecutive endpoint descriptors (IN & OUT)
     const usb_ep_descriptor_t* descriptor,
     uint8_t transfer_type,

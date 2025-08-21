@@ -78,12 +78,8 @@ static ep_assignment_t ep_assignment[USB_EP_MAX];
 
 #define USB_PMA_BUFFER_START (sizeof(usb_buffer_description_tables_t))
 
-#define PMA_EP0_TX_BUFF_ADDR USB_PMA_BUFFER_START                          // Start at first location after usb_buffer_description_tables_t
-#define PMA_EP0_RX_BUFF_ADDR PMA_EP0_TX_BUFF_ADDR + USB_EP0_BUFFER_SIZE    // Start at end of TX buffer address
-#define PMA_EP_BUFF_ADDR_START PMA_EP0_RX_BUFF_ADDR + USB_EP0_BUFFER_SIZE  // next avaialble PMA space after EP0
-
 // Next available USB PMA buffer pointer location
-static uint16_t usb_pma_next_available = PMA_EP_BUFF_ADDR_START;
+static uint16_t usb_pma_next_available;
 
 /****************************************************************************************************************************************
  * HAL internal inline methods
@@ -101,8 +97,8 @@ ALWAYS_INLINE static void usb_ep_reset() {
     ep_reset_assigned_state(idn);
   }
 
-  // Reset PMA assignment (to first avaialble after EP0 buffers)
-  usb_pma_next_available = PMA_EP_BUFF_ADDR_START;
+  // Reset PMA assignment
+  usb_pma_next_available = 8 * USB_EP_MAX + 2 * USB_EP0_BUFFER_SIZE;
 }
 
 /*
@@ -297,12 +293,59 @@ static void usb_ep_set_rx_buffer_block_size(uint32_t ep_idn, uint32_t buffer_siz
 }
 
 /*
+ *
+ */
+static uint8_t usb_ep_assign(uint8_t ep_addr, uint8_t ep_type) {
+  const uint8_t ep_idn = USB_EP_IDN(ep_addr);
+  const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
+
+  for (uint8_t idn = 0; idn < USB_EP_MAX; idn++) {
+    // Check if already assigned, and return existing identifier if so
+    if (ep_assignment[idn].assigned[ep_dir_idx] &&
+        ep_assignment[idn].ep_type == ep_type &&
+        ep_assignment[idn].ep_idn == ep_idn) {
+      return idn;
+    }
+
+    // Assign only if currently not assigned
+    if (!ep_assignment[idn].assigned[ep_dir_idx]) {
+      // Check if EP number is the same
+      if (ep_assignment[idn].ep_idn == UNASSIGNED_VALUE || ep_assignment[idn].ep_idn == ep_idn) {
+        // One EP pair has to be the same type
+        if (ep_assignment[idn].ep_type == UNASSIGNED_VALUE || ep_assignment[idn].ep_type == ep_type) {
+          ep_assignment[idn].ep_idn = ep_idn;
+          ep_assignment[idn].ep_type = ep_type;
+          ep_assignment[idn].assigned[ep_dir_idx] = true;
+
+          return idn;
+        }
+      }
+    }
+  }
+
+  // Assignment failed
+  return UNASSIGNED_VALUE;
+}
+
+/*
  * Initialise the control endpoint (must be EP0)
  */
 static void usb_ep_control_init() {
+  usb_ep_assign(USB_DIR_DEVICE_IN_HOST_OUT, USB_EP_TYPE_CONTROL);
+  usb_ep_assign(USB_DIR_DEVICE_OUT_HOST_IN, USB_EP_TYPE_CONTROL);
+
+  ep_transfer_set[EP0_IDN][USB_DIR_DEVICE_IN_HOST_OUT_IDX].max_packet_size = USB_EP0_BUFFER_SIZE;
+  ep_transfer_set[EP0_IDN][USB_DIR_DEVICE_IN_HOST_OUT_IDX].ep_idn = EP0_IDN;
+
+  ep_transfer_set[EP0_IDN][USB_DIR_DEVICE_OUT_HOST_IN_IDX].max_packet_size = USB_EP0_BUFFER_SIZE;
+  ep_transfer_set[EP0_IDN][USB_DIR_DEVICE_OUT_HOST_IN_IDX].ep_idn = EP0_IDN;
+
+  uint16_t pma_rx_addr = usb_pma_next_addr(USB_EP0_BUFFER_SIZE);
+  uint16_t pma_tx_addr = usb_pma_next_addr(USB_EP0_BUFFER_SIZE);
+
   // Set EP0 TX/RX buffer addresses
-  usb_pma_ep_addr_set(EP0_IDN, USB_EP_TX_COUNT_ADDR_IDX, PMA_EP0_TX_BUFF_ADDR);
-  usb_pma_ep_addr_set(EP0_IDN, USB_EP_RX_COUNT_ADDR_IDX, PMA_EP0_RX_BUFF_ADDR);
+  usb_pma_ep_addr_set(EP0_IDN, USB_EP_TX_COUNT_ADDR_IDX, pma_tx_addr);
+  usb_pma_ep_addr_set(EP0_IDN, USB_EP_RX_COUNT_ADDR_IDX, pma_rx_addr);
 
   // Get CHEP0R value
   uint32_t ep_reg = USB->chep[EP0_IDN].CHEPnR & ~USB_CHEP_REG_MASK;
@@ -317,6 +360,20 @@ static void usb_ep_control_init() {
 
   // Update the EP0 register with configured value
   usb_ep_reg_set(EP0_IDN, ep_reg, false);
+}
+
+void usb_ep_close_all() {
+  NVIC_DisableIRQ(USB_UCPD1_2_IRQn);
+
+  for (uint32_t i = 1; i < USB_EP_MAX; i++) {
+    usb_ep_reg_set(i, 0, false);
+    ep_reset_assigned_state(i);
+  }
+
+  NVIC_EnableIRQ(USB_UCPD1_2_IRQn);
+
+  // Reset PMA assignment (to end of EP buffer descriptor table)
+  usb_pma_next_available = 8 * USB_EP_MAX;
 }
 
 /*
@@ -579,38 +636,6 @@ static void usb_ep_rx_queued_bytes(uint32_t ep_idn) {
 
   // Clear the feed counts (receive data was completed)
   ep_transfer->feed.total_count = ep_transfer->feed.fed_count = 0;
-}
-
-static uint8_t usb_ep_assign(uint8_t ep_addr, uint8_t ep_type) {
-  const uint8_t ep_idn = USB_EP_IDN(ep_addr);
-  const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
-
-  for (uint8_t idn = 0; idn < USB_EP_MAX; idn++) {
-    // Check if already assigned, and return existing identifier if so
-    if (ep_assignment[idn].assigned[ep_dir_idx] &&
-        ep_assignment[idn].ep_type == ep_type &&
-        ep_assignment[idn].ep_idn == ep_idn) {
-      return idn;
-    }
-
-    // Assign only if currently not assigned
-    if (!ep_assignment[idn].assigned[ep_dir_idx]) {
-      // Check if EP number is the same
-      if (ep_assignment[idn].ep_idn == UNASSIGNED_VALUE || ep_assignment[idn].ep_idn == ep_idn) {
-        // One EP pair has to be the same type
-        if (ep_assignment[idn].ep_type == UNASSIGNED_VALUE || ep_assignment[idn].ep_type == ep_type) {
-          ep_assignment[idn].ep_idn = ep_idn;
-          ep_assignment[idn].ep_type = ep_type;
-          ep_assignment[idn].assigned[ep_dir_idx] = true;
-
-          return idn;
-        }
-      }
-    }
-  }
-
-  // Assignment failed
-  return UNASSIGNED_VALUE;
 }
 
 /****************************************************************************************************************************************
