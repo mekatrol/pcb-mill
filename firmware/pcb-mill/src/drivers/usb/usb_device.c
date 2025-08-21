@@ -7,11 +7,11 @@
 #define U16_LOW(u16) ((uint8_t)((u16) & 0x00ff))
 
 typedef enum {
-  USB_CONFIG_REMOTE_WAKEUP_MASK = 1U << 5,
-  USB_CONFIG_SELF_POWERED_MASK = 1U << 6,
+  USB_CONFIG_REMOTE_WAKEUP_MASK = 1 << 5U,
+  USB_CONFIG_SELF_POWERED_MASK = 1 << 6U,
 } usb_configuration_flags;
 
-usbd_device_t usb_device = {
+usb_device_t usb_device = {
     .self_powered = 1,     // Set to 1 if device is self powered
     .connected = 0,        // Set to 1 if device is connected
     .addressed = 0,        // Set to 1 if device has recieved its address
@@ -59,28 +59,14 @@ ALWAYS_INLINE static void usb_control_set_complete_callback(const usb_control_tr
 }
 
 /*
- * Initialise the control transfer data stage
- */
-ALWAYS_INLINE static void usb_control_transfer_init_data_stage(const usb_control_request_t* request) {
-  control_transfer.request = (*request);
-  control_transfer.feed.buffer = NULL;
-  control_transfer.feed.fed_count = 0;
-  control_transfer.feed.total_count = 0;
-}
-
-/*
  * Reset device configuration
  */
 ALWAYS_INLINE static void usb_configuration_reset() {
+  // Reset CDC
   usb_cdc_reset();
 
-  usb_device.self_powered = 1;     // Set to 1 if device is self powered
-  usb_device.connected = 0;        // Set to 1 if device is connected
-  usb_device.addressed = 0;        // Set to 1 if device has recieved its address
-  usb_device.remote_wakeup = 0;    // Set to 1 if remote wakeup is enabled
-  usb_device.address_pending = 0;  // The pending device address (only set while pending status stage for USB_STD_SET_ADDRESS)
-  usb_device.address = 0;          // The device address (only valid if addressed == 1)
-  usb_device.config_num = 0;       // 0 means unconfigured
+  // Reset all members
+  memset(&usb_device, 0, sizeof(usb_device_t));
 }
 
 /*
@@ -184,7 +170,6 @@ static void usb_ep_stall_set(uint8_t ep_addr) {
   const uint8_t ep_idn = USB_EP_IDN(ep_addr);
   const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
 
-  // only stalled if currently cleared
   usb_ep_stall_set_hal(ep_idn, ep_dir_idx);
 }
 
@@ -192,7 +177,6 @@ static void usb_ep_stall_clear(uint8_t ep_addr) {
   const uint8_t ep_idn = USB_EP_IDN(ep_addr);
   const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
 
-  // only clear if currently stalled
   usb_ep_stall_clear_hal(ep_idn, ep_dir_idx);
 }
 
@@ -323,7 +307,7 @@ static bool process_get_descriptor(const usb_control_request_t* request) {
  * Full USB reset
  */
 void usb_reset() {
-  usb_init_function_hal();
+  usb_init_enable_hal();
   usb_configuration_reset();
   usb_control_transfer_reset();
 }
@@ -565,7 +549,7 @@ bool usb_process_control_request(const usb_control_request_t* request) {
   return true;
 }
 
-bool usb_control_transfer_complete(uint8_t ep_addr, uint32_t transferred_bytes) {
+bool usb_control_transfer(uint8_t ep_addr, uint32_t transferred_bytes) {
   const uint8_t request_direction = USB_EP_DIR(control_transfer.request.bmRequestType);
 
   // Status stage complete inidicated by status direction is always
@@ -604,7 +588,7 @@ bool usb_control_transfer_complete(uint8_t ep_addr, uint32_t transferred_bytes) 
   // Data Stage is complete when all request's length are transferred or
   // a short packet is sent including zero-length packet.
   if ((control_transfer.request.wLength == control_transfer.feed.fed_count) ||
-      (transferred_bytes <= USB_EP0_BUFFER_SIZE)) {
+      (transferred_bytes < USB_EP0_BUFFER_SIZE)) {
     // DATA stage is complete
     bool data_stage_complete_ok = true;
 
@@ -631,12 +615,14 @@ bool usb_control_transfer_complete(uint8_t ep_addr, uint32_t transferred_bytes) 
 }
 
 void usb_device_init() {
-  // Reset config to 'unconfigured'
-  usb_configuration_reset();
+  // Reset device configuration
+  memset(&usb_device, 0, sizeof(usb_device_t));
 
   // Initialise CDC (Virtual COM) state
   usb_cdc_init();
 
   // Start USB in device mode
   usb_device_start_hal();
+
+  NVIC_EnableIRQ(USB_UCPD1_2_IRQn);
 }

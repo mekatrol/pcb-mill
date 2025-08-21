@@ -291,17 +291,17 @@ typedef struct {
   volatile uint8_t remote_wakeup : 1;  // Remote wakeup enabled
   volatile uint8_t self_powered : 1;   // Device is self-powered
   uint8_t reserved : 4;                // Padding to make a full byte
-  uint8_t address_pending;             // USB device address is pending status stage
-  uint8_t address;                     // USB device address
-  uint8_t config_num;                  // The current device configuration number
-} usbd_device_t;
+  volatile uint8_t address_pending;    // USB device address is pending status stage
+  volatile uint8_t address;            // USB device address
+  volatile uint8_t config_num;         // The current device configuration number
+} usb_device_t;
 
 /*
  * USB HAL methods - these must be implmented by a HAL (typically the board code)
  */
 void usb_init_board_hal();
 void usb_device_start_hal();
-void usb_init_function_hal();                                                                               // Start USB in device mode
+void usb_init_enable_hal();                                                                                 // Start USB in device mode
 bool usb_ep_queue_transfer_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t* buffer, uint16_t total_bytes);  // Queue endpoint transfer in HAL
 void usb_device_set_addr_hal(const uint8_t device_addr);
 bool usb_ep_stall_get_hal(uint8_t ep_idn, uint8_t ep_dir_idx);
@@ -314,19 +314,19 @@ bool usb_ep_open_hal(const usb_ep_descriptor_t* ep_descriptor);
  */
 void usb_device_init();
 void usb_reset();
-bool usb_process_control_request(const usb_control_request_t* request);           // Process a control request
-bool usb_control_transfer_complete(uint8_t ep_addr, uint32_t transferred_bytes);  // An EP0 control transfer has completed
-bool usb_control_init_status_stage(const usb_control_request_t* request);         //
-void usb_ep_close_all();                                                          // Close all endpoints (unconfigure them)
-bool usb_ep_initiate_control_response(                                            // Initiate a staged control response
-    const usb_control_request_t* request,                                         //
-    const uint8_t* buffer,                                                        //
-    uint16_t len);                                                                //
-bool usb_ep_open_in_out(                                                          // Configure consecutive endpoint descriptors (IN & OUT)
-    const usb_ep_descriptor_t* descriptor,                                        //
-    uint8_t transfer_type,                                                        //
-    uint8_t* ep_addr_out,                                                         //
-    uint8_t* ep_addr_in);                                                         //
+bool usb_process_control_request(const usb_control_request_t* request);    // Process a control request
+bool usb_control_transfer(uint8_t ep_addr, uint32_t transferred_bytes);    // An EP0 control transfer has completed
+bool usb_control_init_status_stage(const usb_control_request_t* request);  //
+void usb_ep_close_all();                                                   // Close all endpoints (unconfigure them)
+bool usb_ep_initiate_control_response(                                     // Initiate a staged control response
+    const usb_control_request_t* request,                                  //
+    const uint8_t* buffer,                                                 //
+    uint16_t len);                                                         //
+bool usb_ep_open_in_out(                                                   // Configure consecutive endpoint descriptors (IN & OUT)
+    const usb_ep_descriptor_t* descriptor,                                 //
+    uint8_t transfer_type,                                                 //
+    uint8_t* ep_addr_out,                                                  //
+    uint8_t* ep_addr_in);                                                  //
 
 /*
  * USB descriptor methods
@@ -336,7 +336,7 @@ const uint8_t* get_device_descriptor();
 const uint16_t* usb_descriptor_string(uint8_t index);
 const uint8_t* usb_descriptor_device_qualifier();
 
-extern usbd_device_t usb_device;
+extern usb_device_t usb_device;
 
 /*
  * True if device configured

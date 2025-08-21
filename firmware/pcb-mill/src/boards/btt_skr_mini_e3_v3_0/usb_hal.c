@@ -76,8 +76,6 @@ static ep_assignment_t ep_assignment[USB_EP_MAX];
 // Buffer descriptor tables. Located at USB_DRD_PMAADDR.
 #define USB_BUFF_DESC ((volatile usb_buffer_description_tables_t *)(USB_DRD_PMAADDR))
 
-#define USB_PMA_BUFFER_START (sizeof(usb_buffer_description_tables_t))
-
 // Next available USB PMA buffer pointer location
 static uint16_t usb_pma_next_available;
 
@@ -97,8 +95,8 @@ ALWAYS_INLINE static void usb_ep_reset() {
     ep_reset_assigned_state(idn);
   }
 
-  // Reset PMA assignment
-  usb_pma_next_available = 8 * USB_EP_MAX + 2 * USB_EP0_BUFFER_SIZE;
+  // Reset PMA assignment (to end of EP buffer descriptor table)
+  usb_pma_next_available = 8 * USB_EP_MAX;
 }
 
 /*
@@ -340,8 +338,8 @@ static void usb_ep_control_init() {
   ep_transfer_set[EP0_IDN][USB_DIR_DEVICE_OUT_HOST_IN_IDX].max_packet_size = USB_EP0_BUFFER_SIZE;
   ep_transfer_set[EP0_IDN][USB_DIR_DEVICE_OUT_HOST_IN_IDX].ep_idn = EP0_IDN;
 
-  uint16_t pma_rx_addr = usb_pma_next_addr(USB_EP0_BUFFER_SIZE);
   uint16_t pma_tx_addr = usb_pma_next_addr(USB_EP0_BUFFER_SIZE);
+  uint16_t pma_rx_addr = usb_pma_next_addr(USB_EP0_BUFFER_SIZE);
 
   // Set EP0 TX/RX buffer addresses
   usb_pma_ep_addr_set(EP0_IDN, USB_EP_TX_COUNT_ADDR_IDX, pma_tx_addr);
@@ -372,8 +370,8 @@ void usb_ep_close_all() {
 
   NVIC_EnableIRQ(USB_UCPD1_2_IRQn);
 
-  // Reset PMA assignment (to end of EP buffer descriptor table)
-  usb_pma_next_available = 8 * USB_EP_MAX;
+  // Reset PMA assignment (except EP0)
+  usb_pma_next_available = 8 * USB_EP_MAX + 2 * USB_EP0_BUFFER_SIZE;
 }
 
 /*
@@ -457,7 +455,7 @@ void usb_ep_stall_clear_hal(uint8_t ep_idn, uint8_t ep_dir_idx) {
 static void process_control_request_hal(usb_control_request_t *control_request) {
   // Process control request
   if (!usb_process_control_request(control_request)) {
-    // USB 2.0 Specification, Section 9.2.7, “Error Handling”
+    // USB 2.0 Specification, Section 9.2.7, "Error Handling"
     // If a device detects a condition that prevents it from completing the request, it must indicate the error by returning a STALL handshake.
     // For control transfers, the device must respond with a STALL to any setup or data stage packet it cannot handle.
     usb_ep_stall_set_hal(EP0_IDN, USB_DIR_DEVICE_OUT_HOST_IN);
@@ -538,7 +536,7 @@ static void usb_ep_transfer_complete(uint8_t ep_addr, uint32_t transferred_bytes
   const uint8_t ep_idn = USB_EP_IDN(ep_addr);
 
   if (ep_idn == 0) {
-    usb_control_transfer_complete(ep_addr, transferred_bytes);
+    usb_control_transfer(ep_addr, transferred_bytes);
   } else {
     usb_cdc_transfer(ep_addr, transferred_bytes);
   }
@@ -678,7 +676,7 @@ void usb_init_board_hal() {
 /*
  * Initialise board HAL for USB function, and enable USB interrupts
  */
-void usb_init_function_hal() {
+void usb_init_enable_hal() {
   // Disable USB while initialising USB
   USB->DADDR = 0U;
 
@@ -733,7 +731,7 @@ void usb_device_start_hal() {
                USB_CNTR_CTRM;      // Correct transfer interrupt enabled
 
   // Initialise USB HAL function and control endpoint
-  usb_init_function_hal();
+  usb_init_enable_hal();
 
   // This bit is set by software to enable the embedded pull-up on DP line.
   // Clearing it to 0 can be used to signal disconnect to the host when
