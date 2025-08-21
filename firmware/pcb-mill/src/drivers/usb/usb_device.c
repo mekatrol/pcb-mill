@@ -71,7 +71,7 @@ ALWAYS_INLINE static void usb_control_transfer_init_data_stage(const usb_control
 /*
  * Reset device configuration
  */
-ALWAYS_INLINE static void usb_reset_config() {
+ALWAYS_INLINE static void usb_configuration_reset() {
   usb_cdc_reset();
 
   usb_device.self_powered = 1;     // Set to 1 if device is self powered
@@ -132,7 +132,7 @@ bool usb_control_init_status_stage(const usb_control_request_t* request) {
 bool usb_ep_initiate_control_response(const usb_control_request_t* request, const uint8_t* buffer, uint16_t len) {
   control_transfer.request = (*request);
   control_transfer.feed.buffer = buffer;
-  control_transfer.feed.fed_count = 0;
+  control_transfer.feed.fed_count = 0U;
   control_transfer.feed.total_count = (len < request->wLength) ? len : request->wLength;
 
   // If the request contains data then commence the data stage for the request
@@ -143,47 +143,6 @@ bool usb_ep_initiate_control_response(const usb_control_request_t* request, cons
 
   // This is the control status stage and we just need to respond with the response
   return usb_control_status_stage(request);
-}
-
-/*
- * Get a devices status: self_powered, remote_wakeup and stalled.
- */
-static bool usb_device_get_status(const usb_control_request_t* request) {
-  // Default status to zero
-  uint16_t status = 0;
-
-  // Get recipient
-  const usb_request_recipient_t request_recipient = usb_request_recipient(request->bmRequestType);
-
-  switch (request_recipient) {
-    case USB_REQUEST_RECIPIENT_DEVICE:
-      // Device status (USB 2.0 Spec, Table 9-4)
-      // Bit 0: Self Powered (1 = self-powered, 0 = bus-powered)
-      // Bit 1: Remote Wakeup (1 = enabled, 0 = disabled)
-      status = (usb_device.self_powered ? 1U : 0U);
-      status |= (usb_device.remote_wakeup ? 2U : 0U);
-      break;
-
-    case USB_REQUEST_RECIPIENT_INTERFACE:
-      // Status always zero for interfaces, nothing to do
-      break;
-
-    case USB_REQUEST_RECIPIENT_ENDPOINT: {
-      const uint8_t ep_num = USB_EP_IDN(request->wIndex);
-      const uint8_t ep_dir_idx = USB_EP_DIR_IDX(request->wIndex);
-      bool stalled = usb_ep_stall_get_hal(ep_num, ep_dir_idx);
-      // Endpoint status (USB 2.0 Spec, Table 9-6)
-      // Bit 0: Halt (1 = STALL, 0 = normal)
-      status = stalled ? 1U : 0U;
-      break;
-    }
-
-    default:
-      // Invalid recipient → stall
-      return false;
-  }
-
-  return usb_ep_initiate_control_response(request, (const uint8_t*)&status, sizeof(status));
 }
 
 static bool usb_device_set_address_complete(const uint8_t control_stage, const usb_control_request_t* request) {
@@ -324,13 +283,13 @@ static bool process_get_descriptor(const usb_control_request_t* request) {
 
   switch (descriptor_type) {
     case USB_DESCRIPTOR_TYPE_DEVICE: {
-      void* descriptor_device = (void*)(uintptr_t)get_device_descriptor();
+      const uint8_t* descriptor_device = (const uint8_t*)get_device_descriptor();
       return usb_ep_initiate_control_response(request, descriptor_device, sizeof(usb_device_descriptor_t));
     }
 
     case USB_DESCRIPTOR_TYPE_CONFIGURATION: {
       usb_configuration_descriptor_t* descriptor_config = (usb_configuration_descriptor_t*)usb_descriptor_configuration(descriptor_index);
-      return usb_ep_initiate_control_response(request, (void*)descriptor_config, descriptor_config->wTotalLength);
+      return usb_ep_initiate_control_response(request, (const uint8_t*)descriptor_config, descriptor_config->wTotalLength);
     }
 
     case USB_DESCRIPTOR_TYPE_OTHER_SPEED_CONFIG:
@@ -365,7 +324,7 @@ static bool process_get_descriptor(const usb_control_request_t* request) {
  */
 void usb_reset() {
   usb_init_function_hal();
-  usb_reset_config();
+  usb_configuration_reset();
   usb_control_transfer_reset();
 }
 
@@ -468,7 +427,7 @@ bool usb_process_control_request(const usb_control_request_t* request) {
             usb_ep_close_all();
 
             // Reset all current configuration
-            usb_reset_config();
+            usb_configuration_reset();
 
             usb_device.config_num = config_num;
 
@@ -518,7 +477,12 @@ bool usb_process_control_request(const usb_control_request_t* request) {
           break;
 
         case USB_STD_GET_STATUS:
-          return usb_device_get_status(request);
+          // Device status bit mask
+          // - Bit 0: Self Powered
+          // - Bit 1: Remote Wakeup enabled
+          uint16_t status = (uint16_t)(0x01 | (usb_device.remote_wakeup ? 2U : 0U));
+          usb_ep_initiate_control_response(request, (const uint8_t*)&status, 2);
+          break;
 
         // Unknown/Unsupported request
         default:
@@ -668,7 +632,7 @@ bool usb_control_transfer_complete(uint8_t ep_addr, uint32_t transferred_bytes) 
 
 void usb_device_init() {
   // Reset config to 'unconfigured'
-  usb_reset_config();
+  usb_configuration_reset();
 
   // Initialise CDC (Virtual COM) state
   usb_cdc_init();
