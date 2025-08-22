@@ -85,11 +85,11 @@ typedef enum {
 
 typedef enum {
   // Type (bits 5..6)
-  USB_REQUEST_TYPE_STANDARD = 0 << 5,  // 00b
-  USB_REQUEST_TYPE_CLASS = 1 << 5,     // 01b
-  USB_REQUEST_TYPE_VENDOR = 2 << 5,    // 10b
-  USB_REQUEST_TYPE_RESERVED = 3 << 5,  // 11b (reserved in spec)
-  USB_REQUEST_TYPE_MASK = 0x60,        // Bits 5..6
+  USB_REQUEST_TYPE_STANDARD = 0,  // 00b
+  USB_REQUEST_TYPE_CLASS = 1,     // 01b
+  USB_REQUEST_TYPE_VENDOR = 2,    // 10b
+  USB_REQUEST_TYPE_RESERVED = 3,  // 11b (reserved in spec)
+  USB_REQUEST_TYPE_MASK = 0x60,   // Bits 5..6
 } usb_request_type_t;
 
 typedef enum {

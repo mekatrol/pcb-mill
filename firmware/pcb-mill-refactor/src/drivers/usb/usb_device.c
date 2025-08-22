@@ -24,10 +24,12 @@ typedef enum {
 // We are a single USB device
 usb_device_t usb_device;
 
+typedef bool (*usb_control_transfer_complete_t)(const uint8_t control_stage, const usb_control_request_t* request);
+
 typedef struct {
-  feed_forward_buffer_t feed;                      // "Inherited" fields
-  usb_control_request_t request;                   // The control request being transferred
-  usb_cdc_control_transfer_t control_complete_cb;  // Callback when transfer is complete
+  feed_forward_buffer_t feed;                           // "Inherited" fields
+  usb_control_request_t request;                        // The control request being transferred
+  usb_control_transfer_complete_t control_complete_cb;  // Callback when transfer is complete
 } usb_control_transfer_t;
 
 static usb_control_transfer_t control_transfer;
@@ -48,7 +50,7 @@ static bool process_get_descriptor(const usb_control_request_t* request);
 
 // from usbd_control.c
 void usb_control_transfer_reset(void);
-void usb_control_set_complete_callback(usb_cdc_control_transfer_t fp);
+void usb_control_set_complete_callback(usb_control_transfer_complete_t fp);
 
 bool usb_connected(void) {
   return usb_device.connected;
@@ -122,6 +124,20 @@ void usb_reset() {
   usb_init_enable_hal();
   usb_configuration_reset();
   usb_control_transfer_reset();
+}
+
+void usb_ep_stall_set(uint8_t ep_addr) {
+  const uint8_t ep_idn = USB_EP_IDN(ep_addr);
+  const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
+
+  usb_ep_stall_set_hal(ep_idn, ep_dir_idx);
+}
+
+void usb_ep_stall_clear(uint8_t ep_addr) {
+  const uint8_t ep_idn = USB_EP_IDN(ep_addr);
+  const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
+
+  usb_ep_stall_clear_hal(ep_idn, ep_dir_idx);
 }
 
 bool usb_process_control_request(const usb_control_request_t* request) {
@@ -454,32 +470,6 @@ bool usb_ep_open_in_out(const usb_ep_descriptor_t* descriptor_ep, uint8_t xfer_t
   return true;
 }
 
-bool usb_ep_queue_transfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes) {
-  const uint8_t ep_idn = USB_EP_IDN(ep_addr);
-  const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
-
-  if (usb_ep_queue_transfer_hal(ep_idn, ep_dir_idx, buffer, total_bytes)) {
-    return true;
-  } else {
-    // Transfer error
-    return false;
-  }
-}
-
-void usb_ep_stall_set(uint8_t ep_addr) {
-  const uint8_t ep_idn = USB_EP_IDN(ep_addr);
-  const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
-
-  usb_ep_stall_set_hal(ep_idn, ep_dir_idx);
-}
-
-void usb_ep_stall_clear(uint8_t ep_addr) {
-  const uint8_t ep_idn = USB_EP_IDN(ep_addr);
-  const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
-
-  usb_ep_stall_clear_hal(ep_idn, ep_dir_idx);
-}
-
 static inline bool usb_control_status_stage(const usb_control_request_t* request) {
   // Opposite to endpoint in Data Phase
   const usb_request_direction_index_t request_direction = usb_request_direction(request->bmRequestType);
@@ -547,7 +537,7 @@ void usb_control_transfer_reset(void) {
 }
 
 // Set complete callback
-void usb_control_set_complete_callback(usb_cdc_control_transfer_t fp) {
+void usb_control_set_complete_callback(usb_control_transfer_complete_t fp) {
   control_transfer.control_complete_cb = fp;
 }
 

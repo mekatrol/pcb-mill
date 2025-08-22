@@ -1,7 +1,6 @@
 #ifndef __USB_H__
 #define __USB_H__
 
-// Standard Headers
 #include <stdbool.h>
 #include <stdint.h>
 #include <inttypes.h>
@@ -85,21 +84,21 @@ typedef enum {
 } usb_direction_t;
 
 typedef enum {
-  USB_REQUEST_TYPE_STANDARD = 0,  // 00
-  USB_REQUEST_TYPE_CLASS = 1,     // 01
-  USB_REQUEST_TYPE_VENDOR = 2,    // 10
-  USB_REQUEST_TYPE_RESERVED = 3,  // 11 -> reserved in spec
-
-  USB_REQUEST_TYPE_MASK = 0x60
+  // Type (bits 5..6)
+  USB_REQUEST_TYPE_STANDARD = 0,  // 00b
+  USB_REQUEST_TYPE_CLASS = 1,     // 01b
+  USB_REQUEST_TYPE_VENDOR = 2,    // 10b
+  USB_REQUEST_TYPE_RESERVED = 3,  // 11b (reserved in spec)
+  USB_REQUEST_TYPE_MASK = 0x60,   // Bits 5..6
 } usb_request_type_t;
 
 typedef enum {
+  // Recipient (bits 0..4)
   USB_REQUEST_RECIPIENT_DEVICE = 0,
   USB_REQUEST_RECIPIENT_INTERFACE = 1,
   USB_REQUEST_RECIPIENT_ENDPOINT = 2,
   USB_REQUEST_RECIPIENT_OTHER = 3,
-
-  USB_REQUEST_RECIPIENT_MASK = 0x1F
+  USB_REQUEST_RECIPIENT_MASK = 0x1F,  // Bits 0..4
 } usb_request_recipient_t;
 
 // Descriptor types recognised by this USB library
@@ -143,10 +142,16 @@ typedef enum {
   CDC_CLASS_SEND_BREAK = 0x23               // 35
 } usb_request_code_t;
 
+// USB Standard Feature Selectors (USB 2.0 Spec, Table 9-6)
 typedef enum {
-  USB_FEATURE_ENDPOINT_HALT = 0,
-  USB_FEATURE_REMOTE_WAKEUP = 1
-} tusb_request_feature_selector_t;
+  USB_FEATURE_ENDPOINT_HALT = 0,  // Used with CLEAR_FEATURE/SET_FEATURE for endpoints
+                                  // Stops endpoint from transmitting/receiving data (stall condition)
+
+  USB_FEATURE_REMOTE_WAKEUP = 1,  // Used with CLEAR_FEATURE/SET_FEATURE for devices
+                                  // Allows device to signal resume from suspend (if supported)
+
+  USB_FEATURE_TEST_MODE = 2  // Used only in high-speed devices for test modes (Chapter 9, USB 2.0 spec)
+} usb_request_feature_selector_t;
 
 typedef enum {
   USB_EP_NUM_MASK = 0x0F,             // Bits 0..3 = endpoint number
@@ -154,11 +159,10 @@ typedef enum {
   USB_EP_PACKET_SIZE_MASK = 0x7FFUL,  // Bits 0–10 = Max packet size in bytes (0–1024)
 } control_request_addr_mask_t;
 
-// TODO remove
 enum {
-  DESC_OFFSET_LEN = 0,
-  DESC_OFFSET_TYPE = 1,
-  DESC_OFFSET_SUBTYPE = 2
+  DESCRIPTOR_LEN_OFFSET = 0,
+  DESCRIPTOR_TYPE_OFFSET = 1,
+  DESCRIPTOR_SUBTYPE_OFFSET = 2
 };
 
 // Extract endpoint identifier (0..15)
@@ -176,13 +180,13 @@ enum {
 // Extract endpoint packet size
 #define USB_EP_PACKET_SIZE(packet_size) (((uint32_t)(packet_size)) & USB_EP_PACKET_SIZE_MASK)
 
-// Standard USB control request (USB 2.0 Spec, Table 9-2)
+// USB Setup Packet (USB 2.0 Spec, Table 9-2: Standard Device Request)
 typedef struct __attribute__((packed)) {
-  uint8_t bmRequestType;  // Request characteristics: direction, type, and recipient (see USB 2.0 §9.3, Table 9-2)
-  uint8_t bRequest;       // Specific request code (standard, class, or vendor-specific)
-  uint16_t wValue;        // Request-specific parameter (meaning depends on bRequest)
-  uint16_t wIndex;        // Typically an index or offset; often used for interface or endpoint number
-  uint16_t wLength;       // Number of bytes to transfer in the data stage (host → device or device → host)
+  uint8_t bmRequestType;  // Direction, type, recipient
+  uint8_t bRequest;       // Request code
+  uint16_t wValue;        // Request-specific parameter
+  uint16_t wIndex;        // Index (e.g., interface, endpoint)
+  uint16_t wLength;       // Number of bytes in data stage
 } usb_control_request_t;
 
 _Static_assert(sizeof(usb_control_request_t) == 8, "sizeof(usb_control_request_t) must be 8");
@@ -277,27 +281,27 @@ typedef struct __attribute__((packed)) {
 
 _Static_assert(sizeof(usb_ep_descriptor_t) == 7, "size must be 7");
 
+/*
+ * The USB device state
+ */
 typedef struct {
-  volatile uint8_t connected : 1;    // USB is connected and ready for use
-  volatile uint8_t addressed : 1;    // USB has received address
-  uint8_t remote_wakeup : 1;         // configuration descriptor's attribute
-  uint8_t self_powered : 1;          // configuration descriptor's attribute
-  uint8_t reserved : 4;              // Padding to make a full byte
-  volatile uint8_t config_num;       // current active configuration (0x00 is not configured)
-  volatile uint8_t address_pending;  // USB device address is pending status stage
-  volatile uint8_t address;          // USB device address
-
+  volatile uint8_t connected : 1;      // Device is connected
+  volatile uint8_t addressed : 1;      // Device has been assigned an address
+  volatile uint8_t remote_wakeup : 1;  // Remote wakeup enabled
+  volatile uint8_t self_powered : 1;   // Device is self-powered
+  uint8_t reserved : 4;                // Padding to make a full byte
+  volatile uint8_t address_pending;    // USB device address is pending status stage
+  volatile uint8_t address;            // USB device address
+  volatile uint8_t config_num;         // The current device configuration number
 } usb_device_t;
-
-typedef bool (*usb_cdc_control_transfer_t)(uint8_t stage, const usb_control_request_t* request);
 
 /*
  * USB HAL methods - these must be implmented by a HAL (typically the board code)
  */
 void usb_init_board_hal();
 void usb_device_start_hal();
-void usb_init_enable_hal();
-bool usb_ep_queue_transfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes);
+void usb_init_enable_hal();                                                                                 // Start USB in device mode
+bool usb_ep_queue_transfer_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t* buffer, uint16_t total_bytes);  // Queue endpoint transfer in HAL
 void usb_device_set_addr_hal(const uint8_t device_addr);
 bool usb_ep_stall_get_hal(uint8_t ep_idn, uint8_t ep_dir_idx);
 void usb_ep_stall_set_hal(uint8_t ep_idn, uint8_t ep_dir_idx);
@@ -309,19 +313,19 @@ bool usb_ep_open_hal(const usb_ep_descriptor_t* ep_descriptor);
  */
 void usb_device_init();
 void usb_reset();
-bool usb_process_control_request(const usb_control_request_t* request);
-bool usb_control_transfer(uint8_t ep_addr, uint32_t transferred_bytes);
-bool usb_control_init_status_stage(const usb_control_request_t* request);
-void usb_ep_close_all();
-bool usb_ep_initiate_control_response(
-    const usb_control_request_t* request,
-    const uint8_t* buffer,
-    uint16_t len);
-bool usb_ep_open_in_out(
-    const usb_ep_descriptor_t* p_desc,
-    uint8_t xfer_type,
-    uint8_t* ep_addr_out,
-    uint8_t* ep_addr_in);
+bool usb_process_control_request(const usb_control_request_t* request);    // Process a control request
+bool usb_control_transfer(uint8_t ep_addr, uint32_t transferred_bytes);    // An EP0 control transfer has completed
+bool usb_control_init_status_stage(const usb_control_request_t* request);  //
+void usb_ep_close_all();                                                   // Close all endpoints (unconfigure them)
+bool usb_ep_initiate_control_response(                                     // Initiate a staged control response
+    const usb_control_request_t* request,                                  //
+    const uint8_t* buffer,                                                 //
+    uint16_t len);                                                         //
+bool usb_ep_open_in_out(                                                   // Configure consecutive endpoint descriptors (IN & OUT)
+    const usb_ep_descriptor_t* descriptor,                                 //
+    uint8_t transfer_type,                                                 //
+    uint8_t* ep_addr_out,                                                  //
+    uint8_t* ep_addr_in);                                                  //
 
 /*
  * USB descriptor methods
@@ -329,48 +333,62 @@ bool usb_ep_open_in_out(
 const usb_configuration_descriptor_t* usb_descriptor_configuration();
 const uint8_t* get_device_descriptor();
 const uint16_t* usb_descriptor_string(uint8_t index);
-const uint8_t* usb_descriptor_device_qualifier(void);
+const uint8_t* usb_descriptor_device_qualifier();
 
 extern usb_device_t usb_device;
 
-// True if device configured
+/*
+ * True if device configured
+ */
 ALWAYS_INLINE static bool usb_configured(void) {
-  return usb_device.config_num ? true : false;
+  return usb_device.config_num != 0;
 }
 
-ALWAYS_INLINE static usb_request_recipient_t usb_request_recipient(uint8_t bm) { return (bm)&USB_REQUEST_RECIPIENT_MASK; }
-ALWAYS_INLINE static usb_request_type_t usb_request_type(uint8_t bm) { return ((bm)&USB_REQUEST_TYPE_MASK) >> 5; }
-ALWAYS_INLINE static usb_request_direction_index_t usb_request_direction(uint8_t bm) { return USB_EP_DIR((bm)) >> 7; }
+/*
+ * Request type, recipient and direction helpers
+ */
+ALWAYS_INLINE static usb_request_recipient_t usb_request_recipient(uint8_t bmRequestType) { return (bmRequestType)&USB_REQUEST_RECIPIENT_MASK; }
+ALWAYS_INLINE static usb_request_type_t usb_request_type(uint8_t bmRequestType) { return ((bmRequestType)&USB_REQUEST_TYPE_MASK) >> 5; }
+ALWAYS_INLINE static usb_request_direction_index_t usb_request_direction(uint8_t bmRequestType) { return USB_EP_DIR((bmRequestType)) >> 7; }
 
-void usb_ep_stall_set(uint8_t ep_addr);
-void usb_ep_stall_clear(uint8_t ep_addr);
+/*
+ * Descriptor helpers
+ */
 
-// return next descriptor
+// Return next descriptor
 ALWAYS_INLINE static const uint8_t* usb_next_descriptor(const void* desc) {
   const uint8_t* desc8 = (const uint8_t*)desc;
-  return desc8 + desc8[DESC_OFFSET_LEN];
+  return desc8 + desc8[DESCRIPTOR_LEN_OFFSET];
 }
 
-// get descriptor length
+// Get descriptor length
 ALWAYS_INLINE static uint8_t usb_descriptor_len(const void* desc) {
-  return ((const uint8_t*)desc)[DESC_OFFSET_LEN];
+  return ((const uint8_t*)desc)[DESCRIPTOR_LEN_OFFSET];
 }
 
-// get descriptor type
+// Get descriptor type
 ALWAYS_INLINE static uint8_t usb_descriptor_type(const void* desc) {
-  return ((const uint8_t*)desc)[DESC_OFFSET_TYPE];
+  return ((const uint8_t*)desc)[DESCRIPTOR_TYPE_OFFSET];
 }
 
-// get descriptor subtype
-ALWAYS_INLINE static uint8_t tu_desc_subtype(const void* desc) {
-  return ((const uint8_t*)desc)[DESC_OFFSET_SUBTYPE];
+// Get descriptor subtype
+ALWAYS_INLINE static uint8_t usb_descriptor_subtype(const void* desc) {
+  return ((const uint8_t*)desc)[DESCRIPTOR_SUBTYPE_OFFSET];
 }
 
-ALWAYS_INLINE static uint8_t tu_desc_is_valid(const void* desc, const uint8_t* desc_end) {
+ALWAYS_INLINE static uint8_t usb_descriptor_is_valid(const void* desc, const uint8_t* desc_end) {
   const uint8_t* desc8 = (const uint8_t*)desc;
   return (desc8 < desc_end) && (usb_next_descriptor(desc) <= desc_end);
 }
 
-bool usb_ep_queue_transfer_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t* buffer, uint16_t total_bytes);
+/*
+ * Queue a transfer in HAL
+ */
+ALWAYS_INLINE static bool usb_ep_queue_transfer(uint8_t ep_addr, uint8_t* buffer, uint16_t total_bytes) {
+  const uint8_t ep_idn = USB_EP_IDN(ep_addr);
+  const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
+
+  return usb_ep_queue_transfer_hal(ep_idn, ep_dir_idx, buffer, total_bytes);
+}
 
 #endif  // __USB_H__
