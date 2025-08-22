@@ -191,7 +191,11 @@ static bool usb_cdc_control_staging_init(const usb_control_request_t* request) {
 static bool usb_set_configuration() {
   const usb_configuration_descriptor_t* descriptor_config = (const usb_configuration_descriptor_t*)usb_descriptor_configuration();
 
+  diag_print("USB configuration - start.\r\n");
+
   if (descriptor_config == NULL || descriptor_config->bDescriptorType != USB_DESCRIPTOR_TYPE_CONFIGURATION) {
+    diag_print("The descriptor configuration is not of type 'USB_DESCRIPTOR_TYPE_CONFIGURATION'.\r\n");
+    diag_print("USB configuration - failed.\r\n");
     return false;
   }
 
@@ -203,30 +207,54 @@ static bool usb_set_configuration() {
   const usb_descriptor_base_t* descriptor = usb_next_descriptor(descriptor_config);
   const uint8_t* descriptor_end = ((const uint8_t*)descriptor_config) + descriptor_config->wTotalLength;
 
+  // Iterate through descriptor configurations
   while ((const uint8_t*)descriptor < descriptor_end) {
-    // Class will always starts with Interface Association (if any) and then Interface descriptor
+    // A descriptor class can start with an association definition (optional), we skip over as it is for hosts information
     if (descriptor->bDescriptorType == USB_DESCRIPTOR_TYPE_INTERFACE_ASSOCIATION) {
-      descriptor = usb_next_descriptor(descriptor);  // next to Interface
+      descriptor = usb_next_descriptor(descriptor);  // Move to descriptor interface
     }
 
+    // The interface descriptor must be next
     if (descriptor->bDescriptorType != USB_DESCRIPTOR_TYPE_INTERFACE) {
+      diag_print("The descriptor type is not of type 'USB_DESCRIPTOR_TYPE_INTERFACE'.\r\n");
+      diag_print("USB configuration - failed.\r\n");
       return false;
     }
 
+    // Case to interface descriptor
     const usb_control_interface_descriptor_t* descriptor_interface = (const usb_control_interface_descriptor_t*)descriptor;
 
-    // Find driver for this interface
-    const uint16_t remaining_len = (uint16_t)(descriptor_end - (const uint8_t*)descriptor);
-    const uint16_t descriptor_len = usb_cdc_open(descriptor_interface, remaining_len);
+    // Get remaining length of descriptors in configuration
+    uint16_t remaining_len = (uint16_t)(descriptor_end - (const uint8_t*)descriptor);
 
-    if ((sizeof(usb_control_interface_descriptor_t) <= descriptor_len) && (descriptor_len <= remaining_len)) {
-      // next Interface
+    // Is the a CDC ACM subclass (Virtual COM)?
+    if (descriptor_interface->bInterfaceClass == USB_CLASS_CDC &&
+        descriptor_interface->bInterfaceSubClass == CDC_COMM_SUBCLASS_ABSTRACT_CONTROL_MODEL) {
+      diag_printf("Configuring the interface descriptor class: %d with subclass: %d.\r\n", descriptor_interface->bInterfaceClass, descriptor_interface->bInterfaceSubClass);
+
+      // Open CDC interface
+      uint16_t descriptor_len = usb_cdc_open((const usb_control_interface_descriptor_t*)descriptor, remaining_len);
+
+      if (descriptor_len == 0) {
+        // There was an error processing the CDC descriptor configuration and so we need to fail
+        diag_printf("Failed to configure the interface descriptor class: %d with subclass: %d.\r\n", descriptor_interface->bInterfaceClass, descriptor_interface->bInterfaceSubClass);
+        diag_print("USB configuration - failed.\r\n");
+        return false;
+      }
+
+      // Move to next interface
       descriptor += descriptor_len;
-
-      break;  // exit driver find loop
+      continue;
     }
+
+    // If we have tried processing all known interface types for current descriptor (aka the type is unknown to us)
+    // then we exit and process no more. We can't just skip unknown interface types because we do not know their total configuration length
+    diag_printf("The interface descriptor class: %d with subclass: %d is not known.\r\n", descriptor_interface->bInterfaceClass, descriptor_interface->bInterfaceSubClass);
+    diag_print("USB configuration - failed.\r\n");
+    return false;
   }
 
+  diag_print("USB configuration - complete.\r\n");
   return true;
 }
 

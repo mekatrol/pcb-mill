@@ -20,35 +20,25 @@ static usb_cdc_epbuf_t usb_cdc_epbuf;
 // The USB CDC state and config
 usb_cdc_t usb_cdc;
 
-static bool usb_device_prep_out_transaction() {
-  // Skip if usb is not yet configured
-  if (!(usb_configured() && usb_cdc.ep_addr_out)) {
+static bool usb_cdc_ep_buffer_transfer() {
+  // Skip if usb is not yet configured or the ep not yet assigned
+  if (!(usb_configured() && usb_cdc.ep_addr_out != 0)) {
     return false;
   }
 
-  // Get rx data available count
-  uint16_t available_count = circular_buffer_space(&usb_cdc.rx_buffer);
+  // Get available space in buffer
+  uint16_t available_space = circular_buffer_space(&usb_cdc.rx_buffer);
 
-  // Prepare for incoming data but only allow what we can store in the ring buffer.
-  // TODO Actually we can still carry out the transfer, keeping count of received bytes
-  // and slowly move it to the buffer when read().
-  // This pre-check reduces endpoint claiming
-  if (available_count < USB_EP0_BUFFER_SIZE) {
-    return false;
-  }
-
-  // Update available count
-  available_count = circular_buffer_space(&usb_cdc.rx_buffer);
-
-  if (available_count >= USB_EP0_BUFFER_SIZE) {
+  // If the buffer is empty then we can queue more data
+  if (available_space >= USB_EP0_BUFFER_SIZE) {
     return usb_ep_queue_transfer(usb_cdc.ep_addr_out, usb_cdc_epbuf.epout, USB_EP0_BUFFER_SIZE);
-  } else {
-    return false;
   }
+
+  return false;
 }
 
 uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* control_descriptor, uint16_t descriptor_end) {
-  // Only support ACM subclass
+  // Is the a CDC ACM subclass (Virtual COM)?
   if (control_descriptor->bInterfaceClass != USB_CLASS_CDC ||
       control_descriptor->bInterfaceSubClass != CDC_COMM_SUBCLASS_ABSTRACT_CONTROL_MODEL) {
     return 0;
@@ -67,6 +57,7 @@ uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* control_descript
     // notification endpoint
     const usb_ep_descriptor_t* ep_descriptor = (const usb_ep_descriptor_t*)descriptor;
     if (!usb_ep_open_hal(ep_descriptor)) {
+      diag_print("usb_ep_open_hal - failed.\r\n");
       return 0;
     }
 
@@ -76,20 +67,22 @@ uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* control_descript
 
   if ((descriptor->bDescriptorType == USB_DESCRIPTOR_TYPE_INTERFACE) &&
       (((const usb_control_interface_descriptor_t*)descriptor)->bInterfaceClass) == USB_CLASS_CDC_DATA) {
-    // next to endpoint descriptor
+    // Move to endpoint descriptor
     descriptor_len += descriptor->bLength;
     descriptor = (const usb_ep_descriptor_t*)usb_next_descriptor(descriptor);
 
     // Open endpoint pair
     if (!usb_ep_open_in_out_pair((const usb_ep_descriptor_t*)descriptor, USB_EP_TYPE_BULK, &usb_cdc.ep_addr_out, &usb_cdc.ep_addr_in)) {
+      diag_print("usb_ep_open_in_out_pair - failed.\r\n");
       return 0;
     }
 
-    descriptor_len += 2 * sizeof(usb_ep_descriptor_t);
+    // Move past end point descriptor pair
+    descriptor_len += EP_IN_OUT_PAIR * sizeof(usb_ep_descriptor_t);
   }
 
-  // Prepare for incoming data
-  usb_device_prep_out_transaction();
+  // Transfer data between EP and circular buffers
+  usb_cdc_ep_buffer_transfer();
 
   return descriptor_len;
 }
@@ -155,7 +148,8 @@ uint32_t usb_cdc_available() {
 
 uint32_t usb_cdc_read(void* buffer, uint32_t bufsize) {
   uint32_t num_read = circular_buffer_read(&usb_cdc.rx_buffer, buffer, bufsize);
-  usb_device_prep_out_transaction();
+  // Transfer data between EP and circular buffers
+  usb_cdc_ep_buffer_transfer();
   return num_read;
 }
 
@@ -204,8 +198,8 @@ bool usb_cdc_transfer(uint8_t ep_addr, uint32_t transferred_bytes) {
       usb_cdc_rx_cb();
     }
 
-    // prepare for OUT transaction
-    usb_device_prep_out_transaction();
+    // Transfer data between EP and circular buffers
+    usb_cdc_ep_buffer_transfer();
   }
 
   // Data sent to host, we continue to fetch from tx buffer to send.

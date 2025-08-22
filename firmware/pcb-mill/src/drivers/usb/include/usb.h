@@ -9,8 +9,9 @@
 #include <stdio.h>
 
 #include "stm32g0xx.h"
-#include "macros.h"
 
+#include "diagnostics.h"
+#include "macros.h"
 #include "usb_types.h"
 
 // A pair of endpoints IN/OUT

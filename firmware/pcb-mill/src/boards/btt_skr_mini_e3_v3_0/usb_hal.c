@@ -521,6 +521,7 @@ static void usb_ep_transfer_complete(uint8_t ep_addr, uint32_t transferred_bytes
   if (ep_idn == 0) {
     usb_control_transfer(ep_addr, transferred_bytes);
   } else {
+    // Transfer data between EP and circular buffers
     usb_cdc_transfer(ep_addr, transferred_bytes);
   }
 }
