@@ -202,13 +202,8 @@ static bool usb_set_configuration() {
   const uint8_t* descriptor_end = ((const uint8_t*)descriptor_config) + descriptor_config->wTotalLength;
 
   while (discriptor < descriptor_end) {
-    uint8_t assoc_itf_count = 1;
-
     // Class will always starts with Interface Association (if any) and then Interface descriptor
     if (usb_descriptor_type(discriptor) == USB_DESCRIPTOR_TYPE_INTERFACE_ASSOCIATION) {
-      const usb_interface_association_descriptor_t* descriptor_iad = (const usb_interface_association_descriptor_t*)discriptor;
-      assoc_itf_count = descriptor_iad->bInterfaceCount;
-
       discriptor = usb_next_descriptor(discriptor);  // next to Interface
     }
 
@@ -220,15 +215,11 @@ static bool usb_set_configuration() {
 
     // Find driver for this interface
     const uint16_t remaining_len = (uint16_t)(descriptor_end - discriptor);
-    const uint16_t drv_len = usb_cdc_open(descriptor_interface, remaining_len);
+    const uint16_t descriptor_len = usb_cdc_open(descriptor_interface, remaining_len);
 
-    if ((sizeof(usb_control_interface_descriptor_t) <= drv_len) && (drv_len <= remaining_len)) {
-      if (assoc_itf_count == 1) {
-        assoc_itf_count = 2;
-      }
-
+    if ((sizeof(usb_control_interface_descriptor_t) <= descriptor_len) && (descriptor_len <= remaining_len)) {
       // next Interface
-      discriptor += drv_len;
+      discriptor += descriptor_len;
 
       break;  // exit driver find loop
     }
