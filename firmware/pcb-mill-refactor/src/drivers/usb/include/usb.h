@@ -102,7 +102,7 @@ typedef enum {
 typedef enum {
   USB_DIR_DEVICE_IN_HOST_OUT_IDX = 0,  // Host-to-device
   USB_DIR_DEVICE_OUT_HOST_IN_IDX = 1,  // Device-to-host
-} usb_direction_index_t;
+} usb_request_direction_index_t;
 
 /// Standard USB control request (USB 2.0 Spec, Table 9-2)
 typedef struct __attribute__((packed)) {
@@ -117,7 +117,7 @@ _Static_assert(sizeof(usb_control_request_t) == 8, "sizeof(usb_control_request_t
 
 __attribute__((always_inline)) static inline usb_request_recipient_t usb_request_recipient(uint8_t bm) { return (bm)&USB_REQUEST_RECIPIENT_MASK; }
 __attribute__((always_inline)) static inline usb_request_type_t usb_request_type(uint8_t bm) { return ((bm)&USB_REQUEST_TYPE_MASK) >> 5; }
-__attribute__((always_inline)) static inline usb_direction_index_t usb_request_direction(uint8_t bm) { return USB_EP_DIR((bm)) >> 7; }
+__attribute__((always_inline)) static inline usb_request_direction_index_t usb_request_direction(uint8_t bm) { return USB_EP_DIR((bm)) >> 7; }
 
 // USB Device Descriptor
 typedef struct __attribute__((packed)) {

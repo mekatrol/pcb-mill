@@ -11,7 +11,8 @@
     "hal.h": "c",
     "usb_hal.h": "c",
     "stdint.h": "c",
-    "stdbool.h": "c"
+    "stdbool.h": "c",
+    "aligned_memory.h": "c"
   },
   "cortex-debug.variableUseNaturalFormat": true
 }

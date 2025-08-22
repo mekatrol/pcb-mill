@@ -468,7 +468,7 @@ void usb_ep_stall_clear(uint8_t ep_addr) {
 
 static inline bool usb_control_status_stage(const usb_control_request_t* request) {
   // Opposite to endpoint in Data Phase
-  const usb_direction_index_t request_direction = usb_request_direction(request->bmRequestType);
+  const usb_request_direction_index_t request_direction = usb_request_direction(request->bmRequestType);
   const uint8_t ep_addr = request_direction ? USB_DIR_DEVICE_IN_HOST_OUT : USB_DIR_DEVICE_OUT_HOST_IN;
 
   return usb_ep_queue_transfer(ep_addr, NULL, 0);
@@ -492,7 +492,7 @@ static bool usb_control_data_stage() {
   uint8_t ep0_addr = USB_DIR_DEVICE_IN_HOST_OUT;
 
   // Get direction from request
-  const usb_direction_index_t request_direction = usb_request_direction(control_transfer.request.bmRequestType);
+  const usb_request_direction_index_t request_direction = usb_request_direction(control_transfer.request.bmRequestType);
 
   // Is the direction IN?
   if (request_direction == USB_DIR_DEVICE_OUT_HOST_IN_IDX) {

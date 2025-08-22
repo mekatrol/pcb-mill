@@ -1,6 +1,8 @@
 #include "board_hal.h"
 #include "cdc_device.h"
 #include "feed_forward_buffer.h"
+#include "aligned_memory.h"
+#include "usb.h"
 
 // Member unassigned value
 #define UNASSIGNED_VALUE 0xFFU
@@ -11,6 +13,7 @@
 // STM32G0B1 has 8 endpoints
 #define USB_EP_MAX 8
 
+// Endpoint TX and RX count_addr indexes
 #define USB_EP_TX_COUNT_ADDR_IDX 0
 #define USB_EP_RX_COUNT_ADDR_IDX 1
 
@@ -87,7 +90,7 @@ __attribute__((always_inline)) static inline void ep_reset_assigned_state(uint32
   ep_assignment[ep_idn].assigned[USB_DIR_DEVICE_OUT_HOST_IN_IDX] = false;  // In unassigned
 }
 
-static void usb_ep_reset() {
+__attribute__((always_inline)) static inline void usb_ep_reset() {
   for (uint32_t idn = 0; idn < USB_EP_MAX; idn++) {
     ep_reset_assigned_state(idn);
   }
@@ -96,6 +99,9 @@ static void usb_ep_reset() {
   usb_pma_next_available = 8 * USB_EP_MAX;
 }
 
+/*
+ * Set endpoint register with option of disabling interrupts while setting the value.
+ */
 __attribute__((always_inline)) static inline void usb_ep_reg_set(uint32_t ep_idn, uint32_t value, bool disable_usb_irq) {
   if (disable_usb_irq) {
     NVIC_DisableIRQ(USB_UCPD1_2_IRQn);
@@ -122,23 +128,32 @@ __attribute__((always_inline)) static inline void usb_ep_reg_set_preserve(uint32
   }
 }
 
-__attribute__((always_inline)) static inline uint32_t usb_ep_status_get(uint32_t ep_reg, usb_direction_index_t ep_dir_idx) {
+/*
+ * Get endpoint status value.
+ */
+__attribute__((always_inline)) static inline uint32_t usb_ep_status_get(uint32_t ep_reg, usb_request_direction_index_t ep_dir_idx) {
   // Calculate status bits
   uint32_t pos = (ep_dir_idx == USB_DIR_DEVICE_OUT_HOST_IN_IDX ? USB_CHEP_TX_STTX_Pos : USB_CHEP_RX_STRX_Pos);
 
-  // Makse status bits
+  // Mask status bits
   uint32_t status = ep_reg & (3U << pos);
 
   // Shift status to zero bit
   return status >> pos;
 }
 
-__attribute__((always_inline)) static inline void usb_ep_status(uint32_t *ep_reg, usb_direction_index_t ep_dir_idx, usb_ep_state_t state) {
-  // Any bits set to 1 in state will be toggle the same bit in ep_reg
-  *ep_reg ^= (state << (ep_dir_idx == USB_DIR_DEVICE_OUT_HOST_IN_IDX ? USB_CHEP_TX_STTX_Pos : USB_CHEP_RX_STRX_Pos));
+/*
+ * Set endpoint status value.
+ */
+__attribute__((always_inline)) static inline void usb_ep_status(uint32_t *ep_reg, usb_request_direction_index_t ep_dir_idx, usb_ep_state_t status_flags) {
+  // Any bits set to 1 in status_flags will be toggle the same bit in ep_reg
+  *ep_reg ^= (status_flags << (ep_dir_idx == USB_DIR_DEVICE_OUT_HOST_IN_IDX ? USB_CHEP_TX_STTX_Pos : USB_CHEP_RX_STRX_Pos));
 }
 
-__attribute__((always_inline)) static inline void usb_ep_data_toggle(uint32_t *ep_reg, usb_direction_index_t ep_dir_idx, usb_ep_state_t state) {
+/*
+ * Toggle endpoint register value.
+ */
+__attribute__((always_inline)) static inline void usb_ep_data_toggle(uint32_t *ep_reg, usb_request_direction_index_t ep_dir_idx, usb_ep_state_t state) {
   // Any bits set to 1 in state will be toggle the same bit in ep_reg
   *ep_reg ^= (state << (ep_dir_idx == USB_DIR_DEVICE_OUT_HOST_IN_IDX ? USB_CHEP_DTOG_TX_Pos : USB_CHEP_DTOG_RX_Pos));
 }
@@ -186,7 +201,7 @@ __attribute__((always_inline)) static inline uint32_t usb_ep_calc_rx_buffer_bloc
   return block_count << block_size_log2;
 }
 
-__attribute__((always_inline)) static inline void usb_ep_clear_correct_transfer(uint32_t ep_idn, usb_direction_index_t ep_dir_idx) {
+__attribute__((always_inline)) static inline void usb_ep_clear_correct_transfer(uint32_t ep_idn, usb_request_direction_index_t ep_dir_idx) {
   // Correct transfer interupt flags are:
   //  (VT == valid transation)
   //  TX -> USB_CHEP_VTTX
@@ -233,7 +248,6 @@ __attribute__((always_inline)) static inline uint32_t usb_pma_next_addr(uint32_t
 /*
  * Get the PMA for an endpoint
  */
-
 __attribute__((always_inline)) static inline uint32_t usb_pma_ep_addr_get(uint32_t ep_idn, uint8_t buf_id) {
   return USB_BUFF_DESC->ep[ep_idn].buffer[buf_id].count_addr & 0x0000FFFFU;
 }
@@ -241,8 +255,10 @@ __attribute__((always_inline)) static inline uint32_t usb_pma_ep_addr_get(uint32
 /*
  * Set the PMA for an endpoint
  */
-
-__attribute__((always_inline)) static inline void usb_pma_ep_addr_set(uint32_t ep_idn, uint8_t idn_dir_idx, uint16_t addr) {
+__attribute__((always_inline)) static inline void usb_pma_ep_addr_set(
+    uint32_t ep_idn,      // The ep identifier (0 = EP0 ... 7 = EP7)
+    uint8_t idn_dir_idx,  // The ep direction
+    uint16_t addr) {      // The allocated memory address
   uint32_t count_addr = USB_BUFF_DESC->ep[ep_idn].buffer[idn_dir_idx].count_addr;
   count_addr = (count_addr & 0xFFFF0000U) | (addr & 0x0000FFFCU);
   USB_BUFF_DESC->ep[ep_idn].buffer[idn_dir_idx].count_addr = count_addr;
@@ -255,10 +271,10 @@ __attribute__((always_inline)) static inline void usb_pma_ep_addr_set(uint32_t e
 /*
  * Set the enpoints block size (BLSIZE and NUM_BLOCK) from buffer_size
  */
-static void usb_ep_set_rx_buffer_block_size(uint32_t ep_idn, uint32_t size) {
+static void usb_ep_set_rx_buffer_block_size(uint32_t ep_idn, uint32_t buffer_size) {
   // Calculate BLSIZE and NUM_BLOCK from size
   uint32_t blsize, num_block;
-  usb_ep_calc_rx_buffer_block_size(size, &blsize, &num_block);
+  usb_ep_calc_rx_buffer_block_size(buffer_size, &blsize, &num_block);
 
   // Merge BLSIZE and NUM_BLOCK and shift to correct bit positions
   uint32_t memory_buffer_assignment = (blsize << BIT_31_POS) | (num_block << BIT_26_POS);
@@ -399,7 +415,6 @@ void usb_ep_stall_set_hal(uint8_t ep_idn, uint8_t ep_dir_idx) {
   uint32_t ep_reg = USB->chep[ep_idn].CHEPnR;
   ep_reg &= USB_CHEP_REG_MASK | USB_EP_STATUS_MASK(ep_dir_idx);
   usb_ep_status(&ep_reg, ep_dir_idx, USB_EP_STATE_STALL);
-
   usb_ep_reg_set_preserve(ep_idn, ep_reg, true);
 }
 
@@ -423,17 +438,14 @@ void usb_ep_stall_clear_hal(uint8_t ep_idn, uint8_t ep_dir_idx) {
 /*
  * Process a control request and stall if failed.
  */
-static void process_control_request_hal(usb_control_request_t *process_control_request_hal) {
-  // Setup recieved, therefore host has connected to device
-  usb_device.connected = 1;
-
+static void process_control_request_hal(usb_control_request_t *control_request) {
   // Process control request
-  if (!usb_process_control_request(process_control_request_hal)) {
-    // USB 2.0 Specification, Section 9.2.7, “Error Handling”
+  if (!usb_process_control_request(control_request)) {
+    // USB 2.0 Specification, Section 9.2.7, "Error Handling"
     // If a device detects a condition that prevents it from completing the request, it must indicate the error by returning a STALL handshake.
     // For control transfers, the device must respond with a STALL to any setup or data stage packet it cannot handle.
-    usb_ep_stall_set(EP0_IDN | USB_DIR_DEVICE_OUT_HOST_IN);
-    usb_ep_stall_set(EP0_IDN | USB_DIR_DEVICE_IN_HOST_OUT);
+    usb_ep_stall_set_hal(EP0_IDN, USB_DIR_DEVICE_OUT_HOST_IN);
+    usb_ep_stall_set_hal(EP0_IDN, USB_DIR_DEVICE_IN_HOST_OUT);
   }
 }
 
@@ -441,20 +453,26 @@ static void process_control_request_hal(usb_control_request_t *process_control_r
  * Set up an endpoint
  */
 static void usb_ep_setup(uint32_t ep_idn) {
-  uint16_t rx_count = usb_pma_count_get(ep_idn, USB_EP_RX_COUNT_ADDR_IDX);
+  uint8_t control_request[8];
+
+  // Get received buffer PMA location
   uint16_t rx_addr = usb_pma_ep_addr_get(ep_idn, USB_EP_RX_COUNT_ADDR_IDX);
 
-  uint8_t setup_packet[8];
+  // Get number of bytes received
+  uint16_t rx_count = usb_pma_count_get(ep_idn, USB_EP_RX_COUNT_ADDR_IDX);
 
-  usb_rx_pma_read(setup_packet, rx_addr, rx_count);
+  // Receive the request data
+  usb_rx_pma_read(control_request, rx_addr, rx_count);
 
   // Clear correct transfer flag
   usb_ep_clear_correct_transfer(ep_idn, USB_DIR_DEVICE_IN_HOST_OUT_IDX);
 
+  // is the received data the correct length?
   if (rx_count == sizeof(usb_control_request_t)) {
-    process_control_request_hal((usb_control_request_t *)setup_packet);
+    // Process setup request
+    process_control_request_hal((usb_control_request_t *)control_request);
   } else {
-    // Something went wrong, reset the endpoint state (by resetting size, which clears count etc)
+    // Something went wrong, reset the control endpoint (by resetting size, which clears count etc)
     usb_ep_set_rx_buffer_block_size(EP0_IDN, sizeof(usb_control_request_t));
   }
 }
@@ -536,6 +554,17 @@ static void usb_tx_packet(usb_ep_transfer_t *ep_transfer) {
   usb_ep_reg_set_preserve(ep_transfer->ep_idn, ep_reg, true);
 }
 
+static void usb_ep_tx_queued_bytes(uint32_t ep_idn) {
+  usb_ep_transfer_t *ep_transfer = &ep_transfer_set[ep_idn][USB_DIR_DEVICE_OUT_HOST_IN_IDX];
+
+  if (ep_transfer->feed.total_count != ep_transfer->feed.fed_count) {
+    usb_tx_packet(ep_transfer);
+  } else {
+    uint32_t ep_addr = USB->chep[ep_idn].CHEPnR & USB_CHEP_ADDR;
+    usb_ep_transfer_complete(ep_addr | USB_DIR_DEVICE_OUT_HOST_IN, ep_transfer->feed.fed_count);
+  }
+}
+
 static void usb_ep_rx_queued_bytes(uint32_t ep_idn) {
   // Get the transfer buffer
   usb_ep_transfer_t *ep_transfer = &ep_transfer_set[ep_idn][USB_DIR_DEVICE_IN_HOST_OUT_IDX];
@@ -560,17 +589,6 @@ static void usb_ep_rx_queued_bytes(uint32_t ep_idn) {
 
   // Clear the feed counts (receive data was completed)
   ep_transfer->feed.total_count = ep_transfer->feed.fed_count = 0;
-}
-
-static void usb_ep_tx_queued_bytes(uint32_t ep_idn) {
-  usb_ep_transfer_t *ep_transfer = &ep_transfer_set[ep_idn][USB_DIR_DEVICE_OUT_HOST_IN_IDX];
-
-  if (ep_transfer->feed.total_count != ep_transfer->feed.fed_count) {
-    usb_tx_packet(ep_transfer);
-  } else {
-    uint32_t ep_addr = USB->chep[ep_idn].CHEPnR & USB_CHEP_ADDR;
-    usb_ep_transfer_complete(ep_addr | USB_DIR_DEVICE_OUT_HOST_IN, ep_transfer->feed.fed_count);
-  }
 }
 
 /****************************************************************************************************************************************
@@ -757,9 +775,10 @@ void USB_UCPD1_2_IRQHandler() {
  * Prepare HAL for sending / receiving data from host
  */
 bool usb_ep_queue_transfer_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t *buffer, uint16_t total_bytes) {
+  // Get the endpoint specific transfer buffer
   usb_ep_transfer_t *ep_transfer = &ep_transfer_set[ep_idn][ep_dir_idx];
 
-  // Initialise packet
+  // Initialise transfer feed
   ep_transfer->feed.buffer = buffer;            // Use callers buffer
   ep_transfer->feed.total_count = total_bytes;  // We are going to transfer total bytes
   ep_transfer->feed.fed_count = 0;              // Nothing has been transferred yet
@@ -781,6 +800,9 @@ bool usb_ep_queue_transfer_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t *buff
   return true;
 }
 
+/*
+ * Set the device address in HAL
+ */
 void usb_device_set_addr_hal(const uint8_t device_addr) {
   // Set the device address and keep enabled
   USB->DADDR = (USB_DADDR_EF | device_addr);
