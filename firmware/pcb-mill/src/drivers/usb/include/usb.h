@@ -379,11 +379,6 @@ ALWAYS_INLINE static uint8_t usb_descriptor_len(const void* desc) {
   return ((const uint8_t*)desc)[DESCRIPTOR_LEN_OFFSET];
 }
 
-// Get descriptor type
-ALWAYS_INLINE static uint8_t usb_descriptor_type(const void* desc) {
-  return ((const uint8_t*)desc)[DESCRIPTOR_TYPE_OFFSET];
-}
-
 /*
  * Queue a transfer in HAL
  */
