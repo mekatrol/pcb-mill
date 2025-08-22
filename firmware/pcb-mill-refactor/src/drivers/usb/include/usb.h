@@ -318,10 +318,18 @@ typedef enum {
   USB_FEATURE_REMOTE_WAKEUP = 1
 } tusb_request_feature_selector_t;
 
-// https://www.usb.org/defined-class-codes
+// USB class codes (see USB-IF Assigned Numbers)
+// These values may appear in device, interface, or function descriptors
+// depending on how the class is defined.
 typedef enum {
-  TUSB_CLASS_CDC = 2,
-  TUSB_CLASS_CDC_DATA = 10
+  USB_CLASS_CDC = 0x02,  // Communications Device Class (CDC):
+                         // Typically used in the Interface Descriptor
+                         // for control interfaces of USB CDC devices
+                         // (e.g. Abstract Control Model for Virtual COM ports).
+
+  USB_CLASS_CDC_DATA = 0x0A  // CDC Data Class:
+                             // Used for the data interface in a CDC device.
+                             // Always paired with a CDC control interface.
 } usb_class_code_t;
 
 enum {
