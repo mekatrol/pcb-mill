@@ -99,6 +99,4 @@ uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* control_descript
 bool usb_cdc_control_transfer(uint8_t control_stage, const usb_control_request_t* request);
 bool usb_cdc_transfer(uint8_t ep_addr, uint32_t transferred_bytes);
 
-uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* descriptor, uint16_t max_len);
-
-#endif
+#endif  // __USB_CDC_H__

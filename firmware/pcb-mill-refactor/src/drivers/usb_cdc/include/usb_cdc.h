@@ -1,5 +1,5 @@
-#ifndef TUSB_CDC_DEVICE_H_
-#define TUSB_CDC_DEVICE_H_
+#ifndef __USB_CDC_H__
+#define __USB_CDC_H__
 
 #include <stdint.h>
 #include <stdio.h>
@@ -56,10 +56,10 @@ __attribute__((weak)) void usb_cdc_rx_cb();
 // All data has been transmitted through CDC
 __attribute__((weak)) void usb_cdc_tx_complete_cb();
 
-// Invoked when line state DTR & RTS are changed via SET_CONTROL_LINE_STATE
+// DTR/RTS changed from SET_CONTROL_LINE_STATE
 __attribute__((weak)) void usb_cdc_handshake_cb(bool dtr, bool rts);
 
-// Invoked when line coding is change via SET_LINE_CODING
+// Line coding change from SET_LINE_CODING
 __attribute__((weak)) void usb_cdc_line_coding_cb(const usb_cdc_line_coding_t* p_line_coding);
 
 // Get the number of bytes available for reading
@@ -90,13 +90,13 @@ ALWAYS_INLINE static uint32_t usb_cdc_write_str(const uint8_t* str) {
 // Force sending data if possible, return number of forced bytes
 uint32_t usb_cdc_write_flush();
 
-//--------------------------------------------------------------------+
-// INTERNAL USBD-CLASS DRIVER API
-//--------------------------------------------------------------------+
 void usb_cdc_init();
+
 void usb_cdc_reset();
-uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* itf_desc, uint16_t max_len);
-bool usb_cdc_control_transfer(uint8_t stage, const usb_control_request_t* request);
+
+uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* control_descriptor, uint16_t max_len);
+
+bool usb_cdc_control_transfer(uint8_t control_stage, const usb_control_request_t* request);
 bool usb_cdc_transfer(uint8_t ep_addr, uint32_t transferred_bytes);
 
-#endif /* _TUSB_CDC_DEVICE_H_ */
+#endif  // __USB_CDC_H__
