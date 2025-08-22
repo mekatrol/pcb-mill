@@ -87,9 +87,6 @@ ALWAYS_INLINE static uint32_t usb_cdc_write_str(const uint8_t* str) {
   return usb_cdc_write(str, strlen((char*)str));
 }
 
-// Force sending data if possible, return number of forced bytes
-uint32_t usb_cdc_write_flush();
-
 void usb_cdc_init();
 
 void usb_cdc_reset();
@@ -97,7 +94,5 @@ void usb_cdc_reset();
 uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* control_descriptor, uint16_t descriptor_end);
 
 bool usb_cdc_control_transfer(uint8_t control_stage, const usb_control_request_t* request);
-
-bool usb_cdc_transfer(uint8_t ep_addr, uint32_t transferred_bytes);
 
 #endif  // __USB_CDC_H__

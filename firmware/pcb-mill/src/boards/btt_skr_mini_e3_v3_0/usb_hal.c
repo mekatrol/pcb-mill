@@ -2,7 +2,6 @@
 #include "feed_forward_buffer.h"
 #include "aligned_memory.h"
 #include "usb.h"
-#include "usb_cdc.h"
 
 // Member unassigned value
 #define UNASSIGNED_VALUE 0xFFU
@@ -521,8 +520,8 @@ static void usb_ep_transfer_complete(uint8_t ep_addr, uint32_t transferred_bytes
   if (ep_idn == 0) {
     usb_control_transfer(ep_addr, transferred_bytes);
   } else {
-    // Transfer data between EP and circular buffers
-    usb_cdc_transfer(ep_addr, transferred_bytes);
+    // Transfer data between EP and function buffers
+    usb_ep_buffer_transfer(ep_addr, transferred_bytes);
   }
 }
 

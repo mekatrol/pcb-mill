@@ -10,17 +10,13 @@ typedef enum {
   CDC_REQUEST_SEND_BREAK = 0x23               // Transmit break condition on the communication line :contentReference[oaicite:3]{index=3}
 } cdc_acm_request_t;
 
-typedef struct {
-  __attribute__((aligned(4))) uint8_t epout[USB_EP0_BUFFER_SIZE];
-  __attribute__((aligned(4))) uint8_t epin[USB_EP0_BUFFER_SIZE];
-} usb_cdc_epbuf_t;
-
-static usb_cdc_epbuf_t usb_cdc_epbuf;
+static __attribute__((aligned(4))) uint8_t ep_out_buffer[USB_CDC_EP_BUFFER_SIZE];
+static __attribute__((aligned(4))) uint8_t ep_in_buffer[USB_CDC_EP_BUFFER_SIZE];
 
 // The USB CDC state and config
 usb_cdc_t usb_cdc;
 
-static bool usb_cdc_ep_buffer_transfer() {
+static bool usb_cdc_read_ep() {
   // Skip if usb is not yet configured or the ep not yet assigned
   if (!(usb_configured() && usb_cdc.ep_addr_out != 0)) {
     return false;
@@ -30,11 +26,35 @@ static bool usb_cdc_ep_buffer_transfer() {
   uint16_t available_space = circular_buffer_space(&usb_cdc.rx_buffer);
 
   // If the buffer is empty then we can queue more data
-  if (available_space >= USB_EP0_BUFFER_SIZE) {
-    return usb_ep_queue_transfer(usb_cdc.ep_addr_out, usb_cdc_epbuf.epout, USB_EP0_BUFFER_SIZE);
+  if (available_space >= USB_CDC_EP_BUFFER_SIZE) {
+    return usb_ep_queue_transfer(usb_cdc.ep_addr_out, ep_out_buffer, USB_CDC_EP_BUFFER_SIZE);
   }
 
   return false;
+}
+
+uint32_t usb_cdc_write_ep() {
+  // Skip if usb is not yet configured or the ep not yet assigned
+  if (!(usb_configured() && usb_cdc.ep_addr_in != 0)) {
+    return false;
+  }
+
+  // No data to send
+  if (circular_buffer_count(&usb_cdc.tx_buffer) == 0) {
+    return 0;
+  }
+
+  // Pull data from buffer
+  const uint16_t count = circular_buffer_read(&usb_cdc.tx_buffer, ep_in_buffer, USB_CDC_EP_BUFFER_SIZE);
+
+  if (count) {
+    if (!usb_ep_queue_transfer(usb_cdc.ep_addr_in, ep_in_buffer, count)) {
+      return 0;
+    }
+    return count;
+  } else {
+    return 0;
+  }
 }
 
 uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* control_descriptor, uint16_t descriptor_end) {
@@ -81,8 +101,8 @@ uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* control_descript
     descriptor_len += EP_IN_OUT_PAIR * sizeof(usb_ep_descriptor_t);
   }
 
-  // Transfer data between EP and circular buffers
-  usb_cdc_ep_buffer_transfer();
+  // Read from endpoint RX buffer to CDC RX buffer
+  usb_cdc_read_ep();
 
   return descriptor_len;
 }
@@ -147,59 +167,34 @@ uint32_t usb_cdc_available() {
 }
 
 uint32_t usb_cdc_read(void* buffer, uint32_t bufsize) {
-  uint32_t num_read = circular_buffer_read(&usb_cdc.rx_buffer, buffer, bufsize);
-  // Transfer data between EP and circular buffers
-  usb_cdc_ep_buffer_transfer();
-  return num_read;
+  // Read from endpoint RX buffer to CDC RX buffer
+  usb_cdc_read_ep();
+
+  uint32_t read_count = circular_buffer_read(&usb_cdc.rx_buffer, buffer, bufsize);
+  return read_count;
 }
 
 uint32_t usb_cdc_write(const uint8_t* buffer, uint32_t bufsize) {
-  uint16_t wr_count = circular_buffer_write(&usb_cdc.tx_buffer, buffer, bufsize);
+  uint16_t write_count = circular_buffer_write(&usb_cdc.tx_buffer, buffer, bufsize);
 
-  // flush if queue more than packet size
-  if (circular_buffer_count(&usb_cdc.tx_buffer) >= USB_CDC_EP_BUFFER_SIZE) {
-    usb_cdc_write_flush();
-  }
+  // Write from CDC TX buffer endpoint TX buffer
+  usb_cdc_write_ep();
 
-  return wr_count;
+  return write_count;
 }
 
-uint32_t usb_cdc_write_flush() {
-  // Skip if usb is not ready yet
-  if (!usb_configured()) {
-    return 0;
-  }
-
-  // No data to send
-  if (circular_buffer_count(&usb_cdc.tx_buffer) == 0) {
-    return 0;
-  }
-
-  // Pull data from buffer
-  const uint16_t count = circular_buffer_read(&usb_cdc.tx_buffer, usb_cdc_epbuf.epin, USB_EP0_BUFFER_SIZE);
-
-  if (count) {
-    if (!usb_ep_queue_transfer(usb_cdc.ep_addr_in, usb_cdc_epbuf.epin, count)) {
-      return 0;
-    }
-    return count;
-  } else {
-    return 0;
-  }
-}
-
-bool usb_cdc_transfer(uint8_t ep_addr, uint32_t transferred_bytes) {
+bool usb_ep_buffer_transfer(uint8_t ep_addr, uint32_t transferred_bytes) {
   // Received new data
   if (ep_addr == usb_cdc.ep_addr_out) {
-    circular_buffer_write(&usb_cdc.rx_buffer, usb_cdc_epbuf.epout, transferred_bytes);
+    circular_buffer_write(&usb_cdc.rx_buffer, ep_out_buffer, transferred_bytes);
 
     // invoke receive callback (if there is still data)
     if (usb_cdc_rx_cb && circular_buffer_count(&usb_cdc.rx_buffer) > 0) {
       usb_cdc_rx_cb();
     }
 
-    // Transfer data between EP and circular buffers
-    usb_cdc_ep_buffer_transfer();
+    // Read from endpoint RX buffer to CDC RX buffer
+    usb_cdc_read_ep();
   }
 
   // Data sent to host, we continue to fetch from tx buffer to send.
@@ -211,7 +206,8 @@ bool usb_cdc_transfer(uint8_t ep_addr, uint32_t transferred_bytes) {
       usb_cdc_tx_complete_cb();
     }
 
-    if (usb_cdc_write_flush() == 0) {
+    // Write from CDC TX buffer endpoint TX buffer
+    if (usb_cdc_write_ep() == 0) {
       // If there is no data left, a ZLP should be sent if
       // transferred_bytes is multiple of EP Packet size and not zero
       if (circular_buffer_count(&usb_cdc.tx_buffer) == 0 && transferred_bytes && (0 == (transferred_bytes & (USB_CDC_EP_BUFFER_SIZE - 1)))) {

@@ -335,6 +335,14 @@ const uint8_t* get_device_descriptor();
 const uint16_t* usb_descriptor_string(uint8_t index);
 const uint8_t* usb_descriptor_device_qualifier();
 
+/*
+ * USB function methods
+ */
+bool usb_ep_buffer_transfer(uint8_t ep_addr, uint32_t transferred_bytes);  // Transfer bytes between and endpoint and the endpoint function (e.g. CDC) buffers
+
+/*
+ * The USB device configuration and state
+ */
 extern usb_device_t usb_device;
 
 /*

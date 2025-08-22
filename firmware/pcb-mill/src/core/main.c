@@ -17,7 +17,6 @@ void usb_cdc_rx_cb() {
     // Echo data
     char c = usb_cdc_read_char();
     usb_cdc_write_char(c);
-    usb_cdc_write_flush();
   }
 }
 
