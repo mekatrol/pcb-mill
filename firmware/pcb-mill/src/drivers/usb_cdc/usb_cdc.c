@@ -107,9 +107,6 @@ uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* control_descript
   return descriptor_len;
 }
 
-// Invoked when a control transfer occurred on an interface of this class
-// Driver response accordingly to the request and the transfer stage (setup/data/ack)
-// return false to stall control endpoint (e.g unsupported request)
 bool usb_cdc_control_transfer(uint8_t control_stage, const usb_control_request_t* request) {
   const usb_request_type_t request_type = usb_request_type(request->bmRequestType);
 
@@ -163,10 +160,6 @@ bool usb_cdc_control_transfer(uint8_t control_stage, const usb_control_request_t
   }
 
   return true;
-}
-
-void usb_cdc_get_line_coding(usb_cdc_line_coding_t* coding) {
-  (*coding) = usb_cdc.line_coding;
 }
 
 uint32_t usb_cdc_available() {
