@@ -1,6 +1,6 @@
 #include "usb.h"
 #include "diagnostics.h"
-#include "cdc_device.h"
+#include "usb_cdc.h"
 #include "feed_forward_buffer.h"
 #include "stm32g0xx.h"
 

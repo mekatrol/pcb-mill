@@ -1,5 +1,5 @@
 #include "hal.h"
-#include "cdc_device.h"
+#include "usb_cdc.h"
 
 config_interface_t machine_config = {
     .version = 1 << 16  // Version 1.0

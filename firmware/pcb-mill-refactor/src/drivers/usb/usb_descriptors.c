@@ -2,7 +2,7 @@
 #include <stdint.h>
 
 #include "usb.h"
-#include "cdc_device.h"
+#include "usb_cdc.h"
 
 // -----------------------------------------------------------------------------
 // USB Device Descriptor (See USB 2.0 Spec, Section 9.6.1)

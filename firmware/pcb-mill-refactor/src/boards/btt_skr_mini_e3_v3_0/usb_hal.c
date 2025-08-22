@@ -1,8 +1,8 @@
 #include "board_hal.h"
-#include "cdc_device.h"
 #include "feed_forward_buffer.h"
 #include "aligned_memory.h"
 #include "usb.h"
+#include "usb_cdc.h"
 
 // Member unassigned value
 #define UNASSIGNED_VALUE 0xFFU

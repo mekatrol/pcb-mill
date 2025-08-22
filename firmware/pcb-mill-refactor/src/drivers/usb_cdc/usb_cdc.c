@@ -1,6 +1,6 @@
 #include "circular_buffer.h"
 #include "usb.h"
-#include "cdc_device.h"
+#include "usb_cdc.h"
 
 typedef enum {
   // wValue bits for CDC_REQUEST_SET_CONTROL_LINE_STATE (CDC Spec §6.2.14)
