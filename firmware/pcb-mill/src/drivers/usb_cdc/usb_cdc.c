@@ -60,19 +60,19 @@ static bool usb_device_prep_out_transaction() {
   }
 }
 
-uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* control_descriptor, uint16_t max_len) {
+uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* control_descriptor, uint16_t descriptor_end) {
   // Only support ACM subclass
   if (control_descriptor->bInterfaceClass != USB_CLASS_CDC ||
       control_descriptor->bInterfaceSubClass != CDC_COMM_SUBCLASS_ABSTRACT_CONTROL_MODEL) {
     return 0;
   }
 
-  uint16_t drv_len = sizeof(usb_control_interface_descriptor_t);
+  uint16_t descriptor_len = sizeof(usb_control_interface_descriptor_t);
   const usb_ep_descriptor_t* descriptor = (const usb_ep_descriptor_t*)usb_next_descriptor(control_descriptor);
 
   // Communication Functional Descriptors
-  while (usb_descriptor_type(descriptor) == USB_DESCRIPTOR_TYPE_CS_INTERFACE && drv_len <= max_len) {
-    drv_len += usb_descriptor_len(descriptor);
+  while (usb_descriptor_type(descriptor) == USB_DESCRIPTOR_TYPE_CS_INTERFACE && descriptor_len <= descriptor_end) {
+    descriptor_len += usb_descriptor_len(descriptor);
     descriptor = (const usb_ep_descriptor_t*)usb_next_descriptor(descriptor);
   }
 
@@ -83,15 +83,14 @@ uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* control_descript
       return 0;
     }
 
-    drv_len += usb_descriptor_len(descriptor);
+    descriptor_len += usb_descriptor_len(descriptor);
     descriptor = (const usb_ep_descriptor_t*)usb_next_descriptor(descriptor);
   }
 
-  //------------- Data Interface (if any) -------------//
-  if ((USB_DESCRIPTOR_TYPE_INTERFACE == usb_descriptor_type(descriptor)) &&
-      (USB_CLASS_CDC_DATA == ((const usb_control_interface_descriptor_t*)descriptor)->bInterfaceClass)) {
+  if ((usb_descriptor_type(descriptor) == USB_DESCRIPTOR_TYPE_INTERFACE) &&
+      (((const usb_control_interface_descriptor_t*)descriptor)->bInterfaceClass) == USB_CLASS_CDC_DATA) {
     // next to endpoint descriptor
-    drv_len += usb_descriptor_len(descriptor);
+    descriptor_len += usb_descriptor_len(descriptor);
     descriptor = (const usb_ep_descriptor_t*)usb_next_descriptor(descriptor);
 
     // Open endpoint pair
@@ -99,13 +98,13 @@ uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* control_descript
       return 0;
     }
 
-    drv_len += 2 * sizeof(usb_ep_descriptor_t);
+    descriptor_len += 2 * sizeof(usb_ep_descriptor_t);
   }
 
   // Prepare for incoming data
   usb_device_prep_out_transaction();
 
-  return drv_len;
+  return descriptor_len;
 }
 
 // Invoked when a control transfer occurred on an interface of this class

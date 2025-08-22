@@ -59,12 +59,13 @@ enum {
   // CDC total interface count
   INTERFACE_CDC_INTERFACE_COUNT = 2,
 
-  // Total device interface count
+  // Total device interface count (CDC control + CDC data)
   INTERFACE_TOTAL_COUNT = INTERFACE_CDC_INTERFACE_COUNT
 };
 
 const uint8_t usb_descriptor_conf[] = {
     // Configuration Descriptor (usb_configuration_descriptor_t)
+    // Purpose: Declares one complete configuration.
     9,                                  // bLength: Size of this descriptor in bytes (always 9)
     USB_DESCRIPTOR_TYPE_CONFIGURATION,  // bDescriptorType: CONFIGURATION descriptor (0x02)
     0x4B,                               // wTotalLength (low byte): total length of all descriptors for this configuration
@@ -76,6 +77,7 @@ const uint8_t usb_descriptor_conf[] = {
     50,                                 // bMaxPower: maximum power in 2 mA units (50 = 100 mA)
 
     // Interface Association Descriptor (IAD) for CDC (usb_interface_association_descriptor_t)
+    // Purpose: Groups the CDC control interface and data interface as one "function" so the OS knows they belong together.
     8,                                          // bLength: size of this descriptor in bytes (8)
     USB_DESCRIPTOR_TYPE_INTERFACE_ASSOCIATION,  // bDescriptorType: INTERFACE_ASSOCIATION (0x0B)
     INTERFACE_CDC_NUM,                          // bFirstInterface: first interface associated with this function
@@ -86,6 +88,7 @@ const uint8_t usb_descriptor_conf[] = {
     0,                                          // iFunction: index of string descriptor for this function (0 = none)
 
     // CDC Control Interface Descriptor (usb_control_interface_descriptor_t)
+    // Purpose: Declares the control interface (the "management" side of the CDC)
     9,                              // bLength: size of interface descriptor
     USB_DESCRIPTOR_TYPE_INTERFACE,  // bDescriptorType: INTERFACE (0x04)
     INTERFACE_CDC_NUM,              // bInterfaceNumber: CDC control interface number
@@ -97,6 +100,7 @@ const uint8_t usb_descriptor_conf[] = {
     4,                              // iInterface: index of string descriptor describing this interface
 
     // CDC Header Functional Descriptor
+    // Purpose: Tells the host "this interface follows the CDC functional descriptor set."
     5,                                 // bFunctionLength: size of this descriptor
     USB_DESCRIPTOR_TYPE_CS_INTERFACE,  // bDescriptorType: CS_INTERFACE (0x24)
     0x00,                              // bDescriptorSubtype: Header functional descriptor (0x00)
@@ -111,12 +115,14 @@ const uint8_t usb_descriptor_conf[] = {
     INTERFACE_CDC_DATA_NUM,            // bDataInterface: interface number of data class interface
 
     // CDC ACM Functional Descriptor
+    // Purpose: Needed for COM port drivers (e.g. Windows uses this to load usbser.sys)
     4,                                 // bFunctionLength: size of descriptor
     USB_DESCRIPTOR_TYPE_CS_INTERFACE,  // bDescriptorType: CS_INTERFACE
     0x02,                              // bDescriptorSubtype: Abstract Control Management (0x02)
     6,                                 // bmCapabilities: supports Set_Line_Coding, Set_Control_Line_State, Get_Line_Coding
 
     // CDC Union Functional Descriptor
+    // Purpose: This ties the two interfaces into one logical device
     5,                                 // bFunctionLength: size of descriptor
     USB_DESCRIPTOR_TYPE_CS_INTERFACE,  // bDescriptorType: CS_INTERFACE
     0x06,                              // bDescriptorSubtype: Union functional descriptor (0x06)
@@ -124,6 +130,7 @@ const uint8_t usb_descriptor_conf[] = {
     INTERFACE_CDC_DATA_NUM,            // bSlaveInterface0: CDC data interface
 
     // CDC Notification Endpoint (Interrupt IN)
+    // Purpose: Used for sending notifications (e.g. line state change)
     7,                                  // bLength: size of endpoint descriptor
     USB_DESCRIPTOR_TYPE_ENDPOINT,       // bDescriptorType: ENDPOINT (0x05)
     USB_DIR_DEVICE_OUT_HOST_IN | 0x01,  // bEndpointAddress: IN endpoint 1 (0x80 | 1)
@@ -133,6 +140,7 @@ const uint8_t usb_descriptor_conf[] = {
     1,                                  // bInterval: polling interval in ms
 
     // CDC Data Interface Descriptor
+    // Purpose: Declares the data interface
     9,                              // bLength: size of interface descriptor
     USB_DESCRIPTOR_TYPE_INTERFACE,  // bDescriptorType: INTERFACE
     INTERFACE_CDC_DATA_NUM,         // bInterfaceNumber: data interface number
@@ -144,6 +152,7 @@ const uint8_t usb_descriptor_conf[] = {
     0,                              // iInterface: string index
 
     // Data OUT Endpoint (Bulk OUT)
+    // Purpose: Used for host → device data
     7,                                  // bLength: endpoint descriptor size
     USB_DESCRIPTOR_TYPE_ENDPOINT,       // bDescriptorType: ENDPOINT
     USB_DIR_DEVICE_IN_HOST_OUT | 0x02,  // bEndpointAddress: OUT endpoint (0x00 | 2)
@@ -153,6 +162,7 @@ const uint8_t usb_descriptor_conf[] = {
     0,                                  // bInterval: ignored for bulk
 
     // Data IN Endpoint (Bulk IN)
+    // Purpose: Used for device → host data
     7,                                  // bLength
     USB_DESCRIPTOR_TYPE_ENDPOINT,       // bDescriptorType: ENDPOINT
     USB_DIR_DEVICE_OUT_HOST_IN | 0x02,  // bEndpointAddress: IN endpoint 2 (0x80 | 2)
