@@ -4,6 +4,11 @@
 #include "feed_forward_buffer.h"
 #include "stm32g0xx.h"
 
+enum {
+  USB_DESCRIPTOR_TYPE_CONFIG_ATT_REMOTE_WAKEUP = 1U << 5,
+  USB_DESCRIPTOR_TYPE_CONFIG_ATT_SELF_POWERED = 1U << 6,
+};
+
 typedef enum {
   USB_BMATTR_RESERVED_D7 = 0x80,      ///< Bit 7: Reserved, must always be set to 1
   USB_BMATTR_SELF_POWERED = 0x40,     ///< Bit 6: 1 = Device is self-powered, 0 = bus-powered
@@ -108,6 +113,15 @@ static bool usb_device_set_address(const usb_control_request_t* request) {
   usb_ep_queue_transfer_hal(EP0_IDN, USB_DIR_DEVICE_OUT_HOST_IN >> 7, NULL, 0);
 
   return true;
+}
+
+/*
+ * Full USB reset
+ */
+void usb_reset() {
+  usb_init_enable_hal();
+  usb_configuration_reset();
+  usb_control_transfer_reset();
 }
 
 bool usb_process_control_request(const usb_control_request_t* request) {

@@ -153,7 +153,6 @@ typedef enum {
   USB_FEATURE_TEST_MODE = 2  // Used only in high-speed devices for test modes (Chapter 9, USB 2.0 spec)
 } usb_request_feature_selector_t;
 
-// Masks
 typedef enum {
   USB_EP_NUM_MASK = 0x0F,             // Bits 0..3 = endpoint number
   USB_EP_DIR_MASK = 0x80,             // Bit 7 = direction
