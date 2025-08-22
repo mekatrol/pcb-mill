@@ -10,6 +10,7 @@
 #include <stdio.h>
 
 #include "stm32g0xx.h"
+#include "macros.h"
 
 #include "aligned_memory.h"
 
@@ -67,7 +68,7 @@ bool usb_control_transfer(uint8_t ep_addr, uint32_t transferred_bytes);
 // Initialize USN in device mode
 void usb_device_start_hal();
 
-__attribute__((always_inline)) static inline void usb_reset() {
+ALWAYS_INLINE static void usb_reset() {
   usb_init_enable_hal();
   usb_configuration_reset();
   usb_control_transfer_reset();
@@ -115,9 +116,9 @@ typedef struct __attribute__((packed)) {
 
 _Static_assert(sizeof(usb_control_request_t) == 8, "sizeof(usb_control_request_t) must be 8");
 
-__attribute__((always_inline)) static inline usb_request_recipient_t usb_request_recipient(uint8_t bm) { return (bm)&USB_REQUEST_RECIPIENT_MASK; }
-__attribute__((always_inline)) static inline usb_request_type_t usb_request_type(uint8_t bm) { return ((bm)&USB_REQUEST_TYPE_MASK) >> 5; }
-__attribute__((always_inline)) static inline usb_request_direction_index_t usb_request_direction(uint8_t bm) { return USB_EP_DIR((bm)) >> 7; }
+ALWAYS_INLINE static usb_request_recipient_t usb_request_recipient(uint8_t bm) { return (bm)&USB_REQUEST_RECIPIENT_MASK; }
+ALWAYS_INLINE static usb_request_type_t usb_request_type(uint8_t bm) { return ((bm)&USB_REQUEST_TYPE_MASK) >> 5; }
+ALWAYS_INLINE static usb_request_direction_index_t usb_request_direction(uint8_t bm) { return USB_EP_DIR((bm)) >> 7; }
 
 // USB Device Descriptor
 typedef struct __attribute__((packed)) {
@@ -235,16 +236,6 @@ typedef enum {
   CDC_COMM_SUBCLASS_ABSTRACT_CONTROL_MODEL = 0x02  // Abstract Control Model             [USB PSTN 1.2]
 } cdc_comm_subclass_type_t;
 
-// For a USB CDC Virtual COM Port, this struct represents the Line Coding object defined in USB CDC Specification 1.2, Section 6.2.13.
-typedef struct __attribute__((packed)) {
-  uint32_t dwDTERate;   // Data terminal rate in bits per second (baud rate)
-  uint8_t bCharFormat;  // Stop bits: 0 = 1 stop bit, 1 = 1.5 stop bits, 2 = 2 stop bits
-  uint8_t bParityType;  // Parity: 0 = None, 1 = Odd, 2 = Even, 3 = Mark, 4 = Space
-  uint8_t bDataBits;    // Number of data bits: typically 5, 6, 7, 8, or 16
-} usb_cdc_line_coding_t;
-
-_Static_assert(sizeof(usb_cdc_line_coding_t) == 7, "size must be 7");
-
 const usb_configuration_descriptor_t* usb_descriptor_configuration();
 
 typedef bool (*usb_cdc_control_transfer_t)(uint8_t stage, const usb_control_request_t* request);
@@ -263,6 +254,8 @@ void usb_ep_stall_clear(uint8_t ep_addr);
 // Open a set of output and input endpoints
 bool usb_ep_open_in_out(const usb_ep_descriptor_t* p_desc, uint8_t xfer_type, uint8_t* ep_addr_out, uint8_t* ep_addr_in);
 
+void usb_device_init();
+
 extern usb_device_t usb_device;
 
 bool usb_process_control_request(const usb_control_request_t* request);
@@ -272,7 +265,7 @@ bool usb_process_control_request(const usb_control_request_t* request);
 bool usb_connected(void);
 
 // True if device configured
-__attribute__((always_inline)) static inline bool usb_configured(void) {
+ALWAYS_INLINE static bool usb_configured(void) {
   return usb_device.config_num ? true : false;
 }
 
@@ -399,37 +392,37 @@ typedef struct __attribute__((packed)) {
 } usb_descriptor_string_t;
 
 // return next descriptor
-__attribute__((always_inline)) static inline const uint8_t* usb_next_descriptor(const void* desc) {
+ALWAYS_INLINE static const uint8_t* usb_next_descriptor(const void* desc) {
   const uint8_t* desc8 = (const uint8_t*)desc;
   return desc8 + desc8[DESC_OFFSET_LEN];
 }
 
 // get descriptor length
-__attribute__((always_inline)) static inline uint8_t usb_descriptor_len(const void* desc) {
+ALWAYS_INLINE static uint8_t usb_descriptor_len(const void* desc) {
   return ((const uint8_t*)desc)[DESC_OFFSET_LEN];
 }
 
 // get descriptor type
-__attribute__((always_inline)) static inline uint8_t usb_descriptor_type(const void* desc) {
+ALWAYS_INLINE static uint8_t usb_descriptor_type(const void* desc) {
   return ((const uint8_t*)desc)[DESC_OFFSET_TYPE];
 }
 
 // get descriptor subtype
-__attribute__((always_inline)) static inline uint8_t tu_desc_subtype(const void* desc) {
+ALWAYS_INLINE static uint8_t tu_desc_subtype(const void* desc) {
   return ((const uint8_t*)desc)[DESC_OFFSET_SUBTYPE];
 }
 
-__attribute__((always_inline)) static inline uint8_t tu_desc_is_valid(const void* desc, const uint8_t* desc_end) {
+ALWAYS_INLINE static uint8_t tu_desc_is_valid(const void* desc, const uint8_t* desc_end) {
   const uint8_t* desc8 = (const uint8_t*)desc;
   return (desc8 < desc_end) && (usb_next_descriptor(desc) <= desc_end);
 }
 
-__attribute__((always_inline)) static inline uint16_t usb_get_request_type_code(const usb_control_request_t* request) {
+ALWAYS_INLINE static uint16_t usb_get_request_type_code(const usb_control_request_t* request) {
   uint16_t req_code = ((request->bmRequestType & 0x60) << 3) | request->bRequest;
   return req_code;
 }
 
-__attribute__((always_inline)) static inline const char* get_usb_request_code_name(const usb_control_request_t* request) {
+ALWAYS_INLINE static const char* get_usb_request_code_name(const usb_control_request_t* request) {
   uint8_t type = request->bmRequestType & 0x60;  // 0x00=Standard, 0x20=Class, 0x40=Vendor
   uint8_t bRequest = (uint16_t)request->bRequest;
 

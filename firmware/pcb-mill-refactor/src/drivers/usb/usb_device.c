@@ -30,7 +30,7 @@ static usb_control_transfer_t control_transfer;
 static __attribute__((aligned(4))) uint8_t ep0_control_buffer[USB_EP0_BUFFER_SIZE];
 
 // Will return next interfac descriptor
-__attribute__((always_inline)) static inline const usb_interface_association_descriptor_t* next_interface(const usb_interface_association_descriptor_t* interface_assoc) {
+ALWAYS_INLINE static const usb_interface_association_descriptor_t* next_interface(const usb_interface_association_descriptor_t* interface_assoc) {
   return (const usb_interface_association_descriptor_t*)(interface_assoc + interface_assoc->bLength);
 }
 

@@ -2,34 +2,6 @@
 #include "usb.h"
 #include "usb_cdc.h"
 
-typedef enum {
-  // wValue bits for CDC_REQUEST_SET_CONTROL_LINE_STATE (CDC Spec §6.2.14)
-  CDC_CONTROL_LINE_STATE_DTR = (1U << 0U),  // Data Terminal Ready (DTR) signal
-  CDC_CONTROL_LINE_STATE_RTS = (1U << 1U)   // Request To Send (RTS) signal
-} handshake_state_t;
-
-typedef struct {
-  uint8_t ep_addr_in;
-  uint8_t ep_addr_out;
-
-  // Meaning:
-  // Bit 0 (DTR) — Host is ready (DCE can establish a connection).
-  // Bit 1 (RTS) — Host requests the device to prepare for data transmission.
-  // Other bits — Reserved, must be set to zero.
-  handshake_state_t flow_control_state;
-
-  // For a USB CDC Virtual COM Port, this struct represents the Line Coding object defined in USB CDC Specification 1.2, Section 6.2.13.
-  usb_cdc_line_coding_t line_coding;
-
-  // TX and RX circular buffer state
-  circular_buffer_t rx_buffer;
-  circular_buffer_t tx_buffer;
-
-  // TX and RX circular buffer data
-  uint8_t rx_buffer_data[USB_EP_RX_BUFFER_SIZE];
-  uint8_t tx_buffer_data[USB_EP_TX_BUFFER_SIZE];
-} usb_cdc_interface_t;
-
 typedef struct {
   union {
     __attribute__((aligned(4)))
@@ -48,7 +20,7 @@ typedef struct {
   };
 } usb_cdc_epbuf_t;
 
-static usb_cdc_interface_t usb_cdc_interface;
+static usb_cdc_t usb_cdc_interface;
 static usb_cdc_epbuf_t usb_cdc_epbuf;
 
 static bool usb_device_prep_out_transaction() {
@@ -128,7 +100,7 @@ uint32_t usb_cdc_write_flush() {
 }
 
 void usb_cdc_init() {
-  memset(&usb_cdc_interface, 0, sizeof(usb_cdc_interface_t));
+  memset(&usb_cdc_interface, 0, sizeof(usb_cdc_t));
 
   // default line coding is : stop bit = 1, parity = none, data bits = 8
   usb_cdc_interface.line_coding.dwDTERate = 115200;
@@ -232,8 +204,8 @@ bool usb_cdc_control_transfer(uint8_t control_stage, const usb_control_request_t
         const bool rts = (request->wValue & CDC_CONTROL_LINE_STATE_RTS) != 0;
 
         // Invoke callback
-        if (usb_cdc_line_state_cb) {
-          usb_cdc_line_state_cb(dtr, rts);
+        if (usb_cdc_handshake_cb) {
+          usb_cdc_handshake_cb(dtr, rts);
         }
       }
       break;

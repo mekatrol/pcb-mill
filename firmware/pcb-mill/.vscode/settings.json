@@ -6,7 +6,8 @@
     "*.bak": "c",
     "macros.h": "c",
     "usb.h": "c",
-    "usb_cdc.h": "c"
+    "usb_cdc.h": "c",
+    "circular_buffer.h": "c"
   },
   "cortex-debug.variableUseNaturalFormat": true
 }

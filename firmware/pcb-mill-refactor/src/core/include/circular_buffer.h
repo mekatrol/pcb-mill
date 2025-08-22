@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "macros.h"
+
 typedef struct {
   volatile uint8_t* buffer;
   volatile uint32_t size;
@@ -11,7 +13,7 @@ typedef struct {
   volatile uint32_t tail;
 } circular_buffer_t;
 
-__attribute__((always_inline)) static inline uint32_t circular_buffer_count(const circular_buffer_t* cb) {
+ALWAYS_INLINE static uint32_t circular_buffer_count(const circular_buffer_t* cb) {
   if (cb->head >= cb->tail) {
     return cb->head - cb->tail;
   } else {
@@ -19,7 +21,7 @@ __attribute__((always_inline)) static inline uint32_t circular_buffer_count(cons
   }
 }
 
-__attribute__((always_inline)) static inline uint32_t circular_buffer_space(const circular_buffer_t* cb) {
+ALWAYS_INLINE static uint32_t circular_buffer_space(const circular_buffer_t* cb) {
   return cb->size - circular_buffer_count(cb);
 }
 

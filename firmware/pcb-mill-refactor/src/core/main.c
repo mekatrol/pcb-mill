@@ -1,4 +1,5 @@
 #include "hal.h"
+#include "usb.h"
 #include "usb_cdc.h"
 
 config_interface_t machine_config = {
@@ -7,7 +8,7 @@ config_interface_t machine_config = {
     /* end default machine configuration*/
 };
 
-void usb_cdc_line_state_cb(bool dtr, bool rts) {
+void usb_cdc_handshake_cb(bool dtr, bool rts) {
   diag_printf("dtr: %d, rts: %d\r\n", dtr, rts);
 }
 
