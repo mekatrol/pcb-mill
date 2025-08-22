@@ -11,21 +11,8 @@ typedef enum {
 } cdc_acm_request_t;
 
 typedef struct {
-  union {
-    __attribute__((aligned(4)))
-    uint8_t epout[USB_EP0_BUFFER_SIZE];
-
-    __attribute__((aligned(1)))
-    uint8_t epout_dcache_padding[USB_EP0_BUFFER_SIZE];
-  };
-
-  union {
-    __attribute__((aligned(4)))
-    uint8_t epin[USB_EP0_BUFFER_SIZE];
-
-    __attribute__((aligned(1)))
-    uint8_t epin_dcache_padding[USB_EP0_BUFFER_SIZE];
-  };
+  __attribute__((aligned(4))) uint8_t epout[USB_EP0_BUFFER_SIZE];
+  __attribute__((aligned(4))) uint8_t epin[USB_EP0_BUFFER_SIZE];
 } usb_cdc_epbuf_t;
 
 static usb_cdc_epbuf_t usb_cdc_epbuf;
