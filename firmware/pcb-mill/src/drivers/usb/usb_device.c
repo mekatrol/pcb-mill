@@ -282,15 +282,19 @@ static bool process_get_descriptor(const usb_control_request_t* request) {
         return false;
       }
 
-      return usb_ep_initiate_control_response(request, (void*)(uintptr_t)descriptor_str, usb_descriptor_len(descriptor_str));
+      // The first byte is always the length of the descriptor string
+      const uint8_t descriptor_str_len = ((const uint8_t*)descriptor_str)[0];
+
+      // Send descriptor to host
+      return usb_ep_initiate_control_response(request, (void*)descriptor_str, descriptor_str_len);
     }
 
     case USB_DESCRIPTOR_TYPE_DEVICE_QUALIFIER: {
-      const uint8_t* descriptor_qualifier = usb_descriptor_device_qualifier();
+      const usb_descriptor_base_t* descriptor_qualifier = (const usb_descriptor_base_t*)usb_descriptor_device_qualifier();
       if (!descriptor_qualifier) {
         return false;
       }
-      return usb_ep_initiate_control_response(request, (void*)(uintptr_t)descriptor_qualifier, usb_descriptor_len(descriptor_qualifier));
+      return usb_ep_initiate_control_response(request, (void*)descriptor_qualifier, descriptor_qualifier->bLength);
     }
 
     default:

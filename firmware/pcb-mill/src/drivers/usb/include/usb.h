@@ -164,12 +164,6 @@ typedef enum {
   USB_EP_PACKET_SIZE_MASK = 0x7FFUL,  // Bits 0–10 = Max packet size in bytes (0–1024)
 } control_request_addr_mask_t;
 
-enum {
-  DESCRIPTOR_LEN_OFFSET = 0,
-  DESCRIPTOR_TYPE_OFFSET = 1,
-  DESCRIPTOR_SUBTYPE_OFFSET = 2
-};
-
 // Extract endpoint identifier (0..15)
 #define USB_EP_IDN(addr) ((uint8_t)((addr) & USB_EP_NUM_MASK))
 
@@ -357,20 +351,11 @@ ALWAYS_INLINE static usb_request_type_t usb_request_type(uint8_t bmRequestType) 
 ALWAYS_INLINE static usb_request_direction_index_t usb_request_direction(uint8_t bmRequestType) { return USB_EP_DIR((bmRequestType)) >> 7; }
 
 /*
- * Descriptor helpers
- */
-
-/*
  * Moves from one descriptor to next descriptor by offseting location by bLength
  */
 ALWAYS_INLINE static const usb_descriptor_base_t* usb_next_descriptor(const void* desc) {
   const usb_descriptor_base_t* desc_base = (const usb_descriptor_base_t*)desc;
   return (const usb_descriptor_base_t*)(desc + desc_base->bLength);
-}
-
-// Get descriptor length
-ALWAYS_INLINE static uint8_t usb_descriptor_len(const void* desc) {
-  return ((const uint8_t*)desc)[DESCRIPTOR_LEN_OFFSET];
 }
 
 /*
