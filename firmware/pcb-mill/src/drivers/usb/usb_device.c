@@ -205,11 +205,11 @@ static bool usb_set_configuration() {
 
   while ((const uint8_t*)descriptor < descriptor_end) {
     // Class will always starts with Interface Association (if any) and then Interface descriptor
-    if (usb_descriptor_type(descriptor) == USB_DESCRIPTOR_TYPE_INTERFACE_ASSOCIATION) {
+    if (((const usb_descriptor_base_t*)descriptor)->bDescriptorType == USB_DESCRIPTOR_TYPE_INTERFACE_ASSOCIATION) {
       descriptor = usb_next_descriptor(descriptor);  // next to Interface
     }
 
-    if (usb_descriptor_type(descriptor) != USB_DESCRIPTOR_TYPE_INTERFACE) {
+    if (((const usb_descriptor_base_t*)descriptor)->bDescriptorType != USB_DESCRIPTOR_TYPE_INTERFACE) {
       return false;
     }
 

@@ -368,14 +368,6 @@ ALWAYS_INLINE static const usb_descriptor_base_t* usb_next_descriptor2(const voi
   return (const usb_descriptor_base_t*)(desc_base + desc_base->bLength);
 }
 
-/*
- * Gets the length of the descriptor
- */
-ALWAYS_INLINE static uint8_t usb_descriptor_len2(const void* desc) {
-  const usb_descriptor_base_t* desc_base = (const usb_descriptor_base_t*)desc;
-  return desc_base->bLength;
-}
-
 // Return next descriptor
 ALWAYS_INLINE static const uint8_t* usb_next_descriptor(const void* desc) {
   const uint8_t* desc8 = (const uint8_t*)desc;
