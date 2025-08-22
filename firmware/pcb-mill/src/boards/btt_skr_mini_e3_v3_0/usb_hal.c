@@ -265,7 +265,7 @@ ALWAYS_INLINE static void usb_pma_ep_addr_set(
 }
 
 /****************************************************************************************************************************************
- * HAL interal methods
+ * HAL internal methods
  ****************************************************************************************************************************************/
 
 /*
@@ -291,7 +291,7 @@ static void usb_ep_set_rx_buffer_block_size(uint32_t ep_idn, uint32_t buffer_siz
 }
 
 /*
- *
+ * Set next available endpoint assignment for the specified ep IDn and type
  */
 static uint8_t usb_ep_assign(uint8_t ep_addr, uint8_t ep_type) {
   const uint8_t ep_idn = USB_EP_IDN(ep_addr);
@@ -360,22 +360,8 @@ static void usb_ep_control_init() {
   usb_ep_reg_set(EP0_IDN, ep_reg, false);
 }
 
-void usb_ep_close_all() {
-  NVIC_DisableIRQ(USB_UCPD1_2_IRQn);
-
-  for (uint32_t i = 1; i < USB_EP_MAX; i++) {
-    usb_ep_reg_set(i, 0, false);
-    ep_reset_assigned_state(i);
-  }
-
-  NVIC_EnableIRQ(USB_UCPD1_2_IRQn);
-
-  // Reset PMA assignment (except EP0)
-  usb_pma_next_available = 8 * USB_EP_MAX + 2 * USB_EP0_BUFFER_SIZE;
-}
-
 /*
- * Set up an endpoint
+ *
  */
 static bool usb_rx_pma_read(void *__restrict dst, uint16_t src, uint16_t byte_count) {
   if (byte_count == 0) {
@@ -450,7 +436,7 @@ void usb_ep_stall_clear_hal(uint8_t ep_idn, uint8_t ep_dir_idx) {
 }
 
 /*
- * Set up an endpoint
+ * Process a control request and stall if failed.
  */
 static void process_control_request_hal(usb_control_request_t *control_request) {
   // Process control request
@@ -494,7 +480,7 @@ static void usb_ep_setup(uint32_t ep_idn) {
 /*
  * This method writes data from an unaligned buffer to the endpoint buffer
  */
-static bool usb_write_unaligned_data(uint16_t dst, const void *__restrict src, uint16_t byte_count) {
+ALWAYS_INLINE static bool usb_write_unaligned_data(uint16_t dst, const void *__restrict src, uint16_t byte_count) {
   if (byte_count == 0) {
     // No count then nothing to write
     return true;
@@ -568,37 +554,6 @@ static void usb_tx_packet(usb_ep_transfer_t *ep_transfer) {
   usb_ep_reg_set_preserve(ep_transfer->ep_idn, ep_reg, true);
 }
 
-static bool usb_rx_packet(const void *__restrict dst, uint16_t src, uint16_t byte_count) {
-  if (byte_count == 0) {
-    // No count then nothing to read
-    return true;
-  }
-
-  // We are readng 32 bit values from unaligned byte locations
-  uint32_t read_count = byte_count / sizeof(uint32_t);
-
-  volatile uint32_t *pma_buf = (volatile uint32_t *)(USB_DRD_PMAADDR + src);
-  uint8_t *dst8 = (uint8_t *)dst;
-
-  while (read_count--) {
-    unaligned_write_32(dst8, (uint32_t)(*pma_buf));
-    dst8 += sizeof(uint32_t);
-    pma_buf++;
-  }
-
-  // odd bytes e.g 1 for 16-bit or 1-3 for 32-bit
-  uint16_t odd = byte_count & (sizeof(uint32_t) - 1);
-  if (odd) {
-    uint32_t temp = *pma_buf;
-    while (odd--) {
-      *dst8++ = (uint8_t)(temp & 0xffUL);
-      temp >>= 8;
-    }
-  }
-
-  return true;
-}
-
 static void usb_ep_tx_queued_bytes(uint32_t ep_idn) {
   usb_ep_transfer_t *ep_transfer = &ep_transfer_set[ep_idn][USB_DIR_DEVICE_OUT_HOST_IN_IDX];
 
@@ -621,7 +576,7 @@ static void usb_ep_rx_queued_bytes(uint32_t ep_idn) {
   uint16_t pma_addr = (uint16_t)usb_pma_ep_addr_get(ep_idn, USB_EP_RX_COUNT_ADDR_IDX);
 
   // Append data PMA to the transfer feed
-  usb_rx_packet(ep_transfer->feed.buffer + ep_transfer->feed.fed_count, pma_addr, rx_count);
+  usb_rx_pma_read(((void *)ep_transfer->feed.buffer) + ep_transfer->feed.fed_count, pma_addr, rx_count);
 
   // Increase the amount fed to the buffer
   ep_transfer->feed.fed_count += rx_count;
@@ -906,4 +861,18 @@ bool usb_ep_open_hal(const usb_ep_descriptor_t *ep_descriptor) {
   usb_ep_reg_set_preserve(ep_idn, ep_reg, true);
 
   return true;
+}
+
+void usb_ep_close_all() {
+  NVIC_DisableIRQ(USB_UCPD1_2_IRQn);
+
+  for (uint32_t i = 1; i < USB_EP_MAX; i++) {
+    usb_ep_reg_set(i, 0, false);
+    ep_reset_assigned_state(i);
+  }
+
+  NVIC_EnableIRQ(USB_UCPD1_2_IRQn);
+
+  // Reset PMA assignment (except EP0)
+  usb_pma_next_available = 8 * USB_EP_MAX + 2 * USB_EP0_BUFFER_SIZE;
 }
