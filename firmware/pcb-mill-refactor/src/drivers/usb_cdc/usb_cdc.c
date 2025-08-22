@@ -1,4 +1,3 @@
-#include "circular_buffer.h"
 #include "usb.h"
 #include "usb_cdc.h"
 
