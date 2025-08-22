@@ -577,6 +577,9 @@ static void usb_ep_tx_queued_bytes(uint32_t ep_idn) {
  * HAL public methods
  ****************************************************************************************************************************************/
 
+/*
+ * Initialise board HAL for USB function, and enable USB interrupts
+ */
 void usb_init_board_hal() {
   // Set PA11 and PA12 to Alternate Function mode
   GPIO_SET_MODE(GPIOA, BIT_11_POS, MODER_ALT);
@@ -605,6 +608,27 @@ void usb_init_board_hal() {
 
   // Enable USB IRQ
   NVIC_EnableIRQ(USB_UCPD1_2_IRQn);
+}
+
+/*
+ * Initialise board HAL for USB function, and enable USB interrupts
+ */
+void usb_init_enable_hal() {
+  // Disable USB while initialising USB
+  USB->DADDR = 0U;
+
+  // Reset endpoint assignments
+  usb_ep_reset();
+
+  // Control ep (EP0) must exist
+  usb_ep_control_init();
+
+  // USB Device address (USB_DADDR)
+  // Bit 7 EF: Enable function (USB_DADDR_EF)
+  // This bit is set by the software to enable the USB Device. The address of this device is
+  // contained in the following ADD[6:0] bits. If this bit is at 0 no transactions are handled,
+  // irrespective of the settings of USB_CHEPnR registers.
+  USB->DADDR = USB_DADDR_EF;  // Enable USB and clear USB device address
 }
 
 /*
@@ -650,27 +674,6 @@ void usb_device_start_hal() {
   // Clearing it to 0 can be used to signal disconnect to the host when
   // needed by the user software.
   USB->BCDR |= USB_BCDR_DPPU;
-}
-
-/*
- * Initialise board HAL for USB function, and enable USB interrupts
- */
-void usb_init_enable_hal() {
-  // Disable USB while initialising USB
-  USB->DADDR = 0U;
-
-  // Reset endpoint assignments
-  usb_ep_reset();
-
-  // Control ep (EP0) must exist
-  usb_ep_control_init();
-
-  // USB Device address (USB_DADDR)
-  // Bit 7 EF: Enable function (USB_DADDR_EF)
-  // This bit is set by the software to enable the USB Device. The address of this device is
-  // contained in the following ADD[6:0] bits. If this bit is at 0 no transactions are handled,
-  // irrespective of the settings of USB_CHEPnR registers.
-  USB->DADDR = USB_DADDR_EF;  // Enable USB and clear USB device address
 }
 
 void USB_UCPD1_2_IRQHandler() {
@@ -750,6 +753,42 @@ void USB_UCPD1_2_IRQHandler() {
   }
 }
 
+/*
+ * Prepare HAL for sending / receiving data from host
+ */
+bool usb_ep_queue_transfer_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t *buffer, uint16_t total_bytes) {
+  usb_ep_transfer_t *ep_transfer = &ep_transfer_set[ep_idn][ep_dir_idx];
+
+  // Initialise packet
+  ep_transfer->feed.buffer = buffer;            // Use callers buffer
+  ep_transfer->feed.total_count = total_bytes;  // We are going to transfer total bytes
+  ep_transfer->feed.fed_count = 0;              // Nothing has been transferred yet
+
+  if (ep_dir_idx == USB_DIR_DEVICE_OUT_HOST_IN_IDX) {
+    // Transmit from device is USB_DIR_DEVICE_OUT_HOST_IN_IDX to host
+    usb_tx_packet(ep_transfer);
+  } else {
+    // Receive to device is USB_DIR_DEVICE_IN_HOST_OUT_IDX from host
+    uint32_t ep_reg = USB->chep[ep_idn].CHEPnR;
+    ep_reg &= (USB_CHEP_REG_MASK | USB_EP_STATUS_MASK(ep_dir_idx));
+
+    usb_ep_set_rx_buffer_block_size(ep_idn, (uint32_t)ep_transfer->feed.total_count);
+    usb_ep_status(&ep_reg, ep_dir_idx, USB_EP_STATE_VALID);
+    usb_ep_reg_set_preserve(ep_idn, ep_reg, true);
+  }
+
+  // STM32G0B1 does not detect failures in this method so always return true (assume success)
+  return true;
+}
+
+void usb_device_set_addr_hal(const uint8_t device_addr) {
+  // Set the device address and keep enabled
+  USB->DADDR = (USB_DADDR_EF | device_addr);
+
+  // Address is set upon ACK status response so we clear RX count
+  usb_ep_set_rx_buffer_block_size(EP0_IDN, sizeof(usb_control_request_t));
+}
+
 bool usb_ep_open_hal(const usb_ep_descriptor_t *ep_descriptor) {
   const uint8_t ep_addr = ep_descriptor->bEndpointAddress;
   const uint8_t ep_dir_idx = USB_EP_DIR_IDX(ep_addr);
@@ -814,40 +853,4 @@ void usb_ep_close_all() {
 
   // Reset PMA assignment (except EP0)
   usb_pma_next_available = 8 * USB_EP_MAX + 2 * USB_EP0_BUFFER_SIZE;
-}
-
-void usb_device_set_addr_hal(const uint8_t device_addr) {
-  // Set the device address and keep enabled
-  USB->DADDR = (USB_DADDR_EF | device_addr);
-
-  // Address is set upon ACK status response so we clear RX count
-  usb_ep_set_rx_buffer_block_size(EP0_IDN, sizeof(usb_control_request_t));
-}
-
-/*
- * Prepare HAL for sending / receiving data from host
- */
-bool usb_ep_queue_transfer_hal(uint8_t ep_idn, uint8_t ep_dir_idx, uint8_t *buffer, uint16_t total_bytes) {
-  usb_ep_transfer_t *ep_transfer = &ep_transfer_set[ep_idn][ep_dir_idx];
-
-  // Initialise packet
-  ep_transfer->feed.buffer = buffer;            // Use callers buffer
-  ep_transfer->feed.total_count = total_bytes;  // We are going to transfer total bytes
-  ep_transfer->feed.fed_count = 0;              // Nothing has been transferred yet
-
-  if (ep_dir_idx == USB_DIR_DEVICE_OUT_HOST_IN_IDX) {
-    // Transmit from device is USB_DIR_DEVICE_OUT_HOST_IN_IDX to host
-    usb_tx_packet(ep_transfer);
-  } else {
-    // Receive to device is USB_DIR_DEVICE_IN_HOST_OUT_IDX from host
-    uint32_t ep_reg = USB->chep[ep_idn].CHEPnR;
-    ep_reg &= (USB_CHEP_REG_MASK | USB_EP_STATUS_MASK(ep_dir_idx));
-
-    usb_ep_set_rx_buffer_block_size(ep_idn, (uint32_t)ep_transfer->feed.total_count);
-    usb_ep_status(&ep_reg, ep_dir_idx, USB_EP_STATE_VALID);
-    usb_ep_reg_set_preserve(ep_idn, ep_reg, true);
-  }
-
-  // STM32G0B1 does not detect failures in this method so always return true (assume success)
-  return true;
 }
