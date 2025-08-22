@@ -222,15 +222,6 @@ typedef struct {
 
 } usb_device_t;
 
-/// CDC ACM (Virtual COM Port) Class-Specific Request Codes
-/// See USB CDC Spec 1.2, Table 3.1 (Abstract Control Model Requests)
-typedef enum {
-  CDC_REQUEST_SET_LINE_CODING = 0x20,         // Set serial line coding (baud rate, stop bits, parity, data bits) :contentReference[oaicite:0]{index=0}
-  CDC_REQUEST_GET_LINE_CODING = 0x21,         // Get current serial line coding :contentReference[oaicite:1]{index=1}
-  CDC_REQUEST_SET_CONTROL_LINE_STATE = 0x22,  // Control RTS/DTR tone (host signals presence) :contentReference[oaicite:2]{index=2}
-  CDC_REQUEST_SEND_BREAK = 0x23               // Transmit break condition on the communication line :contentReference[oaicite:3]{index=3}
-} cdc_acm_request_t;
-
 // USB CDC Communication Interface Class Subclass Codes (CDC Spec 1.2 Table 4)
 typedef enum {
   CDC_COMM_SUBCLASS_ABSTRACT_CONTROL_MODEL = 0x02  // Abstract Control Model             [USB PSTN 1.2]
