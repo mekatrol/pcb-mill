@@ -392,16 +392,6 @@ ALWAYS_INLINE static uint8_t usb_descriptor_type(const void* desc) {
   return ((const uint8_t*)desc)[DESCRIPTOR_TYPE_OFFSET];
 }
 
-// Get descriptor subtype
-ALWAYS_INLINE static uint8_t usb_descriptor_subtype(const void* desc) {
-  return ((const uint8_t*)desc)[DESCRIPTOR_SUBTYPE_OFFSET];
-}
-
-ALWAYS_INLINE static uint8_t usb_descriptor_is_valid(const void* desc, const uint8_t* desc_end) {
-  const uint8_t* desc8 = (const uint8_t*)desc;
-  return (desc8 < desc_end) && (usb_next_descriptor(desc) <= desc_end);
-}
-
 /*
  * Queue a transfer in HAL
  */
