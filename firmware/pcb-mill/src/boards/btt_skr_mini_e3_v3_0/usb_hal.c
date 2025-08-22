@@ -7,9 +7,6 @@
 // Member unassigned value
 #define UNASSIGNED_VALUE 0xFFU
 
-// A pair of endpoints max IN/OUT
-#define EP_IN_OUT_PAIR 2
-
 // STM32G0B1 has 8 endpoints
 #define USB_EP_MAX 8
 

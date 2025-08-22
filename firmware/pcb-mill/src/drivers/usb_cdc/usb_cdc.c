@@ -81,7 +81,7 @@ uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* control_descript
     descriptor = (const usb_ep_descriptor_t*)usb_next_descriptor(descriptor);
 
     // Open endpoint pair
-    if (!usb_ep_open_in_out((const usb_ep_descriptor_t*)descriptor, USB_EP_TYPE_BULK, &usb_cdc.ep_addr_out, &usb_cdc.ep_addr_in)) {
+    if (!usb_ep_open_in_out_pair((const usb_ep_descriptor_t*)descriptor, USB_EP_TYPE_BULK, &usb_cdc.ep_addr_out, &usb_cdc.ep_addr_in)) {
       return 0;
     }
 

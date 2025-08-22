@@ -11,6 +11,11 @@
 #include "stm32g0xx.h"
 #include "macros.h"
 
+#include "usb_types.h"
+
+// A pair of endpoints IN/OUT
+#define EP_IN_OUT_PAIR 2
+
 // EP0 identifier
 #define EP0_IDN 0
 
@@ -193,20 +198,20 @@ _Static_assert(sizeof(usb_control_request_t) == 8, "sizeof(usb_control_request_t
 
 // USB Device Descriptor
 typedef struct __attribute__((packed)) {
-  uint8_t bLength;             ///< Size of this descriptor in bytes (always 18 for device descriptor)
-  uint8_t bDescriptorType;     ///< Descriptor type (DEVICE = 0x01)
-  uint16_t bcdUSB;             ///< USB specification release number in BCD (e.g., 0x0200 = USB 2.0)
-  uint8_t bDeviceClass;        ///< Device class code (assigned by USB-IF; 0 = defined at interface level, 0xFF = vendor-specific)
-  uint8_t bDeviceSubClass;     ///< Device subclass code (qualified by bDeviceClass)
-  uint8_t bDeviceProtocol;     ///< Device protocol code (qualified by bDeviceClass and bDeviceSubClass)
-  uint8_t bMaxPacketSize0;     ///< Maximum packet size for endpoint zero (8, 16, 32, or 64 bytes)
-  uint16_t idVendor;           ///< Vendor ID (assigned by USB-IF)
-  uint16_t idProduct;          ///< Product ID (assigned by manufacturer)
-  uint16_t bcdDevice;          ///< Device release number in BCD (manufacturer-defined)
-  uint8_t iManufacturer;       ///< Index of string descriptor describing manufacturer (0 = none)
-  uint8_t iProduct;            ///< Index of string descriptor describing product (0 = none)
-  uint8_t iSerialNumber;       ///< Index of string descriptor describing the device’s serial number (0 = none)
-  uint8_t bNumConfigurations;  ///< Number of possible configurations supported by the device
+  uint8_t bLength;             // Size of this descriptor in bytes (always 18 for device descriptor)
+  uint8_t bDescriptorType;     // Descriptor type (DEVICE = 0x01)
+  uint16_t bcdUSB;             // USB specification release number in BCD (e.g., 0x0200 = USB 2.0)
+  uint8_t bDeviceClass;        // Device class code (assigned by USB-IF; 0 = defined at interface level, 0xFF = vendor-specific)
+  uint8_t bDeviceSubClass;     // Device subclass code (qualified by bDeviceClass)
+  uint8_t bDeviceProtocol;     // Device protocol code (qualified by bDeviceClass and bDeviceSubClass)
+  uint8_t bMaxPacketSize0;     // Maximum packet size for endpoint zero (8, 16, 32, or 64 bytes)
+  uint16_t idVendor;           // Vendor ID (assigned by USB-IF)
+  uint16_t idProduct;          // Product ID (assigned by manufacturer)
+  uint16_t bcdDevice;          // Device release number in BCD (manufacturer-defined)
+  uint8_t iManufacturer;       // Index of string descriptor describing manufacturer (0 = none)
+  uint8_t iProduct;            // Index of string descriptor describing product (0 = none)
+  uint8_t iSerialNumber;       // Index of string descriptor describing the device’s serial number (0 = none)
+  uint8_t bNumConfigurations;  // Number of possible configurations supported by the device
 } usb_device_descriptor_t;
 
 _Static_assert(sizeof(usb_device_descriptor_t) == 18, "sizeof(usb_device_descriptor_t) must be 18");
@@ -321,7 +326,7 @@ bool usb_ep_initiate_control_response(                                     // In
     const usb_control_request_t* request,                                  //
     const uint8_t* buffer,                                                 //
     uint16_t len);                                                         //
-bool usb_ep_open_in_out(                                                   // Configure consecutive endpoint descriptors (IN & OUT)
+bool usb_ep_open_in_out_pair(                                              // Configure consecutive endpoint descriptors (IN & OUT)
     const usb_ep_descriptor_t* descriptor,                                 //
     uint8_t transfer_type,                                                 //
     uint8_t* ep_addr_out,                                                  //
@@ -354,6 +359,22 @@ ALWAYS_INLINE static usb_request_direction_index_t usb_request_direction(uint8_t
 /*
  * Descriptor helpers
  */
+
+/*
+ * Moves from one descriptor to next descriptor by offseting location by bLength
+ */
+ALWAYS_INLINE static const usb_descriptor_base_t* usb_next_descriptor2(const void* desc) {
+  const usb_descriptor_base_t* desc_base = (const usb_descriptor_base_t*)desc;
+  return (const usb_descriptor_base_t*)(desc_base + desc_base->bLength);
+}
+
+/*
+ * Gets the length of the descriptor
+ */
+ALWAYS_INLINE static uint8_t usb_descriptor_len2(const void* desc) {
+  const usb_descriptor_base_t* desc_base = (const usb_descriptor_base_t*)desc;
+  return desc_base->bLength;
+}
 
 // Return next descriptor
 ALWAYS_INLINE static const uint8_t* usb_next_descriptor(const void* desc) {

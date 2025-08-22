@@ -180,8 +180,10 @@ static void usb_ep_stall_clear(uint8_t ep_addr) {
   usb_ep_stall_clear_hal(ep_idn, ep_dir_idx);
 }
 
-//
-static bool usb_class_control_staging_init(const usb_control_request_t* request) {
+/*
+ *
+ */
+static bool usb_cdc_control_staging_init(const usb_control_request_t* request) {
   usb_control_set_complete_callback(usb_cdc_control_transfer);
   return usb_cdc_control_transfer(CONTROL_STAGE_SETUP, request);
 }
@@ -198,28 +200,28 @@ static bool usb_set_configuration() {
   usb_device.self_powered = (descriptor_config->bmAttributes & USB_CONFIG_SELF_POWERED_MASK) ? 1U : 0U;
 
   // Interface descriptor
-  const uint8_t* discriptor = ((const uint8_t*)descriptor_config) + sizeof(usb_configuration_descriptor_t);
+  const uint8_t* descriptor = usb_next_descriptor(descriptor_config);
   const uint8_t* descriptor_end = ((const uint8_t*)descriptor_config) + descriptor_config->wTotalLength;
 
-  while (discriptor < descriptor_end) {
+  while ((const uint8_t*)descriptor < descriptor_end) {
     // Class will always starts with Interface Association (if any) and then Interface descriptor
-    if (usb_descriptor_type(discriptor) == USB_DESCRIPTOR_TYPE_INTERFACE_ASSOCIATION) {
-      discriptor = usb_next_descriptor(discriptor);  // next to Interface
+    if (usb_descriptor_type(descriptor) == USB_DESCRIPTOR_TYPE_INTERFACE_ASSOCIATION) {
+      descriptor = usb_next_descriptor(descriptor);  // next to Interface
     }
 
-    if (usb_descriptor_type(discriptor) != USB_DESCRIPTOR_TYPE_INTERFACE) {
+    if (usb_descriptor_type(descriptor) != USB_DESCRIPTOR_TYPE_INTERFACE) {
       return false;
     }
 
-    const usb_control_interface_descriptor_t* descriptor_interface = (const usb_control_interface_descriptor_t*)discriptor;
+    const usb_control_interface_descriptor_t* descriptor_interface = (const usb_control_interface_descriptor_t*)descriptor;
 
     // Find driver for this interface
-    const uint16_t remaining_len = (uint16_t)(descriptor_end - discriptor);
+    const uint16_t remaining_len = (uint16_t)(descriptor_end - (const uint8_t*)descriptor);
     const uint16_t descriptor_len = usb_cdc_open(descriptor_interface, remaining_len);
 
     if ((sizeof(usb_control_interface_descriptor_t) <= descriptor_len) && (descriptor_len <= remaining_len)) {
       // next Interface
-      discriptor += descriptor_len;
+      descriptor += descriptor_len;
 
       break;  // exit driver find loop
     }
@@ -228,9 +230,11 @@ static bool usb_set_configuration() {
   return true;
 }
 
-// Configure consecutive endpoint descriptors (IN & OUT)
-bool usb_ep_open_in_out(const usb_ep_descriptor_t* descriptor_ep, uint8_t transfer_type, uint8_t* ep_addr_out, uint8_t* ep_addr_in) {
-  for (int i = 0; i < 2; i++) {
+/*
+ * Configure consecutive endpoint descriptors (IN & OUT)
+ */
+bool usb_ep_open_in_out_pair(const usb_ep_descriptor_t* descriptor_ep, uint8_t transfer_type, uint8_t* ep_addr_out, uint8_t* ep_addr_in) {
+  for (int i = 0; i < EP_IN_OUT_PAIR; i++) {
     if (descriptor_ep->bDescriptorType != USB_DESCRIPTOR_TYPE_ENDPOINT || descriptor_ep->bmAttributes.type != transfer_type) {
       return false;
     }
@@ -359,7 +363,7 @@ bool usb_process_control_request(const usb_control_request_t* request) {
   switch (request_recipient) {
     case USB_REQUEST_RECIPIENT_DEVICE:
       if (request_type == USB_REQUEST_TYPE_CLASS) {
-        return usb_class_control_staging_init(request);
+        return usb_cdc_control_staging_init(request);
       }
 
       if (request_type != USB_REQUEST_TYPE_STANDARD) {
@@ -468,10 +472,10 @@ bool usb_process_control_request(const usb_control_request_t* request) {
     case USB_REQUEST_RECIPIENT_INTERFACE: {
       // all requests to Interface (STD or Class) is forwarded to class driver.
       // notable requests are: GET HID REPORT DESCRIPTOR, SET_INTERFACE, GET_INTERFACE
-      if (!usb_class_control_staging_init(request)) {
+      if (!usb_cdc_control_staging_init(request)) {
         // For GET_INTERFACE and SET_INTERFACE, it is mandatory to respond even if the class
         // driver doesn't use alternate settings or implement this
-        if (USB_REQUEST_TYPE_STANDARD != request_type) {
+        if (request_type != USB_REQUEST_TYPE_STANDARD) {
           return false;
         }
 
@@ -501,7 +505,7 @@ bool usb_process_control_request(const usb_control_request_t* request) {
 
       if (USB_REQUEST_TYPE_STANDARD != request_type) {
         // Forward class request to its driver
-        return usb_class_control_staging_init(request);
+        return usb_cdc_control_staging_init(request);
       } else {
         // Handle STD request to endpoint
         switch (request->bRequest) {
@@ -520,7 +524,7 @@ bool usb_process_control_request(const usb_control_request_t* request) {
 
             // STD request must always be ACKed regardless of driver returned value
             // Also clear complete callback if driver set since it can also stall the request.
-            usb_class_control_staging_init(request);
+            usb_cdc_control_staging_init(request);
             usb_control_set_complete_callback(NULL);
           } break;
 
