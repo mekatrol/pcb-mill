@@ -200,16 +200,16 @@ static bool usb_set_configuration() {
   usb_device.self_powered = (descriptor_config->bmAttributes & USB_CONFIG_SELF_POWERED_MASK) ? 1U : 0U;
 
   // Interface descriptor
-  const uint8_t* descriptor = usb_next_descriptor(descriptor_config);
+  const usb_descriptor_base_t* descriptor = usb_next_descriptor(descriptor_config);
   const uint8_t* descriptor_end = ((const uint8_t*)descriptor_config) + descriptor_config->wTotalLength;
 
   while ((const uint8_t*)descriptor < descriptor_end) {
     // Class will always starts with Interface Association (if any) and then Interface descriptor
-    if (((const usb_descriptor_base_t*)descriptor)->bDescriptorType == USB_DESCRIPTOR_TYPE_INTERFACE_ASSOCIATION) {
+    if (descriptor->bDescriptorType == USB_DESCRIPTOR_TYPE_INTERFACE_ASSOCIATION) {
       descriptor = usb_next_descriptor(descriptor);  // next to Interface
     }
 
-    if (((const usb_descriptor_base_t*)descriptor)->bDescriptorType != USB_DESCRIPTOR_TYPE_INTERFACE) {
+    if (descriptor->bDescriptorType != USB_DESCRIPTOR_TYPE_INTERFACE) {
       return false;
     }
 

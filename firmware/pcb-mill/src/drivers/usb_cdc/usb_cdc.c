@@ -58,12 +58,12 @@ uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* control_descript
   const usb_ep_descriptor_t* descriptor = (const usb_ep_descriptor_t*)usb_next_descriptor(control_descriptor);
 
   // Communication Functional Descriptors
-  while (((const usb_descriptor_base_t*)descriptor)->bDescriptorType == USB_DESCRIPTOR_TYPE_CS_INTERFACE && descriptor_len <= descriptor_end) {
+  while (descriptor->bDescriptorType == USB_DESCRIPTOR_TYPE_CS_INTERFACE && descriptor_len <= descriptor_end) {
     descriptor_len += usb_descriptor_len(descriptor);
     descriptor = (const usb_ep_descriptor_t*)usb_next_descriptor(descriptor);
   }
 
-  if (((const usb_descriptor_base_t*)descriptor)->bDescriptorType == USB_DESCRIPTOR_TYPE_ENDPOINT) {
+  if (descriptor->bDescriptorType == USB_DESCRIPTOR_TYPE_ENDPOINT) {
     // notification endpoint
     const usb_ep_descriptor_t* ep_descriptor = (const usb_ep_descriptor_t*)descriptor;
     if (!usb_ep_open_hal(ep_descriptor)) {
@@ -74,7 +74,7 @@ uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* control_descript
     descriptor = (const usb_ep_descriptor_t*)usb_next_descriptor(descriptor);
   }
 
-  if ((((const usb_descriptor_base_t*)descriptor)->bDescriptorType == USB_DESCRIPTOR_TYPE_INTERFACE) &&
+  if ((descriptor->bDescriptorType == USB_DESCRIPTOR_TYPE_INTERFACE) &&
       (((const usb_control_interface_descriptor_t*)descriptor)->bInterfaceClass) == USB_CLASS_CDC_DATA) {
     // next to endpoint descriptor
     descriptor_len += usb_descriptor_len(descriptor);
