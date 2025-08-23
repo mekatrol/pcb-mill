@@ -380,6 +380,8 @@ static bool usb_set_configuration(const usb_control_request_t* request) {
         usb_mounted_cb();
       }
     } else {
+      // This unmount only occurs if the host signals an unmount
+      // it does not detect disconnecting the cable
       if (usb_unmounted_cb) {
         usb_unmounted_cb();
       }
