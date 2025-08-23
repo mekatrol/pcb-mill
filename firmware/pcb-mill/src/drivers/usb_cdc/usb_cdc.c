@@ -1,5 +1,6 @@
 #include "usb.h"
 #include "usb_cdc.h"
+#include "macros.h"
 
 /// CDC ACM (Virtual COM Port) Class-Specific Request Codes
 /// See USB CDC Spec 1.2, Table 3.1 (Abstract Control Model Requests)
@@ -36,7 +37,7 @@ static bool usb_cdc_read_ep() {
 uint32_t usb_cdc_write_ep() {
   // Skip if usb is not yet configured or the ep not yet assigned
   if (!(usb_configured() && usb_cdc.ep_addr_in != 0)) {
-    return false;
+    return 0;
   }
 
   // No data to send
@@ -44,17 +45,17 @@ uint32_t usb_cdc_write_ep() {
     return 0;
   }
 
-  // Pull data from buffer
+  // Read data from circular buffer
   const uint16_t count = circular_buffer_read(&usb_cdc.tx_buffer, ep_in_buffer, USB_CDC_EP_BUFFER_SIZE);
 
-  if (count) {
-    if (!usb_ep_queue_transfer(usb_cdc.ep_addr_in, ep_in_buffer, count)) {
-      return 0;
-    }
-    return count;
-  } else {
-    return 0;
+  // Any data?
+  if (count > 0) {
+    // Write to ep buffers
+    return usb_ep_queue_transfer(usb_cdc.ep_addr_in, ep_in_buffer, count) ? count : 0;
   }
+
+  // Nothing written to ep buffers
+  return 0;
 }
 
 uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* control_descriptor, uint16_t descriptor_end) {
@@ -197,20 +198,28 @@ bool usb_ep_buffer_transfer(uint8_t ep_addr, uint32_t transferred_bytes) {
     usb_cdc_read_ep();
   }
 
-  // Data sent to host, we continue to fetch from tx buffer to send.
-  // Note: This will cause incorrect baudrate set in line coding.
-  //       Though maybe the baudrate is not really important !!!
   if (ep_addr == usb_cdc.ep_addr_in) {
-    // invoke transmit callback to possibly refill tx buffer
+    // If set, invoke callback in case more TX data needs to be queued prior to testing if sending is complete
     if (usb_cdc_tx_complete_cb) {
       usb_cdc_tx_complete_cb();
     }
 
-    // Write from CDC TX buffer endpoint TX buffer
-    if (usb_cdc_write_ep() == 0) {
-      // If there is no data left, a ZLP should be sent if
-      // transferred_bytes is multiple of EP Packet size and not zero
-      if (circular_buffer_count(&usb_cdc.tx_buffer) == 0 && transferred_bytes && (0 == (transferred_bytes & (USB_CDC_EP_BUFFER_SIZE - 1)))) {
+    // All TX data sent to host?
+    if (usb_cdc_write_ep() == 0 && circular_buffer_count(&usb_cdc.tx_buffer) == 0) {
+      // The host knows a transfer is finished when:
+      //    It receives a short packet (less than max packet size), or
+      //    It receives a Zero-Length Packet (ZLP).
+
+      // E.g. EP max packet (USB_CDC_EP_BUFFER_SIZE) = 64:
+      //    If we send 100 bytes, packets are:
+      //      64 (full) + 36 (short) → host sees short packet = transfer complete. No ZLP needed.
+      //    If we send 128 bytes, packets are:
+      //      64 + 64 (both full).
+      // Host sees both full → expects more so need a ZLP to terminate transfer.
+      if (transferred_bytes != 0 &&                                       // Bytes were transferred
+          IS_MULTIPLE_POW2(transferred_bytes, USB_CDC_EP_BUFFER_SIZE)) {  // Transferred byte count is a multiple of USB_CDC_EP_BUFFER_SIZE
+
+        // A ZLP is required to terminate the transfer.
         if (!usb_ep_queue_transfer(usb_cdc.ep_addr_in, NULL, 0)) {
           return false;
         }
@@ -224,7 +233,7 @@ bool usb_ep_buffer_transfer(uint8_t ep_addr, uint32_t transferred_bytes) {
 void usb_cdc_init() {
   memset(&usb_cdc, 0, sizeof(usb_cdc_t));
 
-  // default line coding is : stop bit = 1, parity = none, data bits = 8
+  // Set default line coding to 115200bps N81
   usb_cdc.line_coding.dwDTERate = 115200;
   usb_cdc.line_coding.bCharFormat = 0;
   usb_cdc.line_coding.bParityType = 0;
