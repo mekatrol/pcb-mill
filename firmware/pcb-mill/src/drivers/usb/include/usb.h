@@ -37,21 +37,21 @@ void usb_device_init();                                                    // In
 bool usb_process_control_request(const usb_control_request_t* request);    // Process a control request
 bool usb_control_transfer(uint8_t ep_addr, uint32_t transferred_bytes);    // An EP0 control transfer has completed
 bool usb_control_init_status_stage(const usb_control_request_t* request);  //
-bool usb_ep_buffer_transfer(uint8_t ep_addr, uint32_t transferred_bytes);  // Transfer bytes between and endpoint and the endpoint function (e.g. CDC) buffers
 
 /*
  * USB endpoint level methods
  */
-void usb_ep_close_all();                    // Close all endpoints (unconfigure them)
-bool usb_ep_initiate_control_response(      // Initiate a staged control response
-    const usb_control_request_t* request,   //
-    const uint8_t* buffer,                  //
-    uint16_t len);                          //
-bool usb_ep_open_in_out_pair(               // Configure consecutive endpoint descriptors (IN & OUT)
-    const usb_ep_descriptor_t* descriptor,  //
-    uint8_t transfer_type,                  //
-    uint8_t* ep_addr_out,                   //
-    uint8_t* ep_addr_in);                   //
+void usb_ep_close_all();                                                   // Close all endpoints (unconfigure them)
+bool usb_ep_buffer_transfer(uint8_t ep_addr, uint32_t transferred_bytes);  // Transfer bytes between and endpoint and the endpoint function (e.g. CDC) buffers
+bool usb_ep_initiate_control_response(                                     // Initiate a staged control response
+    const usb_control_request_t* request,                                  //
+    const uint8_t* buffer,                                                 //
+    uint16_t len);                                                         //
+bool usb_ep_open_in_out_pair(                                              // Configure consecutive endpoint descriptors (IN & OUT)
+    const usb_ep_descriptor_t* descriptor,                                 //
+    uint8_t transfer_type,                                                 //
+    uint8_t* ep_addr_out,                                                  //
+    uint8_t* ep_addr_in);                                                  //
 
 /*
  * USB descriptor methods
