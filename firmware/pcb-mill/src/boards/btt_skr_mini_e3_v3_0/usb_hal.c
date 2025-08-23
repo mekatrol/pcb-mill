@@ -552,19 +552,7 @@ static void usb_tx_packet(usb_ep_transfer_t *ep_transfer) {
   usb_ep_reg_set_preserve(ep_transfer->ep_idn, ep_reg, true);
 }
 
-static void usb_ep_tx_queued_bytes(uint32_t ep_idn) {
-  usb_ep_transfer_t *ep_transfer = &ep_transfer_set[ep_idn][USB_DIR_DEVICE_OUT_HOST_IN_IDX];
-
-  if (ep_transfer->feed.total_count != ep_transfer->feed.fed_count) {
-    // Queue next packet
-    usb_tx_packet(ep_transfer);
-  } else {
-    // Send complete
-    usb_ep_transfer_complete(ep_idn | USB_DIR_DEVICE_OUT_HOST_IN, ep_transfer->feed.fed_count);
-  }
-}
-
-static void usb_ep_rx_queued_bytes(uint32_t ep_idn) {
+static void usb_rx_packet(uint32_t ep_idn) {
   // Get the transfer buffer
   usb_ep_transfer_t *ep_transfer = &ep_transfer_set[ep_idn][USB_DIR_DEVICE_IN_HOST_OUT_IDX];
 
@@ -728,7 +716,7 @@ void USB_UCPD1_2_IRQHandler() {
         usb_ep_clear_correct_transfer(ep_idn, USB_DIR_DEVICE_IN_HOST_OUT_IDX);
 
         // Receive data
-        usb_ep_rx_queued_bytes(ep_idn);
+        usb_rx_packet(ep_idn);
       }
     }
 
@@ -736,8 +724,16 @@ void USB_UCPD1_2_IRQHandler() {
       // Clear USB_EP_VTTX
       usb_ep_clear_correct_transfer(ep_idn, USB_DIR_DEVICE_OUT_HOST_IN_IDX);
 
-      // Transmit next batch of queued data (or complete transfer if none remianing in queue)
-      usb_ep_tx_queued_bytes(ep_idn);
+      usb_ep_transfer_t *ep_transfer = &ep_transfer_set[ep_idn][USB_DIR_DEVICE_OUT_HOST_IN_IDX];
+
+      // Data remaining to send?
+      if (ep_transfer->feed.total_count != ep_transfer->feed.fed_count) {
+        // Transmit next packet
+        usb_tx_packet(ep_transfer);
+      } else {
+        // Tranmit transfer complete
+        usb_ep_transfer_complete(ep_idn | USB_DIR_DEVICE_OUT_HOST_IN, ep_transfer->feed.fed_count);
+      }
     }
   }
 
@@ -850,7 +846,6 @@ bool usb_ep_open_hal(const usb_ep_descriptor_t *ep_descriptor) {
   usb_ep_status(&ep_reg, ep_dir_idx, USB_EP_STATE_NAK);
   usb_ep_data_toggle(&ep_reg, ep_dir_idx, 0);
 
-  // reserve other direction toggle bits
   if (ep_dir_idx == USB_DIR_DEVICE_OUT_HOST_IN_IDX) {
     ep_reg &= ~(USB_CH_RX_VALID | USB_EP_DTOG_RX);
   } else {
