@@ -11,6 +11,7 @@ typedef enum {
   CDC_REQUEST_SEND_BREAK = 0x23               // Transmit break condition on the communication line :contentReference[oaicite:3]{index=3}
 } cdc_acm_request_t;
 
+// Staging buffers for CDC IN and OUT endpoints
 static __attribute__((aligned(4))) uint8_t ep_out_buffer[USB_CDC_EP_BUFFER_SIZE];
 static __attribute__((aligned(4))) uint8_t ep_in_buffer[USB_CDC_EP_BUFFER_SIZE];
 
