@@ -44,7 +44,7 @@ const static usb_device_descriptor_t descriptor_device = {
     .bNumConfigurations = 0x01,  // Number of configurations this device supports
 };
 
-const uint8_t* get_device_descriptor(void) {
+const uint8_t* usb_get_device_descriptor(void) {
   return (const uint8_t*)&descriptor_device;
 }
 
@@ -189,39 +189,77 @@ const uint8_t* usb_descriptor_device_qualifier() {
   return (uint8_t*)device_qualifier_desc;
 }
 
-const usb_configuration_descriptor_t* usb_descriptor_configuration() {
-  // The start of usb_descriptor_configuration is the description configuration for the device
+const usb_configuration_descriptor_t* usb_get_configuration_descriptor() {
+  // The start of usb_get_configuration_descriptor is the description configuration for the device
   // So just cast and return it
   return (usb_configuration_descriptor_t*)usb_descriptor_conf;
 }
 
-// String descriptors
-const char* string_descriptor_arr[] = {
-    (const char[]){0x09, 0x04},  // LANGID (English)
+// -----------------------------------------------------------------------------
+// USB String Descriptors
+// -----------------------------------------------------------------------------
+//
+// String descriptor index mapping:
+//   0 : Supported language IDs (special case, LANGID descriptor)
+//   1 : Manufacturer
+//   2 : Product
+//   3 : Serial number
+//   4 : CDC Interface description
+//
+// NOTE: Strings must be UTF-16LE encoded per USB spec. Here we generate them
+//       dynamically from ASCII strings at runtime.
+// -----------------------------------------------------------------------------
+
+// String descriptor source table.
+// Index 0 is special: LANGID (0x0409 = English - United States)
+static const char* string_descriptor_arr[] = {
+    (const char[]){0x09, 0x04},  // LANGID descriptor (en-US)
     "ST",                        // Manufacturer
-    "PCB Mill",                  // Product
-    "9876543210",                // Serial
-    "PCB Mill",                  // CDC Interface
+    "PCB Mill",                  // Product name
+    "9876543210",                // Serial number
+    "PCB Mill",                  // CDC interface string
 };
 
+// Temporary buffer for building string descriptors.
+// Size = 32 UTF-16 characters max.
 static uint16_t descriptor_str[32];
 
+/**
+ * @brief Retrieve a USB string descriptor.
+ *
+ * @param index String descriptor index (0 = LANGID, others = from table)
+ * @return Pointer to UTF-16LE string descriptor (length-prefixed), or NULL if invalid.
+ *
+ * The returned buffer is reused across calls, so it must be consumed immediately.
+ */
 const uint16_t* usb_descriptor_string(uint8_t index) {
+  // Special case: index 0 = LANGID descriptor
   if (index == 0) {
+    // Descriptor header: bLength (2), bDescriptorType (STRING = 0x03)
     descriptor_str[0] = (2 << 8) | USB_DESCRIPTOR_TYPE_STRING;
+    // First (and only) LANGID: English (0x0409)
     descriptor_str[1] = 0x0409;
     return descriptor_str;
   }
 
-  if (!(index < sizeof(string_descriptor_arr) / sizeof(string_descriptor_arr[0]))) return NULL;
+  // Bounds check: must be within string descriptor array
+  if (index >= (sizeof(string_descriptor_arr) / sizeof(string_descriptor_arr[0]))) {
+    return NULL;
+  }
 
   const char* str = string_descriptor_arr[index];
   size_t len = strlen(str);
 
+  // Limit length to 31 characters (fits into descriptor_str[32], with header)
   if (len > 31) len = 31;
+
+  // Descriptor header: bLength, bDescriptorType
+  // bLength = 2 (header) + 2*len (UTF-16 chars)
   descriptor_str[0] = (USB_DESCRIPTOR_TYPE_STRING << 8) | (2 * len + 2);
-  for (size_t i = 0; i < len; ++i) {
-    descriptor_str[1 + i] = str[i];
+
+  // Convert ASCII to UTF-16LE
+  for (size_t i = 0; i < len; i++) {
+    descriptor_str[1 + i] = (uint8_t)str[i];  // high byte = 0
   }
 
   return descriptor_str;

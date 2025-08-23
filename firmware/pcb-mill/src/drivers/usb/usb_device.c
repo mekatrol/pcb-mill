@@ -189,7 +189,7 @@ static bool usb_cdc_control_staging_init(const usb_control_request_t* request) {
 }
 
 static bool usb_reset_configuration() {
-  const usb_configuration_descriptor_t* descriptor_config = (const usb_configuration_descriptor_t*)usb_descriptor_configuration();
+  const usb_configuration_descriptor_t* descriptor_config = (const usb_configuration_descriptor_t*)usb_get_configuration_descriptor();
 
   diag_print("USB configuration - start.\r\n");
 
@@ -290,12 +290,12 @@ static bool process_get_descriptor(const usb_control_request_t* request) {
 
   switch (descriptor_type) {
     case USB_DESCRIPTOR_TYPE_DEVICE: {
-      const uint8_t* descriptor_device = (const uint8_t*)get_device_descriptor();
+      const uint8_t* descriptor_device = (const uint8_t*)usb_get_device_descriptor();
       return usb_ep_initiate_control_response(request, descriptor_device, sizeof(usb_device_descriptor_t));
     }
 
     case USB_DESCRIPTOR_TYPE_CONFIGURATION: {
-      usb_configuration_descriptor_t* descriptor_config = (usb_configuration_descriptor_t*)usb_descriptor_configuration(descriptor_index);
+      usb_configuration_descriptor_t* descriptor_config = (usb_configuration_descriptor_t*)usb_get_configuration_descriptor(descriptor_index);
       return usb_ep_initiate_control_response(request, (const uint8_t*)descriptor_config, descriptor_config->wTotalLength);
     }
 
