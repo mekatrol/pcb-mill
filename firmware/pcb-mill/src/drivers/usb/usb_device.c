@@ -339,6 +339,192 @@ void usb_reset() {
   usb_control_transfer_reset();
 }
 
+static bool usb_process_device_control_request(const usb_control_request_t* request) {
+  // Get request type
+  const usb_request_type_t request_type = usb_request_type(request->bmRequestType);
+
+  // Get request code
+  const usb_request_code_t request_code = request->bRequest;
+
+  if (request_type == USB_REQUEST_TYPE_CLASS) {
+    return usb_cdc_control_staging_init(request);
+  }
+
+  if (request_type != USB_REQUEST_TYPE_STANDARD) {
+    // Non-standard request is not supported
+    return false;
+  }
+
+  // request->bRequest is of type usb_request_code_t
+  switch (request_code) {
+    case USB_STD_SET_ADDRESS:
+      return usb_device_set_address(request);
+
+    case USB_STD_GET_CONFIGURATION: {
+      uint8_t config_num = usb_device.config_num;
+      usb_ep_initiate_control_response(request, &config_num, 1);
+    } break;
+
+    case USB_STD_SET_CONFIGURATION: {
+      const uint8_t config_num = (uint8_t)request->wValue;
+
+      // SET_CONFIGURATION is idempotent — sending the same configuration number twice
+      // should not tear down and rebuild everything unnecessarily.
+      // If the device is already in configuration N, and host sends SET_CONFIGURATION N again,
+      // nothing should change.
+      // If the host sends a different configuration number, then the device must tear down
+      // all interfaces/endpoints from the old configuration and set up the new ones.
+
+      // config_num changes only when the host explicitly issues SET_CONFIGURATION with a different nonzero value (or 0 to unconfigure).
+      // After reset: usb_device.config_num = 0 (unconfigured).
+      // When host sets configuration: e.g. SET_CONFIGURATION 1 → now config_num = 1.
+      // If host later sets SET_CONFIGURATION 0 → return to unconfigured state (config_num = 0).
+      // If host switches to another configuration (e.g. 2) → config_num = 2.
+      // Most USB devices only expose one valid configuration descriptor. In that case, the only meaningful transitions are:
+      //    0 → 1 (host configures device)
+      //    1 → 0 (host unconfigures device)
+      // If the device advertised multiple configurations in its device descriptor (bNumConfigurations > 1), then the host could select between them, and config_num could flip between 1, 2, etc.
+
+      if (usb_device.config_num != config_num) {
+        // Close any existing configured endpoints
+        usb_ep_close_all();
+
+        // Reset all current configuration
+        usb_configuration_reset();
+
+        usb_device.config_num = config_num;
+
+        // Handle the new configuration and execute the corresponding callback
+        if (config_num) {
+          // switch to new configuration if not zero
+          if (!usb_set_configuration(config_num)) {
+            usb_device.config_num = 0;
+            return false;
+          }
+
+          // TODO: USB mount
+        } else {
+          // TODO: USB unmount
+        }
+      }
+
+      usb_control_init_status_stage(request);
+    } break;
+
+    case USB_STD_GET_DESCRIPTOR:
+      return process_get_descriptor(request);
+
+    case USB_STD_SET_FEATURE:
+      switch (request->wValue) {
+        case USB_FEATURE_REMOTE_WAKEUP:
+          // Host may enable remote wake up before suspending especially HID device
+          usb_device.remote_wakeup = true;
+          usb_control_init_status_stage(request);
+          break;
+
+        // Stall unsupported feature selector
+        default:
+          return false;
+      }
+      break;
+
+    case USB_STD_CLEAR_FEATURE:
+      // Only support remote wakeup for device feature
+      if (request->wValue != USB_FEATURE_REMOTE_WAKEUP) {
+        return false;
+      }
+
+      // Host may disable remote wake up after resuming
+      usb_device.remote_wakeup = false;
+      usb_control_init_status_stage(request);
+      break;
+
+    case USB_STD_GET_STATUS:
+      // Device status bit mask
+      // - Bit 0: Self Powered
+      // - Bit 1: Remote Wakeup enabled
+      uint16_t status = (uint16_t)(0x01 | (usb_device.remote_wakeup ? 2U : 0U));
+      usb_ep_initiate_control_response(request, (const uint8_t*)&status, 2);
+      break;
+
+    // Unknown/Unsupported request
+    default:
+      return false;
+  }
+
+  return true;
+}
+
+static bool usb_process_interface_control_request(const usb_control_request_t* request) {
+  // Get request type
+  const usb_request_type_t request_type = usb_request_type(request->bmRequestType);
+
+  // all requests to Interface (STD or Class) is forwarded to class driver.
+  // notable requests are: GET HID REPORT DESCRIPTOR, SET_INTERFACE, GET_INTERFACE
+  if (!usb_cdc_control_staging_init(request)) {
+    // For GET_INTERFACE and SET_INTERFACE, it is mandatory to respond even if the class
+    // driver doesn't use alternate settings or implement this
+    if (request_type != USB_REQUEST_TYPE_STANDARD) {
+      return false;
+    }
+
+    switch (request->bRequest) {
+      case USB_STD_GET_INTERFACE:
+      case USB_STD_SET_INTERFACE:
+        // Make sure control callback cleared
+        usb_control_set_complete_callback(NULL);
+
+        if (USB_STD_GET_INTERFACE == request->bRequest) {
+          uint8_t alternate = 0;
+          usb_ep_initiate_control_response(request, &alternate, 1);
+        } else {
+          usb_control_init_status_stage(request);
+        }
+        break;
+
+      default:
+        return false;
+    }
+  }
+
+  return true;
+}
+
+static bool usb_process_endpoint_control_request(const usb_control_request_t* request) {
+  // Get request type
+  const usb_request_type_t request_type = usb_request_type(request->bmRequestType);
+
+  const uint8_t ep_addr = (uint8_t)(request->wIndex & 0xFF);
+
+  if (USB_REQUEST_TYPE_STANDARD != request_type) {
+    // Forward class request to its driver
+    return usb_cdc_control_staging_init(request);
+  } else {
+    // Handle STD request to endpoint
+    switch (request->bRequest) {
+      case USB_STD_CLEAR_FEATURE:
+      case USB_STD_SET_FEATURE: {
+        if (USB_FEATURE_ENDPOINT_HALT == request->wValue) {
+          if (USB_STD_CLEAR_FEATURE == request->bRequest) {
+            usb_ep_stall_clear(ep_addr);
+          } else {
+            usb_ep_stall_set(ep_addr);
+          }
+        }
+
+        usb_cdc_control_staging_init(request);
+        usb_control_set_complete_callback(NULL);
+      } break;
+
+      // Unknown/Unsupported request
+      default:
+        return false;
+    }
+  }
+
+  return true;
+}
+
 /*
  * All control requests are received on EP0.
  * They handle standard USB requests (enumeration, descriptors, addressing,
@@ -373,9 +559,6 @@ bool usb_process_control_request(const usb_control_request_t* request) {
   // Get request type
   const usb_request_type_t request_type = usb_request_type(request->bmRequestType);
 
-  // Get request code
-  const usb_request_code_t request_code = request->bRequest;
-
   // Get recipient
   const usb_request_recipient_t request_recipient = usb_request_recipient(request->bmRequestType);
 
@@ -394,186 +577,19 @@ bool usb_process_control_request(const usb_control_request_t* request) {
 
   switch (request_recipient) {
     case USB_REQUEST_RECIPIENT_DEVICE:
-      if (request_type == USB_REQUEST_TYPE_CLASS) {
-        return usb_cdc_control_staging_init(request);
-      }
+      return usb_process_device_control_request(request);
 
-      if (request_type != USB_REQUEST_TYPE_STANDARD) {
-        // Non-standard request is not supported
-        return false;
-      }
+    case USB_REQUEST_RECIPIENT_INTERFACE:
+      return usb_process_interface_control_request(request);
 
-      // request->bRequest is of type usb_request_code_t
-      switch (request_code) {
-        case USB_STD_SET_ADDRESS:
-          return usb_device_set_address(request);
-
-        case USB_STD_GET_CONFIGURATION: {
-          uint8_t config_num = usb_device.config_num;
-          usb_ep_initiate_control_response(request, &config_num, 1);
-        } break;
-
-        case USB_STD_SET_CONFIGURATION: {
-          const uint8_t config_num = (uint8_t)request->wValue;
-
-          // SET_CONFIGURATION is idempotent — sending the same configuration number twice
-          // should not tear down and rebuild everything unnecessarily.
-          // If the device is already in configuration N, and host sends SET_CONFIGURATION N again,
-          // nothing should change.
-          // If the host sends a different configuration number, then the device must tear down
-          // all interfaces/endpoints from the old configuration and set up the new ones.
-
-          // config_num changes only when the host explicitly issues SET_CONFIGURATION with a different nonzero value (or 0 to unconfigure).
-          // After reset: usb_device.config_num = 0 (unconfigured).
-          // When host sets configuration: e.g. SET_CONFIGURATION 1 → now config_num = 1.
-          // If host later sets SET_CONFIGURATION 0 → return to unconfigured state (config_num = 0).
-          // If host switches to another configuration (e.g. 2) → config_num = 2.
-          // Most USB devices only expose one valid configuration descriptor. In that case, the only meaningful transitions are:
-          //    0 → 1 (host configures device)
-          //    1 → 0 (host unconfigures device)
-          // If the device advertised multiple configurations in its device descriptor (bNumConfigurations > 1), then the host could select between them, and config_num could flip between 1, 2, etc.
-
-          if (usb_device.config_num != config_num) {
-            // Close any existing configured endpoints
-            usb_ep_close_all();
-
-            // Reset all current configuration
-            usb_configuration_reset();
-
-            usb_device.config_num = config_num;
-
-            // Handle the new configuration and execute the corresponding callback
-            if (config_num) {
-              // switch to new configuration if not zero
-              if (!usb_set_configuration(config_num)) {
-                usb_device.config_num = 0;
-                return false;
-              }
-
-              // TODO: USB mount
-            } else {
-              // TODO: USB unmount
-            }
-          }
-
-          usb_control_init_status_stage(request);
-        } break;
-
-        case USB_STD_GET_DESCRIPTOR:
-          return process_get_descriptor(request);
-
-        case USB_STD_SET_FEATURE:
-          switch (request->wValue) {
-            case USB_FEATURE_REMOTE_WAKEUP:
-              // Host may enable remote wake up before suspending especially HID device
-              usb_device.remote_wakeup = true;
-              usb_control_init_status_stage(request);
-              break;
-
-            // Stall unsupported feature selector
-            default:
-              return false;
-          }
-          break;
-
-        case USB_STD_CLEAR_FEATURE:
-          // Only support remote wakeup for device feature
-          if (request->wValue != USB_FEATURE_REMOTE_WAKEUP) {
-            return false;
-          }
-
-          // Host may disable remote wake up after resuming
-          usb_device.remote_wakeup = false;
-          usb_control_init_status_stage(request);
-          break;
-
-        case USB_STD_GET_STATUS:
-          // Device status bit mask
-          // - Bit 0: Self Powered
-          // - Bit 1: Remote Wakeup enabled
-          uint16_t status = (uint16_t)(0x01 | (usb_device.remote_wakeup ? 2U : 0U));
-          usb_ep_initiate_control_response(request, (const uint8_t*)&status, 2);
-          break;
-
-        // Unknown/Unsupported request
-        default:
-          return false;
-      }
-      break;
-
-    case USB_REQUEST_RECIPIENT_INTERFACE: {
-      // all requests to Interface (STD or Class) is forwarded to class driver.
-      // notable requests are: GET HID REPORT DESCRIPTOR, SET_INTERFACE, GET_INTERFACE
-      if (!usb_cdc_control_staging_init(request)) {
-        // For GET_INTERFACE and SET_INTERFACE, it is mandatory to respond even if the class
-        // driver doesn't use alternate settings or implement this
-        if (request_type != USB_REQUEST_TYPE_STANDARD) {
-          return false;
-        }
-
-        switch (request->bRequest) {
-          case USB_STD_GET_INTERFACE:
-          case USB_STD_SET_INTERFACE:
-            // Make sure control callback cleared
-            usb_control_set_complete_callback(NULL);
-
-            if (USB_STD_GET_INTERFACE == request->bRequest) {
-              uint8_t alternate = 0;
-              usb_ep_initiate_control_response(request, &alternate, 1);
-            } else {
-              usb_control_init_status_stage(request);
-            }
-            break;
-
-          default:
-            return false;
-        }
-      }
-      break;
-    }
-
-    case USB_REQUEST_RECIPIENT_ENDPOINT: {
-      const uint8_t ep_addr = (uint8_t)(request->wIndex & 0xFF);
-
-      if (USB_REQUEST_TYPE_STANDARD != request_type) {
-        // Forward class request to its driver
-        return usb_cdc_control_staging_init(request);
-      } else {
-        // Handle STD request to endpoint
-        switch (request->bRequest) {
-          case USB_STD_CLEAR_FEATURE:
-          case USB_STD_SET_FEATURE: {
-            if (USB_FEATURE_ENDPOINT_HALT == request->wValue) {
-              if (USB_STD_CLEAR_FEATURE == request->bRequest) {
-                usb_ep_stall_clear(ep_addr);
-              } else {
-                usb_ep_stall_set(ep_addr);
-              }
-            }
-
-            // Some classes such as USBTMC needs to clear/re-init its buffer when receiving CLEAR_FEATURE request
-            // We will also forward std request targeted endpoint to class drivers as well
-
-            // STD request must always be ACKed regardless of driver returned value
-            // Also clear complete callback if driver set since it can also stall the request.
-            usb_cdc_control_staging_init(request);
-            usb_control_set_complete_callback(NULL);
-          } break;
-
-          // Unknown/Unsupported request
-          default:
-            return false;
-        }
-      }
-    } break;
+    case USB_REQUEST_RECIPIENT_ENDPOINT:
+      return usb_process_endpoint_control_request(request);
 
     case USB_REQUEST_RECIPIENT_OTHER:
     default:
-      // Unknown to this driver, so return false
+      // Unknown to this device, so return false to stall
       return false;
   }
-
-  return true;
 }
 
 bool usb_control_transfer(uint8_t ep_addr, uint32_t transferred_bytes) {
