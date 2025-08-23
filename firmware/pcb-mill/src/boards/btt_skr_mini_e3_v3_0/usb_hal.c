@@ -556,10 +556,11 @@ static void usb_ep_tx_queued_bytes(uint32_t ep_idn) {
   usb_ep_transfer_t *ep_transfer = &ep_transfer_set[ep_idn][USB_DIR_DEVICE_OUT_HOST_IN_IDX];
 
   if (ep_transfer->feed.total_count != ep_transfer->feed.fed_count) {
+    // Queue next packet
     usb_tx_packet(ep_transfer);
   } else {
-    uint32_t ep_addr = USB->chep[ep_idn].CHEPnR & USB_CHEP_ADDR;
-    usb_ep_transfer_complete(ep_addr | USB_DIR_DEVICE_OUT_HOST_IN, ep_transfer->feed.fed_count);
+    // Send complete
+    usb_ep_transfer_complete(ep_idn | USB_DIR_DEVICE_OUT_HOST_IN, ep_transfer->feed.fed_count);
   }
 }
 
