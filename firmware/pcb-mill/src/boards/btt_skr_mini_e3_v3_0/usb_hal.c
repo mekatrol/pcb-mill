@@ -518,6 +518,7 @@ static void usb_ep_transfer_complete(uint8_t ep_addr, uint32_t transferred_bytes
   const uint8_t ep_idn = USB_EP_IDN(ep_addr);
 
   if (ep_idn == 0) {
+    // EP0 (control endpoint) uses a control transfer
     usb_control_transfer(ep_addr, transferred_bytes);
   } else {
     // Transfer data between EP and function buffers
@@ -581,8 +582,8 @@ static void usb_ep_rx_queued_bytes(uint32_t ep_idn) {
   // Reset PMA RX block to max packet size (will reset count)
   usb_ep_set_rx_buffer_block_size(ep_idn, (uint32_t)ep_transfer->max_packet_size);
 
-  // Callback to receive compelte
-  usb_ep_transfer_complete(ep_idn, ep_transfer->feed.fed_count);
+  // Callback to receive complete
+  usb_ep_transfer_complete(ep_idn | USB_DIR_DEVICE_IN_HOST_OUT_IDX, ep_transfer->feed.fed_count);
 
   // Clear the feed counts (receive data was completed)
   ep_transfer->feed.total_count = ep_transfer->feed.fed_count = 0;
