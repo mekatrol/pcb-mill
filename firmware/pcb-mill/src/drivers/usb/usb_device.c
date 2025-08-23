@@ -376,9 +376,13 @@ static bool usb_set_configuration(const usb_control_request_t* request) {
         return false;
       }
 
-      // TODO: USB mount
+      if (usb_mounted_cb) {
+        usb_mounted_cb();
+      }
     } else {
-      // TODO: USB unmount
+      if (usb_unmounted_cb) {
+        usb_unmounted_cb();
+      }
     }
   }
 

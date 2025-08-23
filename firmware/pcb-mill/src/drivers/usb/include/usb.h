@@ -377,4 +377,11 @@ ALWAYS_INLINE static bool usb_ep_queue_transfer(uint8_t ep_addr, uint8_t* buffer
   return usb_ep_queue_transfer_hal(ep_idn, ep_dir_idx, buffer, total_bytes);
 }
 
+/*
+ * USB callback methods
+ */
+// New data received on CDC
+__attribute__((weak)) void usb_mounted_cb();
+__attribute__((weak)) void usb_unmounted_cb();
+
 #endif  // __USB_H__

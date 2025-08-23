@@ -12,6 +12,14 @@ void usb_cdc_handshake_cb(bool dtr, bool rts) {
   diag_printf("dtr: %d, rts: %d\r\n", dtr, rts);
 }
 
+void usb_mounted_cb() {
+  diag_print("USB mounted\r\n");
+}
+
+void usb_unmounted_cb() {
+  diag_print("USB unmounted\r\n");
+}
+
 void usb_cdc_rx_cb() {
   while (usb_cdc_available()) {
     // Echo data
