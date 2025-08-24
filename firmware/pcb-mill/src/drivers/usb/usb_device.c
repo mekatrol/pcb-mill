@@ -13,6 +13,7 @@ typedef enum {
 
 usb_device_t usb_device = {
     .self_powered = 1,     // Set to 1 if device is self powered
+    .suspended = 0,        // Set to 1 if the device is suspended
     .connected = 0,        // Set to 1 if device is connected
     .addressed = 0,        // Set to 1 if device has recieved its address
     .remote_wakeup = 0,    // Set to 1 if remote wakeup is enabled
@@ -199,9 +200,10 @@ static bool usb_reset_configuration() {
     return false;
   }
 
-  // Configuration descriptor
+  // Configuration
   usb_device.remote_wakeup = (descriptor_config->bmAttributes & USB_CONFIG_REMOTE_WAKEUP_MASK) ? 1U : 0U;
   usb_device.self_powered = (descriptor_config->bmAttributes & USB_CONFIG_SELF_POWERED_MASK) ? 1U : 0U;
+  usb_device.suspended = 0;
 
   // Interface descriptor
   const usb_descriptor_base_t* descriptor = usb_next_descriptor(descriptor_config);
@@ -669,4 +671,25 @@ void usb_device_init() {
   usb_device_start_hal();
 
   NVIC_EnableIRQ(USB_UCPD1_2_IRQn);
+}
+
+void usb_device_suspended() {
+  usb_device.suspended = 1;
+}
+
+void usb_device_suspended_sof_timeout() {
+  usb_device.suspended = 1;
+
+  if (usb_suspended_cb) {
+    usb_suspended_cb();
+  }
+}
+
+bool usb_remote_wakeup_start() {
+  // Only valid if device is suspended and host has enabled remote wakeup
+  if (!usb_device.suspended || !usb_device.remote_wakeup) {
+    return false;
+  }
+
+  return usb_remote_wakeup_start_hal();
 }

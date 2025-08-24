@@ -28,6 +28,8 @@ bool usb_ep_stall_get_hal(uint8_t ep_idn, uint8_t ep_dir_idx);                  
 void usb_ep_stall_set_hal(uint8_t ep_idn, uint8_t ep_dir_idx);                                              //
 void usb_ep_stall_clear_hal(uint8_t ep_idn, uint8_t ep_dir_idx);                                            //
 bool usb_ep_open_hal(const usb_ep_descriptor_t* ep_descriptor);                                             //
+bool usb_remote_wakeup_start_hal();                                                                         // Call this in HAL to start wakeup from suspension
+void usb_systick_hal();                                                                                     // This should be called but core about every 1ms, used for timeouts
 
 /*
  * USB Device level methods
@@ -37,6 +39,8 @@ void usb_device_init();                                                    // In
 bool usb_process_control_request(const usb_control_request_t* request);    // Process a control request
 bool usb_control_transfer(uint8_t ep_addr, uint32_t transferred_bytes);    // An EP0 control transfer has completed
 bool usb_control_init_status_stage(const usb_control_request_t* request);  //
+void usb_device_suspended();                                               // HAL can call this method to indicate the device has been suspended
+void usb_device_suspended_sof_timeout();                                   // HAL can call this method to indicate the device has been suspended due to SOF timeout
 
 /*
  * USB endpoint level methods
@@ -104,5 +108,6 @@ ALWAYS_INLINE static bool usb_ep_queue_transfer(uint8_t ep_addr, uint8_t* buffer
 // New data received on CDC
 __attribute__((weak)) void usb_mounted_cb();
 __attribute__((weak)) void usb_unmounted_cb();
+__attribute__((weak)) void usb_suspended_cb();
 
 #endif  // __USB_H__

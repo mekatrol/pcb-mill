@@ -75,11 +75,19 @@ static ep_assignment_t ep_assignment[USB_EP_MAX];
 // Next available USB PMA buffer pointer location
 static uint16_t usb_pma_next_available;
 
+// The countdown is there to ensure the remote wakeup signal is held for the correct duration (1–15 ms),
+// measured in 1 ms ESOF ticks, and then released at the right time by clearing USB_CNTR_RESUME.
+static volatile uint8_t remote_wake_counter;
+
+// This counter is reset in SOF interrupt, and incremented by systick or similar (by calling usb_systick_hal)
+static volatile uint8_t usb_offline_counter;
+
 /****************************************************************************************************************************************
  * HAL internal inline methods
  ****************************************************************************************************************************************/
 
-ALWAYS_INLINE static void ep_reset_assigned_state(uint32_t ep_idn) {
+ALWAYS_INLINE static void
+ep_reset_assigned_state(uint32_t ep_idn) {
   ep_assignment[ep_idn].ep_idn = UNASSIGNED_VALUE;                         // Endpoint identity unassigned
   ep_assignment[ep_idn].ep_type = UNASSIGNED_VALUE;                        // Endpoint type unassigned
   ep_assignment[ep_idn].assigned[USB_DIR_DEVICE_IN_HOST_OUT_IDX] = false;  // Out unassigned
@@ -666,7 +674,9 @@ void usb_device_start_hal() {
   }
 
   // Enable interrupt flags
-  USB->CNTR |= USB_CNTR_RESETM |   // USB reset interrupt interrupt enabled
+  USB->CNTR |= USB_CNTR_SOFM |     // SOF (start of frame)
+               USB_CNTR_ESOFM |    // Expected SOF (start of frame) - used for disconnection detection and suspension resumption
+               USB_CNTR_RESETM |   // USB reset interrupt interrupt enabled
                USB_CNTR_SUSPM |    // Suspend mode interrupt enabled
                USB_CNTR_WKUPM |    // Wake-up interrupt enabled
                USB_CNTR_PMAOVRM |  // Packet memory area over / underrun interrupt enabled
@@ -737,13 +747,40 @@ void USB_UCPD1_2_IRQHandler() {
     }
   }
 
+  if (istr & USB_ISTR_SOF) {
+    USB->ISTR = ~USB_ISTR_SOF;
+
+    // Reset offline counter
+    usb_offline_counter = 0;
+  }
+
+  // Expected SOF missing
+  //  Triggered when the expected SOF is missing (i.e., the host didn'’'t send an SOF at the right time).
+  //  Used in suspend/resume and reset detection logic:
+  //     - If several ESOF events occur without receiving real SOFs → the device can infer the bus is in suspend.
+  //     - Also used for remote wakeup timing, since USB spec requires precise SOF-based delays when resuming the bus.
+  // During suspend, the host stops sending SOFs. So you cannot rely on SOF interrupts.
+  // Instead, the peripheral generates ESOF interrupts internally every 1 ms to keep time during suspend.
+  // That’s why remote_wake_counter is tied to ESOF.
+  if (istr & USB_ISTR_ESOF) {
+    USB->ISTR = ~USB_ISTR_ESOF;
+
+    if (remote_wake_counter == 1) {
+      // Stop driving resume
+      USB->CNTR &= ~USB_CNTR_L2RES;
+    }
+    if (remote_wake_counter > 0) {
+      remote_wake_counter--;
+    }
+  }
+
   // Wakeup
   if (istr & USB_ISTR_WKUP) {
-    // Suspend may still be set from before — if we don’t clear suspend state, the core can get 'stuck' thinking it’s still suspended.
-    // So on wake-up you should:
+    // On wake-up you should:
     //  - Clear the wakeup interrupt flag
     //  - Clear suspend control bits in CNTR (SUSPEN, SUSPRDY) so the PHY exits low-power.
-    USB->CNTR &= ~(USB_CNTR_SUSPRDY | USB_CNTR_SUSPEN | USB_ISTR_WKUP);
+    USB->ISTR = ~USB_ISTR_WKUP;
+    USB->CNTR &= ~(USB_CNTR_SUSPRDY | USB_CNTR_SUSPEN);
   }
 
   // Suspend (and disconnect)
@@ -762,7 +799,12 @@ void USB_UCPD1_2_IRQHandler() {
     //       the analog USB transceivers but keeping them able to detect resume activity.
     //    4. Optionally turn off external oscillator and device PLL to stop any activity inside the
     //       device.
-    USB->CNTR |= (USB_CNTR_SUSPEN | USB_CNTR_SUSPRDY);
+    // These need to be set of two oerations, do not set both flags in a single operation (on some STM32 devices)
+    USB->CNTR |= USB_CNTR_SUSPEN;
+    USB->CNTR |= USB_CNTR_SUSPRDY;
+
+    // Call device layer suspen
+    usb_device_suspended();
   }
 }
 
@@ -869,4 +911,38 @@ void usb_ep_close_all() {
 
   // Reset PMA assignment (except EP0)
   usb_pma_next_available = 8 * USB_EP_MAX + 2 * USB_EP0_BUFFER_SIZE;
+}
+
+/*
+ * Wake up device from suspend mode
+ */
+bool usb_remote_wakeup_start_hal() {
+  if (remote_wake_counter > 1) {
+    // Already in waking up
+    return false;
+  }
+
+  // Start driving resume (K-state) on the bus
+  USB->CNTR |= USB_CNTR_L2RES;
+
+  // Hold resume for 10 ms (USB spec: must be 1–15 ms)
+  remote_wake_counter = 10;
+
+  return true;
+}
+
+/*
+ * Should be called every ms approximately
+ */
+void usb_systick_hal() {
+  // Only timeout once
+  if (usb_offline_counter >= 100) {
+    return;
+  }
+
+  usb_offline_counter++;
+
+  if (usb_offline_counter >= 100) {
+    usb_device_suspended_sof_timeout();
+  }
 }

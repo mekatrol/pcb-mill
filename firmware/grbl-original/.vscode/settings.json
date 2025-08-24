@@ -23,5 +23,6 @@
     "tusb_compiler.h": "c",
     "tusb_config.h": "c"
   },
-  "cortex-debug.variableUseNaturalFormat": false
+  "cortex-debug.variableUseNaturalFormat": false,
+  "cmake.sourceDirectory": "E:/repos/pcb-mill/firmware/grbl-original/libs/tinyusb/examples/device/dfu"
 }

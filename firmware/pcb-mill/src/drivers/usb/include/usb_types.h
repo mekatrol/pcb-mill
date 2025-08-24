@@ -118,7 +118,8 @@ typedef struct {
   volatile uint8_t addressed : 1;      // Device has been assigned an address
   volatile uint8_t remote_wakeup : 1;  // Remote wakeup enabled
   volatile uint8_t self_powered : 1;   // Device is self-powered
-  uint8_t reserved : 4;                // Padding to make a full byte
+  volatile uint8_t suspended : 1;      // Set to 1 if device is suspended
+  uint8_t reserved : 3;                // Padding to make a full byte
   volatile uint8_t address_pending;    // USB device address is pending status stage
   volatile uint8_t address;            // USB device address
   volatile uint8_t config_num;         // The current device configuration number

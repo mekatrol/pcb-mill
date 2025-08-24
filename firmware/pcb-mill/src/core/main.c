@@ -20,6 +20,10 @@ void usb_unmounted_cb() {
   diag_print("USB unmounted\r\n");
 }
 
+void usb_suspended_cb() {
+  diag_print("USB suspended\r\n");
+}
+
 void usb_cdc_rx_cb() {
   while (usb_cdc_available()) {
     // Echo data
@@ -61,5 +65,7 @@ void main() {
 
   // Loop forever
   while (true) {
+    delay_ms(1);
+    usb_systick_hal();
   }
 }
