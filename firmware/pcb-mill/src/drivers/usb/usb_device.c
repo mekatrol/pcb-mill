@@ -206,14 +206,14 @@ static bool usb_reset_configuration() {
   usb_device.suspended = 0;
 
   // Interface descriptor
-  const usb_descriptor_base_t* descriptor = usb_next_descriptor(descriptor_config);
+  const usb_descriptor_base_t* descriptor = usb_configuration_next_descriptor(descriptor_config);
   const uint8_t* descriptor_end = ((const uint8_t*)descriptor_config) + descriptor_config->wTotalLength;
 
   // Iterate through descriptor configurations
   while ((const uint8_t*)descriptor < descriptor_end) {
     // A descriptor class can start with an association definition (optional), we skip over as it is for hosts information
     if (descriptor->bDescriptorType == USB_DESCRIPTOR_TYPE_INTERFACE_ASSOCIATION) {
-      descriptor = usb_next_descriptor(descriptor);  // Move to descriptor interface
+      descriptor = usb_configuration_next_descriptor(descriptor);  // Move to descriptor interface
     }
 
     // The interface descriptor must be next
@@ -279,7 +279,7 @@ bool usb_ep_open_in_out_pair(const usb_ep_descriptor_t* descriptor_ep, uint8_t t
       (*ep_addr_out) = descriptor_ep->bEndpointAddress;
     }
 
-    descriptor_ep = (const usb_ep_descriptor_t*)usb_next_descriptor(descriptor_ep);
+    descriptor_ep = (const usb_ep_descriptor_t*)usb_configuration_next_descriptor(descriptor_ep);
   }
 
   return true;

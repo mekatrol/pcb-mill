@@ -87,7 +87,7 @@ ALWAYS_INLINE static usb_request_direction_index_t usb_request_direction(uint8_t
 /*
  * Moves from one descriptor to next descriptor by offseting location by bLength
  */
-ALWAYS_INLINE static const usb_descriptor_base_t* usb_next_descriptor(const void* desc) {
+ALWAYS_INLINE static const usb_descriptor_base_t* usb_configuration_next_descriptor(const void* desc) {
   const usb_descriptor_base_t* desc_base = (const usb_descriptor_base_t*)desc;
   return (const usb_descriptor_base_t*)(desc + desc_base->bLength);
 }

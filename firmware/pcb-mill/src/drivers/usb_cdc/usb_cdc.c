@@ -67,12 +67,12 @@ uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* control_descript
   }
 
   uint16_t descriptor_len = sizeof(usb_control_interface_descriptor_t);
-  const usb_ep_descriptor_t* descriptor = (const usb_ep_descriptor_t*)usb_next_descriptor(control_descriptor);
+  const usb_ep_descriptor_t* descriptor = (const usb_ep_descriptor_t*)usb_configuration_next_descriptor(control_descriptor);
 
   // Communication Functional Descriptors
   while (descriptor->bDescriptorType == USB_DESCRIPTOR_TYPE_CS_INTERFACE && descriptor_len <= descriptor_end) {
     descriptor_len += descriptor->bLength;
-    descriptor = (const usb_ep_descriptor_t*)usb_next_descriptor(descriptor);
+    descriptor = (const usb_ep_descriptor_t*)usb_configuration_next_descriptor(descriptor);
   }
 
   if (descriptor->bDescriptorType == USB_DESCRIPTOR_TYPE_ENDPOINT) {
@@ -84,14 +84,14 @@ uint16_t usb_cdc_open(const usb_control_interface_descriptor_t* control_descript
     }
 
     descriptor_len += descriptor->bLength;
-    descriptor = (const usb_ep_descriptor_t*)usb_next_descriptor(descriptor);
+    descriptor = (const usb_ep_descriptor_t*)usb_configuration_next_descriptor(descriptor);
   }
 
   if ((descriptor->bDescriptorType == USB_DESCRIPTOR_TYPE_INTERFACE) &&
       (((const usb_control_interface_descriptor_t*)descriptor)->bInterfaceClass) == USB_CLASS_CDC_DATA) {
     // Move to endpoint descriptor
     descriptor_len += descriptor->bLength;
-    descriptor = (const usb_ep_descriptor_t*)usb_next_descriptor(descriptor);
+    descriptor = (const usb_ep_descriptor_t*)usb_configuration_next_descriptor(descriptor);
 
     // Open endpoint pair
     if (!usb_ep_open_in_out_pair((const usb_ep_descriptor_t*)descriptor, USB_EP_TYPE_BULK, &usb_cdc.ep_addr_out, &usb_cdc.ep_addr_in)) {
