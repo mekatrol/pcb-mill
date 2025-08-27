@@ -932,7 +932,7 @@ bool usb_remote_wakeup_start_hal() {
 }
 
 /*
- * Should be called every ms approximately
+ * Should be called every 1ms approximately
  */
 void usb_systick_hal() {
   // Only timeout once
