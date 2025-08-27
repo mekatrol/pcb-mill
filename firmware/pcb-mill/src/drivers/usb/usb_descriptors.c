@@ -63,7 +63,7 @@ enum {
   INTERFACE_TOTAL_COUNT = INTERFACE_CDC_INTERFACE_COUNT
 };
 
-const uint8_t usb_descriptor_conf[] = {
+const uint8_t usb_configuration_descriptor[] = {
     // Configuration Descriptor (usb_configuration_descriptor_t)
     // Purpose: Declares one complete configuration.
     9,                                  // bLength: Size of this descriptor in bytes (always 9)
@@ -192,7 +192,7 @@ const uint8_t* usb_descriptor_device_qualifier() {
 const usb_configuration_descriptor_t* usb_get_configuration_descriptor() {
   // The start of usb_get_configuration_descriptor is the description configuration for the device
   // So just cast and return it
-  return (usb_configuration_descriptor_t*)usb_descriptor_conf;
+  return (usb_configuration_descriptor_t*)usb_configuration_descriptor;
 }
 
 // -----------------------------------------------------------------------------
