@@ -1,6 +1,43 @@
 {
   "configurations": [
     {
+      "name": "btt_skr_1_4t",
+      "includePath": [
+        "src/boards/btt_skr_1_4t",
+        "src/boards/btt_skr_1_4t/include",
+        "src/boards/btt_skr_1_4t/include/core",
+        "src/config",
+        "src/core",
+        "src/core/include",
+        "src/drivers/usb",
+        "src/drivers/usb/include",
+        "src/drivers/usb_cdc",
+        "src/drivers/usb_cdc/include",
+        "${workspaceFolder}/**"
+      ],
+      "defines": [],
+      "compilerPath": "arm-none-eabi-gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "gnu++17",
+      "intelliSenseMode": "gcc-arm",
+      "browse": {
+        "limitSymbolsToIncludedHeaders": true,
+        "path": [
+          "src/boards/btt_skr_1_4t",
+          "src/boards/btt_skr_1_4t/include",
+          "src/boards/btt_skr_1_4t/include/core",
+          "src/config",
+          "src/core",
+          "src/core/include",
+          "src/drivers/usb",
+          "src/drivers/usb/include",
+          "src/drivers/usb_cdc",
+          "src/drivers/usb_cdc/include",
+          "${workspaceFolder}/**"
+        ]
+      }
+    },
+    {
       "name": "btt_skr_mini_e3_v3_0",
       "includePath": [
         "src/boards/btt_skr_mini_e3_v3_0",
@@ -26,6 +63,43 @@
           "src/boards/btt_skr_mini_e3_v3_0",
           "src/boards/btt_skr_mini_e3_v3_0/include",
           "src/boards/btt_skr_mini_e3_v3_0/include/core",
+          "src/config",
+          "src/core",
+          "src/core/include",
+          "src/drivers/usb",
+          "src/drivers/usb/include",
+          "src/drivers/usb_cdc",
+          "src/drivers/usb_cdc/include",
+          "${workspaceFolder}/**"
+        ]
+      }
+    },
+    {
+      "name": "stm32f407g_disc1",
+      "includePath": [
+        "src/boards/stm32f407g_disc1",
+        "src/boards/stm32f407g_disc1/include",
+        "src/boards/stm32f407g_disc1/include/core",
+        "src/config",
+        "src/core",
+        "src/core/include",
+        "src/drivers/usb",
+        "src/drivers/usb/include",
+        "src/drivers/usb_cdc",
+        "src/drivers/usb_cdc/include",
+        "${workspaceFolder}/**"
+      ],
+      "defines": [],
+      "compilerPath": "arm-none-eabi-gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "gnu++17",
+      "intelliSenseMode": "gcc-arm",
+      "browse": {
+        "limitSymbolsToIncludedHeaders": true,
+        "path": [
+          "src/boards/stm32f407g_disc1",
+          "src/boards/stm32f407g_disc1/include",
+          "src/boards/stm32f407g_disc1/include/core",
           "src/config",
           "src/core",
           "src/core/include",
