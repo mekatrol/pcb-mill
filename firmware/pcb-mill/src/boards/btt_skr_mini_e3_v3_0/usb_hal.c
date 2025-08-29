@@ -3,6 +3,8 @@
 #include "aligned_memory.h"
 #include "usb.h"
 
+#include "stm32g0xx.h"
+
 // Member unassigned value
 #define UNASSIGNED_VALUE 0xFFU
 
@@ -689,6 +691,9 @@ void usb_device_start_hal() {
   // Clearing it to 0 can be used to signal disconnect to the host when
   // needed by the user software.
   USB->BCDR |= USB_BCDR_DPPU;
+
+  // Enable interrupts
+  NVIC_EnableIRQ(USB_UCPD1_2_IRQn);
 }
 
 void USB_UCPD1_2_IRQHandler() {

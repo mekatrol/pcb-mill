@@ -9,7 +9,8 @@
     "usb_cdc.h": "c",
     "circular_buffer.h": "c",
     "stdint.h": "c",
-    "usb_types.h": "c"
+    "usb_types.h": "c",
+    "machine_config.h": "c"
   },
   "cortex-debug.variableUseNaturalFormat": true
 }

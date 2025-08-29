@@ -669,8 +669,6 @@ void usb_device_init() {
 
   // Start USB in device mode
   usb_device_start_hal();
-
-  NVIC_EnableIRQ(USB_UCPD1_2_IRQn);
 }
 
 void usb_device_suspended() {

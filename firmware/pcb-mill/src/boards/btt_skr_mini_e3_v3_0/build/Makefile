@@ -16,8 +16,11 @@ MAKEFILE_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 # OBJ_DIR is under project roots so need to traverse from
 # src/boards/btt_skr_mini_e3_v3_0/build to firmware
-OBJ_DIR := ../../../../firmware
 BLD_DIR := $(MAKEFILE_DIR)
+
+# Put build outputs under firmware/<BOARD_NAME>/
+OBJ_DIR_BASE  := ../../../../firmware
+OBJ_DIR       := $(OBJ_DIR_BASE)$(SEP)$(BOARD_NAME)
 
 # Output files
 OUT_ELF := $(OBJ_DIR)$(SEP)pcb-mill.elf
@@ -29,7 +32,7 @@ OUT_BIN := $(OBJ_DIR)$(SEP)pcb-mill.bin
 flash:
 	@echo "[FLASH] Flashing binary"
 	openocd -f interface/stlink.cfg -f target/stm32g0x.cfg \
-		-c "adapter speed 500; program $(OUT_BIN) verify reset exit 0x08000000"
+		-c "debug_level 1; adapter speed 1800; program $(abspath $(OUT_BIN)) verify reset exit 0x08000000"
 
 # Run OpenOCD with flashing and halt for debugging
 .PHONY: debug

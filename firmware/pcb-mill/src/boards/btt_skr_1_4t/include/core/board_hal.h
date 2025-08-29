@@ -70,4 +70,29 @@
 #define BIT_31_POS 31
 #define BIT_31 (1U << BIT_31_POS)
 
+static inline __attribute__((always_inline)) void interrupts_enable() {
+  __asm volatile("cpsie i" ::: "memory");
+  __asm volatile("isb");  // ensure PRIMASK change takes effect immediately
+}
+
+static inline __attribute__((always_inline)) void interrupts_disable() {
+  __asm volatile("cpsid i" ::: "memory");
+  __asm volatile("dsb");  // complete prior memory ops
+  __asm volatile("isb");  // ensure effect before following instructions
+}
+
+static inline unsigned irq_save(void) {
+  unsigned primask;
+  __asm volatile("mrs %0, primask" : "=r"(primask)::"memory");
+  __asm volatile("cpsid i" ::: "memory");
+  __asm volatile("dsb");
+  __asm volatile("isb");
+  return primask;
+}
+
+static inline void irq_restore(unsigned primask) {
+  __asm volatile("msr primask, %0" ::"r"(primask) : "memory");
+  __asm volatile("isb");
+}
+
 #endif  // __MEMORY_MAP_H__

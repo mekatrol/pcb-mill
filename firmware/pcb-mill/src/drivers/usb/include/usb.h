@@ -8,8 +8,6 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "stm32g0xx.h"
-
 #include "diagnostics.h"
 #include "macros.h"
 #include "usb_constants.h"

@@ -146,12 +146,12 @@ size: $(OUT_ELF)
 .PHONY: flash
 flash:
 	@echo [FLASH] $(CHIP) on $(BOARD_NAME)
-	$(MAKE) -C $(BOARD_BLD_DIR) flash MCU=$(MCU) CHIP=$(CHIP) BOARD_NAME=$(BOARD_NAME) DRIVER_NAMES="$(DRIVER_NAMES)"
+	"$(MAKE)" -C $(BOARD_BLD_DIR) flash MCU=$(MCU) CHIP=$(CHIP) BOARD_NAME=$(BOARD_NAME) DRIVER_NAMES="$(DRIVER_NAMES)"
 
 .PHONY: debug
 debug:
 	@echo [DEBUG] $(CHIP) on $(BOARD_NAME)
-	$(MAKE) -C $(BOARD_BLD_DIR) debug MCU=$(MCU) CHIP=$(CHIP) BOARD_NAME=$(BOARD_NAME) DRIVER_NAMES="$(DRIVER_NAMES)"
+	"$(MAKE)" -C $(BOARD_BLD_DIR) debug MCU=$(MCU) CHIP=$(CHIP) BOARD_NAME=$(BOARD_NAME) DRIVER_NAMES="$(DRIVER_NAMES)"
 
 # =========================
 # Clean / Build
@@ -169,8 +169,8 @@ cleanall:
 
 .PHONY: build
 build:
-	$(MAKE) clean
-	$(MAKE) $(OUT_BIN)
+	"$(MAKE)" clean
+	"$(MAKE)" $(OUT_BIN)
 
 .PHONY: vscode_cpp_settings
 vscode_cpp_settings:
@@ -194,12 +194,12 @@ print-config:
 # =========================
 .PHONY: btt_skr_1_4t
 btt_skr_1_4t:
-	$(MAKE) build MCU=cortex-m3 CHIP=LPC1769 BOARD_NAME=btt_skr_1_4t
+	"$(MAKE)" build MCU=cortex-m3 CHIP=LPC1769 BOARD_NAME=btt_skr_1_4t
 
 .PHONY: btt_skr_mini_e3_v3_0
 btt_skr_mini_e3_v3_0:
-	$(MAKE) build MCU=cortex-m0plus CHIP=STM32G0B1 BOARD_NAME=btt_skr_mini_e3_v3_0
+	"$(MAKE)" build MCU=cortex-m0plus CHIP=STM32G0B1 BOARD_NAME=btt_skr_mini_e3_v3_0
 
 .PHONY: stm32f407g
 stm32f407g:
-	$(MAKE) build MCU=cortex-m4 CHIP=STM32F407 BOARD_NAME=stm32f407g_disc1
+	"$(MAKE)" build MCU=cortex-m4 CHIP=STM32F407 BOARD_NAME=stm32f407g_disc1

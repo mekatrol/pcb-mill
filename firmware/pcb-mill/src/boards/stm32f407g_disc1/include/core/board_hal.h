@@ -70,4 +70,10 @@
 #define BIT_31_POS 31
 #define BIT_31 (1U << BIT_31_POS)
 
+static inline __attribute__((always_inline)) void interrupts_enable() {
+}
+
+static inline __attribute__((always_inline)) void interrupts_disable() {
+}
+
 #endif  // __MEMORY_MAP_H__
