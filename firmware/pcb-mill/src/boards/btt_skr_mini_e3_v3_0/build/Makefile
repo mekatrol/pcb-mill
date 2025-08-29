@@ -34,11 +34,15 @@ flash:
 	openocd -f interface/stlink.cfg -f target/stm32g0x.cfg \
 		-c "debug_level 1; adapter speed 1800; program $(abspath $(OUT_BIN)) verify reset exit 0x08000000"
 
-# Run OpenOCD with flashing and halt for debugging
+# Run OpenOCD: program ELF, then halt and wait for GDB
 .PHONY: debug
 debug:
-	@echo "[OPENOCD] Programming and halting"
-	openocd -f interface/stlink.cfg -f target/stm32g0x.cfg \
-		-c "adapter speed 500;" \
-		-c "program $(OUT_BIN) verify" \
+	@echo [OPENOCD] Programming and halting
+	"openocd" -f interface/stlink.cfg -f target/stm32g0x.cfg \
+		-c "debug_level 1" \
+		-c "adapter speed 1800" \
+		-c "init" \
+		-c "halt" \
+		-c "program {$(abspath $(OUT_ELF))} verify" \
 		-c "reset halt"
+
