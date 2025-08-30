@@ -1,17 +1,17 @@
-# =========================
+# ==========================================================
 # Project configuration (defaults; CLI can override)
-# =========================
-MCU        ?= cortex-m0plus
-CHIP       ?= STM32G0B1
-BOARD_NAME ?= btt_skr_mini_e3_v3_0
+# ==========================================================
+MCU          ?= cortex-m0plus
+CHIP         ?= STM32G0B1
+BOARD_NAME   ?= btt_skr_mini_e3_v3_0
 DRIVER_NAMES ?= usb usb_cdc
 
 # Export to sub-makes
 export MCU CHIP BOARD_NAME DRIVER_NAMES
 
-# =========================
+# ====================================
 # OS-specific shell/commands
-# =========================
+# ====================================
 ifeq ($(OS),Windows_NT)
   SHELL := cmd
   .SHELLFLAGS := /c
@@ -140,9 +140,9 @@ $(OUT_BIN): $(OUT_ELF)
 size: $(OUT_ELF)
 	$(SIZE) $<
 
-# =========================
+# ===============================================
 # Flash / Debug (delegated to board build dir)
-# =========================
+# ===============================================
 .PHONY: flash
 flash:
 	@echo [FLASH] $(CHIP) on $(BOARD_NAME)
@@ -189,9 +189,9 @@ print-config:
 	@echo DRIVER_NAMES=$(DRIVER_NAMES)
 	@echo BOARD_DIR=$(BOARD_DIR)
 
-# =========================
+# ===============================================
 # Board-specific meta targets (no double-clean)
-# =========================
+# ===============================================
 .PHONY: btt_skr_1_4t
 btt_skr_1_4t:
 	"$(MAKE)" build MCU=cortex-m3 CHIP=LPC1769 BOARD_NAME=btt_skr_1_4t
