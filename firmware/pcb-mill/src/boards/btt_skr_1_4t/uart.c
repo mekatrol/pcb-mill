@@ -41,12 +41,11 @@ void uart_init() {
   U0FCR = 0x07;
 }
 
-void uart_send_char(char c) {
+void diag_send(uint8_t b) {
   while ((U0LSR & (1 << 5)) == 0);  // Wait for THR empty
-  U0THR = c;
+  U0THR = b;
 }
 
-void uart_send_str(const char *s) {
-  while (*s)
-    uart_send_char(*s++);
+void diag_flush() {
+  while ((U0LSR & (1 << 5)) == 0);  // Wait for THR empty
 }
