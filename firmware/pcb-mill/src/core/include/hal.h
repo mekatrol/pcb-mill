@@ -14,7 +14,6 @@ void board_init_hal();
 // When there is a critical failure then the board goes into halt mode
 void device_halt();
 
-void delay_us(uint32_t us);
 void delay_ms(uint32_t ms);
 
 void steppers_enable_hal(bool enable);

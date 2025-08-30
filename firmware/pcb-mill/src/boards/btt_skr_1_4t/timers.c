@@ -1,5 +1,9 @@
 #include <stdint.h>
 
-void delay_us(uint32_t us) { (void)us; }
+#include "clock.h"
 
-void delay_ms(uint32_t ms) { (void)ms; }
+void delay_ms(uint32_t ms) {
+  for (uint32_t i = 0; i < ms; i++) {
+    while ((SYST_CSR & (1 << 16)) == 0);  // Wait for COUNTFLAG
+  }
+}
